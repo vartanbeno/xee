@@ -614,6 +614,20 @@ impl From<xee_xpath_ast::ParserError> for SpannedError {
     }
 }
 
+impl From<regexml::Error> for Error {
+    fn from(e: regexml::Error) -> Self {
+        use regexml::Error::*;
+        // TODO: pass more error details into error codes
+        match e {
+            Internal => panic!("Internal error in regexml engine"),
+            InvalidFlags(_) => Error::FORX0001,
+            Syntax(_) => Error::FORX0002,
+            MatchesEmptyString => Error::FORX0003,
+            InvalidReplacementString(_) => Error::FORX0004,
+        }
+    }
+}
+
 impl From<xot::Error> for Error {
     fn from(e: xot::Error) -> Self {
         match e {

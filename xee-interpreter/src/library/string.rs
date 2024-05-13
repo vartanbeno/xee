@@ -6,6 +6,7 @@ use ahash::{HashMap, HashMapExt, HashSet, HashSetExt};
 use ibig::IBig;
 use icu::normalizer::{ComposingNormalizer, DecomposingNormalizer};
 
+use regexml::Regex;
 use xee_name::{Name, FN_NAMESPACE};
 use xee_schema_type::Xs;
 use xee_xpath_macros::xpath_fn;
@@ -525,9 +526,8 @@ fn matches2(input: Option<&str>, pattern: &str) -> error::Result<bool> {
 
 fn matches(input: Option<&str>, pattern: &str, flags: &str) -> error::Result<bool> {
     let input = input.unwrap_or("");
-    let pattern = add_flags(pattern, flags)?;
-    let regex = fancy_regex::Regex::new(&pattern).map_err(|_| error::Error::FORX0002)?;
-    regex.is_match(input).map_err(|_| error::Error::FORX0002)
+    let regex = Regex::xpath(pattern, flags)?;
+    Ok(regex.is_match(input))
 }
 
 #[xpath_fn("fn:replace($input as xs:string?, $pattern as xs:string, $replacement as xs:string, $flags as xs:string) as xs:string")]
@@ -552,10 +552,8 @@ fn replace(
     flags: &str,
 ) -> error::Result<String> {
     let input = input.unwrap_or("");
-    let pattern = add_flags(pattern, flags)?;
-    let regex = fancy_regex::Regex::new(&pattern).map_err(|_| error::Error::FORX0002)?;
-    let output = regex.replace_all(input, replacement);
-    Ok(output.into_owned())
+    let regex = Regex::xpath(&pattern, flags)?;
+    Ok(regex.replace_all(input, replacement)?)
 }
 
 #[xpath_fn(
@@ -572,11 +570,8 @@ fn tokenize2(input: Option<&str>, pattern: &str) -> error::Result<Vec<String>> {
 
 fn tokenize(input: Option<&str>, pattern: &str, flags: &str) -> error::Result<Vec<String>> {
     let input = input.unwrap_or("");
-    let pattern = add_flags(pattern, flags)?;
-    // we are not using fancy_regex here as it doesn't have a split...
-    let regex = regex::Regex::new(&pattern).map_err(|_| error::Error::FORX0002)?;
-    let output = regex.split(input);
-    Ok(output.map(|s| s.to_string()).collect())
+    let regex = Regex::xpath(&pattern, flags)?;
+    Ok(regex.tokenize(input)?.collect::<Vec<_>>())
 }
 
 const ALLOWED_FLAGS: [char; 5] = ['s', 'm', 'i', 'x', 'q'];

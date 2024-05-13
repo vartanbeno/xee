@@ -44,7 +44,7 @@ xee-schema-type = { path = "../xee-schema-type" }
 xee-xpath-type = { path = "../xee-xpath-type" }
 xee-name = { path = "../xee-name" }
 lexical = { version = "6.1.1", features = ["format"] }
-regex = "1.9.3"
+regex = { workspace = true }
 hex = "0.4.3"
 base64 = "0.21.2"
 chrono = { workspace = true }
@@ -53,7 +53,7 @@ icu_provider_adapters = { workspace = true, features = ["serde"] }
 icu_provider_blob = { workspace = true }
 serde = { workspace = true, features = ["derive"], optional = true }
 url = "2.4.1"
-fancy-regex = "0.11.0"
+regexml = { workspace = true }
 
 [dev-dependencies]
 insta = { version = "1.29.0", features = ["yaml", "glob"] }

@@ -38,7 +38,8 @@ serde = "1"
 chrono = "0.4.30"
 blanket = "0.2.0"
 thiserror = "1.0.40"
-# regexml = { git = "ssh://git@github.com/Paligo/regexml.git" }
+regexml = { git = "ssh://git@github.com/Paligo/regexml.git" }
+regex = "1.9.3"
 
 [profile.test.package.xot]
 opt-level = 3

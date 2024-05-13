@@ -485,6 +485,18 @@ dependencies = [
 ]
 
 [[package]]
+name = "enum_dispatch"
+version = "0.3.13"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "aa18ce2bc66555b3218614519ac839ddb759a7d6720732f979ef8d13be147ecd"
+dependencies = [
+ "once_cell",
+ "proc-macro2 1.0.82",
+ "quote 1.0.36",
+ "syn 2.0.63",
+]
+
+[[package]]
 name = "equivalent"
 version = "1.0.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -498,16 +510,6 @@ checksum = "534c5cf6194dfab3db3242765c03bbe257cf92f22b38f6bc0c58d59108a820ba"
 dependencies = [
  "libc",
  "windows-sys 0.52.0",
-]
-
-[[package]]
-name = "fancy-regex"
-version = "0.11.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "b95f7c0680e4142284cf8b22c14a476e87d61b004a3a0861872b32ef7ead40a2"
-dependencies = [
- "bit-set",
- "regex",
 ]
 
 [[package]]
@@ -1987,6 +1989,18 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "adad44e29e4c806119491a7f06f03de4d1af22c3a680dd47f1e6e179439d1f56"
 
 [[package]]
+name = "regexml"
+version = "0.1.0"
+source = "git+ssh://git@github.com/Paligo/regexml.git#de6d897b2b548438cee6b9dcf8a8e26749e7a324"
+dependencies = [
+ "ahash 0.8.11",
+ "enum_dispatch",
+ "icu_casemap",
+ "icu_collections",
+ "icu_properties",
+]
+
+[[package]]
 name = "rend"
 version = "0.4.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -2866,7 +2880,6 @@ dependencies = [
  "base64 0.21.7",
  "chrono",
  "chumsky",
- "fancy-regex",
  "hex",
  "ibig",
  "icu",
@@ -2880,6 +2893,7 @@ dependencies = [
  "num-traits",
  "ordered-float",
  "regex",
+ "regexml",
  "rstest",
  "rust_decimal",
  "rust_decimal_macros",
