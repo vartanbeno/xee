@@ -4,7 +4,7 @@ expression: "ast::ExprSingle::parse(\"1 + 2 +\")"
 ---
 Err(ExpectedFound(
   span: SimpleSpan(
-    start: 7,
+    start: 0,
     end: 7,
     context: (),
   ),

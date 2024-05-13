@@ -21,7 +21,7 @@ resolver = "2"
 
 [workspace.dependencies]
 anyhow = "1.0.80"
-xot = "0.23.0"
+xot = "0.24.0"
 ahash = "0.8.6"
 strum = "0.25"
 strum_macros = "0.25"
@@ -31,11 +31,14 @@ ordered-float = "3.7.0"
 rust_decimal = "1.30.0"
 rust_decimal_macros = "1.29.1"
 chumsky = "1.0.0-alpha.6"
-icu = "1.2.0"
+icu = "1.4.0"
+icu_provider_adapters = "1.4.0"
+icu_provider_blob = "1.4.0"
 serde = "1"
 chrono = "0.4.30"
 blanket = "0.2.0"
 thiserror = "1.0.40"
+# regexml = { git = "ssh://git@github.com/Paligo/regexml.git" }
 
 [profile.test.package.xot]
 opt-level = 3
