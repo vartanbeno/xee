@@ -310,15 +310,6 @@ fn tokenize1(input: Option<&str>) -> error::Result<Vec<String>> {
     }
 }
 
-// #[xpath_fn("fn:tokenize($input as xs:string?, $pattern as xs:string) as xs:string*")]
-// fn tokenize2(input: Option<&str>, pattern: &str) -> error::Result<Vec<String>> {
-//     if let Some(input) = input {
-//         Ok(input.split(pattern).map(|s| s.to_string()).collect())
-//     } else {
-//         Ok(Vec::new())
-//     }
-// }
-
 #[xpath_fn("fn:translate($arg as xs:string?, $mapString as xs:string, $transString as xs:string) as xs:string")]
 fn translate(arg: Option<&str>, map_string: &str, trans_string: &str) -> String {
     if let Some(arg) = arg {
