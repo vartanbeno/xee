@@ -49,9 +49,6 @@ string-queries-results-q1
 = app-Walmsley
 = app-XMark
 = app-spec-examples
-fo-test-fn-analyze-string-001
-fo-test-fn-analyze-string-002
-fo-test-fn-analyze-string-003
 fo-test-fn-compare-002
 fo-test-fn-compare-004
 fo-test-fn-contains-004
@@ -151,32 +148,6 @@ array-sort-024
 = fn-adjust-dateTime-to-timezone
 = fn-adjust-time-to-timezone
 = fn-analyze-string
-analyzeString-001
-analyzeString-002
-analyzeString-002a
-analyzeString-003
-analyzeString-004
-analyzeString-005
-analyzeString-006
-analyzeString-007
-analyzeString-008
-analyzeString-009
-analyzeString-010
-analyzeString-011
-analyzeString-012
-analyzeString-013
-analyzeString-014
-analyzeString-015
-analyzeString-016
-analyzeString-017
-analyzeString-017a
-analyzeString-018
-analyzeString-019
-analyzeString-022
-analyzeString-023
-analyzeString-901
-analyzeString-902
-analyzeString-903
 = fn-apply
 = fn-available-environment-variables
 fn-available-environment-variables-001
@@ -1126,7 +1097,6 @@ millisecs-903
 millisecs-904
 millisecs-905
 = fn-function-arity
-fn-function-arity-008
 fn-function-arity-016
 fn-function-arity-017
 = fn-function-lookup
@@ -1169,10 +1139,6 @@ fn-function-lookup-086
 fn-function-lookup-088
 fn-function-lookup-110
 fn-function-lookup-114
-fn-function-lookup-159
-fn-function-lookup-160
-fn-function-lookup-161
-fn-function-lookup-162
 fn-function-lookup-163
 fn-function-lookup-164
 fn-function-lookup-165
@@ -1294,7 +1260,6 @@ fn-function-lookup-765
 fn-function-lookup-766b
 fn-function-lookup-812
 = fn-function-name
-fn-function-name-008
 fn-function-name-017
 fn-function-name-018
 = fn-generate-id
@@ -3114,10 +3079,6 @@ function-literal-086
 function-literal-088
 function-literal-110
 function-literal-114
-function-literal-159
-function-literal-160
-function-literal-161
-function-literal-162
 function-literal-163
 function-literal-164
 function-literal-165

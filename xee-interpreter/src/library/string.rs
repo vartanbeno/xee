@@ -6,14 +6,16 @@ use ahash::{HashMap, HashMapExt, HashSet, HashSetExt};
 use ibig::IBig;
 use icu::normalizer::{ComposingNormalizer, DecomposingNormalizer};
 
-use regexml::Regex;
+use regexml::{AnalyzeEntry, MatchEntry, Regex};
 use xee_name::{Name, FN_NAMESPACE};
 use xee_schema_type::Xs;
 use xee_xpath_macros::xpath_fn;
 use xee_xpath_type::ast;
+use xot::Xot;
 
 use crate::context::DynamicContext;
 use crate::function::{self, StaticFunctionDescription};
+use crate::interpreter::Interpreter;
 use crate::string::Collation;
 use crate::{atomic, error, interpreter, occurrence::Occurrence, sequence, wrap_xpath_fn};
 
@@ -565,6 +567,115 @@ fn tokenize(input: Option<&str>, pattern: &str, flags: &str) -> error::Result<Ve
     Ok(regex.tokenize(input)?.collect::<Vec<_>>())
 }
 
+#[xpath_fn("fn:analyze-string($input as xs:string?, $pattern as xs:string) as element()")]
+fn analyze_string2(
+    interpreter: &mut Interpreter,
+    input: Option<&str>,
+    pattern: &str,
+) -> error::Result<sequence::Sequence> {
+    analyze_string(interpreter, input, pattern, "")
+}
+
+#[xpath_fn(
+    "fn:analyze-string($input as xs:string?, $pattern as xs:string, $flags as xs:string) as element()"
+)]
+fn analyze_string3(
+    interpreter: &mut Interpreter,
+    input: Option<&str>,
+    pattern: &str,
+    flags: &str,
+) -> error::Result<sequence::Sequence> {
+    analyze_string(interpreter, input, pattern, flags)
+}
+
+struct AnalyzeStringNames {
+    fn_prefix: xot::PrefixId,
+    fn_namespace: xot::NamespaceId,
+    analyze_string_result: xot::NameId,
+    match_: xot::NameId,
+    non_match: xot::NameId,
+    group_name: xot::NameId,
+    group_nr: xot::NameId,
+}
+
+impl AnalyzeStringNames {
+    fn new(xot: &mut xot::Xot) -> Self {
+        let fn_namespace = xot.add_namespace(FN_NAMESPACE);
+        Self {
+            fn_prefix: xot.add_prefix("fn"),
+            fn_namespace,
+            analyze_string_result: xot.add_name_ns("analyze-string-result", fn_namespace),
+            match_: xot.add_name_ns("match", fn_namespace),
+            non_match: xot.add_name_ns("non-match", fn_namespace),
+            group_name: xot.add_name_ns("group", fn_namespace),
+            group_nr: xot.add_name("nr"),
+        }
+    }
+}
+
+fn analyze_string(
+    interpreter: &mut Interpreter,
+    input: Option<&str>,
+    pattern: &str,
+    flags: &str,
+) -> error::Result<sequence::Sequence> {
+    let input = input.unwrap_or("");
+    let regex = Regex::xpath(pattern, flags)?;
+    let analyze_results = regex.analyze(input)?;
+
+    let xot = interpreter.state.xot_mut();
+    // TODO: do this somewhere on startup time so we don't need to do it for each
+    // call
+    let analyze_string_names = AnalyzeStringNames::new(xot);
+
+    let analyze_string_result = xot.new_element(analyze_string_names.analyze_string_result);
+    let mut namespaces = xot.namespaces_mut(analyze_string_result);
+    namespaces.insert(
+        analyze_string_names.fn_prefix,
+        analyze_string_names.fn_namespace,
+    );
+    for entry in analyze_results {
+        let child = match entry {
+            AnalyzeEntry::Match(match_entries) => {
+                let match_node = xot.new_element(analyze_string_names.match_);
+                serialize_match_entries(xot, &analyze_string_names, match_node, &match_entries);
+                match_node
+            }
+            AnalyzeEntry::NonMatch(s) => {
+                let non_match_node = xot.new_element(analyze_string_names.non_match);
+                let text = xot.new_text(&s);
+                xot.append(non_match_node, text).unwrap();
+                non_match_node
+            }
+        };
+        xot.append(analyze_string_result, child).unwrap();
+    }
+    let item: sequence::Item = analyze_string_result.into();
+    let sequence: sequence::Sequence = item.into();
+    Ok(sequence)
+}
+
+fn serialize_match_entries(
+    xot: &mut Xot,
+    analyze_string_names: &AnalyzeStringNames,
+    node: xot::Node,
+    match_entries: &[MatchEntry],
+) {
+    for entry in match_entries {
+        let child = match entry {
+            MatchEntry::String(s) => xot.new_text(s),
+            MatchEntry::Group { nr, value } => {
+                let group = xot.new_element(analyze_string_names.group_name);
+                let mut attributes = xot.attributes_mut(group);
+                attributes.insert(analyze_string_names.group_nr, nr.to_string());
+                serialize_match_entries(xot, analyze_string_names, group, value);
+                group
+            }
+        };
+        xot.append(node, child).unwrap();
+    }
+}
+
 pub(crate) fn static_function_descriptions() -> Vec<StaticFunctionDescription> {
     let mut r = vec![
         wrap_xpath_fn!(codepoints_to_string),
@@ -595,6 +706,8 @@ pub(crate) fn static_function_descriptions() -> Vec<StaticFunctionDescription> {
         wrap_xpath_fn!(replace4),
         wrap_xpath_fn!(tokenize3),
         wrap_xpath_fn!(tokenize2),
+        wrap_xpath_fn!(analyze_string2),
+        wrap_xpath_fn!(analyze_string3),
     ];
     // register concat for a variety of arities
     // the spec leaves the amount of arguments indefinite
