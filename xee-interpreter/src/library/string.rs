@@ -574,26 +574,6 @@ fn tokenize(input: Option<&str>, pattern: &str, flags: &str) -> error::Result<Ve
     Ok(regex.tokenize(input)?.collect::<Vec<_>>())
 }
 
-const ALLOWED_FLAGS: [char; 5] = ['s', 'm', 'i', 'x', 'q'];
-
-fn validate_flags(flags: &str) -> error::Result<()> {
-    for c in flags.chars() {
-        if !ALLOWED_FLAGS.contains(&c) {
-            return Err(error::Error::FORX0001);
-        }
-    }
-    Ok(())
-}
-
-fn add_flags(pattern: &str, flags: &str) -> error::Result<String> {
-    validate_flags(flags)?;
-    if flags.is_empty() {
-        Ok(pattern.to_string())
-    } else {
-        Ok(format!("(?{}){}", flags, pattern))
-    }
-}
-
 pub(crate) fn static_function_descriptions() -> Vec<StaticFunctionDescription> {
     let mut r = vec![
         wrap_xpath_fn!(codepoints_to_string),
