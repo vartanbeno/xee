@@ -2,6 +2,7 @@ use std::path::{Path, PathBuf};
 
 use crate::error::{Error, Result};
 
+#[derive(Debug)]
 pub(crate) struct PathInfo {
     pub(crate) catalog_path: PathBuf,
     pub(crate) filter_path: PathBuf,
@@ -32,5 +33,13 @@ pub(crate) fn paths(path: &Path) -> Result<PathInfo> {
 impl PathInfo {
     pub(crate) fn whole_catalog(&self) -> bool {
         self.relative_path.components().count() == 0
+    }
+
+    pub(crate) fn test_file(&self) -> PathBuf {
+        // take base of catalog path and join relative path
+        self.catalog_path
+            .parent()
+            .unwrap()
+            .join(&self.relative_path)
     }
 }

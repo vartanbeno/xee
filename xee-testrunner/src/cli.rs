@@ -3,7 +3,6 @@ use clap::{Parser, Subcommand};
 use std::fs;
 use std::path::{Path, PathBuf};
 use xee_xpath::context::{DynamicContext, StaticContext};
-use xee_xpath::xml::Documents;
 use xee_xpath_load::PathLoadable;
 use xot::Xot;
 
@@ -217,7 +216,7 @@ impl<'a, E: Environment, R: Runnable<E>> Runner<'a, E, R> {
         TestSet::load_from_file(
             &mut self.run_context.xot,
             &mut self.run_context.dynamic_context,
-            &self.path_info.relative_path,
+            &self.path_info.test_file(),
         )
     }
 
