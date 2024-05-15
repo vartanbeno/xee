@@ -1991,7 +1991,7 @@ checksum = "adad44e29e4c806119491a7f06f03de4d1af22c3a680dd47f1e6e179439d1f56"
 [[package]]
 name = "regexml"
 version = "0.1.0"
-source = "git+ssh://git@github.com/Paligo/regexml.git#5441f80f2b73014485a7914633a710c5924af9f2"
+source = "git+ssh://git@github.com/Paligo/regexml.git#b13959c6e748be803afac610cebb3e7f5119e2d8"
 dependencies = [
  "ahash 0.8.11",
  "enum_dispatch",

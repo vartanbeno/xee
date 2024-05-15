@@ -1556,22 +1556,7 @@ LocalNameFromQNameFunc015a
 = fn-lower-case
 fn-lower-case-19
 = fn-matches
-K2-MatchesFunc-16a
 = fn-matches.re
-re00036
-re00056
-re00086
-re00102a
-re00256
-re00288
-re00338
-re00369
-re00370
-re00394
-re00429
-re00461
-re00480
-re00738
 re00754
 re00984
 re00989
@@ -2854,24 +2839,14 @@ K-SeqExprCast-1414
 K-SeqExprCast-440
 K-SeqExprCast-536
 K-SeqExprCast-588
-K2-SeqExprCast-210
 K2-SeqExprCast-221
 K2-SeqExprCast-223
-K2-SeqExprCast-231
-K2-SeqExprCast-232
-K2-SeqExprCast-422
-K2-SeqExprCast-423
-K2-SeqExprCast-424
 K2-SeqExprCast-480
-K2-SeqExprCast-505
 = prod-CastExpr.derived
 cbcl-cast-byte-001
 cbcl-cast-byte-002
 cbcl-cast-gYear-001
-cbcl-cast-gYear-002
-cbcl-cast-gYear-003
 cbcl-cast-gYearMonth-001
-cbcl-cast-gYearMonth-003
 cbcl-cast-int-001
 cbcl-cast-int-002
 cbcl-cast-long-001
@@ -2899,8 +2874,6 @@ K-SeqExprCastable-34
 K-SeqExprCastable-38
 K2-SeqExprCastable-1
 K2-SeqExprCastable-2
-K2-SeqExprCastable-6
-K2-SeqExprCastable-7
 cbcl-castable-unsignedByte-005
 cbcl-castable-unsignedInt-005
 cbcl-castable-unsignedLong-005
@@ -3227,7 +3200,6 @@ xs-dateTimeStamp-4
 xs-dateTimeStamp-5
 xs-dateTimeStamp-6
 = xs-double
-xs-double-004
 = xs-error
 xs-error-005
 xs-error-006
@@ -3256,7 +3228,6 @@ xs-error-051
 xs-error-052
 xs-error-053
 = xs-float
-xs-float-004
 = xs-hexBinary
 = xs-normalizedString
 = xs-numeric
