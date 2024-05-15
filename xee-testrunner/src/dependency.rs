@@ -52,6 +52,10 @@ pub(crate) fn xpath_known_dependencies() -> KnownDependencies {
             type_: "xml-version".to_string(),
             value: "1.0".to_string(),
         },
+        DependencySpec {
+            type_: "xsd-version".to_string(),
+            value: "1.1".to_string(),
+        },
     ];
     KnownDependencies::new(&specs)
 }
@@ -142,10 +146,22 @@ impl Dependencies {
         true
     }
 
-    // the XML version is supported if the the xml-version is the same
+    // the XML version is supported if the xml-version is the same
     pub(crate) fn is_xml_version_supported(&self, known_dependencies: &KnownDependencies) -> bool {
         for dependency in &self.dependencies {
             if dependency.spec.type_ == "xml-version"
+                && !known_dependencies.is_supported(dependency)
+            {
+                return false;
+            }
+        }
+        true
+    }
+
+    // the xsd version is supported if the the xsd-version is the same
+    pub(crate) fn is_xsd_version_supported(&self, known_dependencies: &KnownDependencies) -> bool {
+        for dependency in &self.dependencies {
+            if dependency.spec.type_ == "xsd-version"
                 && !known_dependencies.is_supported(dependency)
             {
                 return false;
@@ -164,6 +180,9 @@ impl Dependencies {
             return false;
         }
         if !self.is_xml_version_supported(known_dependencies) {
+            return false;
+        }
+        if !self.is_xsd_version_supported(known_dependencies) {
             return false;
         }
         self.is_feature_supported(known_dependencies)
