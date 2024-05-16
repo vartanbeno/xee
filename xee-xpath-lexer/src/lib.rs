@@ -1,3 +1,4 @@
+mod delimination;
 mod lexer;
 
-pub use {lexer::lexer, lexer::Token};
+pub use {delimination::lexer, lexer::Token};
