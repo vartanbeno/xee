@@ -35,9 +35,9 @@ impl<'a> Iterator for XPathLexer<'a> {
 
     // A.2.2 Terminal Delimination
     fn next(&mut self) -> Option<Self::Item> {
-        let token_span = self.spanned.next();
+        let token_span = self.spanned.next()?;
         match &token_span {
-            Some((token, span)) => match token {
+            (token, span) => match token {
                 Ok(token) => {
                     use SymbolType::*;
                     match token.symbol_type() {
@@ -68,7 +68,7 @@ impl<'a> Iterator for XPathLexer<'a> {
                             }
                             self.last_is_separator = false;
                             self.last_is_non_delimiting = false;
-                            token_span
+                            Some(token_span)
                         }
                         NonDelimiting => {
                             match token {
@@ -92,13 +92,13 @@ impl<'a> Iterator for XPathLexer<'a> {
                                 // then there has to be a separator, or
                                 // it's an error
                                 if self.last_is_separator {
-                                    token_span
+                                    Some(token_span)
                                 } else {
                                     Some((Err(()), span.clone()))
                                 }
                             } else {
                                 // if we've seen delimiting last, we're fine
-                                token_span
+                                Some(token_span)
                             };
                             self.last_is_separator = false;
                             self.last_is_non_delimiting = true;
@@ -156,12 +156,11 @@ impl<'a> Iterator for XPathLexer<'a> {
                             self.last_is_separator = true;
                             self.next()
                         }
-                        CommentEnd => token_span,
+                        CommentEnd => Some(token_span),
                     }
                 }
-                Err(_) => token_span,
+                Err(_) => Some(token_span),
             },
-            None => None,
         }
     }
 }
