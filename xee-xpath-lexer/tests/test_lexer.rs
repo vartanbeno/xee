@@ -1,0 +1,405 @@
+use std::borrow::Cow;
+
+use ibig::ibig;
+use rust_decimal_macros::dec;
+use xee_xpath_lexer::{lexer, Token};
+
+#[test]
+fn test_tokenize() {
+    let mut lex = lexer("cast as");
+    assert_eq!(lex.next(), Some((Ok(Token::Cast), (0..4))));
+    assert_eq!(lex.next(), Some((Ok(Token::As), (5..7))));
+}
+
+#[test]
+fn test_comment_by_itself() {
+    let mut lex = lexer("(: this is a comment :)");
+    assert_eq!(lex.next(), None);
+}
+
+#[test]
+fn test_comment_weird_content() {
+    let mut lex = lexer("(: 1name :)");
+    assert_eq!(lex.next(), None);
+}
+
+#[test]
+fn test_comment_multiline() {
+    let mut lex = lexer("(: this is\na comment :)");
+    assert_eq!(lex.next(), None);
+}
+
+#[test]
+fn test_comment_nested() {
+    let mut lex = lexer("(: this (:is a:) comment :)");
+    assert_eq!(lex.next(), None);
+}
+
+#[test]
+fn test_comment_nested_broken() {
+    let mut lex = lexer("(: this (:is a:) comment :");
+    assert_eq!(lex.next(), Some((Err(()), (0..26))));
+}
+
+#[test]
+fn test_close_comment_by_itself() {
+    let mut lex = lexer(":)");
+    // this comment end will appear in the token stream,
+    // but the parser will reject it
+    assert_eq!(lex.next(), Some((Ok(Token::CommentEnd), (0..2))));
+}
+
+#[test]
+fn test_open_comment_by_itself() {
+    let mut lex = lexer("(:");
+    // this is an unterminated comment
+    assert_eq!(lex.next(), Some((Err(()), (0..2))));
+}
+
+#[test]
+fn test_integer_literal() {
+    let mut lex = lexer("123");
+    assert_eq!(
+        lex.next(),
+        Some((Ok(Token::IntegerLiteral(ibig!(123))), (0..3)))
+    );
+}
+
+#[test]
+fn test_decimal_literal() {
+    let mut lex = lexer("123.456");
+    assert_eq!(
+        lex.next(),
+        Some((Ok(Token::DecimalLiteral(dec!(123.456))), (0..7)))
+    );
+}
+
+#[test]
+fn test_decimal_starts_with_dot() {
+    let mut lex = lexer(".456");
+    assert_eq!(
+        lex.next(),
+        Some((Ok(Token::DecimalLiteral(dec!(0.456))), (0..4)))
+    );
+}
+
+#[test]
+fn test_decimal_literal_too_big() {
+    let mut lex = lexer("12300000000000000000000000000000000.456");
+    assert_eq!(lex.next(), Some((Err(()), (0..39))));
+}
+
+#[test]
+fn test_double_literal() {
+    let mut lex = lexer("123.456e-5");
+    assert_eq!(
+        lex.next(),
+        Some((Ok(Token::DoubleLiteral(123.456e-5)), (0..10)))
+    );
+}
+
+#[test]
+fn test_double_literal_starts_with_dot() {
+    let mut lex = lexer(".456e-5");
+    assert_eq!(
+        lex.next(),
+        Some((Ok(Token::DoubleLiteral(0.456e-5)), (0..7)))
+    );
+}
+
+#[test]
+fn test_string_literal_double_quotes() {
+    let mut lex = lexer(r#""foo""#);
+    assert_eq!(
+        lex.next(),
+        Some((Ok(Token::StringLiteral(Cow::Borrowed("foo"))), (0..5)))
+    );
+}
+
+#[test]
+fn test_string_literal_double_quotes_escape() {
+    let mut lex = lexer(r#""fo""o""#);
+    assert_eq!(
+        lex.next(),
+        Some((
+            Ok(Token::StringLiteral(Cow::Owned(r#"fo"o"#.to_string()))),
+            (0..7)
+        ))
+    );
+}
+
+#[test]
+fn test_string_literal_single_quotes() {
+    let mut lex = lexer(r#"'foo'"#);
+    assert_eq!(
+        lex.next(),
+        Some((Ok(Token::StringLiteral(Cow::Borrowed("foo"))), (0..5)))
+    );
+}
+
+#[test]
+fn test_string_literal_single_quotes_escape() {
+    let mut lex = lexer(r#"'fo''o'"#);
+    assert_eq!(
+        lex.next(),
+        Some((
+            Ok(Token::StringLiteral(Cow::Owned(r#"fo'o"#.to_string()))),
+            (0..7)
+        ))
+    );
+}
+
+#[test]
+fn test_string_literal_single_quotes_escape2() {
+    let mut lex = lexer(r#"'fo''o''l'"#);
+    assert_eq!(
+        lex.next(),
+        Some((
+            Ok(Token::StringLiteral(Cow::Owned(r#"fo'o'l"#.to_string()))),
+            (0..10)
+        ))
+    );
+}
+
+#[test]
+fn test_ncname() {
+    let mut lex = lexer("foo");
+    assert_eq!(lex.next(), Some((Ok(Token::NCName("foo")), (0..3))));
+}
+
+// #[test]
+// fn test_prefixed_name() {
+//     let mut lex = lexer("xs:integer");
+//     assert_eq!(
+//         lex.next(),
+//         Some((
+//             (Ok(Token::PrefixedQName(PrefixedQName {
+//                 prefix: "xs",
+//                 local_name: "integer"
+//             }))),
+//             (0..10)
+//         ))
+//     );
+// }
+
+#[test]
+fn test_axis_lexer() {
+    let mut lex = lexer("ancestor::foo");
+    assert_eq!(lex.next(), Some((Ok(Token::Ancestor), (0..8))));
+    assert_eq!(lex.next(), Some((Ok(Token::DoubleColon), (8..10))));
+    assert_eq!(lex.next(), Some((Ok(Token::NCName("foo")), (10..13))));
+}
+
+#[test]
+fn test_braced_uri_literal() {
+    let mut lex = lexer("Q{http://example.com}");
+    assert_eq!(
+        lex.next(),
+        Some((Ok(Token::BracedURILiteral("http://example.com")), (0..21)))
+    );
+}
+
+#[test]
+fn two_non_delimiting_tokens_not_separated() {
+    let mut lex = lexer("1cast");
+    assert_eq!(
+        lex.next(),
+        Some((Ok(Token::IntegerLiteral(ibig!(1))), (0..1)))
+    );
+    assert_eq!(lex.next(), Some((Err(()), 1..5)));
+}
+
+#[test]
+fn delimiting_and_non_delimiting_not_separated() {
+    let mut lex = lexer("'1'cast");
+    assert_eq!(
+        lex.next(),
+        Some((Ok(Token::StringLiteral(Cow::Borrowed("1"))), (0..3)))
+    );
+    assert_eq!(lex.next(), Some((Ok(Token::Cast), 3..7)));
+}
+
+#[test]
+fn non_delimiting_and_delimiting_not_separated() {
+    let mut lex = lexer("cast'1'");
+    assert_eq!(lex.next(), Some((Ok(Token::Cast), 0..4)));
+    assert_eq!(
+        lex.next(),
+        Some((Ok(Token::StringLiteral(Cow::Borrowed("1"))), (4..7)))
+    );
+}
+
+#[test]
+fn two_non_delimiting_tokens_separated_by_whitespace() {
+    let mut lex = lexer("1 cast");
+    assert_eq!(
+        lex.next(),
+        Some((Ok(Token::IntegerLiteral(ibig!(1))), (0..1)))
+    );
+    assert_eq!(lex.next(), Some((Ok(Token::Cast), 2..6)));
+}
+
+#[test]
+fn two_non_delimiting_tokens_separated_by_comment() {
+    let mut lex = lexer("1(:hello:)cast");
+    assert_eq!(
+        lex.next(),
+        Some((Ok(Token::IntegerLiteral(ibig!(1))), (0..1)))
+    );
+    assert_eq!(lex.next(), Some((Ok(Token::Cast), (10..14))));
+}
+
+#[test]
+fn test_comment_in_middle_of_integer() {
+    let mut lex = lexer("1(:hello:)2");
+    assert_eq!(
+        lex.next(),
+        Some((Ok(Token::IntegerLiteral(ibig!(1))), (0..1)))
+    );
+    assert_eq!(
+        lex.next(),
+        Some((Ok(Token::IntegerLiteral(ibig!(2))), (10..11)))
+    );
+}
+
+// #[test]
+// fn comment_after_prefix_after_colon() {
+//     let mut lex = lexer("foo:(:hey:)ncname");
+//     assert_eq!(lex.next(), Some((Ok(Token::NCName("foo")), (0..3))));
+//     assert_eq!(lex.next(), Some((Ok(Token::Colon), (3..4))));
+//     assert_eq!(lex.next(), Some((Err(()), 4..11)));
+// }
+
+#[test]
+fn comment_in_uri_qualified_name() {
+    let mut lex = lexer("Q{foo}(:hey:})ncname");
+    assert_eq!(
+        lex.next(),
+        Some((Ok(Token::BracedURILiteral("foo")), (0..6)))
+    );
+    assert_eq!(lex.next(), Some((Err(()), 6..8)));
+}
+
+#[test]
+fn comment_in_braced_uri_literal() {
+    let mut lex = lexer("Q{(:hey:)foo}");
+    assert_eq!(
+        lex.next(),
+        Some((Ok(Token::BracedURILiteral("(:hey:)foo")), (0..13)))
+    );
+}
+
+// #[test]
+// fn comment_after_wildcard_after_colon() {
+//     let mut lex = lexer("*:(:hey:)ncname");
+//     assert_eq!(lex.next(), Some((Ok(Token::AsteriskColon), (0..2))));
+//     assert_eq!(lex.next(), Some((Err(()), 2..4)));
+// }
+
+// #[test]
+// fn comment_after_wildcard_before_colon() {
+//     let mut lex = lexer("name(:hey:):*");
+//     assert_eq!(lex.next(), Some((Ok(Token::NCName("name")), (0..4))));
+//     assert_eq!(lex.next(), Some((Err(()), 4..5)));
+// }
+
+// #[test]
+// fn whitespace_between_prefix_and_wildcard() {
+//     let mut lex = lexer("ncname :*");
+//     assert_eq!(lex.next(), Some((Ok(Token::NCName("ncname")), (0..6))));
+//     assert_eq!(lex.next(), Some((Err(()), 6..7)));
+// }
+
+#[test]
+fn qname_then_dot_is_ncname() {
+    let mut lex = lexer("xs:integer.");
+    assert_eq!(lex.next(), Some((Ok(Token::NCName("xs")), (0..2))));
+    assert_eq!(lex.next(), Some((Ok(Token::Colon), (2..3))));
+    assert_eq!(lex.next(), Some((Ok(Token::NCName("integer.")), (3..11))));
+    assert_eq!(lex.next(), None);
+}
+
+#[test]
+fn qname_then_dot_with_separator_is_ok() {
+    let mut lex = lexer("xs:integer .");
+    assert_eq!(lex.next(), Some((Ok(Token::NCName("xs")), (0..2))));
+    assert_eq!(lex.next(), Some((Ok(Token::Colon), (2..3))));
+    assert_eq!(lex.next(), Some((Ok(Token::NCName("integer")), (3..10))));
+    assert_eq!(lex.next(), Some((Ok(Token::Dot), 11..12)));
+}
+
+#[test]
+fn qname_then_minus_is_ncname() {
+    let mut lex = lexer("xs:integer-");
+    assert_eq!(lex.next(), Some((Ok(Token::NCName("xs")), (0..2))));
+    assert_eq!(lex.next(), Some((Ok(Token::Colon), (2..3))));
+    assert_eq!(lex.next(), Some((Ok(Token::NCName("integer-")), (3..11))));
+    assert_eq!(lex.next(), None);
+}
+
+#[test]
+fn qname_then_minus_with_separator_is_ok() {
+    let mut lex = lexer("xs:integer -");
+    assert_eq!(lex.next(), Some((Ok(Token::NCName("xs")), (0..2))));
+    assert_eq!(lex.next(), Some((Ok(Token::Colon), (2..3))));
+    assert_eq!(lex.next(), Some((Ok(Token::NCName("integer")), (3..10))));
+    assert_eq!(lex.next(), Some((Ok(Token::Minus), 11..12)));
+}
+
+#[test]
+fn decimal_with_dot_must_have_separator() {
+    let mut lex = lexer("1.0.");
+    assert_eq!(
+        lex.next(),
+        Some((Ok(Token::DecimalLiteral(dec!(1.0))), (0..3)))
+    );
+    assert_eq!(lex.next(), Some((Err(()), 3..4)));
+}
+
+#[test]
+fn double_with_dot_must_have_separator() {
+    let mut lex = lexer("1.2e3.");
+    assert_eq!(lex.next(), Some((Ok(Token::DoubleLiteral(1.2e3)), (0..5))));
+    assert_eq!(lex.next(), Some((Err(()), 5..6)));
+}
+
+#[test]
+fn dot_with_decimal_must_have_separator() {
+    let mut lex = lexer(".1.2");
+    assert_eq!(
+        lex.next(),
+        Some((Ok(Token::DecimalLiteral(dec!(0.1))), (0..2)))
+    );
+    assert_eq!(lex.next(), Some((Err(()), 2..4)));
+}
+
+#[test]
+fn test_simple_map() {
+    let mut lex = lexer("(1, 2) ! (. * 2)");
+    assert_eq!(lex.next(), Some((Ok(Token::LeftParen), (0..1))));
+    assert_eq!(
+        lex.next(),
+        Some((Ok(Token::IntegerLiteral(ibig!(1))), (1..2)))
+    );
+    assert_eq!(lex.next(), Some((Ok(Token::Comma), (2..3))));
+    assert_eq!(
+        lex.next(),
+        Some((Ok(Token::IntegerLiteral(ibig!(2))), (4..5)))
+    );
+    assert_eq!(lex.next(), Some((Ok(Token::RightParen), (5..6))));
+    assert_eq!(lex.next(), Some((Ok(Token::ExclamationMark), (7..8))));
+    assert_eq!(lex.next(), Some((Ok(Token::LeftParen), (9..10))));
+    assert_eq!(lex.next(), Some((Ok(Token::Dot), (10..11))));
+    assert_eq!(lex.next(), Some((Ok(Token::Asterisk), (12..13))));
+    assert_eq!(
+        lex.next(),
+        Some((Ok(Token::IntegerLiteral(ibig!(2))), (14..15)))
+    );
+    assert_eq!(lex.next(), Some((Ok(Token::RightParen), (15..16))));
+}
+
+#[test]
+fn test_ncname_contains_minus() {
+    let mut lex = lexer("a-b");
+    assert_eq!(lex.next(), Some((Ok(Token::NCName("a-b")), (0..3))));
+}

@@ -1,0 +1,28 @@
+[package]
+name = "xee-xpath-lexer"
+version = "0.1.0"
+edition = "2021"
+authors = ["Martijn Faassen <faassen@startifact.com>"]
+keywords = ["xml", "xpath"]
+license = "Apache-2.0"
+description = "XPath lexer"
+repository = "http://github.com/Paligo/xee"
+readme = "README.md"
+documentation = "https://docs.rs/xee-xpath-ast"
+homepage = "https://github.com/Paligo/xee"
+
+[features]
+serde = ["dep:serde", "ibig/serde"]
+
+[dependencies]
+logos = "0.14.0"
+ibig = { workspace = true }
+rust_decimal = { workspace = true }
+serde = { workspace = true, features = ["derive"], optional = true }
+
+[dev-dependencies]
+# we want to depend on serde feature during tests
+xee-xpath-lexer = { path = ".", features = ["serde"] }
+insta = { version = "1.29.0", features = ["ron", "glob"] }
+rust_decimal_macros = "1.29.1"
+ron = "0.8.0"
