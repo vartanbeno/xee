@@ -1557,9 +1557,6 @@ LocalNameFromQNameFunc015a
 fn-lower-case-19
 = fn-matches
 = fn-matches.re
-re00754
-re00984
-re00989
 = fn-max
 = fn-min
 = fn-minutes-from-dateTime
@@ -2569,6 +2566,7 @@ xml-to-json-D-511
 = fn-year-from-dateTime
 = fn-years-from-duration
 = fn-zero-or-one
+= map-call
 = map-contains
 = map-entry
 map-entry-001-hof
