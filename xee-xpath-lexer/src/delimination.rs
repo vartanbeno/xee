@@ -79,7 +79,7 @@ impl<'a> Iterator for XPathLexer<'a> {
                                 | Token::DecimalLiteral(_)
                                 | Token::DoubleLiteral(_) => {
                                     // vice versa: T is a "." and U is a numeric literal
-                                    // Checking that isn't necessary, as a leading
+                                    // Checking thatextra.state isn't necessary, as a leading
                                     // dot will automatically be interpreted as starting
                                     // a decimal or double. The vice versa rule is there
                                     // for disambiguation only

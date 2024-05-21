@@ -4,18 +4,17 @@ use ibig::IBig;
 use logos::{Lexer, Logos};
 use rust_decimal::Decimal;
 
-// #[derive(Clone, Debug, PartialEq)]
-// #[cfg_attr(feature = "serde", derive(serde::Serialize))]
-// pub struct PrefixedQName<'a> {
-//     pub prefix: &'a str,
-//     pub local_name: &'a str,
-// }
+#[derive(Clone, Debug, PartialEq)]
+#[cfg_attr(feature = "serde", derive(serde::Serialize))]
+pub struct PrefixedQName<'a> {
+    pub prefix: &'a str,
+    pub local_name: &'a str,
+}
 
 #[derive(Logos, Clone, Debug, PartialEq)]
 #[logos(subpattern name_start_char_without_colon = r"[A-Za-z_\u{c0}-\u{d6}\u{d8}-\u{f6}\u{f8}-\u{2ff}\u{370}-\u{37d}\u{37f}-\u{1fff}\u{200c}-\u{200d}\u{2070}-\u{218f}\u{2c00}-\u{2fef}\u{3001}-\u{d7ff}\u{f900}-\u{fdfc}\u{fdf0}-\u{fffd}\u{10000}-\u{effff}]")]
 #[logos(subpattern name_char_without_colon = r"(?&name_start_char_without_colon)|[\-\.0-9\u{b7}\u{300}-\u{36F}\u{203f}-\u{2040}]")]
 #[logos(subpattern ncname = r"(?&name_start_char_without_colon)(?&name_char_without_colon)*")]
-// #[logos(subpattern prefixedname = r"(?&ncname):(?&ncname)")]
 #[cfg_attr(feature = "serde", derive(serde::Serialize))]
 pub enum Token<'a> {
     Error,
@@ -32,11 +31,10 @@ pub enum Token<'a> {
     #[regex(r#""(?:""|[^"])*"|'(?:''|[^'])*'"#, string_literal, priority = 1)]
     StringLiteral(Cow<'a, str>),
     // QName is a token according to the spec, but it's too complex to analyze
-    // in the lexer, as ncnames can also occur by themselves. Instead we find
-    // prefixed qnames and figure out whether an ncname is an unprefixed qname
-    // later on in the parser
-    // #[regex(r"(?&prefixedname)", prefixed_qname, priority = 2)]
-    // PrefixedQName(PrefixedQName<'a>),
+    // in the lexer, as ncnames can also occur by themselves. We construct PrefixedQName
+    // tokens in a separate after the main lexing is done, and let the parser
+    // figure out what is a proper qname
+    PrefixedQName(PrefixedQName<'a>),
     #[regex(r"(?&ncname)", priority = 2)]
     NCName(&'a str),
 
@@ -266,6 +264,7 @@ impl<'a> Token<'a> {
             // non-delimiting terminal symbols
             IntegerLiteral(_)
             | NCName(_)
+            | PrefixedQName(_)
             | DecimalLiteral(_)
             | DoubleLiteral(_)
             | Ancestor
