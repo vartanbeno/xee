@@ -67,8 +67,6 @@ mod tests {
     use ibig::ibig;
     use logos::Logos;
 
-    use crate::delimination::XPathLexer;
-
     use super::*;
 
     fn spanned_lexer(input: &str) -> SpannedIter<Token> {
@@ -134,6 +132,30 @@ mod tests {
                 })),
                 0..7
             ))
+        );
+        assert_eq!(iter.next(), None);
+    }
+
+    #[test]
+    fn test_prefixed_qname_followed() {
+        let lex = spanned_lexer("foo:bar + 1");
+        let mut iter = PrefixedQNameIterator::new(lex);
+        assert_eq!(
+            iter.next(),
+            Some((
+                Ok(Token::PrefixedQName(PrefixedQName {
+                    prefix: "foo",
+                    local_name: "bar"
+                })),
+                0..7
+            ))
+        );
+        assert_eq!(iter.next(), Some((Ok(Token::Whitespace), 7..8)));
+        assert_eq!(iter.next(), Some((Ok(Token::Plus), 8..9)));
+        assert_eq!(iter.next(), Some((Ok(Token::Whitespace), 9..10)));
+        assert_eq!(
+            iter.next(),
+            Some((Ok(Token::IntegerLiteral(ibig!(1))), 10..11))
         );
         assert_eq!(iter.next(), None);
     }
