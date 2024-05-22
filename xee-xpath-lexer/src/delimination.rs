@@ -18,7 +18,7 @@ pub struct XPathLexer<'a> {
 }
 
 impl<'a> XPathLexer<'a> {
-    fn new(lexer: Lexer<'a, Token<'a>>) -> Self {
+    pub(crate) fn new(lexer: Lexer<'a, Token<'a>>) -> Self {
         let spanned = lexer.spanned();
         Self {
             spanned,

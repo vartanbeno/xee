@@ -1,4 +1,3 @@
-mod combiner;
 mod delimination;
 mod lexer;
 mod prefixed_qname;

@@ -19,6 +19,7 @@ logos = "0.14.0"
 ibig = { workspace = true }
 rust_decimal = { workspace = true }
 serde = { workspace = true, features = ["derive"], optional = true }
+itertools = "0.13.0"
 
 [dev-dependencies]
 # we want to depend on serde feature during tests

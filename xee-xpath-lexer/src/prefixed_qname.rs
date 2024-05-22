@@ -1,91 +1,140 @@
+use itertools::{Itertools, MultiPeek};
 use logos::{Span, SpannedIter};
 
-use crate::Token;
+use crate::{lexer::PrefixedQName, Token};
 
-// we have an iterator with spans
+pub(crate) struct PrefixedQNameIterator<'a> {
+    base: MultiPeek<SpannedIter<'a, Token<'a>>>,
+}
 
-// we keep track of previously seen tokens if they match the pattern
-// if not, we release the previously seen tokens if any are present, then
-// release the current token
+impl<'a> PrefixedQNameIterator<'a> {
+    pub(crate) fn new(spanned_iter: SpannedIter<'a, Token<'a>>) -> Self {
+        let base = spanned_iter.multipeek();
+        Self { base }
+    }
 
-// enum PatternState {
-//     NotInPattern,
-//     InPattern,
-//     EndsPattern,
-// }
+    fn prefixed_qname<'b>(
+        &mut self,
+        token: &'b Token<'a>,
+        span: &'b Span,
+    ) -> Option<(PrefixedQName<'a>, Span)> {
+        if let Token::NCName(prefix) = token {
+            // if we are followed by a token
+            if let Some((Ok(Token::Colon), _)) = self.base.peek() {
+                // and then an ncname
+                if let Some((Ok(Token::NCName(local_name)), local_name_span)) = self.base.peek() {
+                    // we create a span from the start of the original prefix span
+                    // to the end of the localname span
+                    let span = span.start..local_name_span.end;
+                    return Some((PrefixedQName { prefix, local_name }, span));
+                }
+            }
+        }
+        None
+    }
+}
 
-// struct PatternMatchIterator<
-//     'a,
-//     const L: usize,
-//     F: Fn(&[Option<(Token<'a>, Span)>; L], (Token<'a>, Span)) -> PatternState,
-// > {
-//     spanned_iter: SpannedIter<'a, Token<'a>>,
-//     pattern_tokens: [Option<(Token<'a>, Span)>; L],
-//     in_pattern: F,
-//     release_index: Option<usize>,
-// }
+impl<'a> Iterator for PrefixedQNameIterator<'a> {
+    type Item = (Result<Token<'a>, ()>, Span);
 
-// impl<
-//         'a,
-//         const L: usize,
-//         F: Fn(&[Option<(Token<'a>, Span)>; L], (Token<'a>, Span)) -> PatternState,
-//     > Iterator for PatternMatchIterator<'a, L, F>
-// {
-//     type Item = (Result<Token<'a>, ()>, Span);
+    fn next(&mut self) -> Option<Self::Item> {
+        // if we find a ncname, we peek two tokens ahead to determine
+        // whether we find a colon and a ncname. If so, we absorb the three
+        // tokens and produce a prefixed qname token. If not, we just produce
+        // the token from the base iterator.
+        let (token, span) = self.base.next()?;
+        if let Ok(token) = token {
+            if let Some((prefixed_qname, prefixed_qname_span)) = self.prefixed_qname(&token, &span)
+            {
+                // consume two next tokens
+                self.base.next();
+                self.base.next();
+                return Some((
+                    Ok(Token::PrefixedQName(prefixed_qname)),
+                    prefixed_qname_span,
+                ));
+            } else {
+                Some((Ok(token), span))
+            }
+        } else {
+            Some((Err(()), span))
+        }
+    }
+}
 
-//     fn next(&mut self) -> Option<Self::Item> {
-//         // release any buffered tokens if we have any
-//         if let Some(release_index) = self.release_index {
-//             // now take the token to release
-//             if let Some(buffered_token) = self.pattern_tokens[release_index].take() {
-//                 // update release index, or clear it if we're done
-//                 self.release_index = if release_index < L {
-//                     Some(release_index + 1)
-//                 } else {
-//                     None
-//                 };
-//                 return Some((Ok(buffered_token), *span));
-//             } else {
-//                 // we don't find a token in our buffer, so we are done with
-//                 // buffered tokens for now
-//                 self.release_index = None;
-//             }
-//             return Some((Ok(token), *span));
-//         }
+#[cfg(test)]
+mod tests {
+    use ibig::ibig;
+    use logos::Logos;
 
-//         let token_span = self.spanned_iter.next()?;
-//         match &token_span {
-//             (token, span) => match token {
-//                 Ok(token) => {
-//                     let state = (self.in_pattern)(&self.pattern_tokens, (token, span));
-//                     match state {
-//                         PatternState::NotInPattern => {}
-//                         PatternState::InPattern => {}
-//                         PatternState::EndsPattern => {}
-//                     }
-//                 }
-//                 Err(_) => Some((Err(()), *span)),
-//             },
-//         }
-//     }
-// }
+    use crate::delimination::XPathLexer;
 
-// if that iterator contains the sequence ncname colon ncname, then we
-// combine this into a single token, prefixed ncname
-// otherwise we just yield the elements
+    use super::*;
 
-// if we see an ncname, and we just saw ncname colon,
-// consume these and yield prefixed name
+    fn spanned_lexer(input: &str) -> SpannedIter<Token> {
+        Token::lexer(input).spanned()
+    }
 
-// if we see an ncname and we didn't see ncname colon, yield ncname
+    #[test]
+    fn test_no_ncname_no_prefixed_qname() {
+        let lex = spanned_lexer("1 + 1");
+        let mut iter = PrefixedQNameIterator::new(lex);
+        assert_eq!(
+            iter.next(),
+            Some((Ok(Token::IntegerLiteral(ibig!(1))), 0..1))
+        );
+        assert_eq!(iter.next(), Some((Ok(Token::Whitespace), 1..2)));
+        assert_eq!(iter.next(), Some((Ok(Token::Plus), 2..3)));
+        assert_eq!(iter.next(), Some((Ok(Token::Whitespace), 3..4)));
+        assert_eq!(
+            iter.next(),
+            Some((Ok(Token::IntegerLiteral(ibig!(1))), 4..5))
+        );
+    }
 
-// if we see a colon if we're tracking ncname, keep track of it, otherwise yield token
-// if we see something else, track it, yield token
-// if we see something else, track it, yield
+    #[test]
+    fn test_ncname_no_prefixed_qname() {
+        let lex = spanned_lexer("foo + 1");
+        let mut iter = PrefixedQNameIterator::new(lex);
+        assert_eq!(iter.next(), Some((Ok(Token::NCName("foo")), 0..3)));
+        assert_eq!(iter.next(), Some((Ok(Token::Whitespace), 3..4)));
+        assert_eq!(iter.next(), Some((Ok(Token::Plus), 4..5)));
+        assert_eq!(iter.next(), Some((Ok(Token::Whitespace), 5..6)));
+        assert_eq!(
+            iter.next(),
+            Some((Ok(Token::IntegerLiteral(ibig!(1))), 6..7))
+        );
+    }
 
-// we could keep track of the last two tokens
-// if that is an ncname and a colon, and we get an ncname, wipe out the
-// information seen, and yield a prefixed ncname
-// if it's not an ncname, then we yield the first token, keep the second
-// if there's still a second token, we yield that
-// finally we yield the ncname
+    #[test]
+    fn test_ncname_colon_no_prefixed_qname() {
+        let lex = spanned_lexer("foo: + 1");
+        let mut iter = PrefixedQNameIterator::new(lex);
+        assert_eq!(iter.next(), Some((Ok(Token::NCName("foo")), 0..3)));
+        assert_eq!(iter.next(), Some((Ok(Token::Colon), 3..4)));
+        assert_eq!(iter.next(), Some((Ok(Token::Whitespace), 4..5)));
+        assert_eq!(iter.next(), Some((Ok(Token::Plus), 5..6)));
+        assert_eq!(iter.next(), Some((Ok(Token::Whitespace), 6..7)));
+        assert_eq!(
+            iter.next(),
+            Some((Ok(Token::IntegerLiteral(ibig!(1))), 7..8))
+        );
+    }
+
+    #[test]
+    fn test_prefixed_qname() {
+        let lex = spanned_lexer("foo:bar");
+        let mut iter = PrefixedQNameIterator::new(lex);
+        assert_eq!(
+            iter.next(),
+            Some((
+                Ok(Token::PrefixedQName(PrefixedQName {
+                    prefix: "foo",
+                    local_name: "bar"
+                })),
+                0..7
+            ))
+        );
+        assert_eq!(iter.next(), None);
+    }
+}
