@@ -52,8 +52,8 @@ impl<'a> ExplicitWhitespaceIterator<'a> {
                 }
                 None
             }
-            // if we are followed by a AsteriskColon token, this is a local name wildcard
-            Ok(Token::AsteriskColon) => {
+            // if we are followed by a ColonAsterisk token, this is a local name wildcard
+            Ok(Token::ColonAsterisk) => {
                 let span = span.start..next_span.end;
                 return Some((
                     Token::LocalNameWildcard(LocalNameWildcard { prefix: name }),
@@ -243,6 +243,67 @@ mod tests {
         assert_eq!(iter.next(), Some((Token::Plus, 8..9)));
         assert_eq!(iter.next(), Some((Token::Whitespace, 9..10)));
         assert_eq!(iter.next(), Some((Token::IntegerLiteral(ibig!(1)), 10..11)));
+        assert_eq!(iter.next(), None);
+    }
+
+    #[test]
+    fn test_local_name_wildcard() {
+        let lex = spanned_lexer("foo:*");
+        let mut iter = ExplicitWhitespaceIterator::new(lex);
+        assert_eq!(
+            iter.next(),
+            Some((
+                Token::LocalNameWildcard(LocalNameWildcard { prefix: "foo" }),
+                0..5
+            ))
+        );
+        assert_eq!(iter.next(), None);
+    }
+
+    #[test]
+    fn test_prefix_wilcard() {
+        let lex = spanned_lexer("*:bar");
+        let mut iter = ExplicitWhitespaceIterator::new(lex);
+        assert_eq!(
+            iter.next(),
+            Some((
+                Token::PrefixWildcard(PrefixWildcard { local_name: "bar" }),
+                0..5
+            ))
+        );
+        assert_eq!(iter.next(), None);
+    }
+
+    #[test]
+    fn test_uri_qualified_name() {
+        let lex = spanned_lexer("Q{http://example.com}bar");
+        let mut iter = ExplicitWhitespaceIterator::new(lex);
+        assert_eq!(
+            iter.next(),
+            Some((
+                Token::URIQualifiedName(URIQualifiedName {
+                    uri: "http://example.com",
+                    local_name: "bar"
+                }),
+                0..24
+            ))
+        );
+        assert_eq!(iter.next(), None);
+    }
+
+    #[test]
+    fn test_braced_uri_literal_wildcard() {
+        let lex = spanned_lexer("Q{http://example.com}*");
+        let mut iter = ExplicitWhitespaceIterator::new(lex);
+        assert_eq!(
+            iter.next(),
+            Some((
+                Token::BracedURILiteralWildcard(BracedURILiteralWildcard {
+                    uri: "http://example.com"
+                }),
+                0..22
+            ))
+        );
         assert_eq!(iter.next(), None);
     }
 }
