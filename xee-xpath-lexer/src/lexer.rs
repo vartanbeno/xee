@@ -11,6 +11,31 @@ pub struct PrefixedQName<'a> {
     pub local_name: &'a str,
 }
 
+#[derive(Clone, Debug, PartialEq)]
+#[cfg_attr(feature = "serde", derive(serde::Serialize))]
+pub struct URIQualifiedName<'a> {
+    pub uri: &'a str,
+    pub local_name: &'a str,
+}
+
+#[derive(Clone, Debug, PartialEq)]
+#[cfg_attr(feature = "serde", derive(serde::Serialize))]
+pub struct LocalNameWildcard<'a> {
+    pub prefix: &'a str,
+}
+
+#[derive(Clone, Debug, PartialEq)]
+#[cfg_attr(feature = "serde", derive(serde::Serialize))]
+pub struct PrefixWildcard<'a> {
+    pub local_name: &'a str,
+}
+
+#[derive(Clone, Debug, PartialEq)]
+#[cfg_attr(feature = "serde", derive(serde::Serialize))]
+pub struct BracedURILiteralWildcard<'a> {
+    pub uri: &'a str,
+}
+
 #[derive(Logos, Clone, Debug, PartialEq)]
 #[logos(subpattern name_start_char_without_colon = r"[A-Za-z_\u{c0}-\u{d6}\u{d8}-\u{f6}\u{f8}-\u{2ff}\u{370}-\u{37d}\u{37f}-\u{1fff}\u{200c}-\u{200d}\u{2070}-\u{218f}\u{2c00}-\u{2fef}\u{3001}-\u{d7ff}\u{f900}-\u{fdfc}\u{fdf0}-\u{fffd}\u{10000}-\u{effff}]")]
 #[logos(subpattern name_char_without_colon = r"(?&name_start_char_without_colon)|[\-\.0-9\u{b7}\u{300}-\u{36F}\u{203f}-\u{2040}]")]
@@ -31,10 +56,19 @@ pub enum Token<'a> {
     #[regex(r#""(?:""|[^"])*"|'(?:''|[^'])*'"#, string_literal, priority = 1)]
     StringLiteral(Cow<'a, str>),
     // QName is a token according to the spec, but it's too complex to analyze
-    // in the lexer, as ncnames can also occur by themselves. We construct PrefixedQName
-    // tokens in a separate after the main lexing is done, and let the parser
-    // figure out what is a proper qname
+    // in the lexer, as ncnames can also occur by themselves.
+    // We construct PrefixedQName tokens in the explicit whitespace step after lexing is done,
+    // and in the grammar we construct QName
     PrefixedQName(PrefixedQName<'a>),
+    // URLQualifiedName is a token according to the spec, but we construct it
+    // in the explicit whitespace step after lexing is done.
+    URIQualifiedName(URIQualifiedName<'a>),
+    // We analyze various wildcard variants in in the whitespace step after lexing is
+    // done, because they have explicit whitespace rules we cannot implement otherwise.
+    LocalNameWildcard(LocalNameWildcard<'a>),
+    PrefixWildcard(PrefixWildcard<'a>),
+    BracedURILiteralWildcard(BracedURILiteralWildcard<'a>),
+
     #[regex(r"(?&ncname)", priority = 2)]
     NCName(&'a str),
 
@@ -259,12 +293,21 @@ impl<'a> Token<'a> {
             | Slash | DoubleSlash | Colon | ColonAsterisk | DoubleColon | ColonEqual | LessThan
             | Precedes | LessThanEqual | Equal | Arrow | GreaterThan | GreaterThanEqual
             | Follows | QuestionMark | At | BracedURILiteral(_) | LeftBracket | RightBracket
-            | LeftBrace | Pipe | DoublePipe | RightBrace => SymbolType::Delimiting,
+            | LeftBrace | Pipe | DoublePipe | RightBrace | 
+            // starts with *: so is delimiting
+            PrefixWildcard(_) | 
+            // starts with BracedURILiteral so is delimiting
+            BracedURILiteralWildcard(_)=> {
+                SymbolType::Delimiting
+            }
 
             // non-delimiting terminal symbols
             IntegerLiteral(_)
             | NCName(_)
             | PrefixedQName(_)
+            | URIQualifiedName(_)
+            // starts with a ncname, so is non-delimiting
+            | LocalNameWildcard(_)
             | DecimalLiteral(_)
             | DoubleLiteral(_)
             | Ancestor
@@ -373,12 +416,3 @@ fn braced_uri_literal<'a>(lex: &mut Lexer<'a, Token<'a>>) -> &'a str {
     let slice = lex.slice();
     &slice[2..slice.len() - 1]
 }
-
-// fn prefixed_qname<'a>(lex: &mut Lexer<'a, Token<'a>>) -> PrefixedQName<'a> {
-//     let slice = lex.slice();
-//     let colon = slice.find(':').unwrap();
-//     PrefixedQName {
-//         prefix: &slice[..colon],
-//         local_name: &slice[colon + 1..],
-//     }
-// }
