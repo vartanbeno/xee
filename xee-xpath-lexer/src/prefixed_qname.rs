@@ -3,6 +3,10 @@ use logos::{Span, SpannedIter};
 
 use crate::{lexer::PrefixedQName, Token};
 
+// this iterator is used to combine multiple tokens into a prefixed qname
+// a prefixed qname cannot have any whitespace inside, so we cannot use the
+// parser to verify this, as at that point whitespace has been eliminated from
+// the token stream.
 pub(crate) struct PrefixedQNameIterator<'a> {
     base: MultiPeek<SpannedIter<'a, Token<'a>>>,
 }
