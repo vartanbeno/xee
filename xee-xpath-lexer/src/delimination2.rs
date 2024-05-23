@@ -87,7 +87,6 @@ mod tests {
     use super::*;
 
     use ibig::ibig;
-    use rust_decimal_macros::dec;
 
     #[test]
     fn test_delimination() {
