@@ -463,3 +463,58 @@ fn test_reserved_duplicated() {
     let mut lex = lexer("mapmap");
     assert_eq!(lex.next(), Some((Token::NCName("mapmap"), (0..6))));
 }
+
+#[test]
+fn test_map_constructor_025() {
+    let mut lex = lexer("map{$m?a:true()}");
+    assert_eq!(lex.next(), Some((Token::Map, (0..3))));
+    assert_eq!(lex.next(), Some((Token::LeftBrace, (3..4))));
+    assert_eq!(lex.next(), Some((Token::Dollar, (4..5))));
+    assert_eq!(lex.next(), Some((Token::NCName("m"), (5..6))));
+    assert_eq!(lex.next(), Some((Token::QuestionMark, (6..7))));
+    assert_eq!(
+        lex.next(),
+        Some((
+            Token::PrefixedQName(PrefixedQName {
+                prefix: "a",
+                local_name: "true"
+            }),
+            (7..13)
+        ))
+    );
+    assert_eq!(lex.next(), Some((Token::LeftParen, (13..14))));
+    assert_eq!(lex.next(), Some((Token::RightParen, (14..15))));
+}
+
+#[test]
+fn test_function_name_026() {
+    let mut lex = lexer("fn:function-name(fn:lang#1)");
+    assert_eq!(
+        lex.next(),
+        Some((
+            Token::PrefixedQName(PrefixedQName {
+                prefix: "fn",
+                local_name: "function-name"
+            }),
+            (0..16)
+        ))
+    );
+    assert_eq!(lex.next(), Some((Token::LeftParen, (16..17))));
+    assert_eq!(
+        lex.next(),
+        Some((
+            Token::PrefixedQName(PrefixedQName {
+                prefix: "fn",
+                local_name: "lang"
+            }),
+            (17..24)
+        ))
+    );
+    assert_eq!(lex.next(), Some((Token::Hash, (24..25))));
+    assert_eq!(
+        lex.next(),
+        Some((Token::IntegerLiteral(ibig!(1)), (25..26)))
+    );
+    assert_eq!(lex.next(), Some((Token::RightParen, (26..27))));
+    assert_eq!(lex.next(), None);
+}
