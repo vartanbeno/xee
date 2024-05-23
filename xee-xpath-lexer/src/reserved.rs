@@ -1,0 +1,33 @@
+use crate::Token;
+
+impl<'a> Token<'a> {
+    pub(crate) fn local_name(&self) -> Option<&'a str> {
+        // in section A.3 of the XPath 3.1 specification
+        // a bunch of tokens are listed as reserved functions. They may
+        // not be ncnames but *can* be the local name of prefixed qnames.
+        match self {
+            Token::Array => Some("array"),
+            Token::Attribute => Some("attribute"),
+            Token::Comment => Some("comment"),
+            Token::DocumentNode => Some("document-node"),
+            Token::Element => Some("element"),
+            Token::EmptySequence => Some("empty-sequence"),
+            Token::Function => Some("function"),
+            Token::If => Some("if"),
+            Token::Item => Some("item"),
+            Token::Map => Some("map"),
+            Token::NamespaceNode => Some("namespace-node"),
+            Token::Node => Some("node"),
+            Token::ProcessingInstruction => Some("processing-instruction"),
+            Token::SchemaAttribute => Some("schema-attribute"),
+            Token::SchemaElement => Some("schema-element"),
+            // Token::Switch => Some("switch"),
+            Token::Text => Some("text"),
+            // Token::Typeswitch => Some("typeswitch"),
+
+            // an NCName can also as a local name
+            Token::NCName(name) => Some(name),
+            _ => None,
+        }
+    }
+}

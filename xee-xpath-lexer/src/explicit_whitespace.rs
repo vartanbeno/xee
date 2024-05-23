@@ -41,18 +41,21 @@ impl<'a> ExplicitWhitespace<'a> {
         match next_token {
             // if we are followed by a colon token, this may be a prefixed qname
             Ok(Token::Colon) => {
-                // and then an ncname
-                if let Some((Ok(Token::NCName(local_name)), local_name_span)) = self.base.peek() {
-                    // we create a span from the start of the original prefix span
-                    // to the end of the localname span
-                    let span = span.start..local_name_span.end;
-                    return Some((
-                        Token::PrefixedQName(PrefixedQName {
-                            prefix: name,
-                            local_name,
-                        }),
-                        span,
-                    ));
+                // and then something that can be interpreted as a local name;
+                // either a ncname or a reserved name
+                if let Some((Ok(local_name_token), local_name_span)) = self.base.peek() {
+                    if let Some(local_name) = local_name_token.local_name() {
+                        // we create a span from the start of the original prefix span
+                        // to the end of the localname span
+                        let span = span.start..local_name_span.end;
+                        return Some((
+                            Token::PrefixedQName(PrefixedQName {
+                                prefix: name,
+                                local_name,
+                            }),
+                            span,
+                        ));
+                    }
                 }
                 None
             }
