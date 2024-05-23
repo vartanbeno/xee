@@ -167,18 +167,12 @@ impl<'a> Iterator for ExplicitWhitespaceIterator<'a> {
 #[cfg(test)]
 mod tests {
     use ibig::ibig;
-    use logos::Logos;
 
     use super::*;
 
-    fn spanned_lexer(input: &str) -> SpannedIter<Token> {
-        Token::lexer(input).spanned()
-    }
-
     #[test]
     fn test_no_ncname_no_prefixed_qname() {
-        let lex = spanned_lexer("1 + 1");
-        let mut iter = ExplicitWhitespaceIterator::new(lex);
+        let mut iter = ExplicitWhitespaceIterator::from_str("1 + 1");
         assert_eq!(iter.next(), Some((Token::IntegerLiteral(ibig!(1)), 0..1)));
         assert_eq!(iter.next(), Some((Token::Whitespace, 1..2)));
         assert_eq!(iter.next(), Some((Token::Plus, 2..3)));
@@ -188,8 +182,7 @@ mod tests {
 
     #[test]
     fn test_ncname_no_prefixed_qname() {
-        let lex = spanned_lexer("foo + 1");
-        let mut iter = ExplicitWhitespaceIterator::new(lex);
+        let mut iter = ExplicitWhitespaceIterator::from_str("foo + 1");
         assert_eq!(iter.next(), Some((Token::NCName("foo"), 0..3)));
         assert_eq!(iter.next(), Some((Token::Whitespace, 3..4)));
         assert_eq!(iter.next(), Some((Token::Plus, 4..5)));
@@ -199,8 +192,7 @@ mod tests {
 
     #[test]
     fn test_ncname_colon_no_prefixed_qname() {
-        let lex = spanned_lexer("foo: + 1");
-        let mut iter = ExplicitWhitespaceIterator::new(lex);
+        let mut iter = ExplicitWhitespaceIterator::from_str("foo: + 1");
         assert_eq!(iter.next(), Some((Token::NCName("foo"), 0..3)));
         assert_eq!(iter.next(), Some((Token::Colon, 3..4)));
         assert_eq!(iter.next(), Some((Token::Whitespace, 4..5)));
@@ -211,8 +203,7 @@ mod tests {
 
     #[test]
     fn test_prefixed_qname() {
-        let lex = spanned_lexer("foo:bar");
-        let mut iter = ExplicitWhitespaceIterator::new(lex);
+        let mut iter = ExplicitWhitespaceIterator::from_str("foo:bar");
         assert_eq!(
             iter.next(),
             Some((
@@ -228,8 +219,7 @@ mod tests {
 
     #[test]
     fn test_prefixed_qname_followed() {
-        let lex = spanned_lexer("foo:bar + 1");
-        let mut iter = ExplicitWhitespaceIterator::new(lex);
+        let mut iter = ExplicitWhitespaceIterator::from_str("foo:bar + 1");
         assert_eq!(
             iter.next(),
             Some((
@@ -249,8 +239,7 @@ mod tests {
 
     #[test]
     fn test_local_name_wildcard() {
-        let lex = spanned_lexer("foo:*");
-        let mut iter = ExplicitWhitespaceIterator::new(lex);
+        let mut iter = ExplicitWhitespaceIterator::from_str("foo:*");
         assert_eq!(
             iter.next(),
             Some((
@@ -263,8 +252,7 @@ mod tests {
 
     #[test]
     fn test_prefix_wilcard() {
-        let lex = spanned_lexer("*:bar");
-        let mut iter = ExplicitWhitespaceIterator::new(lex);
+        let mut iter = ExplicitWhitespaceIterator::from_str("*:bar");
         assert_eq!(
             iter.next(),
             Some((
@@ -277,8 +265,7 @@ mod tests {
 
     #[test]
     fn test_uri_qualified_name() {
-        let lex = spanned_lexer("Q{http://example.com}bar");
-        let mut iter = ExplicitWhitespaceIterator::new(lex);
+        let mut iter = ExplicitWhitespaceIterator::from_str("Q{http://example.com}bar");
         assert_eq!(
             iter.next(),
             Some((
@@ -294,8 +281,7 @@ mod tests {
 
     #[test]
     fn test_braced_uri_literal_wildcard() {
-        let lex = spanned_lexer("Q{http://example.com}*");
-        let mut iter = ExplicitWhitespaceIterator::new(lex);
+        let mut iter = ExplicitWhitespaceIterator::from_str("Q{http://example.com}*");
         assert_eq!(
             iter.next(),
             Some((
