@@ -1,5 +1,7 @@
 use itertools::{Itertools, MultiPeek};
-use logos::{Logos, Span, SpannedIter};
+#[cfg(test)]
+use logos::Logos;
+use logos::{Span, SpannedIter};
 
 use crate::{
     lexer::{
@@ -25,6 +27,7 @@ impl<'a> ExplicitWhitespace<'a> {
         Self { base }
     }
 
+    #[cfg(test)]
     pub(crate) fn from_str(input: &'a str) -> Self {
         let spanned_lexer = Token::lexer(input).spanned();
         Self::new(spanned_lexer)
