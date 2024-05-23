@@ -56,17 +56,13 @@ impl<'a> ExplicitWhitespace<'a> {
             // if we are followed by a ColonAsterisk token, this is a local name wildcard
             Ok(Token::ColonAsterisk) => {
                 let span = span.start..next_span.end;
-                return Some((
+                Some((
                     Token::LocalNameWildcard(LocalNameWildcard { prefix: name }),
                     span,
-                ));
+                ))
             }
-            Ok(_) => {
-                return None;
-            }
-            Err(_) => {
-                return Some((Token::Error, span.clone()));
-            }
+            Ok(_) => None,
+            Err(_) => Some((Token::Error, span.clone())),
         }
     }
 
@@ -79,21 +75,19 @@ impl<'a> ExplicitWhitespace<'a> {
         match next_token {
             Ok(Token::NCName(local_name)) => {
                 let span = span.start..next_span.end;
-                return Some((
+                Some((
                     Token::URIQualifiedName(URIQualifiedName { uri, local_name }),
                     span,
-                ));
+                ))
             }
             Ok(Token::Asterisk) => {
                 let span = span.start..next_span.end;
-                return Some((
+                Some((
                     Token::BracedURILiteralWildcard(BracedURILiteralWildcard { uri }),
                     span,
-                ));
+                ))
             }
-            Err(_) => {
-                return Some((Token::Error, span.clone()));
-            }
+            Err(_) => Some((Token::Error, span.clone())),
             _ => None,
         }
     }
