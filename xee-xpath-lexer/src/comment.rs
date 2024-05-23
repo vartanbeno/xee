@@ -81,8 +81,6 @@ impl<'a> Iterator for ReplaceCommentWithWhitespace<'a> {
 
 #[cfg(test)]
 mod tests {
-    use logos::Logos;
-
     use super::*;
 
     #[test]
