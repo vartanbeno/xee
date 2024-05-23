@@ -90,4 +90,15 @@ mod tests {
         assert_eq!(lexer.next(), Some((Token::Whitespace, 13..14)));
         assert_eq!(lexer.next(), Some((Token::NCName("baz"), 14..17)));
     }
+
+    #[test]
+    fn test_nested_comment() {
+        let explicit_whitespace = base_lexer("foo (: bar (: baz :) quux :) baz");
+        let mut lexer = ReplaceCommentWithWhitespaceIterator::new(explicit_whitespace);
+        assert_eq!(lexer.next(), Some((Token::NCName("foo"), 0..3)));
+        assert_eq!(lexer.next(), Some((Token::Whitespace, 3..4)));
+        assert_eq!(lexer.next(), Some((Token::Whitespace, 4..28)));
+        assert_eq!(lexer.next(), Some((Token::Whitespace, 28..29)));
+        assert_eq!(lexer.next(), Some((Token::NCName("baz"), 29..32)));
+    }
 }
