@@ -25,10 +25,6 @@ impl<'a> ExplicitWhitespaceIterator<'a> {
         Self { base }
     }
 
-    pub(crate) fn peek(&mut self) -> Option<(&Result<Token<'a>, ()>, Span)> {
-        self.base.peek().map(|(token, span)| (token, span.clone()))
-    }
-
     // if we find a qname, this could be merged into a prefixed qname, or a
     // local name wildcard.
     fn qname_prefix<'b>(&mut self, name: &'a str, span: &'b Span) -> Option<(Token<'a>, Span)> {

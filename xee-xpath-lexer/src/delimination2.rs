@@ -12,15 +12,6 @@ impl<'a> DeliminationIterator<'a> {
         Self { base }
     }
 
-    fn peek_symbol_type(&mut self) -> Option<SymbolType> {
-        let peeked = self.base.peek()?;
-        let (token, _) = peeked;
-        match token {
-            Ok(token) => Some(token.symbol_type()),
-            Err(_) => None,
-        }
-    }
-
     // fn eat_comments(&mut self) {
     //     let mut depth = 1;
     //     // we track the span from the start of the first

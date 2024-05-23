@@ -1,3 +1,4 @@
+mod collapse_whitespace;
 mod comment;
 mod delimination;
 mod delimination2;

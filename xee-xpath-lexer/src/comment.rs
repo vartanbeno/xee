@@ -4,7 +4,7 @@ use logos::Span;
 
 use crate::{explicit_whitespace::ExplicitWhitespaceIterator, Token};
 
-struct ReplaceCommentWithWhitespaceIterator<'a> {
+pub(crate) struct ReplaceCommentWithWhitespaceIterator<'a> {
     base: ExplicitWhitespaceIterator<'a>,
 }
 
