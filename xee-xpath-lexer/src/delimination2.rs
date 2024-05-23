@@ -6,6 +6,9 @@ use crate::symbol_type::SymbolType;
 use crate::{collapse_whitespace::CollapseWhitespace, Token};
 
 pub(crate) struct DeliminationIterator<'a> {
+    // TODO: do we really need to collapse whitespace and comments? It
+    // may not be needed at all to make things work, though balanced comments
+    // would need to be tracked here
     base: Peekable<CollapseWhitespace<'a>>,
 }
 
@@ -32,6 +35,18 @@ impl<'a> Iterator for DeliminationIterator<'a> {
 
     fn next(&mut self) -> Option<Self::Item> {
         let (token, span) = self.base.next()?;
+
+        match &token {
+            // IntegerLiteral won't be found with a dot behind it, as it would
+            // become a decimal literal
+            Token::DecimalLiteral(_) | Token::DoubleLiteral(_) => {
+                let next = self.base.peek();
+                if let Some((Token::Dot, _)) = next {
+                    return Some((Token::Error, span));
+                }
+            }
+            _ => {}
+        }
         match token.symbol_type2() {
             SymbolType::NonDelimiting => {
                 // if we are not followed by either a delimiting symbol or a symbol separator, or are
@@ -67,16 +82,111 @@ impl<'a> Iterator for DeliminationIterator<'a> {
 
 #[cfg(test)]
 mod tests {
+    use crate::lexer::PrefixedQName;
+
     use super::*;
 
-    // #[test]
-    // fn test_delimination() {
-    //     let base = CollapseWhitespace::new("a  b".logos());
-    //     let mut delimination = DeliminationIterator::new(base);
+    use ibig::ibig;
+    use rust_decimal_macros::dec;
 
-    //     assert_eq!(delimination.next(), Some((Token::NCName("a"), 0..1)));
-    //     assert_eq!(delimination.next(), Some((Token::Whitespace, 1..3)));
-    //     assert_eq!(delimination.next(), Some((Token::NCName("b"), 3..4)));
-    //     assert_eq!(delimination.next(), None);
-    // }
+    #[test]
+    fn test_delimination() {
+        let mut d = DeliminationIterator::from_str("a  b");
+
+        assert_eq!(d.next(), Some((Token::NCName("a"), 0..1)));
+        assert_eq!(d.next(), Some((Token::NCName("b"), 3..4)));
+        assert_eq!(d.next(), None);
+    }
+
+    #[test]
+    fn test_delimination_comment() {
+        // because comments are turned into whitespace and whitespace is
+        // collapsed, this shouldn't be a problem
+        let mut d = DeliminationIterator::from_str("a (: foo :) b");
+
+        assert_eq!(d.next(), Some((Token::NCName("a"), 0..1)));
+        assert_eq!(d.next(), Some((Token::NCName("b"), 12..13)));
+        assert_eq!(d.next(), None);
+    }
+
+    #[test]
+    fn test_delimination_two_non_delimiting_without_separator() {
+        let mut d = DeliminationIterator::from_str("1comment");
+
+        assert_eq!(d.next(), Some((Token::Error, 0..1)));
+        assert_eq!(d.next(), Some((Token::Comment, 1..8)));
+    }
+
+    #[test]
+    fn test_delimination_non_delimiting_followed_by_delimiting() {
+        let mut d = DeliminationIterator::from_str("1=");
+
+        assert_eq!(d.next(), Some((Token::IntegerLiteral(ibig!(1)), 0..1)));
+        assert_eq!(d.next(), Some((Token::Equal, 1..2)));
+        assert_eq!(d.next(), None);
+    }
+
+    // if T is an NCName and U is "-" or ".", then the
+    // lexer will absorb the "-" and "." at the end of
+    // the ncname. This is a valid NCName and should be
+    // accepted.
+
+    #[test]
+    fn test_ncname_followed_by_dot() {
+        let mut d = DeliminationIterator::from_str("foo.");
+
+        assert_eq!(d.next(), Some((Token::NCName("foo."), 0..4)));
+        assert_eq!(d.next(), None);
+    }
+
+    #[test]
+    fn test_prefixed_name_followed_by_dot() {
+        let mut d = DeliminationIterator::from_str("foo:bar.");
+
+        assert_eq!(
+            d.next(),
+            Some((
+                Token::PrefixedQName(PrefixedQName {
+                    prefix: "foo",
+                    local_name: "bar."
+                }),
+                0..8
+            ))
+        );
+        assert_eq!(d.next(), None);
+    }
+
+    #[test]
+    fn test_ncname_followed_by_dash() {
+        let mut d = DeliminationIterator::from_str("foo-");
+
+        assert_eq!(d.next(), Some((Token::NCName("foo-"), 0..4)));
+        assert_eq!(d.next(), None);
+    }
+
+    #[test]
+    fn test_prefixed_name_followed_by_dash() {
+        let mut d = DeliminationIterator::from_str("foo:bar-");
+
+        assert_eq!(
+            d.next(),
+            Some((
+                Token::PrefixedQName(PrefixedQName {
+                    prefix: "foo",
+                    local_name: "bar-"
+                }),
+                0..8
+            ))
+        );
+        assert_eq!(d.next(), None);
+    }
+
+    #[test]
+    fn test_numeric_followed_by_dot() {
+        let mut d = DeliminationIterator::from_str("1..");
+
+        assert_eq!(d.next(), Some((Token::Error, 0..2)));
+        assert_eq!(d.next(), Some((Token::Dot, 2..3)));
+        assert_eq!(d.next(), None);
+    }
 }
