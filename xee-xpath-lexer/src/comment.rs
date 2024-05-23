@@ -4,11 +4,11 @@ use logos::{Logos, Span, SpannedIter};
 
 use crate::{explicit_whitespace::ExplicitWhitespaceIterator, Token};
 
-pub(crate) struct ReplaceCommentWithWhitespaceIterator<'a> {
+pub(crate) struct ReplaceCommentWithWhitespace<'a> {
     base: ExplicitWhitespaceIterator<'a>,
 }
 
-impl<'a> ReplaceCommentWithWhitespaceIterator<'a> {
+impl<'a> ReplaceCommentWithWhitespace<'a> {
     pub(crate) fn new(base: ExplicitWhitespaceIterator<'a>) -> Self {
         Self { base }
     }
@@ -24,7 +24,7 @@ impl<'a> ReplaceCommentWithWhitespaceIterator<'a> {
     }
 }
 
-impl<'a> Iterator for ReplaceCommentWithWhitespaceIterator<'a> {
+impl<'a> Iterator for ReplaceCommentWithWhitespace<'a> {
     type Item = (Token<'a>, Span);
 
     fn next(&mut self) -> Option<Self::Item> {
@@ -85,15 +85,10 @@ mod tests {
 
     use super::*;
 
-    fn base_lexer(input: &str) -> ExplicitWhitespaceIterator {
-        let spanned_lexer = Token::lexer(input).spanned();
-        ExplicitWhitespaceIterator::new(spanned_lexer)
-    }
-
     #[test]
     fn test_single_comment() {
-        let explicit_whitespace = base_lexer("foo (: bar :) baz");
-        let mut lexer = ReplaceCommentWithWhitespaceIterator::new(explicit_whitespace);
+        let mut lexer = ReplaceCommentWithWhitespace::from_str("foo (: bar :) baz");
+
         assert_eq!(lexer.next(), Some((Token::NCName("foo"), 0..3)));
         assert_eq!(lexer.next(), Some((Token::Whitespace, 3..4)));
         assert_eq!(lexer.next(), Some((Token::Whitespace, 4..13)));
@@ -103,8 +98,7 @@ mod tests {
 
     #[test]
     fn test_single_comment_with_expression_content() {
-        let explicit_whitespace = base_lexer("foo (: 1 + 2 :) baz");
-        let mut lexer = ReplaceCommentWithWhitespaceIterator::new(explicit_whitespace);
+        let mut lexer = ReplaceCommentWithWhitespace::from_str("foo (: 1 + 2 :) baz");
         assert_eq!(lexer.next(), Some((Token::NCName("foo"), 0..3)));
         assert_eq!(lexer.next(), Some((Token::Whitespace, 3..4)));
         assert_eq!(lexer.next(), Some((Token::Whitespace, 4..15)));
@@ -114,8 +108,7 @@ mod tests {
 
     #[test]
     fn test_nested_comment() {
-        let explicit_whitespace = base_lexer("foo (: bar (: baz :) quux :) baz");
-        let mut lexer = ReplaceCommentWithWhitespaceIterator::new(explicit_whitespace);
+        let mut lexer = ReplaceCommentWithWhitespace::from_str("foo (: bar (: baz :) quux :) baz");
         assert_eq!(lexer.next(), Some((Token::NCName("foo"), 0..3)));
         assert_eq!(lexer.next(), Some((Token::Whitespace, 3..4)));
         assert_eq!(lexer.next(), Some((Token::Whitespace, 4..28)));
@@ -125,8 +118,7 @@ mod tests {
 
     #[test]
     fn test_nested_comment_unbalanced() {
-        let explicit_whitespace = base_lexer("foo (: bar (: quux :) baz");
-        let mut lexer = ReplaceCommentWithWhitespaceIterator::new(explicit_whitespace);
+        let mut lexer = ReplaceCommentWithWhitespace::from_str("foo (: bar (: quux :) baz");
         assert_eq!(lexer.next(), Some((Token::NCName("foo"), 0..3)));
         assert_eq!(lexer.next(), Some((Token::Whitespace, 3..4)));
         assert_eq!(lexer.next(), Some((Token::Error, 4..25)));
@@ -134,8 +126,7 @@ mod tests {
 
     #[test]
     fn test_unclosed_comment() {
-        let explicit_whitespace = base_lexer("foo (: bar");
-        let mut lexer = ReplaceCommentWithWhitespaceIterator::new(explicit_whitespace);
+        let mut lexer = ReplaceCommentWithWhitespace::from_str("foo (: bar");
         assert_eq!(lexer.next(), Some((Token::NCName("foo"), 0..3)));
         assert_eq!(lexer.next(), Some((Token::Whitespace, 3..4)));
         assert_eq!(lexer.next(), Some((Token::Error, 4..10)));
@@ -143,8 +134,7 @@ mod tests {
 
     #[test]
     fn test_closed_comment_without_opening() {
-        let explicit_whitespace = base_lexer("foo :) bar");
-        let mut lexer = ReplaceCommentWithWhitespaceIterator::new(explicit_whitespace);
+        let mut lexer = ReplaceCommentWithWhitespace::from_str("foo :) bar");
         assert_eq!(lexer.next(), Some((Token::NCName("foo"), 0..3)));
         assert_eq!(lexer.next(), Some((Token::Whitespace, 3..4)));
         assert_eq!(lexer.next(), Some((Token::Error, 4..6)));

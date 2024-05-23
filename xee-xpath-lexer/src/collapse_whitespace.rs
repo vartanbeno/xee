@@ -1,21 +1,21 @@
 use itertools::{Itertools, MultiPeek};
 use logos::{Logos, Span, SpannedIter};
 
-use crate::{comment::ReplaceCommentWithWhitespaceIterator, Token};
+use crate::{comment::ReplaceCommentWithWhitespace, Token};
 
 pub(crate) struct CollapseWhitespace<'a> {
-    base: MultiPeek<ReplaceCommentWithWhitespaceIterator<'a>>,
+    base: MultiPeek<ReplaceCommentWithWhitespace<'a>>,
 }
 
 impl<'a> CollapseWhitespace<'a> {
-    pub(crate) fn new(base: ReplaceCommentWithWhitespaceIterator<'a>) -> Self {
+    pub(crate) fn new(base: ReplaceCommentWithWhitespace<'a>) -> Self {
         Self {
             base: base.multipeek(),
         }
     }
 
     pub(crate) fn from_spanned(spanned_iter: SpannedIter<'a, Token<'a>>) -> Self {
-        let base = ReplaceCommentWithWhitespaceIterator::from_spanned(spanned_iter);
+        let base = ReplaceCommentWithWhitespace::from_spanned(spanned_iter);
         Self::new(base)
     }
 
