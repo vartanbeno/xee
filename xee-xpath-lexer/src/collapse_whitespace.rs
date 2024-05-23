@@ -32,7 +32,6 @@ impl<'a> Iterator for CollapseWhitespace<'a> {
                 }
                 // now eat the whitespace
                 for _ in 0..whitespace_peeked {
-                    println!("eat whitespace");
                     self.base.next();
                 }
                 Some((Token::Whitespace, start..end))
