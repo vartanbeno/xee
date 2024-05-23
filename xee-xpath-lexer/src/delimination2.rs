@@ -5,7 +5,7 @@ use logos::{Logos, Span, SpannedIter};
 use crate::symbol_type::SymbolType;
 use crate::{collapse_whitespace::CollapseWhitespace, Token};
 
-pub(crate) struct DeliminationIterator<'a> {
+pub struct DeliminationIterator<'a> {
     // TODO: do we really need to collapse whitespace and comments? It
     // may not be needed at all to make things work, though balanced comments
     // would need to be tracked here
@@ -78,6 +78,10 @@ impl<'a> Iterator for DeliminationIterator<'a> {
             }
         }
     }
+}
+
+pub fn lexer(input: &str) -> DeliminationIterator {
+    DeliminationIterator::from_str(input)
 }
 
 #[cfg(test)]
@@ -188,4 +192,6 @@ mod tests {
         assert_eq!(d.next(), Some((Token::Dot, 2..3)));
         assert_eq!(d.next(), None);
     }
+
+    // TODO: two dots followed by a number should be an error
 }
