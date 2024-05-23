@@ -1,10 +1,12 @@
 use crate::Token;
 
 impl<'a> Token<'a> {
-    pub(crate) fn local_name(&self) -> Option<&'a str> {
+    // tokens that can count as an ncname as a local name or as a prefix
+    pub(crate) fn ncname(&self) -> Option<&'a str> {
         // in section A.3 of the XPath 3.1 specification
-        // a bunch of tokens are listed as reserved functions. They may
-        // not be ncnames but *can* be the local name of prefixed qnames.
+        // a bunch of tokens are listed as reserved functions.
+        // They can be used as a valid prefix or local name, just like
+        // an ncname
         match self {
             Token::Array => Some("array"),
             Token::Attribute => Some("attribute"),
@@ -25,7 +27,7 @@ impl<'a> Token<'a> {
             Token::Text => Some("text"),
             // Token::Typeswitch => Some("typeswitch"),
 
-            // an NCName can also as a local name
+            // an NCName of course can also be a prefix or a local name
             Token::NCName(name) => Some(name),
             _ => None,
         }

@@ -44,7 +44,7 @@ impl<'a> ExplicitWhitespace<'a> {
                 // and then something that can be interpreted as a local name;
                 // either a ncname or a reserved name
                 if let Some((Ok(local_name_token), local_name_span)) = self.base.peek() {
-                    if let Some(local_name) = local_name_token.local_name() {
+                    if let Some(local_name) = local_name_token.ncname() {
                         // we create a span from the start of the original prefix span
                         // to the end of the localname span
                         let span = span.start..local_name_span.end;
@@ -101,9 +101,13 @@ impl<'a> ExplicitWhitespace<'a> {
     fn prefix_wildcard(&mut self, span: &Span) -> Option<(Token<'a>, Span)> {
         let (next_token, next_span) = self.base.peek()?;
         match next_token {
-            Ok(Token::NCName(local_name)) => {
-                let span = span.start..next_span.end;
-                return Some((Token::PrefixWildcard(PrefixWildcard { local_name }), span));
+            Ok(next_token) => {
+                if let Some(local_name) = next_token.ncname() {
+                    let span = span.start..next_span.end;
+                    Some((Token::PrefixWildcard(PrefixWildcard { local_name }), span))
+                } else {
+                    None
+                }
             }
             _ => None,
         }
@@ -116,27 +120,26 @@ impl<'a> Iterator for ExplicitWhitespace<'a> {
     fn next(&mut self) -> Option<Self::Item> {
         let (token, span) = self.base.next()?;
         if let Ok(token) = token {
-            match token {
-                // if we have an ncname, it may be merged into either a prefixed qname or
-                // a local name wildcard
-                Token::NCName(name) => {
-                    if let Some((token, span)) = self.qname_prefix(name, &span) {
-                        match token {
-                            Token::PrefixedQName(_) => {
-                                // consume two next tokens
-                                self.base.next();
-                                self.base.next();
-                            }
-                            Token::LocalNameWildcard(_) => {
-                                // consume next token
-                                self.base.next();
-                            }
-                            _ => {}
+            // if we have something that is a valid ncname, it may be merged into either
+            // a prefixed qname or local name wildcard
+            if let Some(name) = token.ncname() {
+                if let Some((token, span)) = self.qname_prefix(name, &span) {
+                    match token {
+                        Token::PrefixedQName(_) => {
+                            // consume two next tokens
+                            self.base.next();
+                            self.base.next();
                         }
-                        return Some((token, span));
+                        Token::LocalNameWildcard(_) => {
+                            // consume next token
+                            self.base.next();
+                        }
+                        _ => {}
                     }
-                    Some((token, span))
+                    return Some((token, span));
                 }
+            }
+            match token {
                 // if we have asterisk colon it may be merged into a prefix wildcard
                 Token::AsteriskColon => {
                     if let Some((token, span)) = self.prefix_wildcard(&span) {
