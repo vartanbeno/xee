@@ -11,7 +11,7 @@ pub(crate) enum SymbolType {
 }
 
 impl<'a> Token<'a> {
-    pub(crate) fn symbol_type2(&self) -> SymbolType {
+    pub(crate) fn symbol_type(&self) -> SymbolType {
         use crate::lexer::Token::*;
         match self {
             // A.2.2 terminal delimination

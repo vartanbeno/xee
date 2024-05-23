@@ -47,13 +47,13 @@ impl<'a> Iterator for DeliminationIterator<'a> {
         // that starts with a dot itself, as this is lexed into Token::DotDot and
         // the parser won't accept DotDot in a stranger position. I hope.
 
-        match token.symbol_type2() {
+        match token.symbol_type() {
             SymbolType::NonDelimiting => {
                 // if we are not followed by either a delimiting symbol or a symbol separator, or are
                 // at the end we are in error
                 let next = self.base.peek();
                 if let Some((next_token, _)) = next {
-                    match next_token.symbol_type2() {
+                    match next_token.symbol_type() {
                         SymbolType::Delimiting
                         | SymbolType::Whitespace
                         | SymbolType::CommentStart
