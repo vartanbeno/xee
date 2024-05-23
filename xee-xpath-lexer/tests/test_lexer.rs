@@ -457,3 +457,9 @@ fn test_reserved_switch() {
     assert_eq!(lex.next(), Some((Token::LeftParen, (6..7))));
     assert_eq!(lex.next(), Some((Token::RightParen, (7..8))));
 }
+
+#[test]
+fn test_reserved_duplicated() {
+    let mut lex = lexer("mapmap");
+    assert_eq!(lex.next(), Some((Token::NCName("mapmap"), (0..6))));
+}
