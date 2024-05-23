@@ -2,7 +2,7 @@ use std::borrow::Cow;
 
 use ibig::ibig;
 use rust_decimal_macros::dec;
-use xee_xpath_lexer::{lexer, PrefixedQName, Token};
+use xee_xpath_lexer::{lexer, PrefixWildcard, PrefixedQName, Token};
 
 #[test]
 fn test_tokenize() {
@@ -398,4 +398,62 @@ fn test_simple_map() {
 fn test_ncname_contains_minus() {
     let mut lex = lexer("a-b");
     assert_eq!(lex.next(), Some((Token::NCName("a-b"), (0..3))));
+}
+
+#[test]
+fn test_fn_if_is_a_qname() {
+    let mut lex = lexer("fn:if");
+    assert_eq!(
+        lex.next(),
+        Some((
+            Token::PrefixedQName(PrefixedQName {
+                prefix: "fn",
+                local_name: "if"
+            }),
+            (0..5)
+        ))
+    );
+}
+
+#[test]
+fn test_array_map_is_a_qname() {
+    let mut lex = lexer("array:map");
+    assert_eq!(
+        lex.next(),
+        Some((
+            Token::PrefixedQName(PrefixedQName {
+                prefix: "array",
+                local_name: "map"
+            }),
+            (0..9)
+        ))
+    );
+}
+
+#[test]
+fn test_prefix_wildcard() {
+    let mut lex = lexer("*:if");
+    assert_eq!(
+        lex.next(),
+        Some((
+            Token::PrefixWildcard(PrefixWildcard { local_name: "if" }),
+            (0..4)
+        ))
+    );
+}
+
+#[test]
+fn test_reserved() {
+    let mut lex = lexer("map()");
+    assert_eq!(lex.next(), Some((Token::Map, (0..3))));
+    assert_eq!(lex.next(), Some((Token::LeftParen, (3..4))));
+    assert_eq!(lex.next(), Some((Token::RightParen, (4..5))));
+}
+
+#[test]
+fn test_reserved_switch() {
+    let mut lex = lexer("switch()");
+    assert_eq!(lex.next(), Some((Token::Switch, (0..6))));
+    assert_eq!(lex.next(), Some((Token::LeftParen, (6..7))));
+    assert_eq!(lex.next(), Some((Token::RightParen, (7..8))));
 }

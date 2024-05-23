@@ -96,7 +96,9 @@ impl<'a> Token<'a> {
             | Then
             | To
             | Treat
-            | Union => SymbolType::NonDelimiting,
+            | Union 
+            | Switch 
+            | Typeswitch => SymbolType::NonDelimiting,
 
         
             Token::Whitespace => SymbolType::Whitespace,

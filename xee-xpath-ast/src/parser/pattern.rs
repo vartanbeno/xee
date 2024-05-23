@@ -2,8 +2,9 @@ use chumsky::{input::ValueInput, prelude::*};
 use std::borrow::Cow;
 use xot::xmlname::NameStrInfo;
 
+use xee_xpath_lexer::Token;
+
 use crate::ast::Span;
-use crate::lexer::Token;
 use crate::{ast, WithSpan, FN_NAMESPACE};
 use crate::{pattern, Namespaces, ParserError, VariableNames};
 
@@ -34,12 +35,8 @@ where
     let parser_primary_output = parser_primary(name.clone());
     let literal = parser_primary_output.literal;
     let var_ref = parser_primary_output.var_ref;
-    let parser_axis_node_test_output = parser_axis_node_test(
-        name.clone(),
-        name_output.ncname,
-        name_output.braced_uri_literal,
-        xpath_parser_output.kind_test,
-    );
+    let parser_axis_node_test_output =
+        parser_axis_node_test(name.clone(), xpath_parser_output.kind_test);
     let node_test = parser_axis_node_test_output.node_test;
     let abbrev_forward_step = parser_axis_node_test_output.abbrev_forward_step;
 

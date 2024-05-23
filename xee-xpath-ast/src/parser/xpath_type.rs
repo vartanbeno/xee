@@ -1,11 +1,11 @@
 use chumsky::{input::ValueInput, prelude::*};
 use xee_schema_type::Xs;
+use xee_xpath_lexer::Token;
 use xot::xmlname::NameStrInfo;
 
 use crate::ast;
 use crate::ast::Span;
 use crate::error::ParserError;
-use crate::lexer::Token;
 
 use super::types::BoxedParser;
 

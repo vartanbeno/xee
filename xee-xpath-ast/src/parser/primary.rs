@@ -3,8 +3,9 @@ use ordered_float::OrderedFloat;
 use std::borrow::Cow;
 use xot::xmlname::NameStrInfo;
 
+use xee_xpath_lexer::Token;
+
 use crate::ast::Span;
-use crate::lexer::Token;
 use crate::span::WithSpan;
 use crate::{ast, error::ParserError};
 
@@ -121,6 +122,11 @@ const RESERVED_FUNCTION_NAMES: [&str; 18] = [
     "typeswitch",
 ];
 
+// you would think this is not necessary: doesn't the lexer already turn
+// the reserved names into separate tokens? Unfortunately it's not that simple;
+// while you cannot use reserved names as function names, you *can* use them as
+// ncnames. With parser_keyword we help to turn them back into ncnames, and thus
+// here we can receive a name that's reserved.
 pub(crate) fn check_reserved(
     name: &ast::NameS,
     span: Span,

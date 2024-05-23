@@ -23,9 +23,9 @@ impl<'a> Token<'a> {
             Token::ProcessingInstruction => Some("processing-instruction"),
             Token::SchemaAttribute => Some("schema-attribute"),
             Token::SchemaElement => Some("schema-element"),
-            // Token::Switch => Some("switch"),
+            Token::Switch => Some("switch"),
             Token::Text => Some("text"),
-            // Token::Typeswitch => Some("typeswitch"),
+            Token::Typeswitch => Some("typeswitch"),
 
             // an NCName of course can also be a prefix or a local name
             Token::NCName(name) => Some(name),

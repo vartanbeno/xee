@@ -1,10 +1,10 @@
 use chumsky::{input::ValueInput, prelude::*};
+use xee_xpath_lexer::Token;
 
 use crate::ast::Span;
-use crate::lexer::Token;
 use crate::{ast, error::ParserError};
 
-use super::types::BoxedParser;
+use super::types::{BoxedParser, State};
 
 #[derive(Clone)]
 pub(crate) struct ParserAxisNodeTestOutput<'a, I>
@@ -18,40 +18,51 @@ where
 
 pub(crate) fn parser_axis_node_test<'a, I>(
     eqname: BoxedParser<'a, I, ast::NameS>,
-    ncname: BoxedParser<'a, I, &'a str>,
-    braced_uri_literal: BoxedParser<'a, I, &'a str>,
     kind_test: BoxedParser<'a, I, ast::KindTest>,
 ) -> ParserAxisNodeTestOutput<'a, I>
 where
     I: ValueInput<'a, Token = Token<'a>, Span = Span>,
 {
-    let wildcard_prefix = ncname
-        .clone()
-        .then_ignore(just(Token::ColonAsterisk))
-        .try_map_with(|prefix, extra| {
-            let span = extra.span();
-            let namespace = extra.state().namespaces.by_prefix(prefix).ok_or_else(|| {
-                ParserError::UnknownPrefix {
-                    prefix: prefix.to_string(),
-                    span,
-                }
-            })?;
-            Ok(ast::NameTest::Namespace(namespace.to_string()))
-        })
+    let local_name_wildcard_token = select! {
+        Token::LocalNameWildcard(w) => w
+    }
+    .boxed();
+
+    let prefix_wildcard_token = select! {
+        Token::PrefixWildcard(p) => p
+    }
+    .boxed();
+
+    let braced_uri_literal_wildcard_token = select! {
+        Token::BracedURILiteralWildcard(b) => b
+    }
+    .boxed();
+
+    let wildcard_prefix =
+        local_name_wildcard_token
+            .try_map_with(|w, extra| {
+                let span = extra.span();
+                let state: &mut State = extra.state();
+                let namespace = state.namespaces.by_prefix(w.prefix).ok_or_else(|| {
+                    ParserError::UnknownPrefix {
+                        prefix: w.prefix.to_string(),
+                        span,
+                    }
+                })?;
+                Ok(ast::NameTest::Namespace(namespace.to_string()))
+            })
+            .boxed();
+    let wildcard_braced_uri_literal = braced_uri_literal_wildcard_token
+        .map(|w| ast::NameTest::Namespace(w.uri.to_string()))
         .boxed();
-    let wildcard_braced_uri_literal = braced_uri_literal
-        .then_ignore(just(Token::Asterisk))
-        .map(|uri| ast::NameTest::Namespace(uri.to_string()))
-        .boxed();
-    let wildcard_localname = just(Token::AsteriskColon)
-        .ignore_then(ncname.clone())
-        .map(|name| ast::NameTest::LocalName(name.to_string()))
+    let wildcard_local_name = prefix_wildcard_token
+        .map(|w| ast::NameTest::LocalName(w.local_name.to_string()))
         .boxed();
     let wildcard_star = just(Token::Asterisk).to(ast::NameTest::Star).boxed();
 
     let name_test_wildcard = wildcard_prefix
         .or(wildcard_braced_uri_literal)
-        .or(wildcard_localname)
+        .or(wildcard_local_name)
         .or(wildcard_star)
         .boxed();
 

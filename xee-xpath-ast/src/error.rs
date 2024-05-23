@@ -1,9 +1,9 @@
 use chumsky::input::ValueInput;
 use chumsky::prelude::SimpleSpan as Span;
 use chumsky::util::MaybeRef;
+use xee_xpath_lexer::Token;
 
 use crate::ast;
-use crate::lexer::Token;
 
 #[derive(Debug, Clone, PartialEq)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize))]

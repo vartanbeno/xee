@@ -1,7 +1,6 @@
 pub mod ast;
 mod context;
 mod error;
-mod lexer;
 mod operator;
 mod parser;
 pub mod pattern;

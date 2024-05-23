@@ -2998,7 +2998,6 @@ dependencies = [
  "chumsky",
  "ibig",
  "insta",
- "logos",
  "ordered-float",
  "ron 0.8.1",
  "rust_decimal",
@@ -3008,6 +3007,7 @@ dependencies = [
  "xee-name",
  "xee-schema-type",
  "xee-xpath-ast",
+ "xee-xpath-lexer",
  "xee-xpath-type",
  "xot",
 ]

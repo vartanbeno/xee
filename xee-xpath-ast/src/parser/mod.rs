@@ -13,22 +13,19 @@ use chumsky::{input::ValueInput, prelude::*};
 use std::borrow::Cow;
 
 use xee_name::VariableNames;
+use xee_xpath_lexer::{lexer, Token};
 
 use crate::ast;
 use crate::ast::unique_names;
 use crate::ast::Span;
 use crate::error::ParserError;
-use crate::lexer::{lexer, Token};
 use crate::Namespaces;
 
 use super::parser::parser_core::parser;
 use super::parser::types::{BoxedParser, State};
 
 fn create_token_iter(src: &str) -> impl Iterator<Item = (Token, SimpleSpan)> + '_ {
-    lexer(src).map(|(tok, span)| match tok {
-        Ok(tok) => (tok, span.into()),
-        Err(()) => (Token::Error, span.into()),
-    })
+    lexer(src).map(|(tok, span)| (tok, span.into()))
 }
 
 fn tokens(src: &str) -> impl ValueInput<'_, Token = Token<'_>, Span = Span> {

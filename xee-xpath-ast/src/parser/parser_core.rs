@@ -1,9 +1,9 @@
 use chumsky::{input::ValueInput, prelude::*};
 use std::iter::once;
+use xee_xpath_lexer::Token;
 
 use crate::ast;
 use crate::ast::Span;
-use crate::lexer::Token;
 
 use crate::span::{Spanned, WithSpan};
 use crate::FN_NAMESPACE;
@@ -36,11 +36,7 @@ pub(crate) fn parser<'a, I>() -> ParserOutput<'a, I>
 where
     I: ValueInput<'a, Token = Token<'a>, Span = Span>,
 {
-    let ParserNameOutput {
-        eqname,
-        ncname,
-        braced_uri_literal,
-    } = parser_name();
+    let ParserNameOutput { eqname, ncname } = parser_name();
 
     let ParserPrimaryOutput {
         literal,
@@ -67,12 +63,8 @@ where
         single_type,
     } = parser_type(eqname.clone(), empty_call.clone(), kind_test.clone());
 
-    let ParserAxisNodeTestOutput { axis_node_test, .. } = parser_axis_node_test(
-        eqname.clone(),
-        ncname.clone(),
-        braced_uri_literal.clone(),
-        kind_test.clone(),
-    );
+    let ParserAxisNodeTestOutput { axis_node_test, .. } =
+        parser_axis_node_test(eqname.clone(), kind_test.clone());
 
     let ParserSignatureOutput {
         signature,

@@ -1,8 +1,8 @@
 use chumsky::{input::ValueInput, prelude::*};
 use std::borrow::Cow;
+use xee_xpath_lexer::Token;
 
 use crate::ast::Span;
-use crate::lexer::Token;
 use crate::{ast, error::ParserError};
 
 use super::types::BoxedParser;

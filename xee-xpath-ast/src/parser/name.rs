@@ -1,11 +1,11 @@
 use chumsky::{input::ValueInput, prelude::*};
+use xee_xpath_lexer::Token;
 
 use crate::ast::Span;
-use crate::lexer::Token;
 use crate::span::WithSpan;
 use crate::{ast, error::ParserError};
 
-use super::types::BoxedParser;
+use super::types::{BoxedParser, State};
 
 #[derive(Clone)]
 pub(crate) struct ParserNameOutput<'a, I>
@@ -14,7 +14,6 @@ where
 {
     pub(crate) eqname: BoxedParser<'a, I, ast::NameS>,
     pub(crate) ncname: BoxedParser<'a, I, &'a str>,
-    pub(crate) braced_uri_literal: BoxedParser<'a, I, &'a str>,
 }
 
 pub(crate) fn parser_name<'a, I>() -> ParserNameOutput<'a, I>
@@ -27,25 +26,29 @@ where
     }
     .boxed();
 
-    let ncname = ncname.clone().or(parser_keyword()).boxed();
-
-    let braced_uri_literal = select! {
-        Token::BracedURILiteral(s) => s,
+    let prefixed_qname_token = select! {
+        Token::PrefixedQName(prefixed) => prefixed
     }
     .boxed();
 
-    let prefixed_name = ncname
-        .clone()
-        .then_ignore(just(Token::Colon))
-        .then(ncname.clone())
-        .try_map_with(|(prefix, local_name), extra| {
-            let state = extra.state();
-            ast::Name::prefixed(prefix, local_name, move |prefix| {
-                state.namespaces.by_prefix(prefix).map(|s| s.to_string())
-            })
+    let uri_qualified_name_token = select! {
+        Token::URIQualifiedName(name) => name
+    }
+    .boxed();
+
+    let ncname = ncname.clone().or(parser_keyword()).boxed();
+
+    let prefixed_name = prefixed_qname_token
+        .try_map_with(|prefixed_qname, extra| {
+            let state: &mut State = extra.state();
+            ast::Name::prefixed(
+                prefixed_qname.prefix,
+                prefixed_qname.local_name,
+                move |prefix| state.namespaces.by_prefix(prefix).map(|s| s.to_string()),
+            )
             .map(|name| name.with_span(extra.span()))
             .map_err(|_e| ParserError::UnknownPrefix {
-                prefix: prefix.to_string(),
+                prefix: prefixed_qname.prefix.to_string(),
                 span: extra.span(),
             })
         })
@@ -57,13 +60,13 @@ where
             .map_with(|local_name, extra| ast::Name::name(local_name).with_span(extra.span())))
         .boxed();
 
-    let uri_qualified_name = braced_uri_literal
-        .clone()
-        .then(ncname.clone())
-        .map_with(|(uri, local_name), extra| {
-            ast::Name::namespaced(local_name.to_string(), uri.to_string(), |_| {
-                Some(String::new())
-            })
+    let uri_qualified_name = uri_qualified_name_token
+        .map_with(|uri_qualified_name, extra| {
+            ast::Name::namespaced(
+                uri_qualified_name.local_name.to_string(),
+                uri_qualified_name.uri.to_string(),
+                |_| Some(String::new()),
+            )
             .unwrap()
             .with_span(extra.span())
         })
@@ -71,13 +74,12 @@ where
 
     let eqname = qname.or(uri_qualified_name).boxed();
 
-    ParserNameOutput {
-        eqname,
-        ncname,
-        braced_uri_literal,
-    }
+    ParserNameOutput { eqname, ncname }
 }
 
+// this is required as even though some tokens are reserved
+// as function names, they're *not* reserved as NCNames. So we
+// make them honorary ncnames after all.
 fn parser_keyword<'a, I>() -> BoxedParser<'a, I, &'a str>
 where
     I: ValueInput<'a, Token = Token<'a>, Span = Span>,
@@ -144,6 +146,8 @@ where
         just(Token::To).to("to"),
         just(Token::Treat).to("treat"),
         just(Token::Union).to("union"),
+        just(Token::Switch).to("switch"),
+        just(Token::Typeswitch).to("typeswitch"),
     ])
     .boxed()
 }

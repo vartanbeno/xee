@@ -1,8 +1,9 @@
 use chumsky::{input::ValueInput, prelude::*};
 
+use xee_xpath_lexer::Token;
+
 use crate::ast;
 use crate::ast::Span;
-use crate::lexer::Token;
 
 use super::types::BoxedParser;
 

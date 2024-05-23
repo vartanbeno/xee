@@ -272,6 +272,11 @@ pub enum Token<'a> {
     CommentStart,
     #[regex(r":\)")]
     CommentEnd,
+    // additional reserved names
+    #[token("switch")]
+    Switch,
+    #[token("typeswitch")]
+    Typeswitch,
 }
 
 fn integer_literal<'a>(lex: &mut Lexer<'a, Token<'a>>) -> IBig {
