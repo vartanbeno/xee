@@ -45,6 +45,9 @@ impl<'a> Iterator for DeliminationIterator<'a> {
                     return Some((Token::Error, span));
                 }
             }
+            // we don't have to handle the case of dot followed by a numeric literal
+            // that starts with a dot itself, as this is lexed into Token::DotDot and
+            // the parser won't accept DotDot in a stranger position. I hope.
             _ => {}
         }
         match token.symbol_type2() {
@@ -91,6 +94,7 @@ mod tests {
     use super::*;
 
     use ibig::ibig;
+    use rust_decimal_macros::dec;
 
     #[test]
     fn test_delimination() {
@@ -193,5 +197,21 @@ mod tests {
         assert_eq!(d.next(), None);
     }
 
-    // TODO: two dots followed by a number should be an error
+    #[test]
+    fn test_dot_followed_by_a_number() {
+        let mut d = DeliminationIterator::from_str("..1");
+
+        assert_eq!(d.next(), Some((Token::DotDot, 0..2)));
+        assert_eq!(d.next(), Some((Token::IntegerLiteral(ibig!(1)), 2..3)));
+        assert_eq!(d.next(), None);
+    }
+
+    #[test]
+    fn test_two_decimal_numbers() {
+        let mut d = DeliminationIterator::from_str(".1.1");
+
+        assert_eq!(d.next(), Some((Token::Error, 0..2)));
+        assert_eq!(d.next(), Some((Token::DecimalLiteral(dec!(0.1)), 2..4)));
+        assert_eq!(d.next(), None);
+    }
 }
