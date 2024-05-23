@@ -1,5 +1,5 @@
 use itertools::{Itertools, MultiPeek};
-use logos::{Span, SpannedIter};
+use logos::{Logos, Span, SpannedIter};
 
 use crate::{
     lexer::{
@@ -23,6 +23,11 @@ impl<'a> ExplicitWhitespaceIterator<'a> {
     pub(crate) fn new(spanned_iter: SpannedIter<'a, Token<'a>>) -> Self {
         let base = spanned_iter.multipeek();
         Self { base }
+    }
+
+    pub(crate) fn from_str(input: &'a str) -> Self {
+        let spanned_lexer = Token::lexer(input).spanned();
+        Self::new(spanned_lexer)
     }
 
     // if we find a qname, this could be merged into a prefixed qname, or a

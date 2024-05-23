@@ -1,9 +1,9 @@
 use itertools::{Itertools, MultiPeek};
-use logos::Span;
+use logos::{Logos, Span, SpannedIter};
 
 use crate::{comment::ReplaceCommentWithWhitespaceIterator, Token};
 
-struct CollapseWhitespace<'a> {
+pub(crate) struct CollapseWhitespace<'a> {
     base: MultiPeek<ReplaceCommentWithWhitespaceIterator<'a>>,
 }
 
@@ -12,6 +12,16 @@ impl<'a> CollapseWhitespace<'a> {
         Self {
             base: base.multipeek(),
         }
+    }
+
+    pub(crate) fn from_spanned(spanned_iter: SpannedIter<'a, Token<'a>>) -> Self {
+        let base = ReplaceCommentWithWhitespaceIterator::from_spanned(spanned_iter);
+        Self::new(base)
+    }
+
+    pub(crate) fn from_str(input: &'a str) -> Self {
+        let spanned_lexer = Token::lexer(input).spanned();
+        Self::from_spanned(spanned_lexer)
     }
 }
 
@@ -43,22 +53,11 @@ impl<'a> Iterator for CollapseWhitespace<'a> {
 
 #[cfg(test)]
 mod tests {
-    use crate::explicit_whitespace::ExplicitWhitespaceIterator;
-
     use super::*;
-
-    use logos::Logos;
-
-    fn base_lexer(input: &str) -> ReplaceCommentWithWhitespaceIterator {
-        let spanned_lexer = Token::lexer(input).spanned();
-        let explicit = ExplicitWhitespaceIterator::new(spanned_lexer);
-        ReplaceCommentWithWhitespaceIterator::new(explicit)
-    }
 
     #[test]
     fn test_collapse_whitespace() {
-        let base = base_lexer("a  b");
-        let mut collapse_whitespace = CollapseWhitespace::new(base);
+        let mut collapse_whitespace = CollapseWhitespace::from_str("a  b");
 
         assert_eq!(collapse_whitespace.next(), Some((Token::NCName("a"), 0..1)));
         assert_eq!(collapse_whitespace.next(), Some((Token::Whitespace, 1..3)));
@@ -68,8 +67,7 @@ mod tests {
 
     #[test]
     fn test_collapse_whitespace_with_comment() {
-        let base = base_lexer("a (: comment :) b");
-        let mut collapse_whitespace = CollapseWhitespace::new(base);
+        let mut collapse_whitespace = CollapseWhitespace::from_str("a (: comment :) b");
 
         assert_eq!(collapse_whitespace.next(), Some((Token::NCName("a"), 0..1)));
         assert_eq!(collapse_whitespace.next(), Some((Token::Whitespace, 1..16)));

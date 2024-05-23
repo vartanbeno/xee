@@ -1,6 +1,6 @@
 // an iterator that replaces comments, potentially nested, with a single
 // whitespace token (with the same span of what is replaced).
-use logos::Span;
+use logos::{Logos, Span, SpannedIter};
 
 use crate::{explicit_whitespace::ExplicitWhitespaceIterator, Token};
 
@@ -11,6 +11,16 @@ pub(crate) struct ReplaceCommentWithWhitespaceIterator<'a> {
 impl<'a> ReplaceCommentWithWhitespaceIterator<'a> {
     pub(crate) fn new(base: ExplicitWhitespaceIterator<'a>) -> Self {
         Self { base }
+    }
+
+    pub(crate) fn from_spanned(spanned_iter: SpannedIter<'a, Token<'a>>) -> Self {
+        let base = ExplicitWhitespaceIterator::new(spanned_iter);
+        Self::new(base)
+    }
+
+    pub(crate) fn from_str(input: &'a str) -> Self {
+        let spanned_lexer = Token::lexer(input).spanned();
+        Self::from_spanned(spanned_lexer)
     }
 }
 

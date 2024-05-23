@@ -1,77 +1,82 @@
-use logos::Span;
+use std::iter::Peekable;
 
-use crate::lexer::SymbolType;
-use crate::{explicit_whitespace::ExplicitWhitespaceIterator, Token};
+use logos::{Logos, Span, SpannedIter};
+
+use crate::symbol_type::SymbolType;
+use crate::{collapse_whitespace::CollapseWhitespace, Token};
 
 pub(crate) struct DeliminationIterator<'a> {
-    base: ExplicitWhitespaceIterator<'a>,
+    base: Peekable<CollapseWhitespace<'a>>,
 }
 
 impl<'a> DeliminationIterator<'a> {
-    pub(crate) fn new(base: ExplicitWhitespaceIterator<'a>) -> Self {
-        Self { base }
+    pub(crate) fn new(base: CollapseWhitespace<'a>) -> Self {
+        Self {
+            base: base.peekable(),
+        }
     }
 
-    // fn eat_comments(&mut self) {
-    //     let mut depth = 1;
-    //     // we track the span from the start of the first
-    //     // comment start
-    //     let start = span.start;
-    //     let mut end = span.end;
-    //     // now we find the commend end that matches,
-    //     // taking into account nested comments
-    //     // we track the end of the span of what we
-    //     // found next, so that we can report it in
-    //     // case of errors
-    //     while depth > 0 {
-    //         match self.spanned.next() {
-    //             Some((Ok(Token::CommentStart), span)) => {
-    //                 end = span.end;
-    //                 depth += 1
-    //             }
-    //             Some((Ok(Token::CommentEnd), span)) => {
-    //                 end = span.end;
-    //                 depth -= 1;
-    //                 // comments are balanced, so done
-    //                 if depth == 0 {
-    //                     break;
-    //                 }
-    //             }
-    //             // If we run into a non-comment, we skip it
-    //             Some((_, span)) => {
-    //                 end = span.end;
-    //             }
-    //             // if we reach the end and things are unclosed,
-    //             // we bail out
-    //             None => {
-    //                 return Some((Err(()), start..end));
-    //             }
-    //         }
-    //     }
-    //     self.last_is_separator = true;
-    //     self.next()
-    // }
+    pub(crate) fn from_spanned(spanned_iter: SpannedIter<'a, Token<'a>>) -> Self {
+        let base = CollapseWhitespace::from_spanned(spanned_iter);
+        Self::new(base)
+    }
+
+    pub(crate) fn from_str(input: &'a str) -> Self {
+        let spanned_lexer = Token::lexer(input).spanned();
+        Self::from_spanned(spanned_lexer)
+    }
 }
 
-// impl<'a> Iterator for DeliminationIterator<'a> {
-//     type Item = (Result<Token<'a>, ()>, Span);
+impl<'a> Iterator for DeliminationIterator<'a> {
+    type Item = (Token<'a>, Span);
 
-//     fn next(&mut self) -> Option<Self::Item> {
-//         let (token, span) = self.base.next()?;
-//         if let Ok(token) = token {
-//             match token.symbol_type() {
-//                 SymbolType::Delimiting => return Some((Ok(token), span)),
-//                 SymbolType::NonDelimiting => match self.peek_symbol_type() {
-//                     Some(SymbolType::Delimiting) => {}
-//                     Some(SymbolType::Whitespace) => {}
-//                     Some(SymbolType::NonDelimiting) => {}
-//                 },
-//                 SymbolType::Whitespace => self.next(),
-//                 SymbolType::CommentStart => {}
-//                 SymbolType::CommentEnd => {}
-//             }
-//         } else {
-//             Some((Err(()), span))
-//         }
-//     }
-// }
+    fn next(&mut self) -> Option<Self::Item> {
+        let (token, span) = self.base.next()?;
+        match token.symbol_type2() {
+            SymbolType::NonDelimiting => {
+                // if we are not followed by either a delimiting symbol or a symbol separator, or are
+                // at the end we are in error
+                let next = self.base.peek();
+                if let Some((next_token, _)) = next {
+                    match next_token.symbol_type2() {
+                        SymbolType::Delimiting
+                        | SymbolType::SymbolSeparator
+                        | SymbolType::Error => {
+                            // a non-delimiting symbol can be followed by these without error
+                            Some((token, span))
+                        }
+                        SymbolType::NonDelimiting => {
+                            // a non-delimiting symbol may not be followed by another one,
+                            // so this is an error
+                            Some((Token::Error, span))
+                        }
+                    }
+                } else {
+                    // if we are at the end we're delimited
+                    Some((token, span))
+                }
+            }
+            SymbolType::Delimiting | SymbolType::Error => Some((token, span)),
+            SymbolType::SymbolSeparator => {
+                // we suppress symbol separators so return the next token
+                self.next()
+            }
+        }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    // #[test]
+    // fn test_delimination() {
+    //     let base = CollapseWhitespace::new("a  b".logos());
+    //     let mut delimination = DeliminationIterator::new(base);
+
+    //     assert_eq!(delimination.next(), Some((Token::NCName("a"), 0..1)));
+    //     assert_eq!(delimination.next(), Some((Token::Whitespace, 1..3)));
+    //     assert_eq!(delimination.next(), Some((Token::NCName("b"), 3..4)));
+    //     assert_eq!(delimination.next(), None);
+    // }
+}
