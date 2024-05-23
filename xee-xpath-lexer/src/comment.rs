@@ -2,19 +2,19 @@
 // whitespace token (with the same span of what is replaced).
 use logos::{Logos, Span, SpannedIter};
 
-use crate::{explicit_whitespace::ExplicitWhitespaceIterator, Token};
+use crate::{explicit_whitespace::ExplicitWhitespace, Token};
 
 pub(crate) struct ReplaceCommentWithWhitespace<'a> {
-    base: ExplicitWhitespaceIterator<'a>,
+    base: ExplicitWhitespace<'a>,
 }
 
 impl<'a> ReplaceCommentWithWhitespace<'a> {
-    pub(crate) fn new(base: ExplicitWhitespaceIterator<'a>) -> Self {
+    pub(crate) fn new(base: ExplicitWhitespace<'a>) -> Self {
         Self { base }
     }
 
     pub(crate) fn from_spanned(spanned_iter: SpannedIter<'a, Token<'a>>) -> Self {
-        let base = ExplicitWhitespaceIterator::new(spanned_iter);
+        let base = ExplicitWhitespace::new(spanned_iter);
         Self::new(base)
     }
 

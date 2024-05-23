@@ -15,11 +15,11 @@ use crate::{
 // parser all whitespace has been elimited, so we cannot use the parser to enforce this.
 // we therefore combine them early here, where we can still see the whitespace.
 // this iterator also turns any errors into error tokens
-pub(crate) struct ExplicitWhitespaceIterator<'a> {
+pub(crate) struct ExplicitWhitespace<'a> {
     base: MultiPeek<SpannedIter<'a, Token<'a>>>,
 }
 
-impl<'a> ExplicitWhitespaceIterator<'a> {
+impl<'a> ExplicitWhitespace<'a> {
     pub(crate) fn new(spanned_iter: SpannedIter<'a, Token<'a>>) -> Self {
         let base = spanned_iter.multipeek();
         Self { base }
@@ -110,7 +110,7 @@ impl<'a> ExplicitWhitespaceIterator<'a> {
     }
 }
 
-impl<'a> Iterator for ExplicitWhitespaceIterator<'a> {
+impl<'a> Iterator for ExplicitWhitespace<'a> {
     type Item = (Token<'a>, Span);
 
     fn next(&mut self) -> Option<Self::Item> {
@@ -172,7 +172,7 @@ mod tests {
 
     #[test]
     fn test_no_ncname_no_prefixed_qname() {
-        let mut iter = ExplicitWhitespaceIterator::from_str("1 + 1");
+        let mut iter = ExplicitWhitespace::from_str("1 + 1");
         assert_eq!(iter.next(), Some((Token::IntegerLiteral(ibig!(1)), 0..1)));
         assert_eq!(iter.next(), Some((Token::Whitespace, 1..2)));
         assert_eq!(iter.next(), Some((Token::Plus, 2..3)));
@@ -182,7 +182,7 @@ mod tests {
 
     #[test]
     fn test_ncname_no_prefixed_qname() {
-        let mut iter = ExplicitWhitespaceIterator::from_str("foo + 1");
+        let mut iter = ExplicitWhitespace::from_str("foo + 1");
         assert_eq!(iter.next(), Some((Token::NCName("foo"), 0..3)));
         assert_eq!(iter.next(), Some((Token::Whitespace, 3..4)));
         assert_eq!(iter.next(), Some((Token::Plus, 4..5)));
@@ -192,7 +192,7 @@ mod tests {
 
     #[test]
     fn test_ncname_colon_no_prefixed_qname() {
-        let mut iter = ExplicitWhitespaceIterator::from_str("foo: + 1");
+        let mut iter = ExplicitWhitespace::from_str("foo: + 1");
         assert_eq!(iter.next(), Some((Token::NCName("foo"), 0..3)));
         assert_eq!(iter.next(), Some((Token::Colon, 3..4)));
         assert_eq!(iter.next(), Some((Token::Whitespace, 4..5)));
@@ -203,7 +203,7 @@ mod tests {
 
     #[test]
     fn test_prefixed_qname() {
-        let mut iter = ExplicitWhitespaceIterator::from_str("foo:bar");
+        let mut iter = ExplicitWhitespace::from_str("foo:bar");
         assert_eq!(
             iter.next(),
             Some((
@@ -219,7 +219,7 @@ mod tests {
 
     #[test]
     fn test_prefixed_qname_followed() {
-        let mut iter = ExplicitWhitespaceIterator::from_str("foo:bar + 1");
+        let mut iter = ExplicitWhitespace::from_str("foo:bar + 1");
         assert_eq!(
             iter.next(),
             Some((
@@ -239,7 +239,7 @@ mod tests {
 
     #[test]
     fn test_local_name_wildcard() {
-        let mut iter = ExplicitWhitespaceIterator::from_str("foo:*");
+        let mut iter = ExplicitWhitespace::from_str("foo:*");
         assert_eq!(
             iter.next(),
             Some((
@@ -252,7 +252,7 @@ mod tests {
 
     #[test]
     fn test_prefix_wilcard() {
-        let mut iter = ExplicitWhitespaceIterator::from_str("*:bar");
+        let mut iter = ExplicitWhitespace::from_str("*:bar");
         assert_eq!(
             iter.next(),
             Some((
@@ -265,7 +265,7 @@ mod tests {
 
     #[test]
     fn test_uri_qualified_name() {
-        let mut iter = ExplicitWhitespaceIterator::from_str("Q{http://example.com}bar");
+        let mut iter = ExplicitWhitespace::from_str("Q{http://example.com}bar");
         assert_eq!(
             iter.next(),
             Some((
@@ -281,7 +281,7 @@ mod tests {
 
     #[test]
     fn test_braced_uri_literal_wildcard() {
-        let mut iter = ExplicitWhitespaceIterator::from_str("Q{http://example.com}*");
+        let mut iter = ExplicitWhitespace::from_str("Q{http://example.com}*");
         assert_eq!(
             iter.next(),
             Some((
