@@ -2,25 +2,23 @@ use std::iter::Peekable;
 
 use logos::{Logos, Span, SpannedIter};
 
+use crate::explicit_whitespace::ExplicitWhitespace;
 use crate::symbol_type::SymbolType;
-use crate::{collapse_whitespace::CollapseWhitespace, Token};
+use crate::Token;
 
 pub struct DeliminationIterator<'a> {
-    // TODO: do we really need to collapse whitespace and comments? It
-    // may not be needed at all to make things work, though balanced comments
-    // would need to be tracked here
-    base: Peekable<CollapseWhitespace<'a>>,
+    base: Peekable<ExplicitWhitespace<'a>>,
 }
 
 impl<'a> DeliminationIterator<'a> {
-    pub(crate) fn new(base: CollapseWhitespace<'a>) -> Self {
+    pub(crate) fn new(base: ExplicitWhitespace<'a>) -> Self {
         Self {
             base: base.peekable(),
         }
     }
 
     pub(crate) fn from_spanned(spanned_iter: SpannedIter<'a, Token<'a>>) -> Self {
-        let base = CollapseWhitespace::from_spanned(spanned_iter);
+        let base = ExplicitWhitespace::new(spanned_iter);
         Self::new(base)
     }
 
@@ -36,20 +34,19 @@ impl<'a> Iterator for DeliminationIterator<'a> {
     fn next(&mut self) -> Option<Self::Item> {
         let (token, span) = self.base.next()?;
 
-        match &token {
-            // IntegerLiteral won't be found with a dot behind it, as it would
-            // become a decimal literal
-            Token::DecimalLiteral(_) | Token::DoubleLiteral(_) => {
-                let next = self.base.peek();
-                if let Some((Token::Dot, _)) = next {
-                    return Some((Token::Error, span));
-                }
+        // IntegerLiteral won't be found with a dot behind it, as it would
+        // become a decimal literal
+        if matches!(&token, Token::DecimalLiteral(_) | Token::DoubleLiteral(_)) {
+            let next = self.base.peek();
+            if let Some((Token::Dot, _)) = next {
+                return Some((Token::Error, span));
             }
-            // we don't have to handle the case of dot followed by a numeric literal
-            // that starts with a dot itself, as this is lexed into Token::DotDot and
-            // the parser won't accept DotDot in a stranger position. I hope.
-            _ => {}
         }
+
+        // we don't have to handle the case of dot followed by a numeric literal
+        // that starts with a dot itself, as this is lexed into Token::DotDot and
+        // the parser won't accept DotDot in a stranger position. I hope.
+
         match token.symbol_type2() {
             SymbolType::NonDelimiting => {
                 // if we are not followed by either a delimiting symbol or a symbol separator, or are
@@ -58,7 +55,9 @@ impl<'a> Iterator for DeliminationIterator<'a> {
                 if let Some((next_token, _)) = next {
                     match next_token.symbol_type2() {
                         SymbolType::Delimiting
-                        | SymbolType::SymbolSeparator
+                        | SymbolType::Whitespace
+                        | SymbolType::CommentStart
+                        | SymbolType::CommentEnd
                         | SymbolType::Error => {
                             // a non-delimiting symbol can be followed by these without error
                             Some((token, span))
@@ -75,9 +74,50 @@ impl<'a> Iterator for DeliminationIterator<'a> {
                 }
             }
             SymbolType::Delimiting | SymbolType::Error => Some((token, span)),
-            SymbolType::SymbolSeparator => {
-                // we suppress symbol separators so return the next token
+            SymbolType::Whitespace => {
+                // we suppress whitespace
                 self.next()
+            }
+            SymbolType::CommentStart => {
+                let mut depth = 1;
+                // we track the span from the start of the first
+                // comment start
+                let start = span.start;
+                let mut end = span.end;
+                // now we find the commend end that matches,
+                // taking into account nested comments
+                // we track the end of the span of what we
+                // found next, so that we can report it in
+                // case of errors
+                while depth > 0 {
+                    match self.base.next() {
+                        Some((Token::CommentStart, span)) => {
+                            end = span.end;
+                            depth += 1
+                        }
+                        Some((Token::CommentEnd, span)) => {
+                            end = span.end;
+                            depth -= 1;
+                            // comments are balanced, so done
+                            if depth == 0 {
+                                break;
+                            }
+                        }
+                        Some((_, span)) => {
+                            end = span.end;
+                        }
+                        // if we reach the end and things are unclosed,
+                        // we bail out with an error
+                        None => {
+                            return Some((Token::Error, start..end));
+                        }
+                    }
+                }
+                self.next()
+            }
+            SymbolType::CommentEnd => {
+                // we should never see a comment end without a start
+                Some((Token::Error, span))
             }
         }
     }

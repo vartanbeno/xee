@@ -4,7 +4,9 @@ use crate::lexer::Token;
 pub(crate) enum SymbolType {
     Delimiting,
     NonDelimiting,
-    SymbolSeparator,
+    Whitespace,
+    CommentStart,
+    CommentEnd,
     Error,
 }
 
@@ -96,8 +98,10 @@ impl<'a> Token<'a> {
             | Treat
             | Union => SymbolType::NonDelimiting,
 
-            // symbols that in some way deliminate
-            Token::Whitespace | Token::CommentStart | Token::CommentEnd => SymbolType::SymbolSeparator,
+        
+            Token::Whitespace => SymbolType::Whitespace,
+            Token::CommentStart => SymbolType::CommentStart,
+            Token::CommentEnd => SymbolType::CommentEnd,
 
             Token::Error => SymbolType::Error,
         }
