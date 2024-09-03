@@ -28,7 +28,7 @@ compatible version of regular expressions for Rust.
   Functions and Operators 3.1](https://www.w3.org/TR/xpath-functions-31/) are
   not yet implemented. Contributions are welcome!
 
-- Of the 21859 tests in the QT3 test suite (vendored into `vendor/xpath-tests)
+- Of the 21859 tests in the QT3 test suite (vendored into `vendor/xpath-tests`)
   that match the features we support (so excluding Query tests), we have 19060
   passing tests. The failures are mostly due to missing library implementation.
 
