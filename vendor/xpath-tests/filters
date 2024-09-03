@@ -1262,6 +1262,7 @@ fn-function-lookup-812
 = fn-function-name
 fn-function-name-017
 fn-function-name-018
+fn-function-name-026
 = fn-generate-id
 generate-id-001
 generate-id-002
@@ -2618,7 +2619,7 @@ xqhof9
 = misc-StaticContext
 = misc-Surrogates
 = misc-UCACollation
-UCA-misc-lang-003 # ICU doesn't seem to support this
+UCA-misc-lang-003
 UCA-params-034
 = misc-XMLEdition
 = op-NOTATION-equal
@@ -2791,18 +2792,14 @@ ArrayTest-084
 = prod-ArrowPostfix
 = prod-AxisStep
 Axes041-1
-K2-Axes-10
-K2-Axes-16
 K2-Axes-38
 K2-Axes-39
 K2-Axes-43
 K2-Axes-44
 K2-Axes-45
 K2-Axes-46
-K2-Axes-5
 K2-Axes-50
 K2-Axes-53
-K2-Axes-9
 K2-Axes-94
 K2-Axes-98
 statictypingaxis-1
@@ -2984,6 +2981,7 @@ Lookup-232
 Lookup-233
 Lookup-234
 = prod-MapConstructor
+MapConstructor-025
 = prod-MapTest
 MapTest-008
 MapTest-020
@@ -2993,9 +2991,6 @@ MapTest-064
 MapTest-065
 = prod-ModuleImport
 = prod-NameTest
-K-NameTest-4
-K-NameTest-5
-K-NameTest-6
 K2-NameTest-1
 K2-NameTest-37
 K2-NameTest-38
