@@ -11,7 +11,6 @@ pub(crate) struct OpGt;
 impl AtomicCompare for OpGt {
     fn atomic_compare<F>(
         a: Atomic,
-
         b: Atomic,
         string_compare: F,
         default_offset: chrono::FixedOffset,
