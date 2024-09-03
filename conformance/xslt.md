@@ -106,13 +106,13 @@ TODO: nodes
 
 Not yet:
 
-* inherit-namespaces
+- inherit-namespaces
 
-* use-attribute sets
+- use-attribute sets
 
-* type
+- type
 
-* validation
+- validation
 
 ## xsl:evaluate
 
@@ -212,7 +212,7 @@ TODO
 
 Not yet:
 
-* validation that namespace cannot be added if a normal child has been added already.
+- validation that namespace cannot be added if a normal child has been added already.
 
 ## xsl:namespace-alias
 
@@ -330,7 +330,7 @@ Not yet:
 
 Not yet:
 
-* depcreated disable-output-escaping
+- depecrated disable-output-escaping
 
 ## xsl:transform
 
