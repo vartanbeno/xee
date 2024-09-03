@@ -8,7 +8,7 @@ Xee implements the following:
 
 - A reasonably complete XPath 3.1 implementation.
 
-- An early XSLT 3.0 implementation.
+- A very incomplete XSLT 3.0 implementation.
 
 Xee implements these as a bytecode interpreter, in Rust. The XPath functions
 are implemented in Rust using a Rust binding system.
