@@ -28,9 +28,9 @@ compatible version of regular expressions for Rust.
   Functions and Operators 3.1](https://www.w3.org/TR/xpath-functions-31/) are
   not yet implemented. Contributions are welcome!
 
-- Of the 21859 tests in the QT3 test suite (vendored into `vendor/xpath-tests),
-  we have 19060 passing tests. The failures are mostly due to missing library
-  implementation.
+- Of the 21859 tests in the QT3 test suite (vendored into `vendor/xpath-tests)
+  that match the features we support (so excluding Query tests), we have 19060
+  passing tests. The failures are mostly due to missing library implementation.
 
 - XMLSchema support. While the basic `xs:*` data types as defined by XML Schema
   are implemented, deep XML Schema integration does not exist.
