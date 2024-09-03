@@ -13,6 +13,13 @@ Xee implements the following:
 Xee implements these as a bytecode interpreter, in Rust. The XPath functions
 are implemented in Rust using a Rust binding system.
 
+This project undergoes extensive automated testing using using specific
+developer tests written with `cargo test` as well as using the `xee-testrunner`
+infrastructure for running conformance tests.
+
+An affiliated project is `regexml`, which contains an XML Schema and XPath
+compatible version of regular expressions for Rust.
+
 ## What's missing?
 
 ### XPath
