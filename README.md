@@ -42,6 +42,8 @@ are implemented in Rust using a Rust binding system.
 
 ## Project structure
 
+### Crates
+
 The Xee project is composed of many crates. Here is a quick overview:
 
 - `xee` - the start of a CLI tool for using Xee.
@@ -88,3 +90,10 @@ The Xee project is composed of many crates. Here is a quick overview:
 
 - `xee-xslt-ast` - Parse XSLT documents into an AST. Uses `xee-xpath-ast` for
   the underlying XPath expressions.
+
+### Other directories
+
+- `conformance` - a manual tracking of various features of XPath and XSLT
+
+- `vendor` - the QT3 test suite (`xpath-tests`) and `xslt-tests` vendored into
+  this project for purposes of easy of access and stability.
