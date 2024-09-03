@@ -22,6 +22,9 @@ compatible version of regular expressions for Rust.
 
 ## What's missing?
 
+Here is a brief description of the state of conformance in this project.
+Contributions are encouraged!
+
 ### XPath
 
 - While much of it is covered, parts of the functions in [XPath and XQuery
