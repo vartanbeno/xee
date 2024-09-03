@@ -47,6 +47,23 @@ compatible version of regular expressions for Rust.
   to bytecode has been implemented, including a full XSLT AST, but much XSLT
   functionality yet remains to be implemented.
 
+## Architecture
+
+XPath gets lexed into tokens using a lexer. This is then turned into an XPath
+AST (abstract syntax tree). This AST is then compiled down into a specialized
+IR (intermediate representation) which normalizes all variables and simplifies
+the code a lot. This IR is then compiled down into a bytecode, executed using a
+specialized interpreter.
+
+XPath library functions are implemented with a special Rust binding system based
+around Rust macros, which allows you to create Rust functions and register them
+into XPath.
+
+XSLT support is very similar: XSLT XML is parsed, then turned into an XSLT AST.
+Any embedded XPath expressions are also transformed into the XPath AST. XSLT is
+then compiled into the IR, and the IR is compiled into bytecode using the same
+infrastructure as for XPath.
+
 ## Project structure
 
 ### Crates
