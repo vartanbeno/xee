@@ -47,7 +47,7 @@ impl<E: Environment, R: Runnable<E>> Catalog<E, R> {
             let full_path = self.base_dir().join(file_path);
             let test_set = TestSet::load_from_file(
                 &mut run_context.xot,
-                &mut run_context.dynamic_context,
+                &run_context.dynamic_context.static_context,
                 &full_path,
             )?;
             let test_set_outcomes = test_set.run(run_context, self, test_filter, out, renderer)?;

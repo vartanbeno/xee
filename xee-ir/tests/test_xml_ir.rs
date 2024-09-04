@@ -1,3 +1,5 @@
+use std::cell::RefCell;
+
 use ahash::HashMapExt;
 use insta::assert_debug_snapshot;
 
@@ -102,7 +104,8 @@ fn test_generate_element() {
 
     // we now should run the generated code
     let static_context = StaticContext::default();
-    let context = DynamicContext::empty(static_context);
+    let documents = RefCell::new(xee_interpreter::xml::Documents::new());
+    let context = DynamicContext::from_documents(&static_context, &documents);
 
     let mut xot = xot::Xot::new();
     let runnable = program.runnable(&context);

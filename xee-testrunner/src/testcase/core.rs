@@ -66,7 +66,7 @@ impl<E: Environment> TestCase<E> {
             .environments(catalog, test_set)
             .collect::<std::result::Result<Vec<_>, crate::error::Error>>()?;
         let xot = &mut run_context.xot;
-        let documents = &mut run_context.dynamic_context.documents;
+        let documents = &run_context.dynamic_context.documents;
         for environment in environments {
             let item = environment
                 .environment_spec()
@@ -89,7 +89,7 @@ impl<E: Environment> TestCase<E> {
             .collect::<std::result::Result<Vec<_>, crate::error::Error>>()?;
         let mut variables = Variables::new();
         let xot = &mut run_context.xot;
-        let source_cache = &mut run_context.dynamic_context.documents;
+        let source_cache = run_context.dynamic_context.documents;
         for environment in environments {
             variables.extend(
                 environment
@@ -183,11 +183,10 @@ mod tests {
 
         let path = PathBuf::from("bar/foo");
         let static_context = StaticContext::from_namespaces(namespaces(XPATH_NS));
-        let mut dynamic_context = DynamicContext::empty(static_context);
 
         let test_case = TestCase::<XPathEnvironmentSpec>::load_from_xml_with_context(
             &mut xot,
-            &mut dynamic_context,
+            &static_context,
             &xml,
             &path,
         )

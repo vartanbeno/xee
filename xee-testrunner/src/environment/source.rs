@@ -1,4 +1,5 @@
 use anyhow::Result;
+use std::cell::RefCell;
 use std::fs::File;
 use std::io::{BufReader, Read};
 use std::path::{Path, PathBuf};
@@ -45,7 +46,7 @@ impl Source {
         &self,
         xot: &mut Xot,
         base_dir: &Path,
-        documents: &mut Documents,
+        documents: &RefCell<Documents>,
     ) -> Result<xot::Node> {
         match &self.content {
             SourceContent::Path(path) => {
@@ -56,10 +57,15 @@ impl Source {
                 let uri = Uri::new(&full_path.to_string_lossy());
 
                 // try to get the cached version of the document
-                let document = documents.get(&uri);
-                if let Some(document) = document {
-                    let root = document.root();
-                    return Ok(root);
+                {
+                    // scope borrowed_documents so we drop it afterward
+                    let borrowed_documents = documents.borrow();
+
+                    let document = borrowed_documents.get(&uri);
+                    if let Some(document) = document {
+                        let root = document.root();
+                        return Ok(root);
+                    }
                 }
 
                 // could not get cached version, so load up document
@@ -68,18 +74,18 @@ impl Source {
                 let mut xml = String::new();
                 buf_reader.read_to_string(&mut xml)?;
 
-                documents.add(xot, &uri, &xml)?;
+                documents.borrow_mut().add(xot, &uri, &xml)?;
                 // now obtain what we just added
-                Ok(documents.get(&uri).unwrap().root())
+                Ok(documents.borrow().get(&uri).unwrap().root())
             }
             SourceContent::String(value) => {
                 // create a new unique uri
-                let uri = Uri::new(&format!("string-source-{}", documents.len()));
+                let uri = Uri::new(&format!("string-source-{}", documents.borrow().len()));
                 // we don't try to get a cached version of the document, as
                 // that would be different each time. we just add it to documents
                 // and return it
-                documents.add(xot, &uri, value)?;
-                Ok(documents.get(&uri).unwrap().root())
+                documents.borrow_mut().add(xot, &uri, value)?;
+                Ok(documents.borrow().get(&uri).unwrap().root())
             }
         }
     }

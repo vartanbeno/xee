@@ -16,6 +16,9 @@
 // statically we need to pass in the names of any known global variables that
 // we've encountered before.
 
+use std::borrow::Cow;
+use std::cell::RefCell;
+
 use xot::{NameId, Node, Xot};
 
 use xee_xpath::{compile, context::DynamicContext, context::Variables, sequence::Sequence};
@@ -226,8 +229,12 @@ impl StaticEvaluator {
         let parser_context = content.parser_context();
         let static_context = parser_context.into();
         let program = compile(&static_context, xpath)?;
-        let dynamic_context =
-            DynamicContext::from_variables(static_context, &self.static_global_variables);
+        let documents = RefCell::new(xee_xpath::xml::Documents::new());
+        let dynamic_context = DynamicContext::from_variables(
+            &static_context,
+            &documents,
+            Cow::Borrowed(&self.static_global_variables),
+        );
         let runnable = program.runnable(&dynamic_context);
         runnable.many(None, xot)
     }

@@ -1,3 +1,5 @@
+use std::{borrow::Cow, cell::RefCell};
+
 use xot::Xot;
 
 use xee_interpreter::{
@@ -34,10 +36,10 @@ pub fn evaluate_root(
     let static_context = StaticContext::from_namespaces(namespaces);
     // TODO: isn't the right URI
     let uri = Uri::new("http://example.com");
-    let mut documents = Documents::new();
-    documents.add_root(xot, &uri, root);
-    let root = documents.get(&uri).unwrap().root;
-    let context = DynamicContext::from_documents(static_context, documents);
+    let documents = RefCell::new(Documents::new());
+    documents.borrow_mut().add_root(xot, &uri, root);
+    let root = documents.borrow().get(&uri).unwrap().root;
+    let context = DynamicContext::from_documents(&static_context, &documents);
 
     let program = parse(&context.static_context, xpath)?;
     let runnable = program.runnable(&context);
@@ -47,7 +49,8 @@ pub fn evaluate_root(
 pub fn evaluate_without_focus(s: &str) -> SpannedResult<Sequence> {
     let mut xot = Xot::new();
     let static_context = StaticContext::default();
-    let context = DynamicContext::empty(static_context);
+    let documents = RefCell::new(Documents::new());
+    let context = DynamicContext::from_documents(&static_context, &documents);
 
     let program = parse(&context.static_context, s)?;
     let runnable = program.runnable(&context);
@@ -62,7 +65,9 @@ pub fn evaluate_without_focus_with_variables(
     let namespaces = Namespaces::default();
     let variable_names = variables.keys().cloned().collect();
     let static_context = StaticContext::new(namespaces, variable_names);
-    let context = DynamicContext::from_variables(static_context, &variables);
+    let documents = RefCell::new(Documents::new());
+    let context =
+        DynamicContext::from_variables(&static_context, &documents, Cow::Owned(variables));
     let program = parse(&context.static_context, s)?;
     let runnable = program.runnable(&context);
     runnable.many(None, &mut xot)

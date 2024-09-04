@@ -1,3 +1,5 @@
+use std::cell::RefCell;
+
 use insta::assert_debug_snapshot;
 use xee_xpath_ast::{ast, Namespaces};
 use xot::Xot;
@@ -57,7 +59,8 @@ where
 
     let namespaces = Namespaces::new(Namespaces::default_namespaces(), "", "");
     let static_context = StaticContext::from_namespaces(namespaces);
-    let context = DynamicContext::from_documents(static_context, documents);
+    let documents = RefCell::new(documents);
+    let context = DynamicContext::from_documents(&static_context, &documents);
 
     let xpath = parse(&context.static_context, xpath)?;
     let result = xpath.runnable(&context).many_xot_node(root, &mut xot)?;

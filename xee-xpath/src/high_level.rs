@@ -1,10 +1,12 @@
+use std::cell::RefCell;
+
 use crate::parse;
 
 #[derive(Debug)]
 pub struct Documents {
     xot: xot::Xot,
     document_uris: Vec<xee_interpreter::xml::Uri>,
-    documents: xee_interpreter::xml::Documents,
+    pub(crate) documents: RefCell<xee_interpreter::xml::Documents>,
 }
 
 #[derive(Debug, Clone, Copy, Eq, PartialEq, Hash)]
@@ -15,14 +17,14 @@ impl Documents {
         Self {
             xot: xot::Xot::new(),
             document_uris: Vec::new(),
-            documents: xee_interpreter::xml::Documents::new(),
+            documents: RefCell::new(xee_interpreter::xml::Documents::new()),
         }
     }
 
     pub fn load_string(&mut self, uri: &str, xml: &str) -> Result<DocumentHandle, xot::Error> {
         let id = self.document_uris.len();
         let uri = xee_interpreter::xml::Uri::new(uri);
-        self.documents.add(&mut self.xot, &uri, xml)?;
+        self.documents.borrow_mut().add(&mut self.xot, &uri, xml)?;
         self.document_uris.push(uri);
         Ok(DocumentHandle(id))
     }
@@ -70,38 +72,34 @@ impl<'namespace> XPath<'namespace> {
 
 #[derive(Debug)]
 pub struct Engine<'namespace> {
-    xot: xot::Xot,
-    dynamic_context: xee_interpreter::context::DynamicContext<'namespace>,
-    xpath_programs: Vec<xee_interpreter::interpreter::Program>,
-    document_uris: Vec<xee_interpreter::xml::Uri>,
+    xpath: &'namespace XPath<'namespace>,
 }
 
 impl<'namespace> Engine<'namespace> {
-    pub fn new(xpath: XPath<'namespace>, documents: Documents) -> Self {
-        let dynamic_context = xee_interpreter::context::DynamicContext::from_documents(
-            xpath.static_context,
-            documents.documents,
-        );
-
-        Self {
-            xot: documents.xot,
-            dynamic_context,
-            xpath_programs: xpath.xpath_programs,
-            document_uris: documents.document_uris,
-        }
+    pub fn new(xpath: &'namespace XPath) -> Self {
+        Self { xpath: xpath }
     }
 
     pub fn evaluate(
         &mut self,
         xpath_handle: XPathHandle,
+        // TODO: don't want to pass in new creation every time
+        mut documents: Documents,
         document_handle: DocumentHandle,
     ) -> Result<xee_interpreter::sequence::Sequence, xee_interpreter::error::SpannedError> {
-        let program = &self.xpath_programs[xpath_handle.0];
-        let document_uri = &self.document_uris[document_handle.0];
-        let document = self.dynamic_context.documents().get(document_uri).unwrap();
+        let program = &self.xpath.xpath_programs[xpath_handle.0];
+        // TODO what if documents does not have the document_handle because
+        // we mixed them up?
+        let document_uri = &documents.document_uris[document_handle.0];
+        let borrowed_documents = documents.documents.borrow();
+        let document = borrowed_documents.get(document_uri).unwrap();
         let root = document.root();
+        let dynamic_context = xee_interpreter::context::DynamicContext::from_documents(
+            &self.xpath.static_context,
+            &documents.documents,
+        );
         program
-            .runnable(&self.dynamic_context)
-            .many_xot_node(root, &mut self.xot)
+            .runnable(&dynamic_context)
+            .many_xot_node(root, &mut documents.xot)
     }
 }

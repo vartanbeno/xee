@@ -225,10 +225,8 @@ mod tests {
         );
         let mut xot = Xot::new();
         let static_context = StaticContext::from_namespaces(namespaces(XPATH_NS));
-        let mut dynamic_context = DynamicContext::empty(static_context);
 
-        let dependencies =
-            Dependencies::load_from_xml(&mut xot, &mut dynamic_context, &xml).unwrap();
+        let dependencies = Dependencies::load_from_xml(&mut xot, &static_context, &xml).unwrap();
 
         assert_eq!(
             dependencies,

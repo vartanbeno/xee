@@ -1009,11 +1009,8 @@ fn run_xpath_with_result(
     let program = parse(&static_context, expr).map_err(|e| e.error)?;
     let variables = AHashMap::from([(name, sequence.clone())]);
     let dynamic_context = DynamicContext::new(
-        static_context,
-        // TODO: This clone is really expensive and only needed because we want
-        // to change the variables. really want to pass variables in separate
-        // from the dynamic context to avoid this
-        runnable.dynamic_context().documents().clone(),
+        &static_context,
+        runnable.dynamic_context().documents,
         Cow::Owned(variables),
     );
     let runnable = program.runnable(&dynamic_context);
@@ -1052,11 +1049,10 @@ mod tests {
             XPATH_NS
         );
         let static_context = StaticContext::from_namespaces(namespaces(XPATH_NS));
-        let mut dynamic_context = DynamicContext::empty(static_context);
 
         let mut xot = Xot::new();
         let test_case_result =
-            TestCaseResult::load_from_xml(&mut xot, &mut dynamic_context, &xml).unwrap();
+            TestCaseResult::load_from_xml(&mut xot, &static_context, &xml).unwrap();
         assert_eq!(
             test_case_result,
             TestCaseResult::AssertEq(AssertEq::new("0".to_string()))
@@ -1079,10 +1075,9 @@ mod tests {
         );
         let mut xot = Xot::new();
         let static_context = StaticContext::from_namespaces(namespaces(XPATH_NS));
-        let mut dynamic_context = DynamicContext::empty(static_context);
 
         let test_case_result =
-            TestCaseResult::load_from_xml(&mut xot, &mut dynamic_context, &xml).unwrap();
+            TestCaseResult::load_from_xml(&mut xot, &static_context, &xml).unwrap();
         assert_eq!(
             test_case_result,
             TestCaseResult::AnyOf(AssertAnyOf::new(vec![

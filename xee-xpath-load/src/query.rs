@@ -361,7 +361,10 @@ impl ManyRecurseQuery {
 
 #[cfg(test)]
 mod tests {
+    use std::cell::RefCell;
+
     use ibig::{ibig, IBig};
+    use xee_xpath::xml::Documents;
     use xot::Xot;
 
     use super::*;
@@ -369,7 +372,8 @@ mod tests {
     #[test]
     fn test_one_query() {
         let static_context = StaticContext::default();
-        let dynamic_context = DynamicContext::empty(static_context);
+        let documents = RefCell::new(Documents::new());
+        let dynamic_context = DynamicContext::from_documents(&static_context, &documents);
         let mut queries = Queries::new(&dynamic_context.static_context);
         let q = queries
             .one("1 + 2", |_, item| {
@@ -388,7 +392,8 @@ mod tests {
     #[test]
     fn test_one_query_recurse() -> Result<()> {
         let static_context = StaticContext::default();
-        let dynamic_context = DynamicContext::empty(static_context);
+        let documents = RefCell::new(Documents::new());
+        let dynamic_context = DynamicContext::from_documents(&static_context, &documents);
         let mut queries = Queries::new(&dynamic_context.static_context);
         #[derive(Debug, PartialEq, Eq)]
         enum Expr {
@@ -436,7 +441,8 @@ mod tests {
     #[test]
     fn test_map_query() {
         let static_context = StaticContext::default();
-        let dynamic_context = DynamicContext::empty(static_context);
+        let documents = RefCell::new(Documents::new());
+        let dynamic_context = DynamicContext::from_documents(&static_context, &documents);
         let mut queries = Queries::new(&dynamic_context.static_context);
         let q = queries
             .one("1 + 2", |_, item| {
@@ -456,7 +462,8 @@ mod tests {
     #[test]
     fn test_map_query_clone() {
         let static_context = StaticContext::default();
-        let dynamic_context = DynamicContext::empty(static_context);
+        let documents = RefCell::new(Documents::new());
+        let dynamic_context = DynamicContext::from_documents(&static_context, &documents);
         let mut queries = Queries::new(&dynamic_context.static_context);
         let q = queries
             .one("1 + 2", |_, item| {

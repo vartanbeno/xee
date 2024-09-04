@@ -1,8 +1,10 @@
 use anyhow::Result;
 use clap::{Parser, Subcommand};
+use std::cell::RefCell;
 use std::fs;
 use std::path::{Path, PathBuf};
 use xee_xpath::context::{DynamicContext, StaticContext};
+use xee_xpath::xml::Documents;
 use xee_xpath_load::PathLoadable;
 use xot::Xot;
 
@@ -91,7 +93,8 @@ pub fn cli() -> Result<()> {
     let xot = Xot::new();
     let ns = XPATH_NS;
     let static_context = StaticContext::from_namespaces(namespaces(ns));
-    let dynamic_context = DynamicContext::empty(static_context);
+    let documents = RefCell::new(Documents::new());
+    let dynamic_context = DynamicContext::from_documents(&static_context, &documents);
 
     let run_context = RunContext::new(
         xot,
@@ -207,7 +210,7 @@ impl<'a, E: Environment, R: Runnable<E>> Runner<'a, E, R> {
     fn load_catalog(&mut self) -> Result<Catalog<E, R>> {
         Catalog::load_from_file(
             &mut self.run_context.xot,
-            &mut self.run_context.dynamic_context,
+            &self.run_context.dynamic_context.static_context,
             &self.path_info.catalog_path,
         )
     }
@@ -215,7 +218,7 @@ impl<'a, E: Environment, R: Runnable<E>> Runner<'a, E, R> {
     fn load_test_set(&mut self) -> Result<TestSet<E, R>> {
         TestSet::load_from_file(
             &mut self.run_context.xot,
-            &mut self.run_context.dynamic_context,
+            &self.run_context.dynamic_context.static_context,
             &self.path_info.test_file(),
         )
     }

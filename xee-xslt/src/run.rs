@@ -1,3 +1,5 @@
+use std::cell::RefCell;
+
 use xee_interpreter::context::DynamicContext;
 use xee_interpreter::context::StaticContext;
 use xee_interpreter::error;
@@ -20,7 +22,8 @@ pub fn evaluate_program(
     documents.add_root(xot, &uri, root);
     let document = documents.get(&uri).unwrap();
     let item: sequence::Item = document.root.into();
-    let context = DynamicContext::from_documents(static_context, documents);
+    let documents = RefCell::new(documents);
+    let context = DynamicContext::from_documents(&static_context, &documents);
     let runnable = program.runnable(&context);
     runnable.many(Some(&item), xot)
 }

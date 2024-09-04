@@ -1,5 +1,6 @@
 use anyhow::Result;
 use std::{
+    cell::RefCell,
     fmt::{self, Display, Formatter},
     path::{Path, PathBuf},
 };
@@ -106,7 +107,7 @@ impl EnvironmentSpec {
     pub(crate) fn context_item(
         &self,
         xot: &mut Xot,
-        documents: &mut Documents,
+        documents: &RefCell<Documents>,
     ) -> Result<Option<sequence::Item>> {
         for source in &self.sources {
             if let SourceRole::Context = source.role {
@@ -117,7 +118,11 @@ impl EnvironmentSpec {
         Ok(None)
     }
 
-    pub(crate) fn variables(&self, xot: &mut Xot, documents: &mut Documents) -> Result<Variables> {
+    pub(crate) fn variables(
+        &self,
+        xot: &mut Xot,
+        documents: &RefCell<Documents>,
+    ) -> Result<Variables> {
         let mut variables = Variables::new();
         for source in &self.sources {
             if let SourceRole::Var(name) = &source.role {
@@ -128,6 +133,7 @@ impl EnvironmentSpec {
         }
         for param in &self.params {
             let static_context = StaticContext::default();
+            let documents = RefCell::new(Documents::new());
             let select = (param.select.as_ref()).expect("param: missing select not supported");
             let program = parse(&static_context, select);
             if program.is_err() {
@@ -135,7 +141,7 @@ impl EnvironmentSpec {
                 continue;
             }
             let program = program.unwrap();
-            let dynamic_context = DynamicContext::empty(static_context);
+            let dynamic_context = DynamicContext::from_documents(&static_context, &documents);
             let runnable = program.runnable(&dynamic_context);
             let result = runnable.many(None, xot).map_err(|e| e.error)?;
             variables.insert(param.name.clone(), result);
@@ -231,10 +237,9 @@ mod tests {
 
         let mut xot = Xot::new();
         let static_context = StaticContext::from_namespaces(namespaces(XPATH_NS));
-        let mut dynamic_context = DynamicContext::empty(static_context);
         let path = Path::new("bar/foo");
         let environment_spec =
-            EnvironmentSpec::load_from_xml_with_context(&mut xot, &mut dynamic_context, &xml, path)
+            EnvironmentSpec::load_from_xml_with_context(&mut xot, &static_context, &xml, path)
                 .unwrap();
         assert_eq!(
             environment_spec,
@@ -300,10 +305,9 @@ mod tests {
         let mut xot = Xot::new();
         let path = Path::new("bar/foo");
         let static_context = StaticContext::from_namespaces(namespaces(XPATH_NS));
-        let mut dynamic_context = DynamicContext::empty(static_context);
 
         let environment_spec =
-            EnvironmentSpec::load_from_xml_with_context(&mut xot, &mut dynamic_context, &xml, path)
+            EnvironmentSpec::load_from_xml_with_context(&mut xot, &static_context, &xml, path)
                 .unwrap();
         assert_eq!(
             environment_spec,

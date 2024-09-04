@@ -88,11 +88,11 @@ impl Runnable<XPathEnvironmentSpec> for XPathTestCase {
         };
 
         let dynamic_context = DynamicContext::new(
-            static_context,
+            &static_context,
             // TODO: this clone is really expensive and I'd like
             // to have a way to do a new query with different parameters
             // without messing around with the context like this
-            run_context.dynamic_context.documents.clone(),
+            run_context.dynamic_context.documents,
             Cow::Borrowed(&variables),
         );
         let runnable = program.runnable(&dynamic_context);

@@ -1,3 +1,4 @@
+use std::cell::RefCell;
 use std::rc::Rc;
 
 use xee_name::Name;
@@ -126,12 +127,12 @@ impl<'a> Runnable<'a> {
         self.dynamic_context
     }
 
-    pub fn static_context(&self) -> &'a StaticContext {
-        &self.dynamic_context.static_context
+    pub fn documents(&self) -> &RefCell<xml::Documents> {
+        &self.dynamic_context.documents
     }
 
-    pub(crate) fn annotations(&self) -> &xml::Annotations {
-        &self.dynamic_context.documents.annotations
+    pub fn static_context(&self) -> &'a StaticContext {
+        &self.dynamic_context.static_context
     }
 
     pub fn default_collation_uri(&self) -> &str {

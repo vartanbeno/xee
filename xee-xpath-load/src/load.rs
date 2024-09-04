@@ -1,6 +1,7 @@
 use anyhow::Result;
 use std::{
     borrow::BorrowMut,
+    cell::RefCell,
     fs::File,
     io::{BufReader, Read},
     path::Path,
@@ -9,7 +10,7 @@ use std::{
 use xee_xpath::{
     context::{DynamicContext, StaticContext},
     sequence::Item,
-    xml::Uri,
+    xml::{Documents, Uri},
     Namespaces,
 };
 use xot::Xot;
@@ -34,17 +35,17 @@ pub trait ContextLoadable<C: ?Sized>: Sized {
 
     fn load_from_xml_with_context(
         xot: &mut Xot,
-        dynamic_context: &mut DynamicContext,
+        static_context: &StaticContext,
         xml: &str,
         context: &C,
     ) -> Result<Self> {
         let root = xot.parse(xml)?;
         let document_element = xot.document_element(root)?;
-        // TODO: Uri is a hack
-        dynamic_context
-            .documents
-            .add_root(xot, &Uri::new("http://example.com"), root);
-        Self::load_from_node_with_context(xot, dynamic_context, document_element, context)
+        let mut documents = Documents::new();
+        documents.add_root(xot, &Uri::new("http://example.com"), root);
+        let documents = RefCell::new(documents);
+        let mut dynamic_context = DynamicContext::from_documents(static_context, &documents);
+        Self::load_from_node_with_context(xot, &mut dynamic_context, document_element, context)
     }
 
     fn load_from_node_with_context(
@@ -73,12 +74,8 @@ pub trait ContextLoadable<C: ?Sized>: Sized {
 pub trait Loadable: Sized {
     fn load(queries: Queries) -> Result<(Queries, impl Query<Self>)>;
 
-    fn load_from_xml(
-        xot: &mut Xot,
-        dynamic_context: &mut DynamicContext,
-        xml: &str,
-    ) -> Result<Self> {
-        Self::load_from_xml_with_context(xot, dynamic_context, xml, &())
+    fn load_from_xml(xot: &mut Xot, static_context: &StaticContext, xml: &str) -> Result<Self> {
+        Self::load_from_xml_with_context(xot, static_context, xml, &())
     }
 
     fn load_from_node(
@@ -103,16 +100,12 @@ impl<T: Loadable> ContextLoadable<()> for T {
 }
 
 pub trait PathLoadable: ContextLoadable<Path> {
-    fn load_from_file(
-        xot: &mut Xot,
-        dynamic_context: &mut DynamicContext,
-        path: &Path,
-    ) -> Result<Self> {
+    fn load_from_file(xot: &mut Xot, static_context: &StaticContext, path: &Path) -> Result<Self> {
         let xml_file = File::open(path)?;
         let mut buf_reader = BufReader::new(xml_file);
         let mut xml = String::new();
         buf_reader.read_to_string(&mut xml)?;
-        Self::load_from_xml_with_context(xot, dynamic_context, &xml, path)
+        Self::load_from_xml_with_context(xot, static_context, &xml, path)
     }
 }
 
