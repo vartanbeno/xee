@@ -1,20 +1,36 @@
-use std::cell::RefCell;
+use std::{cell::RefCell, sync::atomic};
 
 use crate::parse;
 
+static XPATH_COUNTER: atomic::AtomicUsize = atomic::AtomicUsize::new(0);
+static DOCUMENTS_COUNTER: atomic::AtomicUsize = atomic::AtomicUsize::new(0);
+
+fn get_documents_id() -> usize {
+    DOCUMENTS_COUNTER.fetch_add(1, atomic::Ordering::SeqCst)
+}
+
+fn get_xpath_id() -> usize {
+    XPATH_COUNTER.fetch_add(1, atomic::Ordering::SeqCst)
+}
+
 #[derive(Debug)]
 pub struct Documents {
+    id: usize,
     xot: xot::Xot,
     document_uris: Vec<xee_interpreter::xml::Uri>,
     pub(crate) documents: RefCell<xee_interpreter::xml::Documents>,
 }
 
 #[derive(Debug, Clone, Copy, Eq, PartialEq, Hash)]
-pub struct DocumentHandle(usize);
+pub struct DocumentHandle {
+    documents_id: usize,
+    id: usize,
+}
 
 impl Documents {
     pub fn new() -> Self {
         Self {
+            id: get_documents_id(),
             xot: xot::Xot::new(),
             document_uris: Vec::new(),
             documents: RefCell::new(xee_interpreter::xml::Documents::new()),
@@ -26,12 +42,16 @@ impl Documents {
         let uri = xee_interpreter::xml::Uri::new(uri);
         self.documents.borrow_mut().add(&mut self.xot, &uri, xml)?;
         self.document_uris.push(uri);
-        Ok(DocumentHandle(id))
+        Ok(DocumentHandle {
+            documents_id: self.id,
+            id,
+        })
     }
 }
 
 #[derive(Debug)]
 pub struct XPath<'namespace> {
+    id: usize,
     static_context: xee_interpreter::context::StaticContext<'namespace>,
     xpath_programs: Vec<xee_interpreter::interpreter::Program>,
 }
@@ -43,7 +63,10 @@ impl<'namespace> Default for XPath<'namespace> {
 }
 
 #[derive(Debug, Clone, Copy, Eq, PartialEq, Hash)]
-pub struct XPathHandle(usize);
+pub struct XPathHandle {
+    xpath_id: usize,
+    id: usize,
+}
 
 impl<'namespace> XPath<'namespace> {
     pub fn new(default_element_namespace: &'namespace str) -> Self {
@@ -54,6 +77,7 @@ impl<'namespace> XPath<'namespace> {
         );
         let static_context = xee_interpreter::context::StaticContext::from_namespaces(namespaces);
         Self {
+            id: get_xpath_id(),
             static_context,
             xpath_programs: Vec::new(),
         }
@@ -66,7 +90,10 @@ impl<'namespace> XPath<'namespace> {
         let id = self.xpath_programs.len();
         let program = parse(&self.static_context, xpath)?;
         self.xpath_programs.push(program);
-        Ok(XPathHandle(id))
+        Ok(XPathHandle {
+            xpath_id: self.id,
+            id,
+        })
     }
 }
 
@@ -86,10 +113,10 @@ impl<'namespace> Engine<'namespace> {
         xpath_handle: XPathHandle,
         document_handle: DocumentHandle,
     ) -> Result<xee_interpreter::sequence::Sequence, xee_interpreter::error::SpannedError> {
-        let program = &self.xpath.xpath_programs[xpath_handle.0];
-        // TODO what if documents does not have the document_handle because
-        // we mixed them up?
-        let document_uri = &self.documents.document_uris[document_handle.0];
+        assert!(xpath_handle.xpath_id == self.xpath.id);
+        let program = &self.xpath.xpath_programs[xpath_handle.id];
+        assert!(document_handle.documents_id == self.documents.id);
+        let document_uri = &self.documents.document_uris[document_handle.id];
         let root = {
             let borrowed_documents = self.documents.documents.borrow();
             let document = borrowed_documents.get(document_uri).unwrap();
