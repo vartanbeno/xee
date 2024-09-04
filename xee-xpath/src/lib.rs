@@ -1,5 +1,6 @@
 mod ast_ir;
 mod compile;
+pub mod high_level;
 mod run;
 mod span;
 
