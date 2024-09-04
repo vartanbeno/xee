@@ -28,6 +28,8 @@ pub struct DynamicContext<'a> {
     // a reference is handy if we have no variables so we don't need to
     // recreate them each time.
     pub(crate) variables: Cow<'a, Variables>,
+    // TODO: we want to be able to control the creation of this outside,
+    // as it needs to be the same for all evalutions of XSLT I believe
     current_datetime: chrono::DateTime<chrono::offset::FixedOffset>,
 }
 
