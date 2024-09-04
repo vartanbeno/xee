@@ -73,33 +73,34 @@ impl<'namespace> XPath<'namespace> {
 #[derive(Debug)]
 pub struct Engine<'namespace> {
     xpath: &'namespace XPath<'namespace>,
+    documents: Documents,
 }
 
 impl<'namespace> Engine<'namespace> {
-    pub fn new(xpath: &'namespace XPath) -> Self {
-        Self { xpath: xpath }
+    pub fn new(xpath: &'namespace XPath, documents: Documents) -> Self {
+        Self { xpath, documents }
     }
 
     pub fn evaluate(
         &mut self,
         xpath_handle: XPathHandle,
-        // TODO: don't want to pass in new creation every time
-        mut documents: Documents,
         document_handle: DocumentHandle,
     ) -> Result<xee_interpreter::sequence::Sequence, xee_interpreter::error::SpannedError> {
         let program = &self.xpath.xpath_programs[xpath_handle.0];
         // TODO what if documents does not have the document_handle because
         // we mixed them up?
-        let document_uri = &documents.document_uris[document_handle.0];
-        let borrowed_documents = documents.documents.borrow();
-        let document = borrowed_documents.get(document_uri).unwrap();
-        let root = document.root();
+        let document_uri = &self.documents.document_uris[document_handle.0];
+        let root = {
+            let borrowed_documents = self.documents.documents.borrow();
+            let document = borrowed_documents.get(document_uri).unwrap();
+            document.root()
+        };
         let dynamic_context = xee_interpreter::context::DynamicContext::from_documents(
             &self.xpath.static_context,
-            &documents.documents,
+            &self.documents.documents,
         );
         program
             .runnable(&dynamic_context)
-            .many_xot_node(root, &mut documents.xot)
+            .many_xot_node(root, &mut self.documents.xot)
     }
 }
