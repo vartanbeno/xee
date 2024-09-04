@@ -4,6 +4,7 @@ use xee_name::Name;
 use xot::Xot;
 
 use crate::context::DynamicContext;
+use crate::context::StaticContext;
 use crate::error::SpannedError;
 use crate::function;
 use crate::occurrence::Occurrence;
@@ -123,6 +124,10 @@ impl<'a> Runnable<'a> {
 
     pub fn dynamic_context(&self) -> &'a DynamicContext {
         self.dynamic_context
+    }
+
+    pub fn static_context(&self) -> &'a StaticContext {
+        &self.dynamic_context.static_context
     }
 
     pub(crate) fn annotations(&self) -> &xml::Annotations {

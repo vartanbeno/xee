@@ -990,7 +990,7 @@ impl fmt::Display for Failure {
 }
 
 fn run_xpath(expr: &XPathExpr, runnable: &Runnable<'_>, xot: &mut Xot) -> Result<Sequence> {
-    let program = parse(&runnable.dynamic_context().static_context, expr).map_err(|e| e.error)?;
+    let program = parse(runnable.static_context(), expr).map_err(|e| e.error)?;
 
     let runnable = program.runnable(runnable.dynamic_context());
     runnable.many(None, xot).map_err(|e| e.error)

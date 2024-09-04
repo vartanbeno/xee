@@ -103,7 +103,7 @@ impl MergeOptions {
             .clone()
             .sequence_type_matching_function_conversion(
                 &sequence_type,
-                &runnable.dynamic_context().static_context,
+                &runnable.static_context(),
                 interpreter.xot(),
                 &|function| runnable.function_info(function).signature(),
             )?;
