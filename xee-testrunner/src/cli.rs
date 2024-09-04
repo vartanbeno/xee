@@ -91,7 +91,7 @@ pub fn cli() -> Result<()> {
     let xot = Xot::new();
     let ns = XPATH_NS;
     let static_context = StaticContext::from_namespaces(namespaces(ns));
-    let dynamic_context = DynamicContext::empty(&static_context);
+    let dynamic_context = DynamicContext::empty(static_context);
 
     let run_context = RunContext::new(
         xot,

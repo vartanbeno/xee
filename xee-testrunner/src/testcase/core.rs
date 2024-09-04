@@ -183,7 +183,7 @@ mod tests {
 
         let path = PathBuf::from("bar/foo");
         let static_context = StaticContext::from_namespaces(namespaces(XPATH_NS));
-        let mut dynamic_context = DynamicContext::empty(&static_context);
+        let mut dynamic_context = DynamicContext::empty(static_context);
 
         let test_case = TestCase::<XPathEnvironmentSpec>::load_from_xml_with_context(
             &mut xot,

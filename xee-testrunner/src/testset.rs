@@ -165,7 +165,7 @@ mod tests {
 
         let mut xot = Xot::new();
         let static_context = StaticContext::from_namespaces(namespaces(XPATH_NS));
-        let mut dynamic_context = DynamicContext::empty(&static_context);
+        let mut dynamic_context = DynamicContext::empty(static_context);
 
         let path = PathBuf::from("bar/foo");
         let test_set = TestSet::<XPathEnvironmentSpec, XPathTestCase>::load_from_xml_with_context(

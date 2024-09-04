@@ -79,7 +79,7 @@ mod tests {
     fn test_load() {
         let mut xot = Xot::new();
         let static_context = StaticContext::from_namespaces(namespaces(XPATH_NS));
-        let mut dynamic_context = DynamicContext::empty(&static_context);
+        let mut dynamic_context = DynamicContext::empty(static_context);
 
         let xml = r#"
 <container xmlns="http://www.w3.org/2010/09/qt-fots-catalog">

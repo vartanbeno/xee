@@ -54,7 +54,7 @@ pub trait ContextLoadable<C: ?Sized>: Sized {
         context: &C,
     ) -> Result<Self> {
         // let static_context = StaticContext::from_namespaces(namespaces);
-        let queries = Queries::new(dynamic_context.static_context);
+        let queries = Queries::new(&dynamic_context.static_context);
         // let r = {
         //     let mut dynamic_context = DynamicContext::empty(&static_context);
         //     // TODO: this set up isn't proper yet, should really be a proper path,

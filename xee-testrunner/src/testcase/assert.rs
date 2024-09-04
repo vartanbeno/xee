@@ -990,7 +990,7 @@ impl fmt::Display for Failure {
 }
 
 fn run_xpath(expr: &XPathExpr, runnable: &Runnable<'_>, xot: &mut Xot) -> Result<Sequence> {
-    let program = parse(runnable.dynamic_context().static_context, expr).map_err(|e| e.error)?;
+    let program = parse(&runnable.dynamic_context().static_context, expr).map_err(|e| e.error)?;
 
     let runnable = program.runnable(runnable.dynamic_context());
     runnable.many(None, xot).map_err(|e| e.error)
@@ -1009,7 +1009,7 @@ fn run_xpath_with_result(
     let program = parse(&static_context, expr).map_err(|e| e.error)?;
     let variables = AHashMap::from([(name, sequence.clone())]);
     let dynamic_context = DynamicContext::new(
-        &static_context,
+        static_context,
         // TODO: This clone is really expensive and only needed because we want
         // to change the variables. really want to pass variables in separate
         // from the dynamic context to avoid this
@@ -1052,7 +1052,7 @@ mod tests {
             XPATH_NS
         );
         let static_context = StaticContext::from_namespaces(namespaces(XPATH_NS));
-        let mut dynamic_context = DynamicContext::empty(&static_context);
+        let mut dynamic_context = DynamicContext::empty(static_context);
 
         let mut xot = Xot::new();
         let test_case_result =
@@ -1079,7 +1079,7 @@ mod tests {
         );
         let mut xot = Xot::new();
         let static_context = StaticContext::from_namespaces(namespaces(XPATH_NS));
-        let mut dynamic_context = DynamicContext::empty(&static_context);
+        let mut dynamic_context = DynamicContext::empty(static_context);
 
         let test_case_result =
             TestCaseResult::load_from_xml(&mut xot, &mut dynamic_context, &xml).unwrap();

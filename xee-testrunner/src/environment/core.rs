@@ -135,7 +135,7 @@ impl EnvironmentSpec {
                 continue;
             }
             let program = program.unwrap();
-            let dynamic_context = DynamicContext::empty(&static_context);
+            let dynamic_context = DynamicContext::empty(static_context);
             let runnable = program.runnable(&dynamic_context);
             let result = runnable.many(None, xot).map_err(|e| e.error)?;
             variables.insert(param.name.clone(), result);
@@ -231,7 +231,7 @@ mod tests {
 
         let mut xot = Xot::new();
         let static_context = StaticContext::from_namespaces(namespaces(XPATH_NS));
-        let mut dynamic_context = DynamicContext::empty(&static_context);
+        let mut dynamic_context = DynamicContext::empty(static_context);
         let path = Path::new("bar/foo");
         let environment_spec =
             EnvironmentSpec::load_from_xml_with_context(&mut xot, &mut dynamic_context, &xml, path)
@@ -300,7 +300,7 @@ mod tests {
         let mut xot = Xot::new();
         let path = Path::new("bar/foo");
         let static_context = StaticContext::from_namespaces(namespaces(XPATH_NS));
-        let mut dynamic_context = DynamicContext::empty(&static_context);
+        let mut dynamic_context = DynamicContext::empty(static_context);
 
         let environment_spec =
             EnvironmentSpec::load_from_xml_with_context(&mut xot, &mut dynamic_context, &xml, path)

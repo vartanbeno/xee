@@ -37,9 +37,9 @@ pub fn evaluate_root(
     let mut documents = Documents::new();
     documents.add_root(xot, &uri, root);
     let root = documents.get(&uri).unwrap().root;
-    let context = DynamicContext::from_documents(&static_context, documents);
+    let context = DynamicContext::from_documents(static_context, documents);
 
-    let program = parse(context.static_context, xpath)?;
+    let program = parse(&context.static_context, xpath)?;
     let runnable = program.runnable(&context);
     runnable.many_xot_node(root, xot)
 }
@@ -47,9 +47,9 @@ pub fn evaluate_root(
 pub fn evaluate_without_focus(s: &str) -> SpannedResult<Sequence> {
     let mut xot = Xot::new();
     let static_context = StaticContext::default();
-    let context = DynamicContext::empty(&static_context);
+    let context = DynamicContext::empty(static_context);
 
-    let program = parse(context.static_context, s)?;
+    let program = parse(&context.static_context, s)?;
     let runnable = program.runnable(&context);
     runnable.many(None, &mut xot)
 }
@@ -62,8 +62,8 @@ pub fn evaluate_without_focus_with_variables(
     let namespaces = Namespaces::default();
     let variable_names = variables.keys().cloned().collect();
     let static_context = StaticContext::new(namespaces, variable_names);
-    let context = DynamicContext::from_variables(&static_context, &variables);
-    let program = parse(context.static_context, s)?;
+    let context = DynamicContext::from_variables(static_context, &variables);
+    let program = parse(&context.static_context, s)?;
     let runnable = program.runnable(&context);
     runnable.many(None, &mut xot)
 }

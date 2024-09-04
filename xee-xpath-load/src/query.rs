@@ -369,7 +369,8 @@ mod tests {
     #[test]
     fn test_one_query() {
         let static_context = StaticContext::default();
-        let mut queries = Queries::new(&static_context);
+        let dynamic_context = DynamicContext::empty(static_context);
+        let mut queries = Queries::new(&dynamic_context.static_context);
         let q = queries
             .one("1 + 2", |_, item| {
                 let v: IBig = item.to_atomic()?.try_into()?;
@@ -378,7 +379,7 @@ mod tests {
             .unwrap();
 
         let mut xot = Xot::new();
-        let dynamic_context = DynamicContext::empty(&static_context);
+
         let mut session = queries.session(&dynamic_context, &mut xot);
         let r = q.execute(&mut session, &1i64.into()).unwrap();
         assert_eq!(r, ibig!(3));
@@ -387,7 +388,8 @@ mod tests {
     #[test]
     fn test_one_query_recurse() -> Result<()> {
         let static_context = StaticContext::default();
-        let mut queries = Queries::new(&static_context);
+        let dynamic_context = DynamicContext::empty(static_context);
+        let mut queries = Queries::new(&dynamic_context.static_context);
         #[derive(Debug, PartialEq, Eq)]
         enum Expr {
             AnyOf(Box<Expr>),
@@ -421,7 +423,6 @@ mod tests {
         let xml2 = "<doc><result><value>A</value></result></doc>";
         let root2 = xot.parse(xml2).unwrap();
 
-        let dynamic_context = DynamicContext::empty(&static_context);
         let mut session = queries.session(&dynamic_context, &mut xot);
         let r = result_query.execute(&mut session, &Item::from(root))?;
         assert_eq!(r, Expr::AnyOf(Box::new(Expr::Value("A".to_string()))));
@@ -435,7 +436,8 @@ mod tests {
     #[test]
     fn test_map_query() {
         let static_context = StaticContext::default();
-        let mut queries = Queries::new(&static_context);
+        let dynamic_context = DynamicContext::empty(static_context);
+        let mut queries = Queries::new(&dynamic_context.static_context);
         let q = queries
             .one("1 + 2", |_, item| {
                 let v: IBig = item.to_atomic()?.try_into()?;
@@ -445,7 +447,7 @@ mod tests {
             .map(|v, _, _| Ok(v + ibig!(1)));
 
         let mut xot = Xot::new();
-        let dynamic_context = DynamicContext::empty(&static_context);
+
         let mut session = queries.session(&dynamic_context, &mut xot);
         let r = q.execute(&mut session, &1i64.into()).unwrap();
         assert_eq!(r, ibig!(4));
@@ -454,7 +456,8 @@ mod tests {
     #[test]
     fn test_map_query_clone() {
         let static_context = StaticContext::default();
-        let mut queries = Queries::new(&static_context);
+        let dynamic_context = DynamicContext::empty(static_context);
+        let mut queries = Queries::new(&dynamic_context.static_context);
         let q = queries
             .one("1 + 2", |_, item| {
                 let v: IBig = item.to_atomic()?.try_into()?;
@@ -465,7 +468,7 @@ mod tests {
         let q = q.clone();
 
         let mut xot = Xot::new();
-        let dynamic_context = DynamicContext::empty(&static_context);
+
         let mut session = queries.session(&dynamic_context, &mut xot);
         let r = q.execute(&mut session, &1i64.into()).unwrap();
         assert_eq!(r, ibig!(4));

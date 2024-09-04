@@ -14,7 +14,7 @@ pub type Variables = AHashMap<ast::Name, sequence::Sequence>;
 
 #[derive(Debug)]
 pub struct DynamicContext<'a> {
-    pub static_context: &'a StaticContext<'a>,
+    pub static_context: StaticContext<'a>,
     pub documents: xml::Documents,
     pub(crate) variables: Cow<'a, Variables>,
     current_datetime: chrono::DateTime<chrono::offset::FixedOffset>,
@@ -22,7 +22,7 @@ pub struct DynamicContext<'a> {
 
 impl<'a> DynamicContext<'a> {
     pub fn new(
-        static_context: &'a StaticContext<'a>,
+        static_context: StaticContext<'a>,
         documents: xml::Documents,
         variables: Cow<'a, Variables>,
     ) -> Self {
@@ -34,19 +34,16 @@ impl<'a> DynamicContext<'a> {
         }
     }
 
-    pub fn empty(static_context: &'a StaticContext<'a>) -> Self {
+    pub fn empty(static_context: StaticContext<'a>) -> Self {
         let documents = xml::Documents::new();
         Self::new(static_context, documents, Cow::Owned(Variables::default()))
     }
 
-    pub fn from_documents(
-        static_context: &'a StaticContext<'a>,
-        documents: xml::Documents,
-    ) -> Self {
+    pub fn from_documents(static_context: StaticContext<'a>, documents: xml::Documents) -> Self {
         Self::new(static_context, documents, Cow::Owned(Variables::default()))
     }
 
-    pub fn from_variables(static_context: &'a StaticContext<'a>, variables: &'a Variables) -> Self {
+    pub fn from_variables(static_context: StaticContext<'a>, variables: &'a Variables) -> Self {
         Self::new(
             static_context,
             xml::Documents::new(),

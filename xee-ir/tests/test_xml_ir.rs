@@ -102,7 +102,7 @@ fn test_generate_element() {
 
     // we now should run the generated code
     let static_context = StaticContext::default();
-    let context = DynamicContext::empty(&static_context);
+    let context = DynamicContext::empty(static_context);
 
     let mut xot = xot::Xot::new();
     let runnable = program.runnable(&context);

@@ -57,9 +57,9 @@ where
 
     let namespaces = Namespaces::new(Namespaces::default_namespaces(), "", "");
     let static_context = StaticContext::from_namespaces(namespaces);
-    let context = DynamicContext::from_documents(&static_context, documents);
+    let context = DynamicContext::from_documents(static_context, documents);
 
-    let xpath = parse(context.static_context, xpath)?;
+    let xpath = parse(&context.static_context, xpath)?;
     let result = xpath.runnable(&context).many_xot_node(root, &mut xot)?;
     assert_eq!(result, xot_nodes_to_items(&nodes));
     Ok(())

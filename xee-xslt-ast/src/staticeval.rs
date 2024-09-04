@@ -227,7 +227,7 @@ impl StaticEvaluator {
         let static_context = parser_context.into();
         let program = compile(&static_context, xpath)?;
         let dynamic_context =
-            DynamicContext::from_variables(&static_context, &self.static_global_variables);
+            DynamicContext::from_variables(static_context, &self.static_global_variables);
         let runnable = program.runnable(&dynamic_context);
         runnable.many(None, xot)
     }
