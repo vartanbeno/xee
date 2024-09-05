@@ -3,7 +3,7 @@ use std::fs::File;
 use std::io::prelude::*;
 use std::io::BufReader;
 use std::path::PathBuf;
-use xee_xpath::{atomic::Atomic, error::SpannedError, evaluate_root, sequence::Item};
+use xee_xpath_compiler::{atomic::Atomic, error::SpannedError, evaluate_root, sequence::Item};
 use xot::output::xml::Parameters;
 use xot::Xot;
 
@@ -26,7 +26,7 @@ enum Commands {
     },
 }
 
-fn main() -> xee_xpath::error::Result<()> {
+fn main() -> xee_xpath_compiler::error::Result<()> {
     let cli = Cli::parse();
     match cli.command {
         Commands::Xpath {

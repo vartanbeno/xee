@@ -2871,7 +2871,7 @@ version = "0.1.0"
 dependencies = [
  "ariadne",
  "clap",
- "xee-xpath",
+ "xee-xpath-compiler",
  "xot",
 ]
 
@@ -2965,27 +2965,9 @@ dependencies = [
  "tempfile",
  "thiserror",
  "xee-name",
- "xee-xpath",
+ "xee-xpath-compiler",
  "xee-xpath-load",
  "xee-xslt",
- "xot",
-]
-
-[[package]]
-name = "xee-xpath"
-version = "0.1.0"
-dependencies = [
- "ahash 0.8.11",
- "ibig",
- "insta",
- "ordered-float",
- "rust_decimal",
- "rust_decimal_macros",
- "thiserror",
- "xee-interpreter",
- "xee-ir",
- "xee-schema-type",
- "xee-xpath-ast",
  "xot",
 ]
 
@@ -3013,6 +2995,24 @@ dependencies = [
 ]
 
 [[package]]
+name = "xee-xpath-compiler"
+version = "0.1.0"
+dependencies = [
+ "ahash 0.8.11",
+ "ibig",
+ "insta",
+ "ordered-float",
+ "rust_decimal",
+ "rust_decimal_macros",
+ "thiserror",
+ "xee-interpreter",
+ "xee-ir",
+ "xee-schema-type",
+ "xee-xpath-ast",
+ "xot",
+]
+
+[[package]]
 name = "xee-xpath-lexer"
 version = "0.1.0"
 dependencies = [
@@ -3036,7 +3036,7 @@ dependencies = [
  "insta",
  "rust_decimal",
  "thiserror",
- "xee-xpath",
+ "xee-xpath-compiler",
  "xot",
 ]
 
@@ -3079,8 +3079,8 @@ dependencies = [
  "xee-ir",
  "xee-name",
  "xee-schema-type",
- "xee-xpath",
  "xee-xpath-ast",
+ "xee-xpath-compiler",
  "xee-xslt-ast",
  "xot",
 ]
@@ -3099,8 +3099,8 @@ dependencies = [
  "strum_macros",
  "thiserror",
  "xee-name",
- "xee-xpath",
  "xee-xpath-ast",
+ "xee-xpath-compiler",
  "xee-xslt-ast",
  "xot",
 ]

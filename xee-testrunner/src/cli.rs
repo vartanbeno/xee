@@ -3,8 +3,8 @@ use clap::{Parser, Subcommand};
 use std::cell::RefCell;
 use std::fs;
 use std::path::{Path, PathBuf};
-use xee_xpath::context::{DynamicContext, StaticContext};
-use xee_xpath::xml::Documents;
+use xee_xpath_compiler::context::{DynamicContext, StaticContext};
+use xee_xpath_compiler::xml::Documents;
 use xee_xpath_load::PathLoadable;
 use xot::Xot;
 

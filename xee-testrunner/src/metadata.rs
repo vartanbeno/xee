@@ -70,7 +70,7 @@ impl Loadable for Metadata {
 mod tests {
     use super::*;
 
-    use xee_xpath::context::{DynamicContext, StaticContext};
+    use xee_xpath_compiler::context::{DynamicContext, StaticContext};
     use xot::Xot;
 
     use crate::ns::{namespaces, XPATH_NS};

@@ -15,12 +15,12 @@ documentation = "https://docs.rs/xee-xslt"
 homepage = "https://github.com/Paligo/xee-xslt"
 
 [features]
-serde = ["dep:serde", "xee-xpath-ast/serde", "xee-xpath/serde", "xot/serde"]
+serde = ["dep:serde", "xee-xpath-ast/serde", "xee-xpath-compiler/serde", "xot/serde"]
 
 [dependencies]
 ahash = { workspace = true }
 xee-xpath-ast = { path = "../xee-xpath-ast" }
-xee-xpath = { path = "../xee-xpath" }
+xee-xpath-compiler = { path = "../xee-xpath-compiler" }
 xee-name = { path = "../xee-name" }
 thiserror = { workspace = true }
 xot = { workspace = true }

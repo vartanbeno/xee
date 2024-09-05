@@ -1,17 +1,15 @@
 use anyhow::Result;
 use std::{
-    borrow::BorrowMut,
     cell::RefCell,
     fs::File,
     io::{BufReader, Read},
     path::Path,
 };
 
-use xee_xpath::{
+use xee_xpath_compiler::{
     context::{DynamicContext, StaticContext},
     sequence::Item,
     xml::{Documents, Uri},
-    Namespaces,
 };
 use xot::Xot;
 

@@ -18,7 +18,7 @@ pub enum Error {
     #[error("Cannot represent as XML")]
     CannotRepresentAsXml,
     #[error("Xee XPath error")]
-    XeeXPath(#[from] xee_xpath::error::Error),
+    XeeXPath(#[from] xee_xpath_compiler::error::Error),
     #[error("Xot error")]
     Xot(#[from] xot::Error),
     #[error("IO error")]

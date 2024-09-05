@@ -1,4 +1,4 @@
-use xee_xpath::context::DynamicContext;
+use xee_xpath_compiler::context::DynamicContext;
 use xot::Xot;
 
 use crate::{

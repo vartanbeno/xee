@@ -1,6 +1,6 @@
 use crossterm::style::Stylize;
 
-use xee_xpath::error::Error;
+use xee_xpath_compiler::error::Error;
 
 use super::assert::Failure;
 

@@ -9,7 +9,7 @@ members = [
   "xee-xpath-lexer",
   "xee-xpath-ast",
   "xee-xpath-macros",
-  "xee-xpath",
+  "xee-xpath-compiler",
   "xee-xpath-load",
   "xee-xslt-ast",
   "xee-testrunner",

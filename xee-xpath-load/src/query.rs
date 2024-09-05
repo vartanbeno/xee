@@ -1,9 +1,9 @@
 use anyhow::Result;
 
-use xee_xpath::interpreter::Program;
-use xee_xpath::parse;
-use xee_xpath::sequence::Item;
-use xee_xpath::{context::DynamicContext, context::StaticContext};
+use xee_xpath_compiler::interpreter::Program;
+use xee_xpath_compiler::parse;
+use xee_xpath_compiler::sequence::Item;
+use xee_xpath_compiler::{context::DynamicContext, context::StaticContext};
 use xot::Xot;
 
 pub trait Convert<V>: Fn(&mut Session, &Item) -> Result<V> {}
@@ -364,7 +364,7 @@ mod tests {
     use std::cell::RefCell;
 
     use ibig::{ibig, IBig};
-    use xee_xpath::xml::Documents;
+    use xee_xpath_compiler::xml::Documents;
     use xot::Xot;
 
     use super::*;

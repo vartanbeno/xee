@@ -850,7 +850,7 @@ impl<'a> IrConverter<'a> {
 
     fn xpath(&mut self, xpath: &xee_xpath_ast::ast::ExprS) -> error::SpannedResult<Bindings> {
         let mut ir_converter =
-            xee_xpath::IrConverter::new(&mut self.variables, self.static_context);
+            xee_xpath_compiler::IrConverter::new(&mut self.variables, self.static_context);
         ir_converter.expr(xpath)
     }
 

@@ -1,7 +1,7 @@
 use std::path::Path;
 
 // use anyhow::Result;
-use xee_xpath::{context::Variables, sequence};
+use xee_xpath_compiler::{context::Variables, sequence};
 use xee_xpath_load::{convert_string, ContextLoadable, Loadable, Queries, Query};
 
 use crate::{
@@ -152,7 +152,7 @@ impl<E: Environment> ContextLoadable<Path> for TestCase<E> {
 mod tests {
     use std::path::PathBuf;
 
-    use xee_xpath::context::{DynamicContext, StaticContext};
+    use xee_xpath_compiler::context::{DynamicContext, StaticContext};
     use xot::Xot;
 
     use crate::{

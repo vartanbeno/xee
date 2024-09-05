@@ -4,7 +4,7 @@ use std::{
     fmt::{self, Display, Formatter},
     path::{Path, PathBuf},
 };
-use xee_xpath::{
+use xee_xpath_compiler::{
     context::{DynamicContext, StaticContext, Variables},
     parse, sequence,
     xml::Documents,

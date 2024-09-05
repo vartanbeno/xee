@@ -4,7 +4,7 @@ use std::fs::File;
 use std::io::{BufReader, Read};
 use std::path::{Path, PathBuf};
 
-use xee_xpath::xml::{Documents, Uri};
+use xee_xpath_compiler::xml::{Documents, Uri};
 use xee_xpath_load::{convert_string, Loadable, Queries, Query};
 use xot::Xot;
 

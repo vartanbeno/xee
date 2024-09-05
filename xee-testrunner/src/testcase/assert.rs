@@ -2,8 +2,8 @@ use ahash::AHashMap;
 use chrono::Offset;
 use std::borrow::Cow;
 use std::fmt;
-use xee_xpath::error::Result;
-use xee_xpath::{
+use xee_xpath_compiler::error::Result;
+use xee_xpath_compiler::{
     context::{DynamicContext, StaticContext},
     error::Error,
     occurrence::Occurrence,

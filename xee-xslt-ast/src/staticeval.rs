@@ -21,8 +21,10 @@ use std::cell::RefCell;
 
 use xot::{NameId, Node, Xot};
 
-use xee_xpath::{compile, context::DynamicContext, context::Variables, sequence::Sequence};
 use xee_xpath_ast::ast as xpath_ast;
+use xee_xpath_compiler::{
+    compile, context::DynamicContext, context::Variables, sequence::Sequence,
+};
 
 use crate::attributes::Attributes;
 use crate::content::Content;
@@ -225,11 +227,11 @@ impl StaticEvaluator {
         xpath: xpath_ast::XPath,
         content: &Content,
         xot: &mut Xot,
-    ) -> Result<Sequence, xee_xpath::error::SpannedError> {
+    ) -> Result<Sequence, xee_xpath_compiler::error::SpannedError> {
         let parser_context = content.parser_context();
         let static_context = parser_context.into();
         let program = compile(&static_context, xpath)?;
-        let documents = RefCell::new(xee_xpath::xml::Documents::new());
+        let documents = RefCell::new(xee_xpath_compiler::xml::Documents::new());
         let dynamic_context = DynamicContext::from_variables(
             &static_context,
             &documents,
@@ -260,7 +262,7 @@ mod tests {
     use super::*;
     use crate::names::Names;
 
-    use xee_xpath::sequence::Item;
+    use xee_xpath_compiler::sequence::Item;
 
     #[test]
     fn test_one_static_variable() {

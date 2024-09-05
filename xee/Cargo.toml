@@ -13,7 +13,7 @@ homepage = "https://github.com/Paligo/xee"
 
 [dependencies]
 xot = { workspace = true }
-xee-xpath = { path = "../xee-xpath" }
+xee-xpath-compiler = { path = "../xee-xpath-compiler" }
 clap = { workspace = true, features = ["derive"] }
 ariadne = "0.3.0"
 

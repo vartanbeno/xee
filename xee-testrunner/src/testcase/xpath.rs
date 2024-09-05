@@ -1,7 +1,7 @@
 use anyhow::Result;
 use std::{borrow::Cow, path::Path};
 use xee_name::Namespaces;
-use xee_xpath::{
+use xee_xpath_compiler::{
     context::{DynamicContext, StaticContext},
     parse,
 };
