@@ -70,13 +70,13 @@ impl Documents {
 
 /// A collection of compiled XPath expressions.
 #[derive(Debug)]
-pub struct XPath<'namespace> {
+pub struct XPaths<'namespace> {
     id: usize,
     static_context: xee_interpreter::context::StaticContext<'namespace>,
     xpath_programs: Vec<xee_interpreter::interpreter::Program>,
 }
 
-impl<'namespace> Default for XPath<'namespace> {
+impl<'namespace> Default for XPaths<'namespace> {
     fn default() -> Self {
         Self::new("")
     }
@@ -93,7 +93,7 @@ pub struct XPathHandle {
     id: usize,
 }
 
-impl<'namespace> XPath<'namespace> {
+impl<'namespace> XPaths<'namespace> {
     /// Create a new collection of compiled XPath expressions.
     ///
     /// The default namespace to use for unprefixed XML element names in
@@ -132,14 +132,14 @@ impl<'namespace> XPath<'namespace> {
 /// documents.
 #[derive(Debug)]
 pub struct Engine<'namespace> {
-    xpath: &'namespace XPath<'namespace>,
+    xpath: &'namespace XPaths<'namespace>,
     documents: Documents,
 }
 
 impl<'namespace> Engine<'namespace> {
     /// Create a new engine. This consists of reference to XPath expressions
     /// and a collection of documents that these XPath expressions can access.
-    pub fn new(xpath: &'namespace XPath, documents: Documents) -> Self {
+    pub fn new(xpath: &'namespace XPaths, documents: Documents) -> Self {
         Self { xpath, documents }
     }
 
