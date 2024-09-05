@@ -13,6 +13,13 @@ fn get_xpath_id() -> usize {
     XPATH_COUNTER.fetch_add(1, atomic::Ordering::SeqCst)
 }
 
+/// A collection of XML documents as can be used by XPath and XSLT.
+///
+/// This collection can be prepared before any XPath or XSLT processing begins.
+///
+/// Alternatively this collection can be added to incrementally during
+/// processing using the `fn:doc` function for instance. Once a document under
+/// a URL is present, it won't be changed.
 #[derive(Debug)]
 pub struct Documents {
     id: usize,
@@ -21,6 +28,13 @@ pub struct Documents {
     pub(crate) documents: RefCell<xee_interpreter::xml::Documents>,
 }
 
+/// A handle to a document.
+///
+/// This is an identifier into a [`Documents`] collection. You can
+/// freely copy it.
+///
+/// You can use it to evaluate XPath expressions on the document using
+/// the [`Engine`].
 #[derive(Debug, Clone, Copy, Eq, PartialEq, Hash)]
 pub struct DocumentHandle {
     documents_id: usize,
@@ -28,6 +42,7 @@ pub struct DocumentHandle {
 }
 
 impl Documents {
+    /// Create a new empty collection of documents.
     pub fn new() -> Self {
         Self {
             id: get_documents_id(),
@@ -37,6 +52,10 @@ impl Documents {
         }
     }
 
+    /// Load a string as an XML document. Designate it with a URI.
+    ///
+    /// Something may go wrong during processing of the XML document; this is
+    /// a [`xot::Error`].
     pub fn load_string(&mut self, uri: &str, xml: &str) -> Result<DocumentHandle, xot::Error> {
         let id = self.document_uris.len();
         let uri = xee_interpreter::xml::Uri::new(uri);
@@ -49,6 +68,7 @@ impl Documents {
     }
 }
 
+/// A collection of compiled XPath expressions.
 #[derive(Debug)]
 pub struct XPath<'namespace> {
     id: usize,
@@ -62,6 +82,11 @@ impl<'namespace> Default for XPath<'namespace> {
     }
 }
 
+/// A handle to a compiled XPath expression.
+///
+/// This is an identifier into a [`XPath`] collection. You can freely copy it.
+///
+/// You can use it to evaluate the expression using the [`Engine`].
 #[derive(Debug, Clone, Copy, Eq, PartialEq, Hash)]
 pub struct XPathHandle {
     xpath_id: usize,
@@ -69,6 +94,11 @@ pub struct XPathHandle {
 }
 
 impl<'namespace> XPath<'namespace> {
+    /// Create a new collection of compiled XPath expressions.
+    ///
+    /// The default namespace to use for unprefixed XML element names in
+    /// expressions is passed in. Leave it empty or use the default
+    /// implementation if you do not want elements to be namespaced.
     pub fn new(default_element_namespace: &'namespace str) -> Self {
         let namespaces = xee_xpath_ast::Namespaces::new(
             xee_xpath_ast::Namespaces::default_namespaces(),
@@ -83,6 +113,7 @@ impl<'namespace> XPath<'namespace> {
         }
     }
 
+    /// Compile an XPath expression.
     pub fn compile(
         &mut self,
         xpath: &str,
@@ -97,6 +128,8 @@ impl<'namespace> XPath<'namespace> {
     }
 }
 
+/// An engine that can execute XPath expressions against a collection of
+/// documents.
 #[derive(Debug)]
 pub struct Engine<'namespace> {
     xpath: &'namespace XPath<'namespace>,
@@ -104,15 +137,23 @@ pub struct Engine<'namespace> {
 }
 
 impl<'namespace> Engine<'namespace> {
+    /// Create a new engine. This consists of reference to XPath expressions
+    /// and a collection of documents that these XPath expressions can access.
     pub fn new(xpath: &'namespace XPath, documents: Documents) -> Self {
         Self { xpath, documents }
     }
 
+    /// Evaluate an XPath expression against a document.
+    ///
+    /// The handles indicate which XPath expression and which document to use.
+    /// If you use a handle for the wrong [`XPath`] or [`Documents`] collection,
+    /// this is an error.
     pub fn evaluate(
         &mut self,
         xpath_handle: XPathHandle,
         document_handle: DocumentHandle,
     ) -> Result<xee_interpreter::sequence::Sequence, xee_interpreter::error::SpannedError> {
+        // TODO: turn these into normal errors so that any application won't crash
         assert!(xpath_handle.xpath_id == self.xpath.id);
         let program = &self.xpath.xpath_programs[xpath_handle.id];
         assert!(document_handle.documents_id == self.documents.id);
