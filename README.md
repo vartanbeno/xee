@@ -90,10 +90,12 @@ The Xee project is composed of many crates. Here is a quick overview:
   XPath tests. It has also been generalized towards supporting running XSLT
   conformance tests, but that implementation is not complete yet.
 
-- `xee-xpath` - combines the underlying components to provide a high level API
-  to support XPath queries. Compiles XPath AST provided by `xee-xpath-ast` to
+- `xee-xpath-compiler` - Compiles XPath AST provided by `xee-xpath-ast` to
   IR supported by `xee-ir`, which it then uses to create bytecode for
   `xee-interpreter`.
+
+- `xee-xpath` - Combines the underlying components to provide a high level API
+  to support XPath queries.
 
 - `xee-xpath-ast` - Defines an XPath AST. Turns `xee-xpath-lexer` output into
   an XPath AST.
@@ -111,7 +113,7 @@ The Xee project is composed of many crates. Here is a quick overview:
   AST. These are used separately by `xee-xpath-macros` for its Rust bindings
   infrastructure.
 
-- `xee-xslt` - The start of compiler of the XSLT AST (defined by
+- `xee-xslt-compiler` - The start of compiler of the XSLT AST (defined by
   `xee-xslt-ast`) into `xee-ir` IR, so that XSLT code can be run by the
   `xee-interpreter` engine.
 
