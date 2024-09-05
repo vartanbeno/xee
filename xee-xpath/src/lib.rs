@@ -15,4 +15,5 @@ pub mod atomic;
 pub use high_level::{DocumentHandle, Documents, Engine, XPathHandle, XPaths};
 pub use sequence::Sequence;
 pub use xee_interpreter::atomic::Atomic;
+pub use xee_interpreter::error::Result;
 pub use xee_interpreter::sequence::Item;
