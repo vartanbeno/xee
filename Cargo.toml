@@ -6,6 +6,7 @@ members = [
   "xee-xpath-type",
   "xee-interpreter",
   "xee-ir",
+  "xee-xpath",
   "xee-xpath-lexer",
   "xee-xpath-ast",
   "xee-xpath-macros",

@@ -1,6 +1,6 @@
 use std::{cell::RefCell, sync::atomic};
 
-use crate::parse;
+use xee_xpath_compiler::parse;
 
 static XPATH_COUNTER: atomic::AtomicUsize = atomic::AtomicUsize::new(0);
 static DOCUMENTS_COUNTER: atomic::AtomicUsize = atomic::AtomicUsize::new(0);

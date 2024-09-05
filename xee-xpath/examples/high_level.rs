@@ -1,4 +1,4 @@
-use xee_xpath_compiler::high_level::{Documents, Engine, XPath};
+use xee_xpath::{Documents, Engine, XPath};
 
 fn main() {
     let mut xpath = XPath::default();

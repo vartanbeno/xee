@@ -1,0 +1,32 @@
+[package]
+name = "xee-xpath"
+version = "0.1.0"
+edition = "2021"
+authors = ["Martijn Faassen <faassen@startifact.com>"]
+keywords = ["xml", "xpath"]
+license = "Apache-2.0"
+description = "XPath 3.1 library API"
+repository = "http://github.com/Paligo/xee"
+readme = "README.md"
+documentation = "https://docs.rs/xee-xpath"
+homepage = "https://github.com/Paligo/xee"
+
+[features]
+serde = ["xee-xpath-ast/serde", "xee-interpreter/serde"]
+
+[dependencies]
+ahash = { workspace = true }
+ordered-float = { workspace = true }
+rust_decimal = { workspace = true }
+ibig = { workspace = true }
+thiserror = { workspace = true }
+xot = { workspace = true }
+xee-xpath-compiler = { path = "../xee-xpath-compiler" }
+xee-xpath-ast = { path = "../xee-xpath-ast" }
+xee-schema-type = { path = "../xee-schema-type" }
+xee-interpreter = { path = "../xee-interpreter" }
+xee-ir = { path = "../xee-ir" }
+
+[dev-dependencies]
+insta = { version = "1.29.0", features = ["yaml", "glob"] }
+rust_decimal_macros = { workspace = true }
