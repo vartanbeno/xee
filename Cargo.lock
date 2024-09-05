@@ -2967,7 +2967,7 @@ dependencies = [
  "xee-name",
  "xee-xpath-compiler",
  "xee-xpath-load",
- "xee-xslt",
+ "xee-xslt-compiler",
  "xot",
 ]
 
@@ -3065,27 +3065,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "xee-xslt"
-version = "0.1.0"
-dependencies = [
- "ahash 0.8.11",
- "ibig",
- "insta",
- "ordered-float",
- "rust_decimal",
- "rust_decimal_macros",
- "thiserror",
- "xee-interpreter",
- "xee-ir",
- "xee-name",
- "xee-schema-type",
- "xee-xpath-ast",
- "xee-xpath-compiler",
- "xee-xslt-ast",
- "xot",
-]
-
-[[package]]
 name = "xee-xslt-ast"
 version = "0.1.0"
 dependencies = [
@@ -3099,6 +3078,27 @@ dependencies = [
  "strum_macros",
  "thiserror",
  "xee-name",
+ "xee-xpath-ast",
+ "xee-xpath-compiler",
+ "xee-xslt-ast",
+ "xot",
+]
+
+[[package]]
+name = "xee-xslt-compiler"
+version = "0.1.0"
+dependencies = [
+ "ahash 0.8.11",
+ "ibig",
+ "insta",
+ "ordered-float",
+ "rust_decimal",
+ "rust_decimal_macros",
+ "thiserror",
+ "xee-interpreter",
+ "xee-ir",
+ "xee-name",
+ "xee-schema-type",
  "xee-xpath-ast",
  "xee-xpath-compiler",
  "xee-xslt-ast",

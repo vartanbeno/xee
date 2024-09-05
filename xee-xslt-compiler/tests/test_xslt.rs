@@ -1,7 +1,7 @@
 use std::fmt::Write;
 
 use xee_interpreter::{error, sequence::Sequence};
-use xee_xslt::evaluate;
+use xee_xslt_compiler::evaluate;
 use xot::Xot;
 
 fn xml(xot: &Xot, sequence: Sequence) -> String {

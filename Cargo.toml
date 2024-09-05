@@ -13,7 +13,7 @@ members = [
   "xee-xpath-load",
   "xee-xslt-ast",
   "xee-testrunner",
-  "xee-xslt",
+  "xee-xslt-compiler",
 ]
 # even if all crates are set to edition 2021, we still need to force the
 # resolver to 2
