@@ -2,15 +2,17 @@ use std::{cell::RefCell, sync::atomic};
 
 use xee_xpath_compiler::parse;
 
-static XPATH_COUNTER: atomic::AtomicUsize = atomic::AtomicUsize::new(0);
+use crate::sequence::Sequence;
+
+static XPATHS_COUNTER: atomic::AtomicUsize = atomic::AtomicUsize::new(0);
 static DOCUMENTS_COUNTER: atomic::AtomicUsize = atomic::AtomicUsize::new(0);
 
 fn get_documents_id() -> usize {
     DOCUMENTS_COUNTER.fetch_add(1, atomic::Ordering::SeqCst)
 }
 
-fn get_xpath_id() -> usize {
-    XPATH_COUNTER.fetch_add(1, atomic::Ordering::SeqCst)
+fn get_xpaths_id() -> usize {
+    XPATHS_COUNTER.fetch_add(1, atomic::Ordering::SeqCst)
 }
 
 /// A collection of XML documents as can be used by XPath and XSLT.
@@ -84,12 +86,12 @@ impl<'namespace> Default for XPaths<'namespace> {
 
 /// A handle to a compiled XPath expression.
 ///
-/// This is an identifier into a [`XPath`] collection. You can freely copy it.
+/// This is an identifier into a [`XPaths`] collection. You can freely copy it.
 ///
 /// You can use it to evaluate the expression using the [`Engine`].
 #[derive(Debug, Clone, Copy, Eq, PartialEq, Hash)]
 pub struct XPathHandle {
-    xpath_id: usize,
+    xpaths_id: usize,
     id: usize,
 }
 
@@ -107,7 +109,7 @@ impl<'namespace> XPaths<'namespace> {
         );
         let static_context = xee_interpreter::context::StaticContext::from_namespaces(namespaces);
         Self {
-            id: get_xpath_id(),
+            id: get_xpaths_id(),
             static_context,
             xpath_programs: Vec::new(),
         }
@@ -122,7 +124,7 @@ impl<'namespace> XPaths<'namespace> {
         let program = parse(&self.static_context, xpath)?;
         self.xpath_programs.push(program);
         Ok(XPathHandle {
-            xpath_id: self.id,
+            xpaths_id: self.id,
             id,
         })
     }
@@ -132,30 +134,30 @@ impl<'namespace> XPaths<'namespace> {
 /// documents.
 #[derive(Debug)]
 pub struct Engine<'namespace> {
-    xpath: &'namespace XPaths<'namespace>,
+    xpaths: &'namespace XPaths<'namespace>,
     documents: Documents,
 }
 
 impl<'namespace> Engine<'namespace> {
     /// Create a new engine. This consists of reference to XPath expressions
     /// and a collection of documents that these XPath expressions can access.
-    pub fn new(xpath: &'namespace XPaths, documents: Documents) -> Self {
-        Self { xpath, documents }
+    pub fn new(xpaths: &'namespace XPaths, documents: Documents) -> Self {
+        Self { xpaths, documents }
     }
 
     /// Evaluate an XPath expression against a document.
     ///
     /// The handles indicate which XPath expression and which document to use.
-    /// If you use a handle for the wrong [`XPath`] or [`Documents`] collection,
+    /// If you use a handle for the wrong [`XPaths`] or [`Documents`] collection,
     /// this is an error.
     pub fn evaluate(
         &mut self,
         xpath_handle: XPathHandle,
         document_handle: DocumentHandle,
-    ) -> Result<xee_interpreter::sequence::Sequence, xee_interpreter::error::SpannedError> {
+    ) -> Result<Sequence, xee_interpreter::error::SpannedError> {
         // TODO: turn these into normal errors so that any application won't crash
-        assert!(xpath_handle.xpath_id == self.xpath.id);
-        let program = &self.xpath.xpath_programs[xpath_handle.id];
+        assert!(xpath_handle.xpaths_id == self.xpaths.id);
+        let program = &self.xpaths.xpath_programs[xpath_handle.id];
         assert!(document_handle.documents_id == self.documents.id);
         let document_uri = &self.documents.document_uris[document_handle.id];
         let root = {
@@ -164,11 +166,13 @@ impl<'namespace> Engine<'namespace> {
             document.root()
         };
         let dynamic_context = xee_interpreter::context::DynamicContext::from_documents(
-            &self.xpath.static_context,
+            &self.xpaths.static_context,
             &self.documents.documents,
         );
-        program
-            .runnable(&dynamic_context)
-            .many_xot_node(root, &mut self.documents.xot)
+        Ok(Sequence::new(
+            program
+                .runnable(&dynamic_context)
+                .many_xot_node(root, &mut self.documents.xot)?,
+        ))
     }
 }

@@ -10,4 +10,5 @@ mod sequence_type;
 
 pub(crate) use item::AtomizedItemIter;
 pub use item::Item;
+pub use sequence_core::ItemIter;
 pub use sequence_core::Sequence;

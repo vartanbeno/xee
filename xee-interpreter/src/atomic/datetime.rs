@@ -63,6 +63,10 @@ impl From<YearMonthDuration> for Atomic {
     }
 }
 
+/// A Duration is a combination of a [`YearMonthDuration`]` and
+/// [`chrono::Duration`].
+///
+/// It represents `xs:duration`
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
 pub struct Duration {
     pub(crate) year_month: YearMonthDuration,
@@ -122,6 +126,10 @@ impl TryFrom<Atomic> for chrono::Duration {
     }
 }
 
+/// A `NaiveDateTimeWithOffset` is a combination of a [`chrono::NaiveDateTime`] and
+/// an optional [`chrono::FixedOffset`].
+///
+/// It represents `xs:dateTime`
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
 pub struct NaiveDateTimeWithOffset {
     pub(crate) date_time: chrono::NaiveDateTime,
@@ -180,6 +188,10 @@ impl NaiveDateTimeWithOffset {
     }
 }
 
+/// A `NaiveTimeWithOffset` is a combination of a [`chrono::NaiveTime`] and
+/// an optional [`chrono::FixedOffset`].
+///
+/// It represents `xs:time`
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
 pub struct NaiveTimeWithOffset {
     pub(crate) time: chrono::NaiveTime,
@@ -223,6 +235,10 @@ impl From<NaiveTimeWithOffset> for Atomic {
     }
 }
 
+/// A `NaiveDateWithOffset` is a combination of a [`chrono::NaiveDate`] and
+/// an optional [`chrono::FixedOffset`].
+///
+/// It represents `xs:date`
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
 pub struct NaiveDateWithOffset {
     pub(crate) date: chrono::NaiveDate,
@@ -263,6 +279,10 @@ impl From<NaiveDateWithOffset> for Atomic {
     }
 }
 
+/// A `GYearMonth` is a combination of a year and a month, and an optional
+/// [`chrono::FixedOffset`].
+///
+/// It represents `xs:gYearMonth`
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
 pub struct GYearMonth {
     pub(crate) year: i32,
@@ -286,6 +306,10 @@ impl From<GYearMonth> for Atomic {
     }
 }
 
+/// A `GYear` is a combination of a year and an optional
+/// [`chrono::FixedOffset`].
+///
+/// It represents `xs:gYear`
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
 pub struct GYear {
     pub(crate) year: i32,
@@ -304,6 +328,10 @@ impl From<GYear> for Atomic {
     }
 }
 
+/// A `GMonthDay` is a combination of a month and a day, and an optional
+/// [`chrono::FixedOffset`].
+///
+/// It represents `xs:gMonthDay`
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
 pub struct GMonthDay {
     pub(crate) month: u32,
@@ -323,6 +351,10 @@ impl From<GMonthDay> for Atomic {
     }
 }
 
+/// A `GDay` is a combination of a day and an optional
+/// [`chrono::FixedOffset`].
+///
+/// It represents `xs:gDay`
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
 pub struct GDay {
     pub(crate) day: u32,
@@ -341,6 +373,10 @@ impl From<GDay> for Atomic {
     }
 }
 
+/// A `GMonth` is a combination of a month and an optional
+/// [`chrono::FixedOffset`].
+///
+/// It represents `xs:gMonth`
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
 pub struct GMonth {
     pub(crate) month: u32,

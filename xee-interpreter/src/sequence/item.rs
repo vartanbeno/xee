@@ -6,20 +6,32 @@ use crate::error;
 use crate::function;
 use crate::stack;
 
+/// An XPath item. These are the items that make up an XPath sequence.
 #[derive(Debug, Clone, PartialEq)]
 pub enum Item {
+    /// An atomic value.
+    ///
+    /// One of the value types defined by XPath, indicated by an `xs:*` type
+    /// such as `xs:integer` or `xs:string`.
     Atomic(atomic::Atomic),
-    Function(Rc<function::Function>),
+    /// A node in an XML document.
+    ///
+    /// This is defined using the [`xot`] library.
     Node(xot::Node),
+    /// An XPath function type.
+    Function(Rc<function::Function>),
 }
 
 impl Item {
+    /// Try to get the atomic value of the item.
     pub fn to_atomic(&self) -> error::Result<atomic::Atomic> {
         match self {
             Item::Atomic(a) => Ok(a.clone()),
             _ => Err(error::Error::XPTY0004),
         }
     }
+
+    /// Try to get the node value of the item.
     pub fn to_node(&self) -> error::Result<xot::Node> {
         match self {
             Item::Node(n) => Ok(*n),
@@ -27,6 +39,7 @@ impl Item {
         }
     }
 
+    /// Try to get the function value of the item.
     pub fn to_function(&self) -> error::Result<Rc<function::Function>> {
         match self {
             Item::Function(f) => Ok(f.clone()),
@@ -34,6 +47,7 @@ impl Item {
         }
     }
 
+    /// Try to get the value as an XPath Map.
     pub fn to_map(&self) -> error::Result<function::Map> {
         match self {
             Item::Function(function) => match function.as_ref() {
@@ -44,6 +58,7 @@ impl Item {
         }
     }
 
+    /// Try to get the value as an XPath Array.
     pub fn to_array(&self) -> error::Result<function::Array> {
         match self {
             Item::Function(function) => match function.as_ref() {
@@ -54,6 +69,19 @@ impl Item {
         }
     }
 
+    /// Obtain the [effective boolean
+    /// value](https://www.w3.org/TR/xpath-31/#id-ebv) of the item.
+    ///
+    /// - If the item is a node, it's true.
+    ///
+    /// - If the item is a boolean, it's the value of the boolean.
+    ///
+    /// - If the item is a string, it's false if it's empty, otherwise true.
+    ///
+    /// - If the item is a numeric type, it's false if it's NaN or zero,
+    ///   otherwise true.
+    ///
+    /// - Functions are always errors.
     pub fn effective_boolean_value(&self) -> error::Result<bool> {
         match self {
             Item::Atomic(a) => a.effective_boolean_value(),
@@ -65,6 +93,15 @@ impl Item {
         }
     }
 
+    /// Construct the string value.
+    ///
+    /// - For an atomic value, it casts it to a string using the canonical
+    ///   lexical representation rules as defined by XML Schema.
+    ///
+    /// - For a node, it returns the [string value of the
+    ///   node](https://www.w3.org/TR/xpath-31/#id-typed-value).
+    ///
+    /// - For a function, it errors.
     pub fn string_value(&self, xot: &Xot) -> error::Result<String> {
         match self {
             Item::Atomic(atomic) => atomic.string_value(),
@@ -73,6 +110,7 @@ impl Item {
         }
     }
 
+    /// Check whether this item is represents an XPath Map.
     pub(crate) fn is_map(&self) -> bool {
         match self {
             Item::Function(function) => matches!(function.as_ref(), function::Function::Map(_)),
@@ -80,6 +118,7 @@ impl Item {
         }
     }
 
+    /// Check whether this item is represents an XPath Array.
     pub(crate) fn is_array(&self) -> bool {
         match self {
             Item::Function(function) => matches!(function.as_ref(), function::Function::Array(_)),

@@ -24,32 +24,84 @@ use super::{AtomicCompare, OpGt};
 // operation. Anything bigger we stuff in an Rc
 
 // https://www.w3.org/TR/xpath-datamodel-31/#xs-types
+
+/// An atomic value.
+///
+/// These are designated with a `xs:` namespace prefix and are described by the
+/// [XPath data model](https://www.w3.org/TR/xpath-datamodel-31/#xs-types).
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
 pub enum Atomic {
+    /// xs:untypedAtomic
     Untyped(Rc<str>),
+    /// a string type such as xs:string, xs:token, etc
     String(StringType, Rc<str>),
+    /// xs:float
+    ///
+    /// This is an [`ordered_float::OrderedFloat`]
     Float(OrderedFloat<f32>),
+    /// xs:double
+    ///
+    /// This is an [`ordered_float::OrderedFloat`]
     Double(OrderedFloat<f64>),
+    /// xs:decimal
+    ///
+    /// This is a [`rust_decimal::Decimal`]
     Decimal(Rc<Decimal>),
+    /// xs integer types (xs:integer, xs:long, xs:int, etc)
+    ///
+    /// This is an [`ibig::IBig`]
     Integer(IntegerType, Rc<IBig>),
+    /// xs:duration
     Duration(Rc<Duration>),
+    /// xs:yearMonthDuration
     YearMonthDuration(YearMonthDuration),
+    /// xs:dayTimeDuration
+    ///
+    /// This is a [`chrono::Duration`]
     DayTimeDuration(Rc<chrono::Duration>),
+    /// xs:dateTime
     DateTime(Rc<NaiveDateTimeWithOffset>),
+    /// xs:dateTimeStamp
+    ///
+    /// This is a [`chrono::DateTime`] with a fixed offset
     DateTimeStamp(Rc<chrono::DateTime<chrono::FixedOffset>>),
+    /// xs:time
     Time(Rc<NaiveTimeWithOffset>),
+    /// xs:date
     Date(Rc<NaiveDateWithOffset>),
+    /// xs:gYearMonth
     GYearMonth(Rc<GYearMonth>),
+    /// xs:gYear
     GYear(Rc<GYear>),
+    /// xs:gMonthDay
     GMonthDay(Rc<GMonthDay>),
+    /// xs:gMonth
     GDay(Rc<GDay>),
+    /// xs:gDay
     GMonth(Rc<GMonth>),
+    /// xs:boolean
     Boolean(bool),
+    /// xs binary types (xs:hexBinary, xs:base64Binary)
     Binary(BinaryType, Rc<[u8]>),
+    /// xs:QName
     QName(Rc<Name>),
 }
 
 impl Atomic {
+    /// The [effective boolean
+    /// value](https://www.w3.org/TR/xpath-functions-31/#func-boolean) of an
+    /// atomic value.
+    ///
+    /// - xs:boolean are taken as is.
+    ///
+    /// - xs:string is false if empty, otherwise true
+    /// - xs:untypedAtomic is false if empty, otherwise true
+    /// - any xs integer values are false if zero, otherwise true
+    /// - xs:decimal is false if zero, otherwise true
+    /// - xs:float is false if zero or NaN, otherwise true
+    /// - xs:double is false if zero or NaN, otherwise true
+    ///
+    /// All other types are not convertible to a boolean.
     pub(crate) fn effective_boolean_value(&self) -> error::Result<bool> {
         match self {
             Atomic::Boolean(b) => Ok(*b),
@@ -77,15 +129,23 @@ impl Atomic {
         }
     }
 
+    /// Get the string if this atomic value is a xs:string
     pub fn to_string(&self) -> error::Result<String> {
         Ok(self.to_str()?.to_string())
     }
 
+    /// Get the string value of the atomic value.
+    ///
+    /// This is the canonical representation of the atomic value
+    /// according to xs:schema.
     pub(crate) fn string_value(&self) -> error::Result<String> {
         Ok(self.clone().into_canonical())
     }
 
-    pub(crate) fn is_nan(&self) -> bool {
+    /// Check whether this value is the NaN value.
+    ///  
+    /// Only xs:float and xs:double can be NaN.
+    pub fn is_nan(&self) -> bool {
         match self {
             Atomic::Float(f) => f.is_nan(),
             Atomic::Double(d) => d.is_nan(),
@@ -93,7 +153,10 @@ impl Atomic {
         }
     }
 
-    pub(crate) fn is_infinite(&self) -> bool {
+    /// Check whether this value is infinite.
+    ///
+    /// Only xs:float and xs:double can be infinite.
+    pub fn is_infinite(&self) -> bool {
         match self {
             Atomic::Float(f) => f.is_infinite(),
             Atomic::Double(d) => d.is_infinite(),
@@ -101,7 +164,10 @@ impl Atomic {
         }
     }
 
-    pub(crate) fn is_zero(&self) -> bool {
+    /// Check whether this value is zero.
+    ///
+    /// Only numeric types can be zero.
+    pub fn is_zero(&self) -> bool {
         match self {
             Atomic::Float(f) => f.is_zero(),
             Atomic::Double(d) => d.is_zero(),
@@ -111,7 +177,11 @@ impl Atomic {
         }
     }
 
-    pub(crate) fn is_numeric(&self) -> bool {
+    /// Check whether this is a numeric value.
+    ///
+    /// That is, xs:float, xs:double, xs:decimal, xs:integer and any
+    /// types derived from xs:integer such as xs:int, xs:long, etc.
+    pub fn is_numeric(&self) -> bool {
         matches!(
             self,
             Atomic::Float(_) | Atomic::Double(_) | Atomic::Decimal(_) | Atomic::Integer(_, _)
@@ -218,8 +288,8 @@ impl Atomic {
     /// which compares the actual data, and different types are always distinct
     /// in that case.
     ///
-    /// simple equal uses a comparison with the codepoint collation UTC as the
-    /// timezone.
+    /// Simple equal uses a comparison with the codepoint collation, and UTC as
+    /// the timezone.
     pub fn simple_equal(&self, other: &Atomic) -> bool {
         self.equal(other, &Collation::CodePoint, chrono::offset::Utc.fix())
     }

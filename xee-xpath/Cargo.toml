@@ -15,6 +15,7 @@ homepage = "https://github.com/Paligo/xee"
 serde = ["xee-xpath-ast/serde", "xee-interpreter/serde"]
 
 [dependencies]
+chrono = { workspace = true }
 ahash = { workspace = true }
 ordered-float = { workspace = true }
 rust_decimal = { workspace = true }

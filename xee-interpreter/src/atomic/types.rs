@@ -37,20 +37,32 @@ impl IntegerType {
     }
 }
 
+/// The types of string supported as atomic values.
 #[allow(clippy::upper_case_acronyms)]
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 pub enum StringType {
+    /// xs:string
     String,
+    /// xs:normalizedString
     NormalizedString,
+    /// xs:token
     Token,
+    /// xs:language
     Language,
+    /// xs:NMTOKEN
     NMTOKEN,
+    /// xs:Name
     Name,
+    /// xs:NCName
     NCName,
+    /// xs:ID
     ID,
+    /// xs:IDREF
     IDREF,
+    /// xs:ENTITY
     ENTITY,
     // the qt3 tests make the assumption AnyURI is a type of string
+    /// xs:anyURI
     AnyURI,
 }
 
@@ -72,9 +84,12 @@ impl StringType {
     }
 }
 
+/// The types of binary supported as atomic values.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 pub enum BinaryType {
+    /// xs:base64Binary
     Base64,
+    /// xs:hexBinary
     Hex,
 }
 
