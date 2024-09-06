@@ -46,8 +46,7 @@ impl Sequence {
 
     pub(crate) fn to_array(&self) -> error::Result<function::Array> {
         let mut array = Vec::new();
-        for item in self.items() {
-            let item = item?;
+        for item in self.items()? {
             array.push(item.into());
         }
         Ok(array.into())
@@ -65,31 +64,33 @@ impl Sequence {
         }
     }
 
-    pub fn items(&self) -> ItemIter {
-        ItemIter {
-            value_iter: self.stack_value.items(),
-        }
+    pub fn items(&self) -> error::Result<ItemIter> {
+        Ok(ItemIter {
+            value_iter: self.stack_value.items()?,
+        })
     }
 
-    pub fn nodes(&self) -> NodeIter {
-        NodeIter {
-            value_iter: self.stack_value.items(),
-        }
+    pub fn nodes(&self) -> error::Result<NodeIter> {
+        Ok(NodeIter {
+            value_iter: self.stack_value.items()?,
+        })
     }
 
-    pub fn map_iter(&self) -> impl Iterator<Item = error::Result<function::Map>> {
-        self.items().map(|item| item?.to_map())
+    pub fn map_iter(&self) -> error::Result<impl Iterator<Item = error::Result<function::Map>>> {
+        Ok(self.items()?.map(|item| item.to_map()))
     }
 
-    pub fn array_iter(&self) -> impl Iterator<Item = error::Result<function::Array>> {
-        self.items().map(|item| item?.to_array())
+    pub fn array_iter(
+        &self,
+    ) -> error::Result<impl Iterator<Item = error::Result<function::Array>>> {
+        Ok(self.items()?.map(|item| item.to_array()))
     }
 
     pub fn elements<'a>(
         &self,
         xot: &'a Xot,
-    ) -> impl Iterator<Item = error::Result<xot::Node>> + 'a {
-        self.nodes().map(|n| match n {
+    ) -> error::Result<impl Iterator<Item = error::Result<xot::Node>> + 'a> {
+        Ok(self.nodes()?.map(|n| match n {
             Ok(n) => {
                 if xot.is_element(n) {
                     Ok(n)
@@ -98,7 +99,7 @@ impl Sequence {
                 }
             }
             Err(n) => Err(n),
-        })
+        }))
     }
 
     pub fn atomized<'a>(&self, xot: &'a Xot) -> stack::AtomizedIter<'a> {
@@ -116,10 +117,10 @@ impl Sequence {
         }
     }
 
-    pub fn items_atomic(&self) -> ItemAtomicIter {
-        ItemAtomicIter {
-            value_iter: self.stack_value.items(),
-        }
+    pub fn items_atomic(&self) -> error::Result<ItemAtomicIter> {
+        Ok(ItemAtomicIter {
+            value_iter: self.stack_value.items()?,
+        })
     }
 
     pub fn effective_boolean_value(&self) -> error::Result<bool> {
@@ -149,9 +150,7 @@ impl Sequence {
         if self.len() != other.len() {
             return Ok(false);
         }
-        for (a, b) in self.items().zip(other.items()) {
-            let a = a?;
-            let b = b?;
+        for (a, b) in self.items()?.zip(other.items()?) {
             match (a, b) {
                 (Item::Atomic(a), Item::Atomic(b)) => {
                     if !a.deep_equal(&b, collation, default_offset) {
@@ -195,8 +194,8 @@ impl Sequence {
         // we get atoms not by atomizing, but by trying to turn each
         // item into an atom. If it's not an atom, it's not comparable
         // by eq, lt, gt, etc.
-        let a_atoms = self.items_atomic();
-        let mut b_atoms = other.items_atomic();
+        let a_atoms = self.items_atomic()?;
+        let mut b_atoms = other.items_atomic()?;
         for a_atom in a_atoms {
             let b_atom = b_atoms.next();
             let a_atom = a_atom?;
@@ -257,10 +256,10 @@ impl Sequence {
         // sufficiently different we don't want to try to unify them.
 
         let collation = context.static_context.collation(collation)?;
-        let items = self.items().collect::<error::Result<Vec<_>>>()?;
+        let items = self.items()?.collect::<Vec<_>>();
         let keys = self
-            .items()
-            .map(|key| get(&key?))
+            .items()?
+            .map(|key| get(&key))
             .collect::<error::Result<Vec<_>>>()?;
 
         let mut keys_and_items = keys.into_iter().zip(items).collect::<Vec<_>>();
@@ -382,11 +381,45 @@ pub struct ItemIter {
     value_iter: stack::ValueIter,
 }
 
+impl occurrence::Occurrence<Item, error::Error> for ItemIter {
+    fn one(&mut self) -> Result<Item, error::Error> {
+        if let Some(one) = self.next() {
+            if self.next().is_none() {
+                Ok(one)
+            } else {
+                Err(self.error())
+            }
+        } else {
+            Err(self.error())
+        }
+    }
+
+    fn option(&mut self) -> Result<Option<Item>, error::Error> {
+        if let Some(one) = self.next() {
+            if self.next().is_none() {
+                Ok(Some(one))
+            } else {
+                Err(self.error())
+            }
+        } else {
+            Ok(None)
+        }
+    }
+
+    fn many(&mut self) -> Result<Vec<Item>, error::Error> {
+        Ok(self.collect::<Vec<_>>())
+    }
+
+    fn error(&self) -> error::Error {
+        error::Error::XPTY0004
+    }
+}
+
 impl Iterator for ItemIter {
-    type Item = error::Result<sequence::Item>;
+    type Item = sequence::Item;
 
     fn next(&mut self) -> Option<Self::Item> {
-        self.value_iter.next().map(|r| r.map(sequence::Item::from))
+        self.value_iter.next().map(|r| r.into())
     }
 }
 
@@ -399,11 +432,7 @@ impl Iterator for NodeIter {
 
     fn next(&mut self) -> Option<Self::Item> {
         let next = self.value_iter.next();
-        match next {
-            None => None,
-            Some(Err(e)) => Some(Err(e)),
-            Some(Ok(v)) => Some(v.to_node()),
-        }
+        next.map(|v| v.to_node())
     }
 }
 
@@ -428,6 +457,34 @@ where
     V: std::fmt::Debug,
     U: Iterator<Item = error::Result<V>>,
 {
+    fn one(&mut self) -> Result<V, error::Error> {
+        if let Some(one) = self.next() {
+            if self.next().is_none() {
+                Ok(one?)
+            } else {
+                Err(self.error())
+            }
+        } else {
+            Err(self.error())
+        }
+    }
+
+    fn option(&mut self) -> Result<Option<V>, error::Error> {
+        if let Some(one) = self.next() {
+            if self.next().is_none() {
+                Ok(Some(one?))
+            } else {
+                Err(self.error())
+            }
+        } else {
+            Ok(None)
+        }
+    }
+
+    fn many(&mut self) -> Result<Vec<V>, error::Error> {
+        self.collect::<Result<Vec<_>, _>>()
+    }
+
     fn error(&self) -> error::Error {
         error::Error::XPTY0004
     }
@@ -441,19 +498,20 @@ impl Iterator for ItemAtomicIter {
     type Item = error::Result<atomic::Atomic>;
 
     fn next(&mut self) -> Option<Self::Item> {
-        self.value_iter.next().map(|r| r?.to_atomic())
+        self.value_iter.next().map(|r| r.to_atomic())
     }
 }
 
 #[cfg(test)]
 mod tests {
+    use occurrence::Occurrence;
+
     use super::*;
-    use crate::occurrence::Occurrence;
 
     #[test]
     fn test_one() {
         let item = sequence::Item::from(atomic::Atomic::from(true));
         let sequence = Sequence::from(vec![item.clone()]);
-        assert_eq!(sequence.items().one().unwrap(), item);
+        assert_eq!(sequence.items().unwrap().one().unwrap(), item);
     }
 }

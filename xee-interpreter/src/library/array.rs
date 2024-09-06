@@ -138,7 +138,7 @@ fn filter(
     for sequence in array.iter() {
         let include =
             interpreter.call_function_with_arguments(function.clone(), &[sequence.clone()])?;
-        let include: atomic::Atomic = include.items().one()?.to_atomic()?;
+        let include: atomic::Atomic = include.items()?.one()?.to_atomic()?;
         let include: bool = include.try_into()?;
         if include {
             result.push(sequence.clone());
@@ -307,12 +307,11 @@ fn flatten(input: &sequence::Sequence) -> error::Result<sequence::Sequence> {
 
 fn flatten_helper(input: &sequence::Sequence) -> error::Result<sequence::Sequence> {
     let mut result = vec![];
-    for item in input.items() {
-        let item = item?;
+    for item in input.items()? {
         if let Ok(array) = item.to_array() {
             for sequence in array.iter() {
-                for item in flatten_helper(sequence)?.items() {
-                    result.push(item?.clone());
+                for item in flatten_helper(sequence)?.items()? {
+                    result.push(item.clone());
                 }
             }
         } else {

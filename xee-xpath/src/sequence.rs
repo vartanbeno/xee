@@ -12,11 +12,11 @@ impl Sequence {
     }
 }
 
-impl IntoIterator for Sequence {
-    type Item = xee_interpreter::error::Result<Item>;
-    type IntoIter = xee_interpreter::sequence::ItemIter;
+// impl IntoIterator for Sequence {
+//     type Item = xee_interpreter::error::Result<Item>;
+//     type IntoIter = xee_interpreter::sequence::ItemIter;
 
-    fn into_iter(self) -> Self::IntoIter {
-        self.sequence.items()
-    }
-}
+//     fn into_iter(self) -> Self::IntoIter {
+//         self.sequence.items()
+//     }
+// }

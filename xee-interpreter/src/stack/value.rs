@@ -12,6 +12,7 @@ use crate::atomic::AtomicCompare;
 use crate::context;
 use crate::error;
 use crate::function;
+use crate::occurrence;
 use crate::sequence;
 use crate::stack;
 use crate::xml;
@@ -56,8 +57,11 @@ impl Value {
             Value::Absent => Err(error::Error::XPDY0002),
         }
     }
-    pub(crate) fn items(&self) -> ValueIter {
-        ValueIter::new(self.clone())
+    pub(crate) fn items(&self) -> error::Result<ValueIter> {
+        if matches!(self, Value::Absent) {
+            return Err(error::Error::XPDY0002);
+        }
+        Ok(ValueIter::new(self.clone()))
     }
 
     pub(crate) fn atomized<'a>(&self, xot: &'a Xot) -> AtomizedIter<'a> {
@@ -183,12 +187,12 @@ impl Value {
         annotations: &xml::Annotations,
     ) -> error::Result<stack::Value> {
         let mut s = HashSet::new();
-        for item in self.items() {
-            let node = item?.to_node()?;
+        for item in self.items()? {
+            let node = item.to_node()?;
             s.insert(node);
         }
-        for item in other.items() {
-            let node = item?.to_node()?;
+        for item in other.items()? {
+            let node = item.to_node()?;
             s.insert(node);
         }
 
@@ -202,12 +206,12 @@ impl Value {
     ) -> error::Result<stack::Value> {
         let mut s = HashSet::new();
         let mut r = HashSet::new();
-        for item in self.items() {
-            let node = item?.to_node()?;
+        for item in self.items()? {
+            let node = item.to_node()?;
             s.insert(node);
         }
-        for item in other.items() {
-            let node = item?.to_node()?;
+        for item in other.items()? {
+            let node = item.to_node()?;
             if s.contains(&node) {
                 r.insert(node);
             }
@@ -221,12 +225,12 @@ impl Value {
         annotations: &xml::Annotations,
     ) -> error::Result<stack::Value> {
         let mut s = HashSet::new();
-        for item in self.items() {
-            let node = item?.to_node()?;
+        for item in self.items()? {
+            let node = item.to_node()?;
             s.insert(node);
         }
-        for item in other.items() {
-            let node = item?.to_node()?;
+        for item in other.items()? {
+            let node = item.to_node()?;
             s.remove(&node);
         }
         Ok(Self::process_set_result(s, annotations))
@@ -237,8 +241,8 @@ impl Value {
         let mut s = HashSet::new();
         let mut non_node_seen = false;
 
-        for item in self.items() {
-            match item? {
+        for item in self.items()? {
+            match item {
                 sequence::Item::Node(n) => {
                     if non_node_seen {
                         return Err(error::Error::XPTY0004);
@@ -342,6 +346,40 @@ pub(crate) enum ValueIter {
     AbsentIter(std::iter::Once<error::Result<sequence::Item>>),
 }
 
+impl occurrence::Occurrence<sequence::Item, error::Error> for ValueIter {
+    fn one(&mut self) -> Result<sequence::Item, error::Error> {
+        if let Some(one) = self.next() {
+            if self.next().is_none() {
+                Ok(one)
+            } else {
+                Err(self.error())
+            }
+        } else {
+            Err(self.error())
+        }
+    }
+
+    fn option(&mut self) -> Result<Option<sequence::Item>, error::Error> {
+        if let Some(one) = self.next() {
+            if self.next().is_none() {
+                Ok(Some(one))
+            } else {
+                Err(self.error())
+            }
+        } else {
+            Ok(None)
+        }
+    }
+
+    fn many(&mut self) -> Result<Vec<sequence::Item>, error::Error> {
+        Ok(self.collect::<Vec<_>>())
+    }
+
+    fn error(&self) -> error::Error {
+        error::Error::XPTY0004
+    }
+}
+
 impl ValueIter {
     fn new(value: Value) -> Self {
         match value {
@@ -354,14 +392,14 @@ impl ValueIter {
 }
 
 impl Iterator for ValueIter {
-    type Item = error::Result<sequence::Item>;
+    type Item = sequence::Item;
 
     fn next(&mut self) -> Option<Self::Item> {
         match self {
             ValueIter::Empty => None,
-            ValueIter::OneIter(iter) => iter.next().map(Ok),
-            ValueIter::ManyIter(iter) => iter.next().map(Ok),
-            ValueIter::AbsentIter(iter) => iter.next(),
+            ValueIter::OneIter(iter) => iter.next(),
+            ValueIter::ManyIter(iter) => iter.next(),
+            ValueIter::AbsentIter(_) => unreachable!(),
         }
     }
 }

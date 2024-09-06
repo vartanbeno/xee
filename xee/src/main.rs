@@ -48,8 +48,8 @@ fn main() -> xee_xpath_compiler::error::Result<()> {
             );
             match result {
                 Ok(sequence) => {
-                    for item in sequence.items() {
-                        display_item(&xot, &item?).unwrap();
+                    for item in sequence.items()? {
+                        display_item(&xot, &item).unwrap();
                     }
                 }
                 Err(e) => render_error(&xpath, e),

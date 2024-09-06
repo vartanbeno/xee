@@ -585,7 +585,7 @@ impl<'a> Interpreter<'a> {
                     if value.len()? > 1 {
                         Err(error::Error::XTTE3180)?;
                     }
-                    let item = value.items().next().unwrap()?;
+                    let item = value.items()?.next().unwrap();
                     let copy = match &item {
                         sequence::Item::Atomic(_) | sequence::Item::Function(_) => item.clone(),
                         sequence::Item::Node(node) => {
@@ -602,8 +602,7 @@ impl<'a> Interpreter<'a> {
                         continue;
                     }
                     let mut new_sequence = Vec::with_capacity(value.len()?);
-                    for item in value.items() {
-                        let item = item?;
+                    for item in value.items()? {
                         let copy = match &item {
                             sequence::Item::Atomic(_) | sequence::Item::Function(_) => item.clone(),
                             sequence::Item::Node(node) => {
@@ -900,8 +899,8 @@ impl<'a> Interpreter<'a> {
             .collect::<error::Result<Vec<_>>>()?;
         let mut result = Vec::new();
         for key in keys {
-            for item in get_key(&data, key)?.items() {
-                result.push(item?);
+            for item in get_key(&data, key)?.items()? {
+                result.push(item);
             }
         }
         Ok(result)
@@ -1053,7 +1052,7 @@ impl<'a> Interpreter<'a> {
 
     fn pop_node(&mut self) -> error::Result<xot::Node> {
         let value = self.state.pop();
-        let node = value.items().one()?.to_node()?;
+        let node = value.items()?.one()?.to_node()?;
         Ok(node)
     }
 
@@ -1082,8 +1081,8 @@ impl<'a> Interpreter<'a> {
 
     fn xml_append(&mut self, parent_node: xot::Node, value: stack::Value) -> error::Result<()> {
         let mut string_values = Vec::new();
-        for item in value.items() {
-            match item? {
+        for item in value.items()? {
+            match item {
                 sequence::Item::Node(node) => {
                     // if there were any string values before this node, add them
                     // to the node, separated by a space character
@@ -1156,12 +1155,11 @@ impl<'a> Interpreter<'a> {
         let mut r: Vec<sequence::Item> = Vec::new();
         let size: IBig = sequence.len().into();
 
-        for (i, item) in sequence.items().enumerate() {
-            let item = item.unwrap(); // TODO
+        for (i, item) in sequence.items()?.enumerate() {
             let sequence = self.apply_templates_item(mode, item, i, size.clone())?;
             if let Some(sequence) = sequence {
-                for item in sequence.items() {
-                    r.push(item.unwrap());
+                for item in sequence.items()? {
+                    r.push(item);
                 }
             }
         }

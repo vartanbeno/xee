@@ -79,7 +79,7 @@ fn convert_item(
 
 fn convert_item_type(item: &ast::ItemType, arg: TokenStream) -> syn::Result<(TokenStream, bool)> {
     match item {
-        ast::ItemType::Item => Ok((quote!(#arg.items()), false)),
+        ast::ItemType::Item => Ok((quote!(#arg.items()?), false)),
         ast::ItemType::AtomicOrUnionType(xs) => {
             let (token_stream, borrow) = convert_atomic_or_union_type(*xs, arg)?;
             Ok((token_stream, borrow))
@@ -87,13 +87,13 @@ fn convert_item_type(item: &ast::ItemType, arg: TokenStream) -> syn::Result<(Tok
         ast::ItemType::KindTest(kind_test) => Ok((convert_kind_test(kind_test, arg)?, false)),
         // we don't do anything special for higher order functions at this point;
         // the implementation is supposed to manually unpack the items
-        ast::ItemType::FunctionTest(_) => Ok((quote!(#arg.items()), false)),
+        ast::ItemType::FunctionTest(_) => Ok((quote!(#arg.items()?), false)),
         ast::ItemType::ArrayTest(array_test) => match array_test {
-            ast::ArrayTest::AnyArrayTest => Ok((quote!(#arg.array_iter()), false)),
+            ast::ArrayTest::AnyArrayTest => Ok((quote!(#arg.array_iter()?), false)),
             _ => todo!("Unsupported item type: typed array test"),
         },
         ast::ItemType::MapTest(map_test) => match map_test {
-            ast::MapTest::AnyMapTest => Ok((quote!(#arg.map_iter()), false)),
+            ast::MapTest::AnyMapTest => Ok((quote!(#arg.map_iter()?), false)),
             _ => todo!("Unsupported item type: typed map test"),
         },
     }
@@ -122,12 +122,12 @@ fn convert_atomic_or_union_type(xs: Xs, arg: TokenStream) -> syn::Result<(TokenS
 
 fn convert_kind_test(kind_test: &ast::KindTest, arg: TokenStream) -> syn::Result<TokenStream> {
     match kind_test {
-        ast::KindTest::Any => Ok(quote!(#arg.nodes())),
+        ast::KindTest::Any => Ok(quote!(#arg.nodes()?)),
         ast::KindTest::Element(element_test) => {
             if element_test.is_some() {
                 unreachable!("Unsupported element test")
             }
-            Ok(quote!(#arg.elements(interpreter.xot())))
+            Ok(quote!(#arg.elements(interpreter.xot())?))
         }
         _ => {
             todo!("Unsupported kind test")

@@ -100,10 +100,14 @@ impl<'a> Runnable<'a> {
         xot: &'a mut Xot,
     ) -> error::SpannedResult<sequence::Item> {
         let sequence = self.many(item, xot)?;
-        sequence.items().one().map_err(|error| SpannedError {
+        let mut items = sequence.items().map_err(|error| SpannedError {
             error,
             span: self.program.span().into(),
-        })
+        })?;
+        Ok(items.one().map_err(|error| SpannedError {
+            error,
+            span: self.program.span().into(),
+        })?)
     }
 
     /// Run the program, expect an optional single item as the result.
@@ -113,10 +117,14 @@ impl<'a> Runnable<'a> {
         xot: &'a mut Xot,
     ) -> error::SpannedResult<Option<sequence::Item>> {
         let sequence = self.many(item, xot)?;
-        sequence.items().option().map_err(|error| SpannedError {
+        let mut items = sequence.items().map_err(|error| SpannedError {
             error,
             span: self.program.span().into(),
-        })
+        })?;
+        Ok(items.option().map_err(|error| SpannedError {
+            error,
+            span: self.program.span().into(),
+        })?)
     }
 
     pub(crate) fn program(&self) -> &'a Program {

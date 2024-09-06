@@ -2,4 +2,4 @@
 source: xee-xpath-macros/src/convert.rs
 expression: "convert(\"item()\")"
 ---
-"let a = crate :: occurrence :: Occurrence :: one (& mut arguments [0] . items ()) ? ;"
+"let a = crate :: occurrence :: Occurrence :: one (& mut arguments [0] . items () ?) ? ;"

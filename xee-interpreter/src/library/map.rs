@@ -108,7 +108,7 @@ impl MergeOptions {
                 &|function| runnable.function_info(function).signature(),
             )?;
         // take the first value, which should be a string
-        let duplicates = duplicates.items().one()?;
+        let duplicates = duplicates.items()?.one()?;
         let atomic: atomic::Atomic = duplicates.to_atomic()?;
         atomic.to_string()
     }
@@ -165,18 +165,21 @@ fn get(map: function::Map, key: atomic::Atomic) -> sequence::Sequence {
 }
 
 #[xpath_fn("map:find($input as item()*, $key as xs:anyAtomicType) as array(*)")]
-fn find(input: &sequence::Sequence, key: atomic::Atomic) -> function::Array {
-    find_helper(input, atomic::MapKey::new(key.clone()).unwrap()).into()
+fn find(input: &sequence::Sequence, key: atomic::Atomic) -> error::Result<function::Array> {
+    Ok(find_helper(input, atomic::MapKey::new(key.clone()).unwrap())?.into())
 }
 
-fn find_helper(input: &sequence::Sequence, key: atomic::MapKey) -> Vec<sequence::Sequence> {
+fn find_helper(
+    input: &sequence::Sequence,
+    key: atomic::MapKey,
+) -> error::Result<Vec<sequence::Sequence>> {
     let mut result: Vec<sequence::Sequence> = Vec::new();
-    for item in input.items().flatten() {
+    for item in input.items()? {
         if let sequence::Item::Function(function) = item {
             match function.as_ref() {
                 function::Function::Array(array) => {
                     for entry in array.iter() {
-                        let found = find_helper(entry, key.clone());
+                        let found = find_helper(entry, key.clone())?;
                         result.extend(found.into_iter())
                     }
                 }
@@ -185,7 +188,7 @@ fn find_helper(input: &sequence::Sequence, key: atomic::MapKey) -> Vec<sequence:
                         if k == &key {
                             result.push(v.clone());
                         }
-                        let found = find_helper(v, key.clone());
+                        let found = find_helper(v, key.clone())?;
                         result.extend(found.into_iter())
                     }
                 }
@@ -193,7 +196,7 @@ fn find_helper(input: &sequence::Sequence, key: atomic::MapKey) -> Vec<sequence:
             }
         }
     }
-    result
+    Ok(result)
 }
 
 #[xpath_fn("map:put($map as map(*), $key as xs:anyAtomicType, $value as item()*) as map(*)")]
@@ -222,8 +225,8 @@ fn for_each(
     for (_, (key, value)) in map.0.iter() {
         let r = interpreter
             .call_function_with_arguments(function.clone(), &[key.clone().into(), value.clone()])?;
-        for item in r.items() {
-            result.push(item?);
+        for item in r.items()? {
+            result.push(item);
         }
     }
     Ok(result.into())

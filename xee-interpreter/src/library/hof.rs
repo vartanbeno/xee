@@ -65,11 +65,10 @@ fn for_each(
     let mut result: Vec<sequence::Item> = Vec::with_capacity(seq.len());
     let function = action.to_function()?;
 
-    for item in seq.items() {
-        let item = item?;
+    for item in seq.items()? {
         let value = interpreter.call_function_with_arguments(function.clone(), &[item.into()])?;
-        for item in value.items() {
-            result.push(item?);
+        for item in value.items()? {
+            result.push(item);
         }
     }
     Ok(result.into())
@@ -84,11 +83,10 @@ fn filter(
     let mut result: Vec<sequence::Item> = Vec::new();
     let function = predicate.to_function()?;
 
-    for item in seq.items() {
-        let item = item?;
+    for item in seq.items()? {
         let value =
             interpreter.call_function_with_arguments(function.clone(), &[item.clone().into()])?;
-        let atom: atomic::Atomic = value.items().one()?.to_atomic()?;
+        let atom: atomic::Atomic = value.items()?.one()?.to_atomic()?;
         let value: bool = atom.try_into()?;
         if value {
             result.push(item);
@@ -107,8 +105,7 @@ fn fold_left(
     let function = f.to_function()?;
 
     let mut accumulator = zero.clone();
-    for item in seq.items() {
-        let item = item?;
+    for item in seq.items()? {
         accumulator = interpreter
             .call_function_with_arguments(function.clone(), &[accumulator, item.into()])?;
     }
@@ -126,7 +123,7 @@ fn fold_right(
 
     let mut accumulator = zero.clone();
     // TODO: do not have reverse iterator, so have to collect first
-    let seq = seq.items().collect::<error::Result<Vec<_>>>()?;
+    let seq = seq.items()?.collect::<Vec<_>>();
     for item in seq.into_iter().rev() {
         accumulator = interpreter
             .call_function_with_arguments(function.clone(), &[item.into(), accumulator])?;
@@ -144,13 +141,11 @@ fn for_each_pair(
     let mut result: Vec<sequence::Item> = Vec::with_capacity(seq1.len());
     let function = action.to_function()?;
 
-    for (item1, item2) in seq1.items().zip(seq2.items()) {
-        let item1 = item1?;
-        let item2 = item2?;
+    for (item1, item2) in seq1.items()?.zip(seq2.items()?) {
         let value = interpreter
             .call_function_with_arguments(function.clone(), &[item1.into(), item2.into()])?;
-        for item in value.items() {
-            result.push(item?);
+        for item in value.items()? {
+            result.push(item);
         }
     }
     Ok(result.into())
@@ -226,7 +221,7 @@ where
     // sufficiently different we don't want to try to unify them.
 
     let collation = context.static_context.collation(collation)?;
-    let items = input.items().collect::<error::Result<Vec<_>>>()?;
+    let items = input.items()?.collect::<Vec<_>>();
     let keys = items.iter().map(get).collect::<error::Result<Vec<_>>>()?;
 
     let mut keys_and_items = keys.into_iter().zip(items).collect::<Vec<_>>();

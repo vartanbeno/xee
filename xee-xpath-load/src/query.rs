@@ -315,8 +315,8 @@ where
             .many(Some(item), session.xot)
             .map_err(|e| e.error)?;
         let mut values = Vec::with_capacity(sequence.len());
-        for item in sequence.items() {
-            match (self.convert)(session, &item?) {
+        for item in sequence.items()? {
+            match (self.convert)(session, &item) {
                 Ok(value) => values.push(value),
                 Err(query_error) => return Err(query_error),
             }
@@ -352,8 +352,8 @@ impl ManyRecurseQuery {
             .many(Some(item), session.xot)
             .map_err(|e| e.error)?;
         let mut values = Vec::with_capacity(sequence.len());
-        for item in sequence.items() {
-            values.push(recurse.execute(session, &item?)?);
+        for item in sequence.items()? {
+            values.push(recurse.execute(session, &item)?);
         }
         Ok(values)
     }

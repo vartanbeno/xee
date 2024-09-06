@@ -130,7 +130,7 @@ impl Sequence {
         };
         match occurrence_item.occurrence {
             ast::Occurrence::One => {
-                let one = sequence.items().one()?;
+                let one = sequence.items()?.one()?;
                 one.item_type_matching(
                     &occurrence_item.item_type,
                     convert_atomic,
@@ -140,7 +140,7 @@ impl Sequence {
                 Ok(sequence)
             }
             ast::Occurrence::Option => {
-                let option = sequence.items().option()?;
+                let option = sequence.items()?.option()?;
                 if let Some(item) = option {
                     item.item_type_matching(
                         &occurrence_item.item_type,
@@ -154,8 +154,8 @@ impl Sequence {
                 }
             }
             ast::Occurrence::Many => {
-                for item in sequence.items() {
-                    item?.item_type_matching(
+                for item in sequence.items()? {
+                    item.item_type_matching(
                         &occurrence_item.item_type,
                         convert_atomic,
                         check_function,
@@ -168,8 +168,8 @@ impl Sequence {
                 if sequence.is_empty() {
                     return Err(error::Error::XPTY0004);
                 }
-                for item in sequence.items() {
-                    item?.item_type_matching(
+                for item in sequence.items()? {
+                    item.item_type_matching(
                         &occurrence_item.item_type,
                         convert_atomic,
                         check_function,
