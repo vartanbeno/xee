@@ -86,6 +86,84 @@ where
     }
 }
 
+#[derive(Debug, Clone, Copy)]
+pub struct OptionQuery<V, F>
+where
+    F: Convert<V> + Copy,
+{
+    queries_id: usize,
+    id: usize,
+    convert: F,
+    phantom: std::marker::PhantomData<V>,
+}
+
+impl<V, F> OptionQuery<V, F>
+where
+    F: Convert<V> + Copy,
+{
+    pub fn execute(&self, session: &mut Session, item: impl Itemable) -> Result<Option<V>> {
+        assert_eq!(self.queries_id, session.queries.id);
+        let program = &session.queries.xpath_programs[self.id];
+        let dynamic_context = DynamicContext::from_documents(
+            &session.queries.static_context,
+            &session.documents.documents,
+        );
+        let runnable = program.runnable(&dynamic_context);
+        let item = item.to_item(session)?;
+
+        let item = runnable
+            .option(Some(&item), &mut session.documents.xot)
+            .map_err(|e| e.error)?;
+        if let Some(item) = item {
+            match (self.convert)(session, &item) {
+                Ok(value) => Ok(Some(value)),
+                Err(query_error) => Err(query_error),
+            }
+        } else {
+            Ok(None)
+        }
+    }
+}
+
+#[derive(Debug, Clone)]
+pub struct ManyQuery<V, F>
+where
+    F: Convert<V> + Copy,
+{
+    queries_id: usize,
+    id: usize,
+    convert: F,
+    phantom: std::marker::PhantomData<V>,
+}
+
+impl<V, F> ManyQuery<V, F>
+where
+    F: Convert<V> + Copy,
+{
+    pub fn execute(&self, session: &mut Session, item: impl Itemable) -> Result<Vec<V>> {
+        assert_eq!(self.queries_id, session.queries.id);
+        let program = &session.queries.xpath_programs[self.id];
+        let dynamic_context = DynamicContext::from_documents(
+            &session.queries.static_context,
+            &session.documents.documents,
+        );
+        let runnable = program.runnable(&dynamic_context);
+        let item = item.to_item(session)?;
+
+        let sequence = runnable
+            .many(Some(&item), &mut session.documents.xot)
+            .map_err(|e| e.error)?;
+        let mut values = Vec::with_capacity(sequence.len());
+        for item in sequence.items()? {
+            match (self.convert)(session, &item) {
+                Ok(value) => values.push(value),
+                Err(query_error) => return Err(query_error),
+            }
+        }
+        Ok(values)
+    }
+}
+
 /// A collection of XPath queries
 ///
 /// You can register xpath expressions with conversion functions
@@ -167,34 +245,42 @@ impl<'namespaces> Queries<'namespaces> {
     //     Ok(OneRecurseQuery { id })
     // }
 
-    // pub fn option<V, F>(&mut self, s: &str, convert: F) -> Result<OptionQuery<V, F>>
-    // where
-    //     F: Convert<V> + Copy,
-    // {
-    //     let id = self.register(s)?;
-    //     Ok(OptionQuery {
-    //         id,
-    //         convert,
-    //         phantom: std::marker::PhantomData,
-    //     })
-    // }
+    /// Connstruct a query that expects an optional single item result.
+    ///
+    /// This item is converted into a Rust value using supplied `convert` function.
+    pub fn option<V, F>(&mut self, s: &str, convert: F) -> Result<OptionQuery<V, F>>
+    where
+        F: Convert<V> + Copy,
+    {
+        let id = self.register(s)?;
+        Ok(OptionQuery {
+            queries_id: self.id,
+            id,
+            convert,
+            phantom: std::marker::PhantomData,
+        })
+    }
 
     // pub fn option_recurse(&mut self, s: &str) -> Result<OptionRecurseQuery> {
     //     let id = self.register(s)?;
     //     Ok(OptionRecurseQuery { id })
     // }
 
-    // pub fn many<V, F>(&mut self, s: &str, convert: F) -> Result<ManyQuery<V, F>>
-    // where
-    //     F: Convert<V> + Copy,
-    // {
-    //     let id = self.register(s)?;
-    //     Ok(ManyQuery {
-    //         id,
-    //         convert,
-    //         phantom: std::marker::PhantomData,
-    //     })
-    // }
+    /// Construct a query that expects many items as a result.
+    ///
+    /// These items are converted into Rust values using supplied `convert` function.
+    pub fn many<V, F>(&mut self, s: &str, convert: F) -> Result<ManyQuery<V, F>>
+    where
+        F: Convert<V> + Copy,
+    {
+        let id = self.register(s)?;
+        Ok(ManyQuery {
+            queries_id: self.id,
+            id,
+            convert,
+            phantom: std::marker::PhantomData,
+        })
+    }
 
     // pub fn many_recurse(&mut self, s: &str) -> Result<ManyRecurseQuery> {
     //     let id = self.register(s)?;
