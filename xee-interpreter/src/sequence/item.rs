@@ -93,6 +93,18 @@ impl Item {
         }
     }
 
+    /// Convert an atomic value into a value of type `V`.
+    pub fn try_into_value<V>(&self) -> error::Result<V>
+    where
+        V: TryFrom<atomic::Atomic, Error = error::Error>,
+    {
+        match self {
+            Item::Atomic(a) => a.clone().try_into(),
+            // atomic::Atomic::try_from(a.clone()),
+            _ => Err(error::Error::XPTY0004),
+        }
+    }
+
     /// Construct the string value.
     ///
     /// - For an atomic value, it casts it to a string using the canonical

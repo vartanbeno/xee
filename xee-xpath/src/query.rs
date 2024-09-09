@@ -229,8 +229,7 @@ mod tests {
         let mut queries = Queries::default();
         let q = queries
             .one("/root/string()", |_, item| {
-                let s: String = item.to_atomic()?.try_into()?;
-                Ok(s)
+                Ok(item.try_into_value::<String>()?)
             })
             .unwrap();
 
