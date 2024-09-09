@@ -3,6 +3,7 @@ use std::{cell::RefCell, sync::atomic};
 use xee_xpath_compiler::parse;
 
 use crate::sequence::Sequence;
+use crate::Item;
 
 static XPATHS_COUNTER: atomic::AtomicUsize = atomic::AtomicUsize::new(0);
 static DOCUMENTS_COUNTER: atomic::AtomicUsize = atomic::AtomicUsize::new(0);
@@ -24,9 +25,9 @@ fn get_xpaths_id() -> usize {
 /// a URL is present, it won't be changed.
 #[derive(Debug)]
 pub struct Documents {
-    id: usize,
-    xot: xot::Xot,
-    document_uris: Vec<xee_interpreter::xml::Uri>,
+    pub(crate) id: usize,
+    pub(crate) xot: xot::Xot,
+    pub(crate) document_uris: Vec<xee_interpreter::xml::Uri>,
     pub(crate) documents: RefCell<xee_interpreter::xml::Documents>,
 }
 
@@ -39,8 +40,8 @@ pub struct Documents {
 /// the [`Engine`].
 #[derive(Debug, Clone, Copy, Eq, PartialEq, Hash)]
 pub struct DocumentHandle {
-    documents_id: usize,
-    id: usize,
+    pub(crate) documents_id: usize,
+    pub(crate) id: usize,
 }
 
 impl Documents {

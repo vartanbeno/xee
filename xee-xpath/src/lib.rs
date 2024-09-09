@@ -7,12 +7,13 @@
 //!
 //! You can then construct an [`Engine`] to execute the compiled XPath
 //! expressions against documents.
+pub mod atomic;
 mod high_level;
+mod query;
 mod sequence;
 
-pub mod atomic;
-
 pub use high_level::{DocumentHandle, Documents, Engine, XPathHandle, XPaths};
+pub use query::Queries;
 pub use sequence::Sequence;
 pub use xee_interpreter::atomic::Atomic;
 pub use xee_interpreter::error::{Result, SpannedResult};

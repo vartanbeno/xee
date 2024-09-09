@@ -17,11 +17,10 @@ impl IntoIterator for Sequence {
     type IntoIter = xee_interpreter::sequence::ItemIter;
 
     fn into_iter(self) -> Self::IntoIter {
-        // TODO: this unwrap is weird, but items can fail to be created
-        // if the items are absent. but if we ensure in our API that
-        // an absent Sequence is never created, we can remove this unwrap.
-        // That is, instead of items being a result we could make *sequence*
-        // fail if it would be created as absent
-        self.sequence.items().unwrap()
+        // items() can return Err if the sequence is absent but we should
+        // already have handled that before this sequence is even created; we
+        // don't want to return an absent sequence but instead turn this into
+        // an error. So we can safely unwrap here.
+        self.sequence.items().expect("sequence is absent")
     }
 }
