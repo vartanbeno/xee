@@ -2976,7 +2976,6 @@ name = "xee-xpath"
 version = "0.1.0"
 dependencies = [
  "ahash 0.8.11",
- "anyhow",
  "chrono",
  "ibig",
  "insta",

@@ -9,11 +9,10 @@
 //! expressions against documents.
 pub mod atomic;
 mod documents;
-mod high_level;
 mod query;
 mod sequence;
 
-// pub use high_level::{DocumentHandle, Documents, Engine, XPathHandle, XPaths};
+pub use documents::{DocumentHandle, Documents};
 pub use query::Queries;
 pub use sequence::Sequence;
 pub use xee_interpreter::atomic::Atomic;
