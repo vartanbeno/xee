@@ -55,6 +55,12 @@ impl Itemable for DocumentHandle {
     }
 }
 
+impl Itemable for &Item {
+    fn to_item(&self, _session: &Session) -> Result<Item> {
+        Ok(Clone::clone(self))
+    }
+}
+
 /// This is a query that expects a sequence that contains exactly one single item.
 ///
 /// Construct this using [`Queries::one`].

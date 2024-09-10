@@ -1,31 +1,38 @@
-// use xee_xpath::{Documents, Engine, Queries, XPaths};
+use xee_xpath::{error, Documents, Queries};
 
-// fn main() {
-//     let mut queries = Queries::default();
-//     let value_query = queries
-//         .one("./string()", |_, item| item.to_string().unwrap())
-//         .unwrap();
+#[test]
+fn test_simple_query() -> error::Result<()> {
+    let mut documents = Documents::new();
+    let doc = documents
+        .load_string("http://example.com", "<root>foo</root>")
+        .unwrap();
+    let mut queries = Queries::default();
+    let q = queries.one("/root/string()", |_, item| {
+        Ok(item.try_into_value::<String>()?)
+    })?;
 
-//     let values_query = queries
-//         .many("/root/value", |session, item| {
-//             value_query.execute(session, item)
-//         })
-//         .unwrap();
+    let mut session = queries.session(documents);
+    let r = q.execute(&mut session, doc)?;
+    assert_eq!(r, "foo");
+    Ok(())
+}
 
-//     // let converters = Converters::default();
+#[test]
+fn test_nested_query() -> error::Result<()> {
+    let mut documents = Documents::new();
 
-//     // let value_converter = converters.one(value_query, |item| item.to_string().unwrap());
-//     // let values_converter = converters.many(values_query, value_converter);
+    let doc = documents
+        .load_string("http://example.com", "<root><a>1</a><a>2</a></root>")
+        .unwrap();
+    let mut queries = Queries::default();
 
-//     let mut documents = Documents::new();
-//     let doc = documents
-//         .load_string(
-//             "http://example.com",
-//             "<root><value>A</value><value>B</value></root>",
-//         )
-//         .unwrap();
+    let f_query = queries.one("./number()", |_, item| Ok(item.try_into_value::<f64>()?))?;
+    let q = queries.many("/root/a", |session, item| {
+        Ok(f_query.execute(session, item)?)
+    })?;
 
-//     let mut session = queries.session(documents);
-//     // a document can be used as it is nodable to the root node?
-//     let results = session.execute(values_query, doc).unwrap();
-// }
+    let mut session = queries.session(documents);
+    let r = q.execute(&mut session, doc)?;
+    assert_eq!(r, vec![1.0, 2.0]);
+    Ok(())
+}
