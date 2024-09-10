@@ -1,13 +1,15 @@
 ---
-source: xee-xpath/tests/xpath.rs
+source: xee-xpath-compiler/tests/xpath.rs
 expression: "run(\"let $x := $x return $x\")"
 ---
 Err(
     SpannedError {
         error: XPST0008,
-        span: SourceSpan(
-            10,
-            12,
+        span: Some(
+            SourceSpan(
+                10,
+                12,
+            ),
         ),
     },
 )

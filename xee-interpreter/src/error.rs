@@ -9,7 +9,7 @@ use crate::span::SourceSpan;
 #[cfg_attr(feature = "serde", derive(serde::Serialize))]
 pub struct SpannedError {
     pub error: Error,
-    pub span: SourceSpan,
+    pub span: Option<SourceSpan>,
 }
 
 #[derive(Debug, Clone, PartialEq, Display, EnumMessage)]
@@ -546,7 +546,10 @@ pub enum Error {
 
 impl Error {
     pub fn with_span(self, span: SourceSpan) -> SpannedError {
-        SpannedError { error: self, span }
+        SpannedError {
+            error: self,
+            span: Some(span),
+        }
     }
     pub fn with_ast_span(self, span: xee_xpath_ast::ast::Span) -> SpannedError {
         Self::with_span(self, span.into())
@@ -579,8 +582,12 @@ impl std::error::Error for Error {}
 
 impl std::fmt::Display for SpannedError {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        let span = self.span.range();
-        write!(f, "{} ({}..{})", self.error, span.start, span.end)
+        if let Some(span) = self.span {
+            let span = span.range();
+            write!(f, "{} ({}..{})", self.error, span.start, span.end)
+        } else {
+            write!(f, "{}", self.error)
+        }
     }
 }
 
@@ -609,7 +616,7 @@ impl From<xee_xpath_ast::ParserError> for SpannedError {
         };
         SpannedError {
             error,
-            span: span.into(),
+            span: Some(span.into()),
         }
     }
 }
@@ -634,6 +641,15 @@ impl From<xot::Error> for Error {
             xot::Error::MissingPrefix(_) => Error::XPST0081,
             // TODO: are there other xot errors that need to be translated?
             _ => Error::XPST0003,
+        }
+    }
+}
+
+impl From<Error> for SpannedError {
+    fn from(e: Error) -> Self {
+        SpannedError {
+            error: e,
+            span: None,
         }
     }
 }

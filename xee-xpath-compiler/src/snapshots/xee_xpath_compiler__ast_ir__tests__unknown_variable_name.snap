@@ -5,9 +5,11 @@ expression: "convert_expr_single(\"$unknown\")"
 Err(
     SpannedError {
         error: XPST0008,
-        span: SourceSpan(
-            0,
-            8,
+        span: Some(
+            SourceSpan(
+                0,
+                8,
+            ),
         ),
     },
 )

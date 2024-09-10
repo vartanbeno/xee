@@ -1,4 +1,4 @@
-use anyhow::Result;
+use xee_interpreter::error::SpannedResult as Result;
 use xee_interpreter::{context::DynamicContext, sequence::Item};
 use xee_xpath_compiler::parse;
 
@@ -111,9 +111,7 @@ where
         let runnable = program.runnable(&dynamic_context);
         let item = item.to_item(session)?;
 
-        let item = runnable
-            .option(Some(&item), &mut session.documents.xot)
-            .map_err(|e| e.error)?;
+        let item = runnable.option(Some(&item), &mut session.documents.xot)?;
         if let Some(item) = item {
             match (self.convert)(session, &item) {
                 Ok(value) => Ok(Some(value)),
@@ -150,9 +148,7 @@ where
         let runnable = program.runnable(&dynamic_context);
         let item = item.to_item(session)?;
 
-        let sequence = runnable
-            .many(Some(&item), &mut session.documents.xot)
-            .map_err(|e| e.error)?;
+        let sequence = runnable.many(Some(&item), &mut session.documents.xot)?;
         let mut values = Vec::with_capacity(sequence.len());
         for item in sequence.items()? {
             match (self.convert)(session, &item) {
@@ -218,7 +214,7 @@ impl<'namespaces> Queries<'namespaces> {
     // }
 
     fn register(&mut self, s: &str) -> Result<usize> {
-        let program = parse(&self.static_context, s).map_err(|e| e.error)?;
+        let program = parse(&self.static_context, s)?;
         let id = self.xpath_programs.len();
         self.xpath_programs.push(program);
         Ok(id)
@@ -306,21 +302,20 @@ mod tests {
     use super::*;
 
     #[test]
-    fn test_one_query() {
+    fn test_one_query() -> Result<()> {
         let mut documents = Documents::new();
         let doc = documents
             .load_string("http://example.com", "<root>foo</root>")
             .unwrap();
 
         let mut queries = Queries::default();
-        let q = queries
-            .one("/root/string()", |_, item| {
-                Ok(item.try_into_value::<String>()?)
-            })
-            .unwrap();
+        let q = queries.one("/root/string()", |_, item| {
+            Ok(item.try_into_value::<String>()?)
+        })?;
 
         let mut session = queries.session(documents);
-        let r = q.execute(&mut session, doc).unwrap();
+        let r = q.execute(&mut session, doc)?;
         assert_eq!(r, "foo");
+        Ok(())
     }
 }

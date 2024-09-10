@@ -25,7 +25,7 @@
 //         )
 //         .unwrap();
 
-//     let mut session = Session::new(&queries, documents);
+//     let mut session = queries.session(documents);
 //     // a document can be used as it is nodable to the root node?
 //     let results = session.execute(values_query, doc).unwrap();
 // }

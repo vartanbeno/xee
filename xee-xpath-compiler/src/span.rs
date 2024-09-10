@@ -19,7 +19,7 @@ mod tests {
     }
 
     fn span(result: error::SpannedResult<sequence::Sequence>) -> SourceSpan {
-        result.err().unwrap().span
+        result.err().unwrap().span.unwrap()
     }
 
     #[test]

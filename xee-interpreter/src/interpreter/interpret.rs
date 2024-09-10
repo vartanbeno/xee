@@ -1213,7 +1213,7 @@ impl<'a> Interpreter<'a> {
     pub(crate) fn err(&self, value_error: error::Error) -> error::SpannedError {
         error::SpannedError {
             error: value_error,
-            span: self.current_span(),
+            span: Some(self.current_span()),
         }
     }
 

@@ -5,9 +5,11 @@ expression: "convert_expr_single(\"fn:string(1, 2, 3)\")"
 Err(
     SpannedError {
         error: XPST0017,
-        span: SourceSpan(
-            0,
-            18,
+        span: Some(
+            SourceSpan(
+                0,
+                18,
+            ),
         ),
     },
 )

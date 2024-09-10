@@ -68,7 +68,7 @@ impl<'a> Runnable<'a> {
         match value {
             stack::Value::Absent => Err(SpannedError {
                 error: error::Error::XPDY0002,
-                span: self.program.span().into(),
+                span: Some(self.program.span().into()),
             }),
             _ => Ok(value),
         }
@@ -102,11 +102,11 @@ impl<'a> Runnable<'a> {
         let sequence = self.many(item, xot)?;
         let mut items = sequence.items().map_err(|error| SpannedError {
             error,
-            span: self.program.span().into(),
+            span: Some(self.program.span().into()),
         })?;
         Ok(items.one().map_err(|error| SpannedError {
             error,
-            span: self.program.span().into(),
+            span: Some(self.program.span().into()),
         })?)
     }
 
@@ -119,11 +119,11 @@ impl<'a> Runnable<'a> {
         let sequence = self.many(item, xot)?;
         let mut items = sequence.items().map_err(|error| SpannedError {
             error,
-            span: self.program.span().into(),
+            span: Some(self.program.span().into()),
         })?;
         Ok(items.option().map_err(|error| SpannedError {
             error,
-            span: self.program.span().into(),
+            span: Some(self.program.span().into()),
         })?)
     }
 

@@ -104,13 +104,17 @@ fn display_node(xot: &Xot, node: xot::Node) -> Result<String, xot::Error> {
 fn render_error(src: &str, e: SpannedError) {
     let red = ariadne::Color::Red;
 
-    ariadne::Report::build(ariadne::ReportKind::Error, "source", 0)
-        .with_code(e.error.code())
-        .with_label(
-            ariadne::Label::new(("source", e.span.range()))
+    let mut report =
+        ariadne::Report::build(ariadne::ReportKind::Error, "source", 0).with_code(e.error.code());
+
+    if let Some(span) = e.span {
+        report = report.with_label(
+            ariadne::Label::new(("source", span.range()))
                 .with_message(e.error.message())
                 .with_color(red),
         )
+    }
+    report
         .finish()
         .print(("source", ariadne::Source::from(src)))
         .unwrap();

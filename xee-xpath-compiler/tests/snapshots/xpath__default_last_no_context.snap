@@ -1,13 +1,15 @@
 ---
-source: xee-xpath/tests/xpath.rs
+source: xee-xpath-compiler/tests/xpath.rs
 expression: "run(\"fn:last()\")"
 ---
 Err(
     SpannedError {
         error: XPDY0002,
-        span: SourceSpan(
-            0,
-            9,
+        span: Some(
+            SourceSpan(
+                0,
+                9,
+            ),
         ),
     },
 )

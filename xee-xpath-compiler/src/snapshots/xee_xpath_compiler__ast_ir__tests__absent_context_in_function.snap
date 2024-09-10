@@ -5,9 +5,11 @@ expression: "convert_xpath(\"function() { . }\")"
 Err(
     SpannedError {
         error: XPDY0002,
-        span: SourceSpan(
-            13,
-            14,
+        span: Some(
+            SourceSpan(
+                13,
+                14,
+            ),
         ),
     },
 )
