@@ -40,12 +40,16 @@
 pub mod atomic;
 mod documents;
 pub mod error;
+mod queries;
 mod query;
 mod sequence;
+mod session;
 
 pub use documents::{DocumentHandle, Documents};
-pub use query::{Itemable, ManyQuery, OneQuery, OptionQuery, Queries, Query, Session};
+pub use queries::Queries;
+pub use query::{Itemable, ManyQuery, OneQuery, OptionQuery, Query};
 pub use sequence::Sequence;
+pub use session::Session;
 pub use xee_interpreter::atomic::Atomic;
 
 pub use xee_interpreter::sequence::Item;
