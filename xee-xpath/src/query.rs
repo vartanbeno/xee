@@ -156,9 +156,11 @@ where
 {
     /// Execute the query against an itemable.
     pub fn execute(&self, session: &mut Session, item: impl Itemable) -> Result<Option<V>> {
+        // TODO: refactoring this commonality into Session::runnable is
+        // is a problem because of the borrow checker, as session.documents.xot
+        // is borrowed mutably later
         assert_eq!(self.queries_id, session.queries.id);
         let program = &session.queries.xpath_programs[self.id];
-
         let runnable = program.runnable(&session.dynamic_context);
         let item = item.to_item(session)?;
 

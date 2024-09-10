@@ -1,3 +1,5 @@
+use xee_xpath_compiler::Runnable;
+
 use crate::{
     documents::{Documents, InnerDocuments},
     queries::Queries,
