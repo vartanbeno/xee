@@ -5,13 +5,25 @@ use xee_xpath_ast::ParserError;
 
 use crate::span::SourceSpan;
 
+/// An error code with an optional source span.
+///
+/// Also known as `SpannedError` internally.
 #[derive(Debug, PartialEq)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize))]
 pub struct SpannedError {
+    /// The error code
     pub error: Error,
+    /// The source span where the error occurred
     pub span: Option<SourceSpan>,
 }
 
+/// XPath/XSLT error code
+///
+/// These are specified by the XPath and XSLT specifications.
+///
+/// Xee extends them with a few additional error codes.
+///
+/// Also known as `Error` internally.
 #[derive(Debug, Clone, PartialEq, Display, EnumMessage)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize))]
 pub enum Error {
@@ -669,4 +681,7 @@ impl From<OutOfBoundsError> for Error {
 }
 
 pub type Result<T> = std::result::Result<T, Error>;
+/// The result type for errors with (optional) source spans.
+///
+/// Also known as `SpannedResult` internally.
 pub type SpannedResult<T> = std::result::Result<T, SpannedError>;

@@ -1,14 +1,9 @@
 use std::{cell::RefCell, sync::atomic};
 
-static XPATHS_COUNTER: atomic::AtomicUsize = atomic::AtomicUsize::new(0);
 static DOCUMENTS_COUNTER: atomic::AtomicUsize = atomic::AtomicUsize::new(0);
 
 fn get_documents_id() -> usize {
     DOCUMENTS_COUNTER.fetch_add(1, atomic::Ordering::SeqCst)
-}
-
-fn get_xpaths_id() -> usize {
-    XPATHS_COUNTER.fetch_add(1, atomic::Ordering::SeqCst)
 }
 
 /// A collection of XML documents as can be used by XPath and XSLT.
@@ -37,7 +32,7 @@ pub(crate) struct InnerDocuments {
 /// freely copy it.
 ///
 /// You can use it to evaluate XPath expressions on the document using
-/// the [`Engine`].
+/// [`Queries`](`crate::Queries`).
 #[derive(Debug, Clone, Copy, Eq, PartialEq, Hash)]
 pub struct DocumentHandle {
     pub(crate) documents_id: usize,

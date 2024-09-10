@@ -54,9 +54,14 @@ impl Itemable for DocumentHandle {
     }
 }
 
-/// This is a query that expects a sequence that is one item long.
+/// This is a query that expects a sequence that contains exactly one single item.
 ///
 /// If it's empty or has more than one item, an error is returned.
+///
+/// The resulting item is converted into a Rust value using the `convert` function
+/// when constructing this query.
+///
+/// This is useful if you expect a single item to be returned from an XPath query.
 #[derive(Debug, Clone, Copy)]
 pub struct OneQuery<V, F>
 where
@@ -68,11 +73,12 @@ where
     phantom: std::marker::PhantomData<V>,
 }
 
-impl<V, F> Query<V, F> for OneQuery<V, F>
+impl<V, F> OneQuery<V, F>
 where
     F: Convert<V> + Copy,
 {
-    fn execute(&self, session: &mut Session, item: impl Itemable) -> Result<V> {
+    /// Execute the query against an itemable.
+    pub fn execute(&self, session: &mut Session, item: impl Itemable) -> Result<V> {
         assert_eq!(self.queries_id, session.queries.id);
         let program = &session.queries.xpath_programs[self.id];
         let runnable = program.runnable(&session.dynamic_context);
@@ -82,6 +88,24 @@ where
     }
 }
 
+impl<V, F> Query<V, F> for OneQuery<V, F>
+where
+    F: Convert<V> + Copy,
+{
+    fn execute(&self, session: &mut Session, item: impl Itemable) -> Result<V> {
+        OneQuery::execute(self, session, item)
+    }
+}
+
+/// This is a query that expects an optional single item.
+///
+/// If the sequence is empty, `None` is returned. If it contains more than one
+/// item, an error is returned.
+///
+/// The result is converted into a Rust value using the `convert` function
+/// when constructing this query.
+///
+/// This is useful if you expect an optional single item to be returned from an XPath query.
 #[derive(Debug, Clone, Copy)]
 pub struct OptionQuery<V, F>
 where
@@ -97,6 +121,7 @@ impl<V, F> OptionQuery<V, F>
 where
     F: Convert<V> + Copy,
 {
+    /// Execute the query against an itemable.
     pub fn execute(&self, session: &mut Session, item: impl Itemable) -> Result<Option<V>> {
         assert_eq!(self.queries_id, session.queries.id);
         let program = &session.queries.xpath_programs[self.id];
@@ -116,6 +141,14 @@ where
     }
 }
 
+/// A query that expects many items as a result.
+///
+/// The items are converted into Rust values using the supplied `convert` function.
+///
+/// This is useful if you expect many items to be returned from an XPath query.
+///
+/// The result is converted into a Rust value using the `convert` function
+/// when constructing this query.
 #[derive(Debug, Clone)]
 pub struct ManyQuery<V, F>
 where
@@ -131,6 +164,7 @@ impl<V, F> ManyQuery<V, F>
 where
     F: Convert<V> + Copy,
 {
+    /// Execute the query against an itemable.
     pub fn execute(&self, session: &mut Session, item: impl Itemable) -> Result<Vec<V>> {
         assert_eq!(self.queries_id, session.queries.id);
         let program = &session.queries.xpath_programs[self.id];
@@ -187,20 +221,12 @@ impl<'namespaces> Queries<'namespaces> {
         }
     }
 
-    /// Construct a [`Session`]` with a collection of documents
+    /// Construct a [`Session`] with a collection of documents
     ///
-    /// A session is a context in which queries can be executed
+    /// You need a session to be able to execute queries against documents.
     pub fn session(&self, documents: Documents) -> Session {
         Session::new(self, documents)
     }
-
-    // pub fn session<'d>(
-    //     &'d self,
-    //     dynamic_context: &'d DynamicContext<'d>,
-    //     xot: &'d mut Xot,
-    // ) -> Session {
-    //     Session::new(dynamic_context, self, xot)
-    // }
 
     fn register(&mut self, s: &str) -> Result<usize> {
         let program = parse(&self.static_context, s)?;
@@ -273,6 +299,8 @@ impl<'namespaces> Queries<'namespaces> {
 }
 
 /// A session in which queries can be executed
+///
+/// You construct one using the [`Queries::session`] method.
 #[derive(Debug)]
 pub struct Session<'namespaces> {
     queries: &'namespaces Queries<'namespaces>,

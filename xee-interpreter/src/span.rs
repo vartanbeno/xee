@@ -1,5 +1,8 @@
 use xee_xpath_ast::ast;
 
+/// A span in the source code.
+///
+/// Designates where in the source code a certain error occurred.
 #[derive(Debug, Copy, Clone, Eq, PartialEq, Hash)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize))]
 pub struct SourceSpan(usize, usize);
@@ -13,6 +16,7 @@ impl SourceSpan {
         Self(0, 0)
     }
 
+    /// Get the range of the span.
     pub fn range(&self) -> std::ops::Range<usize> {
         self.0..self.1
     }
