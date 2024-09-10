@@ -545,7 +545,7 @@ fn replace(
     flags: &str,
 ) -> error::Result<String> {
     let input = input.unwrap_or("");
-    let regex = Regex::xpath(&pattern, flags)?;
+    let regex = Regex::xpath(pattern, flags)?;
     Ok(regex.replace_all(input, replacement)?)
 }
 
@@ -563,7 +563,7 @@ fn tokenize2(input: Option<&str>, pattern: &str) -> error::Result<Vec<String>> {
 
 fn tokenize(input: Option<&str>, pattern: &str, flags: &str) -> error::Result<Vec<String>> {
     let input = input.unwrap_or("");
-    let regex = Regex::xpath(&pattern, flags)?;
+    let regex = Regex::xpath(pattern, flags)?;
     Ok(regex.tokenize(input)?.collect::<Vec<_>>())
 }
 

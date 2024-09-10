@@ -41,7 +41,7 @@ pub fn evaluate_root(
     let root = documents.borrow().get(&uri).unwrap().root;
     let context = DynamicContext::from_documents(&static_context, &documents);
 
-    let program = parse(&context.static_context, xpath)?;
+    let program = parse(context.static_context, xpath)?;
     let runnable = program.runnable(&context);
     runnable.many_xot_node(root, xot)
 }
@@ -52,7 +52,7 @@ pub fn evaluate_without_focus(s: &str) -> SpannedResult<Sequence> {
     let documents = RefCell::new(Documents::new());
     let context = DynamicContext::from_documents(&static_context, &documents);
 
-    let program = parse(&context.static_context, s)?;
+    let program = parse(context.static_context, s)?;
     let runnable = program.runnable(&context);
     runnable.many(None, &mut xot)
 }
@@ -68,7 +68,7 @@ pub fn evaluate_without_focus_with_variables(
     let documents = RefCell::new(Documents::new());
     let context =
         DynamicContext::from_variables(&static_context, &documents, Cow::Owned(variables));
-    let program = parse(&context.static_context, s)?;
+    let program = parse(context.static_context, s)?;
     let runnable = program.runnable(&context);
     runnable.many(None, &mut xot)
 }

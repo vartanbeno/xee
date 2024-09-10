@@ -50,10 +50,7 @@ impl Value {
                     Err(error::Error::XPTY0004)
                 }
             }
-            Value::Many(items) => items
-                .get(index)
-                .ok_or(error::Error::XPTY0004)
-                .map(|item| item.clone()),
+            Value::Many(items) => items.get(index).ok_or(error::Error::XPTY0004).cloned(),
             Value::Absent => Err(error::Error::XPDY0002),
         }
     }

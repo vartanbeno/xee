@@ -1,5 +1,5 @@
 use xee_interpreter::error::SpannedResult as Result;
-use xee_interpreter::{context::DynamicContext, sequence::Item};
+use xee_interpreter::sequence::Item;
 use xee_xpath_compiler::parse;
 
 use std::sync::atomic;
@@ -35,12 +35,13 @@ impl<V, T> Convert<V> for T where T: Fn(&mut Session, &Item) -> Result<V> {}
 ///
 /// This can be an item, but also a [`DocumentHandle`]
 pub trait Itemable {
+    /// Convert this itemable into an [`Item`]
     fn to_item(&self, session: &Session) -> Result<Item>;
 }
 
 impl Itemable for xot::Node {
     fn to_item(&self, _session: &Session) -> Result<Item> {
-        Ok(Item::Node(self.clone()))
+        Ok(Item::Node(*self))
     }
 }
 
@@ -55,6 +56,8 @@ impl Itemable for DocumentHandle {
 }
 
 /// This is a query that expects a sequence that contains exactly one single item.
+///
+/// Construct this using [`Queries::one`].
 ///
 /// If it's empty or has more than one item, an error is returned.
 ///
@@ -99,6 +102,8 @@ where
 
 /// This is a query that expects an optional single item.
 ///
+/// Construct this using ['Queries::option'].
+///
 /// If the sequence is empty, `None` is returned. If it contains more than one
 /// item, an error is returned.
 ///
@@ -142,6 +147,8 @@ where
 }
 
 /// A query that expects many items as a result.
+///
+/// Construct this using [`Queries::many`].
 ///
 /// The items are converted into Rust values using the supplied `convert` function.
 ///

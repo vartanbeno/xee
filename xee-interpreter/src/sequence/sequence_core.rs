@@ -419,7 +419,7 @@ impl Iterator for ItemIter {
     type Item = sequence::Item;
 
     fn next(&mut self) -> Option<Self::Item> {
-        self.value_iter.next().map(|r| r.into())
+        self.value_iter.next()
     }
 }
 

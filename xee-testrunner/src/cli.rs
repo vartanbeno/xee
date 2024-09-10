@@ -210,7 +210,7 @@ impl<'a, E: Environment, R: Runnable<E>> Runner<'a, E, R> {
     fn load_catalog(&mut self) -> Result<Catalog<E, R>> {
         Catalog::load_from_file(
             &mut self.run_context.xot,
-            &self.run_context.dynamic_context.static_context,
+            self.run_context.dynamic_context.static_context,
             &self.path_info.catalog_path,
         )
     }
@@ -218,7 +218,7 @@ impl<'a, E: Environment, R: Runnable<E>> Runner<'a, E, R> {
     fn load_test_set(&mut self) -> Result<TestSet<E, R>> {
         TestSet::load_from_file(
             &mut self.run_context.xot,
-            &self.run_context.dynamic_context.static_context,
+            self.run_context.dynamic_context.static_context,
             &self.path_info.test_file(),
         )
     }
