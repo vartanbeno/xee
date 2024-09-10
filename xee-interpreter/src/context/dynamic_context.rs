@@ -23,7 +23,7 @@ pub struct DynamicContext<'a> {
     // we want to mutate documents during evaluation, and this happens in
     // multiple spots. We use RefCell to manage that during runtime so we don't
     // need to make the whole thing immutable.
-    pub documents: &'a RefCell<xml::Documents>,
+    pub documents: Cow<'a, RefCell<xml::Documents>>,
     // the variables is either a reference or owned. variables are immutable.
     // a reference is handy if we have no variables so we don't need to
     // recreate them each time.
@@ -36,7 +36,7 @@ pub struct DynamicContext<'a> {
 impl<'a> DynamicContext<'a> {
     pub fn new(
         static_context: &'a StaticContext<'a>,
-        documents: &'a RefCell<xml::Documents>,
+        documents: Cow<'a, RefCell<xml::Documents>>,
         variables: Cow<'a, Variables>,
     ) -> Self {
         Self {
@@ -51,7 +51,22 @@ impl<'a> DynamicContext<'a> {
         static_context: &'a StaticContext<'a>,
         documents: &'a RefCell<xml::Documents>,
     ) -> Self {
-        Self::new(static_context, documents, Cow::Owned(Variables::default()))
+        Self::new(
+            static_context,
+            Cow::Borrowed(documents),
+            Cow::Owned(Variables::default()),
+        )
+    }
+
+    pub fn from_owned_documents(
+        static_context: &'a StaticContext<'a>,
+        documents: RefCell<xml::Documents>,
+    ) -> Self {
+        Self::new(
+            static_context,
+            Cow::Owned(documents),
+            Cow::Owned(Variables::default()),
+        )
     }
 
     pub fn from_variables(
@@ -59,7 +74,15 @@ impl<'a> DynamicContext<'a> {
         documents: &'a RefCell<xml::Documents>,
         variables: Cow<'a, Variables>,
     ) -> Self {
-        Self::new(static_context, documents, variables)
+        Self::new(static_context, Cow::Borrowed(documents), variables)
+    }
+
+    pub fn from_variables_with_owned_documents(
+        static_context: &'a StaticContext<'a>,
+        documents: RefCell<xml::Documents>,
+        variables: Cow<'a, Variables>,
+    ) -> Self {
+        Self::new(static_context, Cow::Owned(documents), variables)
     }
 
     fn create_current_datetime() -> chrono::DateTime<chrono::offset::FixedOffset> {

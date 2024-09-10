@@ -89,7 +89,7 @@ impl<E: Environment> TestCase<E> {
             .collect::<std::result::Result<Vec<_>, crate::error::Error>>()?;
         let mut variables = Variables::new();
         let xot = &mut run_context.xot;
-        let source_cache = run_context.dynamic_context.documents;
+        let source_cache = &run_context.dynamic_context.documents;
         for environment in environments {
             variables.extend(
                 environment

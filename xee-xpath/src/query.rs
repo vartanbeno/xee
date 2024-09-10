@@ -4,7 +4,7 @@ use xee_xpath_compiler::parse;
 
 use std::sync::atomic;
 
-use crate::{DocumentHandle, Documents};
+use crate::documents::{DocumentHandle, Documents, InnerDocuments};
 
 static QUERIES_COUNTER: atomic::AtomicUsize = atomic::AtomicUsize::new(0);
 
@@ -48,7 +48,7 @@ impl Itemable for DocumentHandle {
     fn to_item(&self, session: &Session) -> Result<Item> {
         assert!(self.documents_id == session.documents.id);
         let document_uri = &session.documents.document_uris[self.id];
-        let borrowed_documents = session.documents.documents.borrow();
+        let borrowed_documents = session.dynamic_context.documents().borrow();
         let document = borrowed_documents.get(document_uri).unwrap();
         Ok(Item::Node(document.root()))
     }
@@ -75,11 +75,7 @@ where
     fn execute(&self, session: &mut Session, item: impl Itemable) -> Result<V> {
         assert_eq!(self.queries_id, session.queries.id);
         let program = &session.queries.xpath_programs[self.id];
-        let dynamic_context = DynamicContext::from_documents(
-            &session.queries.static_context,
-            &session.documents.documents,
-        );
-        let runnable = program.runnable(&dynamic_context);
+        let runnable = program.runnable(&session.dynamic_context);
         let item = item.to_item(session)?;
         let item = runnable.one(Some(&item), &mut session.documents.xot)?;
         (self.convert)(session, &item)
@@ -104,11 +100,8 @@ where
     pub fn execute(&self, session: &mut Session, item: impl Itemable) -> Result<Option<V>> {
         assert_eq!(self.queries_id, session.queries.id);
         let program = &session.queries.xpath_programs[self.id];
-        let dynamic_context = DynamicContext::from_documents(
-            &session.queries.static_context,
-            &session.documents.documents,
-        );
-        let runnable = program.runnable(&dynamic_context);
+
+        let runnable = program.runnable(&session.dynamic_context);
         let item = item.to_item(session)?;
 
         let item = runnable.option(Some(&item), &mut session.documents.xot)?;
@@ -141,11 +134,7 @@ where
     pub fn execute(&self, session: &mut Session, item: impl Itemable) -> Result<Vec<V>> {
         assert_eq!(self.queries_id, session.queries.id);
         let program = &session.queries.xpath_programs[self.id];
-        let dynamic_context = DynamicContext::from_documents(
-            &session.queries.static_context,
-            &session.documents.documents,
-        );
-        let runnable = program.runnable(&dynamic_context);
+        let runnable = program.runnable(&session.dynamic_context);
         let item = item.to_item(session)?;
 
         let sequence = runnable.many(Some(&item), &mut session.documents.xot)?;
@@ -287,12 +276,21 @@ impl<'namespaces> Queries<'namespaces> {
 #[derive(Debug)]
 pub struct Session<'namespaces> {
     queries: &'namespaces Queries<'namespaces>,
-    documents: Documents,
+    dynamic_context: xee_interpreter::context::DynamicContext<'namespaces>,
+    documents: InnerDocuments,
 }
 
 impl<'namespaces> Session<'namespaces> {
     fn new(queries: &'namespaces Queries<'namespaces>, documents: Documents) -> Self {
-        Self { queries, documents }
+        let dynamic_context = xee_interpreter::context::DynamicContext::from_owned_documents(
+            &queries.static_context,
+            documents.documents,
+        );
+        Self {
+            queries,
+            dynamic_context,
+            documents: documents.inner,
+        }
     }
 }
 

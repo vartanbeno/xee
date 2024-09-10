@@ -1023,7 +1023,7 @@ fn run_xpath_with_result(
     let variables = AHashMap::from([(name, sequence.clone())]);
     let dynamic_context = DynamicContext::new(
         &static_context,
-        runnable.dynamic_context().documents,
+        Cow::Borrowed(&runnable.dynamic_context().documents),
         Cow::Owned(variables),
     );
     let runnable = program.runnable(&dynamic_context);
