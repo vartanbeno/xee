@@ -2,6 +2,9 @@ use xee_interpreter::sequence::Item;
 
 use crate::{error::Result, DocumentHandle, Session};
 
+// TODO: if the underlying APIs take a sequence we could turn this into
+// a sequenceable.
+
 /// Something that can be converted into an [`Item`] using a [`Session`]
 ///
 /// This can be an item, but also a [`DocumentHandle`]
