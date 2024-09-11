@@ -1,4 +1,5 @@
 use xee_interpreter::error::SpannedResult as Result;
+use xee_interpreter::occurrence::Occurrence;
 use xee_interpreter::sequence::{self, Item};
 
 use std::sync::atomic;
@@ -85,12 +86,17 @@ where
     pub(crate) phantom: std::marker::PhantomData<V>,
 }
 
-// fn execute_many(
-//     session: &Session,
-//     id: impl Query,
-//     item: impl Itemable,
-// ) -> Result<sequence::Sequence> {
-// }
+fn execute_many(
+    session: &mut Session,
+    query_id: &QueryId,
+    item: impl Itemable,
+) -> Result<sequence::Sequence> {
+    assert_eq!(query_id.queries_id, session.queries.id);
+    let program = &session.queries.xpath_programs[query_id.id];
+    let runnable = program.runnable(&session.dynamic_context);
+    let item = item.to_item(session)?;
+    runnable.many(Some(&item), &mut session.documents.xot)
+}
 
 impl<V, F> OneQuery<V, F>
 where
@@ -98,11 +104,9 @@ where
 {
     /// Execute the query against an itemable.
     pub fn execute(&self, session: &mut Session, item: impl Itemable) -> Result<V> {
-        assert_eq!(self.query_id.queries_id, session.queries.id);
-        let program = &session.queries.xpath_programs[self.query_id.id];
-        let runnable = program.runnable(&session.dynamic_context);
-        let item = item.to_item(session)?;
-        let item = runnable.one(Some(&item), &mut session.documents.xot)?;
+        let sequence = execute_many(session, &self.query_id, item)?;
+        let mut items = sequence.items()?;
+        let item = items.one()?;
         (self.convert)(session, &item)
     }
 }
@@ -143,23 +147,10 @@ where
 {
     /// Execute the query against an itemable.
     pub fn execute(&self, session: &mut Session, item: impl Itemable) -> Result<Option<V>> {
-        // TODO: refactoring this commonality into Session::runnable is
-        // is a problem because of the borrow checker, as session.documents.xot
-        // is borrowed mutably later
-        assert_eq!(self.query_id.queries_id, session.queries.id);
-        let program = &session.queries.xpath_programs[self.query_id.id];
-        let runnable = program.runnable(&session.dynamic_context);
-        let item = item.to_item(session)?;
-
-        let item = runnable.option(Some(&item), &mut session.documents.xot)?;
-        if let Some(item) = item {
-            match (self.convert)(session, &item) {
-                Ok(value) => Ok(Some(value)),
-                Err(query_error) => Err(query_error),
-            }
-        } else {
-            Ok(None)
-        }
+        let sequence = execute_many(session, &self.query_id, item)?;
+        let mut items = sequence.items()?;
+        let item = items.option()?;
+        item.map(|item| (self.convert)(session, &item)).transpose()
     }
 }
 
@@ -189,19 +180,11 @@ where
 {
     /// Execute the query against an itemable.
     pub fn execute(&self, session: &mut Session, item: impl Itemable) -> Result<Vec<V>> {
-        assert_eq!(self.query_id.queries_id, session.queries.id);
-        let program = &session.queries.xpath_programs[self.query_id.id];
-        let runnable = program.runnable(&session.dynamic_context);
-        let item = item.to_item(session)?;
-
-        let sequence = runnable.many(Some(&item), &mut session.documents.xot)?;
-        let mut values = Vec::with_capacity(sequence.len());
-        for item in sequence.items()? {
-            match (self.convert)(session, &item) {
-                Ok(value) => values.push(value),
-                Err(query_error) => return Err(query_error),
-            }
-        }
-        Ok(values)
+        let sequence = execute_many(session, &self.query_id, item)?;
+        let items = sequence
+            .items()?
+            .map(|item| (self.convert)(session, &item))
+            .collect::<Result<Vec<V>>>()?;
+        Ok(items)
     }
 }
