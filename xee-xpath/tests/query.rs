@@ -1,4 +1,4 @@
-use xee_xpath::{error, Documents, Queries};
+use xee_xpath::{error, Documents, Item, Queries, Recurse, Session};
 
 #[test]
 fn test_simple_query() -> error::Result<()> {
@@ -79,5 +79,56 @@ fn test_wrong_queries() -> error::Result<()> {
     let mut session = queries.session(documents);
     let r = second_q.execute(&mut session, doc).unwrap_err();
     assert_eq!(r, error::ErrorValue::UsedQueryWithWrongQueries.into());
+    Ok(())
+}
+
+#[test]
+fn test_one_query_recurse() -> error::Result<()> {
+    let mut queries = Queries::default();
+
+    #[derive(Debug, PartialEq, Eq)]
+    enum Expr {
+        AnyOf(Box<Expr>),
+        Value(String),
+        Empty,
+    }
+
+    let any_of_recurse = queries.option_recurse("any-of")?;
+    let value_query = queries.option("value/string()", |_, item| {
+        Ok(item.to_atomic()?.to_string()?)
+    })?;
+
+    let result_query = queries.one("doc/result", |session, item| {
+        let f = |session: &mut Session, item: &Item, recurse: &Recurse<Expr>| {
+            let any_of = any_of_recurse.execute(session, item, recurse)?;
+            if let Some(any_of) = any_of {
+                return Ok(Expr::AnyOf(Box::new(any_of)));
+            }
+            if let Some(value) = value_query.execute(session, item)? {
+                return Ok(Expr::Value(value));
+            }
+            Ok(Expr::Empty)
+        };
+        let recurse = Recurse::new(&f);
+        recurse.execute(session, item)
+    })?;
+
+    let mut documents = Documents::new();
+    let doc1 = documents
+        .load_string(
+            "doc1",
+            r#"<doc><result><any-of><value>A</value></any-of></result></doc>"#,
+        )
+        .unwrap();
+    let doc2 = documents
+        .load_string("doc2", r#"<doc><result><value>A</value></result></doc>"#)
+        .unwrap();
+
+    let mut session = queries.session(documents);
+    let r = result_query.execute(&mut session, doc1)?;
+    assert_eq!(r, Expr::AnyOf(Box::new(Expr::Value("A".to_string()))));
+
+    let r = result_query.execute(&mut session, doc2)?;
+    assert_eq!(r, Expr::Value("A".to_string()));
     Ok(())
 }

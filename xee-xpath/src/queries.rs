@@ -5,7 +5,7 @@ use std::sync::atomic;
 
 use crate::{
     documents::Documents,
-    query::{Convert, ManyQuery, OneQuery, OptionQuery, QueryId},
+    query::{Convert, ManyQuery, OneQuery, OptionQuery, OptionRecurseQuery, QueryId},
     session::Session,
 };
 
@@ -110,10 +110,12 @@ impl<'namespaces> Queries<'namespaces> {
         })
     }
 
-    // pub fn option_recurse(&mut self, s: &str) -> Result<OptionRecurseQuery> {
-    //     let id = self.register(s)?;
-    //     Ok(OptionRecurseQuery { id })
-    // }
+    pub fn option_recurse(&mut self, s: &str) -> Result<OptionRecurseQuery> {
+        let id = self.register(s)?;
+        Ok(OptionRecurseQuery {
+            query_id: QueryId::new(self.id, id),
+        })
+    }
 
     /// Construct a query that expects many items as a result.
     ///

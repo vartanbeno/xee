@@ -46,7 +46,7 @@ pub struct Recurse<'s, V> {
 }
 
 impl<'s, V> Recurse<'s, V> {
-    fn new(f: RecurseFn<'s, V>) -> Self {
+    pub fn new(f: RecurseFn<'s, V>) -> Self {
         Self { f }
     }
     pub fn execute(&self, session: &mut Session, item: &Item) -> Result<V> {
@@ -153,6 +153,25 @@ where
         let mut items = sequence.items()?;
         let item = items.option()?;
         item.map(|item| (self.convert)(session, &item)).transpose()
+    }
+}
+
+#[derive(Debug, Clone)]
+pub struct OptionRecurseQuery {
+    pub(crate) query_id: QueryId,
+}
+
+impl OptionRecurseQuery {
+    pub fn execute<V>(
+        &self,
+        session: &mut Session,
+        item: &Item,
+        recurse: &Recurse<V>,
+    ) -> Result<Option<V>> {
+        let sequence = execute_many(session, &self.query_id, item)?;
+        let mut items = sequence.items()?;
+        let item = items.option()?;
+        item.map(|item| recurse.execute(session, &item)).transpose()
     }
 }
 
