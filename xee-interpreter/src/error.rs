@@ -31,6 +31,17 @@ pub enum Error {
     ///
     /// Internal stack overflow.
     StackOverflow,
+
+    /// Unsupported XPath feature.
+    ///
+    /// This XPath feature is not supported by Xee.
+    Unsupported,
+
+    /// Used query with wrong queries.
+    ///
+    /// The query was created with a different queries collection.
+    UsedQueryWithWrongQueries,
+
     // XPath error conditions: https://www.w3.org/TR/xpath-31/#id-errors
     /// Component absent in static context.
     ///  
@@ -528,11 +539,6 @@ pub enum Error {
     /// contains characters available only in XML 1.1 and the calling processor
     /// cannot handle such characters.
     FOXT0006,
-
-    /// Unsupported XPath feature.
-    ///
-    /// This XPath feature is not supported by Xee.
-    Unsupported,
 
     /// Duplicate global variable name.
     ///

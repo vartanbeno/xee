@@ -5,7 +5,7 @@ use xee_interpreter::sequence::{self, Item};
 use std::sync::atomic;
 
 use crate::session::Session;
-use crate::Itemable;
+use crate::{error, Itemable};
 
 static QUERIES_COUNTER: atomic::AtomicUsize = atomic::AtomicUsize::new(0);
 
@@ -91,7 +91,9 @@ fn execute_many(
     query_id: &QueryId,
     item: impl Itemable,
 ) -> Result<sequence::Sequence> {
-    assert_eq!(query_id.queries_id, session.queries.id);
+    if query_id.queries_id != session.queries.id {
+        return Err(error::ErrorValue::UsedQueryWithWrongQueries.into());
+    }
     let program = &session.queries.xpath_programs[query_id.id];
     let runnable = program.runnable(&session.dynamic_context);
     let item = item.to_item(session)?;

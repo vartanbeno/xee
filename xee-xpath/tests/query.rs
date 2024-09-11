@@ -62,3 +62,22 @@ fn test_nested_query() -> error::Result<()> {
     assert_eq!(r, vec![1.0, 2.0]);
     Ok(())
 }
+
+#[test]
+fn test_wrong_queries() -> error::Result<()> {
+    let mut documents = Documents::new();
+    let doc = documents
+        .load_string("http://example.com", "<root>foo</root>")
+        .unwrap();
+
+    let queries = Queries::default();
+
+    let mut second_queries = Queries::default();
+    let second_q = second_queries.one("/root/string()", |_, item| {
+        Ok(item.try_into_value::<String>()?)
+    })?;
+    let mut session = queries.session(documents);
+    let r = second_q.execute(&mut session, doc).unwrap_err();
+    assert_eq!(r, error::ErrorValue::UsedQueryWithWrongQueries.into());
+    Ok(())
+}
