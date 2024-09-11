@@ -1,5 +1,5 @@
 use xee_interpreter::error::SpannedResult as Result;
-use xee_interpreter::sequence::Item;
+use xee_interpreter::sequence::{self, Item};
 
 use std::sync::atomic;
 
@@ -53,6 +53,18 @@ impl<'s, V> Recurse<'s, V> {
     }
 }
 
+#[derive(Debug, Clone, Copy)]
+pub(crate) struct QueryId {
+    queries_id: usize,
+    id: usize,
+}
+
+impl QueryId {
+    pub(crate) fn new(queries_id: usize, id: usize) -> Self {
+        Self { queries_id, id }
+    }
+}
+
 /// This is a query that expects a sequence that contains exactly one single item.
 ///
 /// Construct this using [`Queries::one`].
@@ -68,11 +80,17 @@ pub struct OneQuery<V, F>
 where
     F: Convert<V> + Copy,
 {
-    pub(crate) queries_id: usize,
-    pub(crate) id: usize,
+    pub(crate) query_id: QueryId,
     pub(crate) convert: F,
     pub(crate) phantom: std::marker::PhantomData<V>,
 }
+
+// fn execute_many(
+//     session: &Session,
+//     id: impl Query,
+//     item: impl Itemable,
+// ) -> Result<sequence::Sequence> {
+// }
 
 impl<V, F> OneQuery<V, F>
 where
@@ -80,8 +98,8 @@ where
 {
     /// Execute the query against an itemable.
     pub fn execute(&self, session: &mut Session, item: impl Itemable) -> Result<V> {
-        assert_eq!(self.queries_id, session.queries.id);
-        let program = &session.queries.xpath_programs[self.id];
+        assert_eq!(self.query_id.queries_id, session.queries.id);
+        let program = &session.queries.xpath_programs[self.query_id.id];
         let runnable = program.runnable(&session.dynamic_context);
         let item = item.to_item(session)?;
         let item = runnable.one(Some(&item), &mut session.documents.xot)?;
@@ -114,8 +132,7 @@ pub struct OptionQuery<V, F>
 where
     F: Convert<V> + Copy,
 {
-    pub(crate) queries_id: usize,
-    pub(crate) id: usize,
+    pub(crate) query_id: QueryId,
     pub(crate) convert: F,
     pub(crate) phantom: std::marker::PhantomData<V>,
 }
@@ -129,8 +146,8 @@ where
         // TODO: refactoring this commonality into Session::runnable is
         // is a problem because of the borrow checker, as session.documents.xot
         // is borrowed mutably later
-        assert_eq!(self.queries_id, session.queries.id);
-        let program = &session.queries.xpath_programs[self.id];
+        assert_eq!(self.query_id.queries_id, session.queries.id);
+        let program = &session.queries.xpath_programs[self.query_id.id];
         let runnable = program.runnable(&session.dynamic_context);
         let item = item.to_item(session)?;
 
@@ -161,8 +178,7 @@ pub struct ManyQuery<V, F>
 where
     F: Convert<V> + Copy,
 {
-    pub(crate) queries_id: usize,
-    pub(crate) id: usize,
+    pub(crate) query_id: QueryId,
     pub(crate) convert: F,
     pub(crate) phantom: std::marker::PhantomData<V>,
 }
@@ -173,8 +189,8 @@ where
 {
     /// Execute the query against an itemable.
     pub fn execute(&self, session: &mut Session, item: impl Itemable) -> Result<Vec<V>> {
-        assert_eq!(self.queries_id, session.queries.id);
-        let program = &session.queries.xpath_programs[self.id];
+        assert_eq!(self.query_id.queries_id, session.queries.id);
+        let program = &session.queries.xpath_programs[self.query_id.id];
         let runnable = program.runnable(&session.dynamic_context);
         let item = item.to_item(session)?;
 

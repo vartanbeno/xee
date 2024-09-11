@@ -5,8 +5,7 @@ use std::sync::atomic;
 
 use crate::{
     documents::Documents,
-    query::Convert,
-    query::{ManyQuery, OneQuery, OptionQuery},
+    query::{Convert, ManyQuery, OneQuery, OptionQuery, QueryId},
     session::Session,
 };
 
@@ -77,12 +76,19 @@ impl<'namespaces> Queries<'namespaces> {
     {
         let id = self.register(s)?;
         Ok(OneQuery {
-            queries_id: self.id,
-            id,
+            query_id: QueryId::new(self.id, id),
             convert,
             phantom: std::marker::PhantomData,
         })
     }
+
+    // pub fn one_recurse(&mut self, s: &str) -> Result<OneRecurseQuery> {
+    //     let id = self.register(s)?;
+    //     Ok(OneRecurseQuery {
+    //         queries_id: self.id,
+    //         id,
+    //     })
+    // }
 
     // pub fn one_recurse(&mut self, s: &str) -> Result<OneRecurseQuery> {
     //     let id = self.register(s)?;
@@ -98,8 +104,7 @@ impl<'namespaces> Queries<'namespaces> {
     {
         let id = self.register(s)?;
         Ok(OptionQuery {
-            queries_id: self.id,
-            id,
+            query_id: QueryId::new(self.id, id),
             convert,
             phantom: std::marker::PhantomData,
         })
@@ -119,8 +124,7 @@ impl<'namespaces> Queries<'namespaces> {
     {
         let id = self.register(s)?;
         Ok(ManyQuery {
-            queries_id: self.id,
-            id,
+            query_id: QueryId::new(self.id, id),
             convert,
             phantom: std::marker::PhantomData,
         })
