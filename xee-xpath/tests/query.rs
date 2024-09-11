@@ -93,22 +93,29 @@ fn test_one_query_recurse() -> error::Result<()> {
         Empty,
     }
 
+    // if we find the "any-of" element, we want to use a recursive
+    // call to the query we pass it
     let any_of_recurse = queries.option_recurse("any-of")?;
+    // the "value" element is simply a string
     let value_query = queries.option("value/string()", |_, item| {
-        Ok(item.to_atomic()?.to_string()?)
+        Ok(item.try_into_value::<String>()?)
     })?;
 
+    // a result is either a "value" or an "any-of" element
     let result_query = queries.one("doc/result", |session, item| {
-        let f = |session: &mut Session, item: &Item, recurse: &Recurse<Expr>| {
-            let any_of = any_of_recurse.execute(session, item, recurse)?;
-            if let Some(any_of) = any_of {
+        let f = |session: &mut Session, item: &Item, recurse: &Recurse<_>| {
+            // we either call the any of query, which recursively
+            // calls this function
+            if let Some(any_of) = any_of_recurse.execute(session, item, recurse)? {
                 return Ok(Expr::AnyOf(Box::new(any_of)));
             }
+            // or use the value query
             if let Some(value) = value_query.execute(session, item)? {
                 return Ok(Expr::Value(value));
             }
             Ok(Expr::Empty)
         };
+        // we want to recursively call this function
         let recurse = Recurse::new(&f);
         recurse.execute(session, item)
     })?;

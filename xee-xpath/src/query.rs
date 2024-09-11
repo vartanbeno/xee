@@ -36,7 +36,7 @@ impl<V, T> Convert<V> for T where T: Fn(&mut Session, &Item) -> Result<V> {}
 // struct.
 // https://stackoverflow.com/questions/16946888/is-it-possible-to-make-a-recursive-closure-in-rust
 
-// The dyn and dereference are unavoidable, as closures are not allowed
+// The dyn and reference are unavoidable, as closures are not allowed
 // to refer to themselves:
 // https://github.com/rust-lang/rust/issues/46062
 type RecurseFn<'s, V> = &'s dyn Fn(&mut Session, &Item, &Recurse<'s, V>) -> Result<V>;
