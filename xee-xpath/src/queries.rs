@@ -5,7 +5,10 @@ use std::sync::atomic;
 
 use crate::{
     documents::Documents,
-    query::{Convert, ManyQuery, OneQuery, OptionQuery, OptionRecurseQuery, QueryId},
+    query::{
+        Convert, ManyQuery, ManyRecurseQuery, OneQuery, OneRecurseQuery, OptionQuery,
+        OptionRecurseQuery, QueryId,
+    },
     session::Session,
 };
 
@@ -82,18 +85,17 @@ impl<'namespaces> Queries<'namespaces> {
         })
     }
 
-    // pub fn one_recurse(&mut self, s: &str) -> Result<OneRecurseQuery> {
-    //     let id = self.register(s)?;
-    //     Ok(OneRecurseQuery {
-    //         queries_id: self.id,
-    //         id,
-    //     })
-    // }
-
-    // pub fn one_recurse(&mut self, s: &str) -> Result<OneRecurseQuery> {
-    //     let id = self.register(s)?;
-    //     Ok(OneRecurseQuery { id })
-    // }
+    /// Construct a query that expects a single item result.
+    ///
+    /// This item is converted into a Rust value not using a convert
+    /// function but through a recursive call that's passed in during
+    /// execution.
+    pub fn one_recurse(&mut self, s: &str) -> Result<OneRecurseQuery> {
+        let id = self.register(s)?;
+        Ok(OneRecurseQuery {
+            query_id: QueryId::new(self.id, id),
+        })
+    }
 
     /// Connstruct a query that expects an optional single item result.
     ///
@@ -110,6 +112,11 @@ impl<'namespaces> Queries<'namespaces> {
         })
     }
 
+    /// Construct a query that expects an optional single item result.
+    ///
+    /// This item is converted into a Rust value not using a convert
+    /// function but through a recursive call that's passed in during
+    /// execution.
     pub fn option_recurse(&mut self, s: &str) -> Result<OptionRecurseQuery> {
         let id = self.register(s)?;
         Ok(OptionRecurseQuery {
@@ -132,9 +139,17 @@ impl<'namespaces> Queries<'namespaces> {
         })
     }
 
-    // pub fn many_recurse(&mut self, s: &str) -> Result<ManyRecurseQuery> {
-    //     let id = self.register(s)?;
-    //     Ok(ManyRecurseQuery { id })queries
+    /// Construct a query that expects many items as a result.
+    ///
+    /// These items are converted into Rust values not using a convert
+    /// function but through a recursive call that's passed in during
+    /// execution.
+    pub fn many_recurse(&mut self, s: &str) -> Result<ManyRecurseQuery> {
+        let id = self.register(s)?;
+        Ok(ManyRecurseQuery {
+            query_id: QueryId::new(self.id, id),
+        })
+    }
 }
 
 #[cfg(test)]

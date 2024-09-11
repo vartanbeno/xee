@@ -2,16 +2,8 @@ use xee_interpreter::error::SpannedResult as Result;
 use xee_interpreter::occurrence::Occurrence;
 use xee_interpreter::sequence::{self, Item};
 
-use std::sync::atomic;
-
 use crate::session::Session;
 use crate::{error, Itemable};
-
-static QUERIES_COUNTER: atomic::AtomicUsize = atomic::AtomicUsize::new(0);
-
-fn get_queries_id() -> usize {
-    QUERIES_COUNTER.fetch_add(1, atomic::Ordering::SeqCst)
-}
 
 /// A query that can be executed against an [`Itemable`]
 ///
@@ -41,14 +33,18 @@ impl<V, T> Convert<V> for T where T: Fn(&mut Session, &Item) -> Result<V> {}
 // https://github.com/rust-lang/rust/issues/46062
 type RecurseFn<'s, V> = &'s dyn Fn(&mut Session, &Item, &Recurse<'s, V>) -> Result<V>;
 
+/// An object that can be used to use a conversion function recursively.
 pub struct Recurse<'s, V> {
     f: RecurseFn<'s, V>,
 }
 
 impl<'s, V> Recurse<'s, V> {
+    /// Create a new recurse object given a conversion function.
     pub fn new(f: RecurseFn<'s, V>) -> Self {
         Self { f }
     }
+
+    /// Execute the conversion function against an item.
     pub fn execute(&self, session: &mut Session, item: &Item) -> Result<V> {
         (self.f)(session, item, self)
     }
@@ -122,6 +118,25 @@ where
     }
 }
 
+#[derive(Debug, Clone)]
+pub struct OneRecurseQuery {
+    pub(crate) query_id: QueryId,
+}
+
+impl OneRecurseQuery {
+    pub fn execute<V>(
+        &self,
+        session: &mut Session,
+        item: &Item,
+        recurse: &Recurse<V>,
+    ) -> Result<V> {
+        let sequence = execute_many(session, &self.query_id, item)?;
+        let mut items = sequence.items()?;
+        let item = items.one()?;
+        recurse.execute(session, &item)
+    }
+}
+
 /// This is a query that expects an optional single item.
 ///
 /// Construct this using ['Queries::option'].
@@ -162,6 +177,10 @@ pub struct OptionRecurseQuery {
 }
 
 impl OptionRecurseQuery {
+    /// Execute the query against an itemable.
+    ///
+    /// To do the conversion pass in a [`Recurse`] object. This
+    /// allows you to use a convert function recursively.
     pub fn execute<V>(
         &self,
         session: &mut Session,
@@ -205,6 +224,31 @@ where
         let items = sequence
             .items()?
             .map(|item| (self.convert)(session, &item))
+            .collect::<Result<Vec<V>>>()?;
+        Ok(items)
+    }
+}
+
+#[derive(Debug, Clone)]
+pub struct ManyRecurseQuery {
+    pub(crate) query_id: QueryId,
+}
+
+impl ManyRecurseQuery {
+    /// Execute the query against an itemable.
+    ///
+    /// To do the conversion pass in a [`Recurse`] object. This
+    /// allows you to use a convert function recursively.
+    pub fn execute<V>(
+        &self,
+        session: &mut Session,
+        item: &Item,
+        recurse: &Recurse<V>,
+    ) -> Result<Vec<V>> {
+        let sequence = execute_many(session, &self.query_id, item)?;
+        let items = sequence
+            .items()?
+            .map(|item| recurse.execute(session, &item))
             .collect::<Result<Vec<V>>>()?;
         Ok(items)
     }
