@@ -606,7 +606,7 @@ impl<'a> Interpreter<'a> {
                         let copy = match &item {
                             sequence::Item::Atomic(_) | sequence::Item::Function(_) => item.clone(),
                             sequence::Item::Node(node) => {
-                                let copied_node = self.state.xot.clone(*node);
+                                let copied_node = self.state.xot.clone_node(*node);
                                 sequence::Item::Node(copied_node)
                             }
                         };
@@ -1108,7 +1108,7 @@ impl<'a> Interpreter<'a> {
                     // if we have a parent we're already in another document,
                     // in which case we want to make a clone first
                     let node = if self.state.xot.parent(node).is_some() {
-                        self.state.xot.clone(node)
+                        self.state.xot.clone_node(node)
                     } else {
                         node
                     };
@@ -1143,7 +1143,7 @@ impl<'a> Interpreter<'a> {
             xot::Value::Element(element) => xot.new_element(element.name()),
             // we can clone (deep-copy) these nodes as it's the same
             // operation as shallow copy
-            _ => xot.clone(node),
+            _ => xot.clone_node(node),
         }
     }
 

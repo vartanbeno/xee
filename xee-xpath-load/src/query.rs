@@ -31,8 +31,6 @@ impl<'s, V> Recurse<'s, V> {
     }
 }
 
-pub trait ConvertRecurse<V>: Fn(&Session, &Item) -> Result<V> {}
-
 #[derive(Debug)]
 pub struct Queries<'s> {
     queries: Vec<Program>,

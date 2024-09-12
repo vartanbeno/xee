@@ -95,7 +95,7 @@ The Xee project is composed of many crates. Here is a quick overview:
   `xee-interpreter`.
 
 - `xee-xpath` - Combines the underlying components to provide a high level API
-  to support XPath queries.
+  to support XPath queries in Rust.
 
 - `xee-xpath-ast` - Defines an XPath AST. Turns `xee-xpath-lexer` output into
   an XPath AST.
