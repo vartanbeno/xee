@@ -240,3 +240,21 @@ fn test_map_query() -> error::Result<()> {
     assert_eq!(r, ibig!(4));
     Ok(())
 }
+
+#[test]
+fn test_map_query_clone() -> error::Result<()> {
+    let mut queries = Queries::default();
+    let q = queries
+        .one("1 + 2", |_, item| {
+            let v: IBig = item.to_atomic()?.try_into()?;
+            Ok(v)
+        })?
+        .map(|v, _, _| Ok(v + ibig!(1)));
+    let q = q.clone();
+    let documents = Documents::new();
+
+    let mut session = queries.session(documents);
+    let r = q.execute(&mut session, &1i64.into())?;
+    assert_eq!(r, ibig!(4));
+    Ok(())
+}
