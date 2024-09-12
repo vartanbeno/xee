@@ -1,4 +1,5 @@
-use xee_xpath::{error, Documents, Item, Queries, Recurse, Session};
+use ibig::{ibig, IBig};
+use xee_xpath::{error, Documents, Item, Queries, Query, Recurse, Session};
 
 #[test]
 fn test_duplicate_document_uri() -> error::Result<()> {
@@ -222,4 +223,20 @@ fn test_many_query_recurse() -> error::Result<()> {
     Ok(())
 }
 
-// TODO: does it make sense to do recurse with one query?
+#[test]
+fn test_map_query() -> error::Result<()> {
+    let mut queries = Queries::default();
+    let q = queries
+        .one("1 + 2", |_, item| {
+            let v: IBig = item.to_atomic()?.try_into()?;
+            Ok(v)
+        })?
+        .map(|v, _, _| Ok(v + ibig!(1)));
+
+    let documents = Documents::new();
+
+    let mut session = queries.session(documents);
+    let r = q.execute(&mut session, &1i64.into())?;
+    assert_eq!(r, ibig!(4));
+    Ok(())
+}

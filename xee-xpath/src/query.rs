@@ -12,6 +12,22 @@ pub trait Query<V, F>
 where
     F: Convert<V> + Copy,
 {
+    fn map<T>(
+        self,
+        f: impl Fn(V, &mut Session, &Item) -> Result<T> + Clone + Copy,
+    ) -> MapQuery<V, T, Self, F, impl Fn(V, &mut Session, &Item) -> Result<T> + Copy + Clone>
+    where
+        Self: Sized,
+    {
+        MapQuery {
+            query: self,
+            f,
+            c: std::marker::PhantomData,
+            v: std::marker::PhantomData,
+            t: std::marker::PhantomData,
+        }
+    }
+
     /// Excute the query against an itemable
     fn execute(&self, session: &mut Session, item: impl Itemable) -> Result<V>;
 }
@@ -253,3 +269,38 @@ impl ManyRecurseQuery {
         Ok(items)
     }
 }
+
+#[derive(Debug, Clone)]
+pub struct MapQuery<V, T, Q: Query<V, C> + Sized, C, F>
+where
+    C: Convert<V> + Copy,
+    F: Fn(V, &mut Session, &Item) -> Result<T> + Clone + Copy,
+{
+    query: Q,
+    f: F,
+    c: std::marker::PhantomData<C>,
+    v: std::marker::PhantomData<V>,
+    t: std::marker::PhantomData<T>,
+}
+
+impl<V, T, Q: Query<V, C> + Sized, C, F> MapQuery<V, T, Q, C, F>
+where
+    C: Convert<V> + Copy,
+    F: Fn(V, &mut Session, &Item) -> Result<T> + Clone + Copy,
+{
+    pub fn execute(&self, session: &mut Session, item: &Item) -> Result<T> {
+        let v = self.query.execute(session, item)?;
+        (self.f)(v, session, item)
+    }
+}
+
+// impl<V, T, Q: Query<V, C> + Sized, C, F> Query<V, C> for MapQuery<V, T, Q, C, F>
+// where
+//     C: Convert<V> + Copy,
+//     F: Fn(V, &mut Session, &Item) -> Result<T> + Clone + Copy,
+// {
+//     fn execute(&self, session: &mut Session, item: &Item) -> Result<T> {
+//         let v = self.query.execute(session, item)?;
+//         (self.f)(v, session, item)
+//     }
+// }
