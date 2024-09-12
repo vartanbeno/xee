@@ -8,21 +8,22 @@ use crate::{error, Itemable};
 /// A query that can be executed against an [`Itemable`]
 ///
 /// It gives back a result of type `V`
-pub trait Query<V, F>
-where
-    F: Convert<V> + Copy,
-{
+pub trait Query<V> {
+    /// Map the the result of the query to a different type.
+    ///
+    /// You need to provide a function that takes the result of the query,
+    /// the session, and the item, and returns a new result.
+
     fn map<T>(
         self,
-        f: impl Fn(V, &mut Session, &Item) -> Result<T> + Clone + Copy,
-    ) -> MapQuery<V, T, Self, F, impl Fn(V, &mut Session, &Item) -> Result<T> + Copy + Clone>
+        f: impl Fn(V, &mut Session, &Item) -> Result<T> + Copy + Clone,
+    ) -> MapQuery<V, T, Self, impl Fn(V, &mut Session, &Item) -> Result<T> + Copy + Clone>
     where
         Self: Sized,
     {
         MapQuery {
             query: self,
             f,
-            c: std::marker::PhantomData,
             v: std::marker::PhantomData,
             t: std::marker::PhantomData,
         }
@@ -125,7 +126,7 @@ where
     }
 }
 
-impl<V, F> Query<V, F> for OneQuery<V, F>
+impl<V, F> Query<V> for OneQuery<V, F>
 where
     F: Convert<V> + Copy,
 {
@@ -186,6 +187,15 @@ where
         item.map(|item| (self.convert)(session, &item)).transpose()
     }
 }
+
+// impl<V, F> Query<Option<V>> for OptionQuery<Option<V>, F>
+// where
+//     F: Convert<Option<V>> + Copy,
+// {
+//     fn execute(&self, session: &mut Session, item: impl Itemable) -> Result<Option<V>> {
+//         Self::execute(self, session, item)
+//     }
+// }
 
 #[derive(Debug, Clone)]
 pub struct OptionRecurseQuery {
@@ -270,22 +280,20 @@ impl ManyRecurseQuery {
     }
 }
 
-#[derive(Debug, Clone)]
-pub struct MapQuery<V, T, Q: Query<V, C> + Sized, C, F>
+#[derive(Debug, Copy, Clone)]
+pub struct MapQuery<V, T, Q: Query<V> + Sized, F>
 where
-    C: Convert<V> + Copy,
     F: Fn(V, &mut Session, &Item) -> Result<T> + Clone + Copy,
 {
     query: Q,
     f: F,
-    c: std::marker::PhantomData<C>,
     v: std::marker::PhantomData<V>,
     t: std::marker::PhantomData<T>,
 }
 
-impl<V, T, Q: Query<V, C> + Sized, C, F> MapQuery<V, T, Q, C, F>
+impl<V, T, Q, F> MapQuery<V, T, Q, F>
 where
-    C: Convert<V> + Copy,
+    Q: Query<V> + Sized,
     F: Fn(V, &mut Session, &Item) -> Result<T> + Clone + Copy,
 {
     pub fn execute(&self, session: &mut Session, item: &Item) -> Result<T> {
