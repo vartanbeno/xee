@@ -13,7 +13,6 @@ pub trait Query<V> {
     ///
     /// You need to provide a function that takes the result of the query,
     /// the session, and the item, and returns a new result.
-
     fn map<T>(
         self,
         f: impl Fn(V, &mut Session, &Item) -> Result<T> + Copy + Clone,
@@ -188,14 +187,14 @@ where
     }
 }
 
-// impl<V, F> Query<Option<V>> for OptionQuery<Option<V>, F>
-// where
-//     F: Convert<Option<V>> + Copy,
-// {
-//     fn execute(&self, session: &mut Session, item: impl Itemable) -> Result<Option<V>> {
-//         Self::execute(self, session, item)
-//     }
-// }
+impl<V, F> Query<Option<V>> for OptionQuery<V, F>
+where
+    F: Convert<V> + Copy,
+{
+    fn execute(&self, session: &mut Session, item: impl Itemable) -> Result<Option<V>> {
+        Self::execute(self, session, item)
+    }
+}
 
 #[derive(Debug, Clone)]
 pub struct OptionRecurseQuery {
@@ -255,6 +254,15 @@ where
     }
 }
 
+impl<V, F> Query<Vec<V>> for ManyQuery<V, F>
+where
+    F: Convert<V> + Copy,
+{
+    fn execute(&self, session: &mut Session, item: impl Itemable) -> Result<Vec<V>> {
+        Self::execute(self, session, item)
+    }
+}
+
 #[derive(Debug, Clone)]
 pub struct ManyRecurseQuery {
     pub(crate) query_id: QueryId,
@@ -302,13 +310,13 @@ where
     }
 }
 
-// impl<V, T, Q: Query<V, C> + Sized, C, F> Query<V, C> for MapQuery<V, T, Q, C, F>
-// where
-//     C: Convert<V> + Copy,
-//     F: Fn(V, &mut Session, &Item) -> Result<T> + Clone + Copy,
-// {
-//     fn execute(&self, session: &mut Session, item: &Item) -> Result<T> {
-//         let v = self.query.execute(session, item)?;
-//         (self.f)(v, session, item)
-//     }
-// }
+impl<V, T, Q: Query<V> + Sized, F> Query<T> for MapQuery<V, T, Q, F>
+where
+    F: Fn(V, &mut Session, &Item) -> Result<T> + Copy + Clone,
+{
+    fn execute(&self, session: &mut Session, item: impl Itemable) -> Result<T> {
+        let item = item.to_item(session)?;
+        let v = self.query.execute(session, &item)?;
+        (self.f)(v, session, &item)
+    }
+}
