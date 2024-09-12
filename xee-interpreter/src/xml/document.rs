@@ -11,6 +11,10 @@ impl Uri {
     pub fn new(s: &str) -> Self {
         Self(s.to_string())
     }
+
+    pub fn as_str(&self) -> &str {
+        &self.0
+    }
 }
 
 #[derive(Debug, Clone)]

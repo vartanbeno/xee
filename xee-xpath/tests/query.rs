@@ -1,6 +1,23 @@
 use xee_xpath::{error, Documents, Item, Queries, Recurse, Session};
 
 #[test]
+fn test_duplicate_document_uri() -> error::Result<()> {
+    let mut documents = Documents::new();
+    let _doc1 = documents
+        .load_string(
+            "doc1",
+            r#"<doc><result><any-of><value>A</value></any-of></result></doc>"#,
+        )
+        .unwrap();
+    // try to load doc with the same URI
+    let doc2_err = documents
+        .load_string("doc1", r#"<doc><result><value>A</value></result></doc>"#)
+        .unwrap_err();
+    assert_eq!(doc2_err.to_string(), "Duplicate URI: doc1");
+    Ok(())
+}
+
+#[test]
 fn test_simple_query() -> error::Result<()> {
     let mut documents = Documents::new();
     let doc = documents

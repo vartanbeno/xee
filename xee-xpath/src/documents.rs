@@ -6,6 +6,32 @@ fn get_documents_id() -> usize {
     DOCUMENTS_COUNTER.fetch_add(1, atomic::Ordering::SeqCst)
 }
 
+/// Something went wrong loading [`Documents`]
+#[derive(Debug)]
+pub enum DocumentsError {
+    /// An attempt as made to add a document with a URI that was already known.
+    DuplicateUri(String),
+    /// An error occurred loading the document XML (using the [`xot`] crate).
+    Xot(xot::Error),
+}
+
+impl std::error::Error for DocumentsError {}
+
+impl std::fmt::Display for DocumentsError {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            DocumentsError::DuplicateUri(uri) => write!(f, "Duplicate URI: {}", uri),
+            DocumentsError::Xot(e) => write!(f, "Xot error: {}", e),
+        }
+    }
+}
+
+impl From<xot::Error> for DocumentsError {
+    fn from(e: xot::Error) -> Self {
+        DocumentsError::Xot(e)
+    }
+}
+
 /// A collection of XML documents as can be used by XPath and XSLT.
 ///
 /// This collection can be prepared before any XPath or XSLT processing begins.
@@ -56,9 +82,14 @@ impl Documents {
     ///
     /// Something may go wrong during processing of the XML document; this is
     /// a [`xot::Error`].
-    pub fn load_string(&mut self, uri: &str, xml: &str) -> Result<DocumentHandle, xot::Error> {
-        let id = self.inner.document_uris.len();
+    pub fn load_string(&mut self, uri: &str, xml: &str) -> Result<DocumentHandle, DocumentsError> {
         let uri = xee_interpreter::xml::Uri::new(uri);
+        if self.inner.document_uris.contains(&uri) {
+            // duplicate URI is an error
+            return Err(DocumentsError::DuplicateUri(uri.as_str().to_string()));
+        }
+        let id = self.inner.document_uris.len();
+
         self.documents
             .borrow_mut()
             .add(&mut self.inner.xot, &uri, xml)?;
