@@ -204,3 +204,5 @@ fn test_many_query_recurse() -> error::Result<()> {
     assert_eq!(r, Expr::Value("A".to_string()));
     Ok(())
 }
+
+// TODO: does it make sense to do recurse with one query?

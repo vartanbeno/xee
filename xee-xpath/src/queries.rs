@@ -87,9 +87,13 @@ impl<'namespaces> Queries<'namespaces> {
 
     /// Construct a query that expects a single item result.
     ///
-    /// This item is converted into a Rust value not using a convert
-    /// function but through a recursive call that's passed in during
-    /// execution.
+    /// This item is converted into a Rust value not using a convert function
+    /// but through a recursive call that's passed in during execution.
+    ///
+    /// NOTE: recursion generally needs a stopping condition, but `one_recurse`
+    /// expects one value always - unlike `option_recurse` and `many_recurse`
+    /// which have the None or empty value. I think this means that
+    /// `one_recurse` is not in fact useful.
     pub fn one_recurse(&mut self, s: &str) -> Result<OneRecurseQuery> {
         let id = self.register(s)?;
         Ok(OneRecurseQuery {
