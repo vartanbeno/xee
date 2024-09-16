@@ -2,6 +2,7 @@ use std::cell::RefCell;
 
 use xee_interpreter::context::DynamicContext;
 use xee_interpreter::context::StaticContext;
+use xee_interpreter::context::Variables;
 use xee_interpreter::error;
 use xee_interpreter::interpreter::Program;
 use xee_interpreter::sequence;
@@ -25,7 +26,7 @@ pub fn evaluate_program(
     let documents = RefCell::new(documents);
     let context = DynamicContext::from_documents(&static_context, &documents);
     let runnable = program.runnable(&context);
-    runnable.many(Some(&item), xot)
+    runnable.many(Some(&item), xot, Variables::new())
 }
 
 pub fn evaluate(xot: &mut Xot, xml: &str, xslt: &str) -> error::SpannedResult<sequence::Sequence> {

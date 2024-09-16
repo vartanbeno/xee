@@ -1,3 +1,4 @@
+use xee_interpreter::context::Variables;
 use xee_interpreter::error::SpannedResult as Result;
 use xee_interpreter::occurrence::Occurrence;
 use xee_interpreter::sequence::{self, Item};
@@ -109,7 +110,7 @@ fn execute_many(
     let program = &session.queries.xpath_programs[query_id.id];
     let runnable = program.runnable(&session.dynamic_context);
     let item = item.to_item(session)?;
-    runnable.many(Some(&item), &mut session.documents.xot)
+    runnable.many(Some(&item), &mut session.documents.xot, Variables::new())
 }
 
 impl<V, F> OneQuery<V, F>

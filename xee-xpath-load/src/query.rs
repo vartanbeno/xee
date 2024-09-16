@@ -1,5 +1,6 @@
 use anyhow::Result;
 
+use xee_xpath_compiler::context::Variables;
 use xee_xpath_compiler::interpreter::Program;
 use xee_xpath_compiler::parse;
 use xee_xpath_compiler::sequence::Item;
@@ -310,7 +311,7 @@ where
         let program = session.one_query_program(self.id);
         let runnable = program.runnable(session.dynamic_context);
         let sequence = runnable
-            .many(Some(item), session.xot)
+            .many(Some(item), session.xot, Variables::new())
             .map_err(|e| e.error)?;
         let mut values = Vec::with_capacity(sequence.len());
         for item in sequence.items()? {
@@ -347,7 +348,7 @@ impl ManyRecurseQuery {
         let program = session.one_query_program(self.id);
         let runnable = program.runnable(session.dynamic_context);
         let sequence = runnable
-            .many(Some(item), session.xot)
+            .many(Some(item), session.xot, Variables::new())
             .map_err(|e| e.error)?;
         let mut values = Vec::with_capacity(sequence.len());
         for item in sequence.items()? {

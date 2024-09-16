@@ -90,12 +90,16 @@ impl Runnable<XPathEnvironmentSpec> for XPathTestCase {
         let dynamic_context = DynamicContext::new(
             &static_context,
             Cow::Borrowed(&run_context.dynamic_context.documents),
-            Cow::Borrowed(&variables),
         );
         let runnable = program.runnable(&dynamic_context);
-        let result = runnable.many(context_item.as_ref(), &mut run_context.xot);
+        let result = runnable.many(
+            context_item.as_ref(),
+            &mut run_context.xot,
+            variables.clone(),
+        );
         self.test_case.result.assert_result(
             &runnable,
+            variables,
             &mut run_context.xot,
             &result.map_err(|error| error.error),
         )

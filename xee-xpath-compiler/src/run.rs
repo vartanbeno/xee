@@ -54,7 +54,7 @@ pub fn evaluate_without_focus(s: &str) -> SpannedResult<Sequence> {
 
     let program = parse(context.static_context, s)?;
     let runnable = program.runnable(&context);
-    runnable.many(None, &mut xot)
+    runnable.many(None, &mut xot, Variables::new())
 }
 
 pub fn evaluate_without_focus_with_variables(
@@ -66,9 +66,8 @@ pub fn evaluate_without_focus_with_variables(
     let variable_names = variables.keys().cloned().collect();
     let static_context = StaticContext::new(namespaces, variable_names);
     let documents = RefCell::new(Documents::new());
-    let context =
-        DynamicContext::from_variables(&static_context, &documents, Cow::Owned(variables));
+    let context = DynamicContext::from_documents(&static_context, &documents);
     let program = parse(context.static_context, s)?;
     let runnable = program.runnable(&context);
-    runnable.many(None, &mut xot)
+    runnable.many(None, &mut xot, variables)
 }

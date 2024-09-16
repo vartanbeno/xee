@@ -6,6 +6,7 @@ use xot::Xot;
 
 use crate::context::DynamicContext;
 use crate::context::StaticContext;
+use crate::context::Variables;
 use crate::error::SpannedError;
 use crate::function;
 use crate::occurrence::Occurrence;
@@ -39,17 +40,31 @@ impl<'a> Runnable<'a> {
         }
     }
 
+    fn arguments(&self, variables: Variables) -> error::SpannedResult<Vec<sequence::Sequence>> {
+        // we extract the arguments in the order defined by variable names in the
+        // parser context, so they get added to the stack in that order later
+        let mut arguments = Vec::new();
+        for variable_name in &self
+            .dynamic_context
+            .static_context
+            .parser_context
+            .variable_names
+        {
+            let items = variables.get(variable_name).ok_or(error::Error::XPDY0002)?;
+            arguments.push(items.clone());
+        }
+        Ok(arguments)
+    }
+
     fn run_value(
         &self,
         context_item: Option<&sequence::Item>,
         xot: &'a mut Xot,
+        variables: Variables,
     ) -> error::SpannedResult<stack::Value> {
+        let arguments = self.arguments(variables)?;
         let mut interpreter = Interpreter::new(self, xot);
-        // TODO: the arguments aren't supplied to the function that are expected.
-        // This should result in an error, preferrably the variable that is missing
-        // underlined in the xpath expression. But that requires some more work to
-        // accomplish, so for now we panic.
-        let arguments = self.dynamic_context.arguments().unwrap();
+
         interpreter.start(context_item.map(|item| item.clone().into()), arguments);
         interpreter.run(0)?;
 
@@ -79,8 +94,9 @@ impl<'a> Runnable<'a> {
         &self,
         item: Option<&sequence::Item>,
         xot: &'a mut Xot,
+        variables: Variables,
     ) -> error::SpannedResult<sequence::Sequence> {
-        Ok(self.run_value(item, xot)?.into())
+        Ok(self.run_value(item, xot, variables)?.into())
     }
 
     /// Run the program against a xot Node.
@@ -90,7 +106,7 @@ impl<'a> Runnable<'a> {
         xot: &'a mut Xot,
     ) -> error::SpannedResult<sequence::Sequence> {
         let item = sequence::Item::Node(node);
-        self.many(Some(&item), xot)
+        self.many(Some(&item), xot, Variables::new())
     }
 
     /// Run the program, expect a single item as the result.
@@ -99,7 +115,7 @@ impl<'a> Runnable<'a> {
         item: Option<&sequence::Item>,
         xot: &'a mut Xot,
     ) -> error::SpannedResult<sequence::Item> {
-        let sequence = self.many(item, xot)?;
+        let sequence = self.many(item, xot, Variables::new())?;
         let mut items = sequence.items().map_err(|error| SpannedError {
             error,
             span: Some(self.program.span().into()),
@@ -116,7 +132,7 @@ impl<'a> Runnable<'a> {
         item: Option<&sequence::Item>,
         xot: &'a mut Xot,
     ) -> error::SpannedResult<Option<sequence::Item>> {
-        let sequence = self.many(item, xot)?;
+        let sequence = self.many(item, xot, Variables::new())?;
         let mut items = sequence.items().map_err(|error| SpannedError {
             error,
             span: Some(self.program.span().into()),

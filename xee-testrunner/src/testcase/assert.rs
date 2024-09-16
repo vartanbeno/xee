@@ -2,6 +2,7 @@ use ahash::AHashMap;
 use chrono::Offset;
 use std::borrow::Cow;
 use std::fmt;
+use xee_xpath_compiler::context::Variables;
 use xee_xpath_compiler::error::Result;
 use xee_xpath_compiler::{
     context::{DynamicContext, StaticContext},
@@ -23,11 +24,12 @@ pub(crate) trait Assertable {
     fn assert_result(
         &self,
         runnable: &Runnable<'_>,
+        variables: Variables,
         xot: &mut Xot,
         result: &Result<Sequence>,
     ) -> TestOutcome {
         match result {
-            Ok(sequence) => self.assert_value(runnable, xot, sequence),
+            Ok(sequence) => self.assert_value(runnable, variables, xot, sequence),
             Err(error) => TestOutcome::RuntimeError(error.clone()),
         }
     }
@@ -35,6 +37,7 @@ pub(crate) trait Assertable {
     fn assert_value(
         &self,
         runnable: &Runnable<'_>,
+        variables: Variables,
         xot: &mut Xot,
         sequence: &Sequence,
     ) -> TestOutcome;
@@ -70,12 +73,13 @@ impl Assertable for AssertAnyOf {
     fn assert_result(
         &self,
         runnable: &Runnable<'_>,
+        variables: Variables,
         xot: &mut Xot,
         result: &Result<Sequence>,
     ) -> TestOutcome {
         let mut failed_test_results = Vec::new();
         for test_case_result in &self.0 {
-            let result = test_case_result.assert_result(runnable, xot, result);
+            let result = test_case_result.assert_result(runnable, variables.clone(), xot, result);
             match result {
                 TestOutcome::Passed => return result,
                 _ => failed_test_results.push(result),
@@ -90,6 +94,7 @@ impl Assertable for AssertAnyOf {
     fn assert_value(
         &self,
         _runnable: &Runnable<'_>,
+        _variables: Variables,
         _xot: &mut Xot,
         _sequence: &Sequence,
     ) -> TestOutcome {
@@ -110,11 +115,12 @@ impl Assertable for AssertAllOf {
     fn assert_result(
         &self,
         runnable: &Runnable<'_>,
+        variables: Variables,
         xot: &mut Xot,
         result: &Result<Sequence>,
     ) -> TestOutcome {
         for test_case_result in &self.0 {
-            let result = test_case_result.assert_result(runnable, xot, result);
+            let result = test_case_result.assert_result(runnable, variables.clone(), xot, result);
             match result {
                 TestOutcome::Passed | TestOutcome::UnexpectedError(..) => {}
                 _ => return result,
@@ -126,6 +132,7 @@ impl Assertable for AssertAllOf {
     fn assert_value(
         &self,
         _runnable: &Runnable<'_>,
+        _variables: Variables,
         _xot: &mut Xot,
         _sequence: &Sequence,
     ) -> TestOutcome {
@@ -146,10 +153,11 @@ impl Assertable for AssertNot {
     fn assert_result(
         &self,
         runnable: &Runnable<'_>,
+        variables: Variables,
         xot: &mut Xot,
         result: &Result<Sequence>,
     ) -> TestOutcome {
-        let result = self.0.assert_result(runnable, xot, result);
+        let result = self.0.assert_result(runnable, variables, xot, result);
         match result {
             TestOutcome::Passed => {
                 TestOutcome::Failed(Failure::Not(self.clone(), Box::new(result)))
@@ -162,6 +170,7 @@ impl Assertable for AssertNot {
     fn assert_value(
         &self,
         _runnable: &Runnable<'_>,
+        _variables: Variables,
         _xot: &mut Xot,
         _sequence: &Sequence,
     ) -> TestOutcome {
@@ -188,6 +197,7 @@ impl Assertable for Assert {
     fn assert_value(
         &self,
         runnable: &Runnable<'_>,
+        variables: Variables,
         xot: &mut Xot,
         sequence: &Sequence,
     ) -> TestOutcome {
@@ -222,10 +232,11 @@ impl Assertable for AssertEq {
     fn assert_value(
         &self,
         runnable: &Runnable<'_>,
+        variables: Variables,
         xot: &mut Xot,
         sequence: &Sequence,
     ) -> TestOutcome {
-        let expected_sequence = run_xpath(&self.0, runnable, xot);
+        let expected_sequence = run_xpath(&self.0, runnable, variables, xot);
 
         match expected_sequence {
             Ok(expected_sequence) => {
@@ -262,10 +273,11 @@ impl Assertable for AssertDeepEq {
     fn assert_value(
         &self,
         runnable: &Runnable<'_>,
+        variables: Variables,
         xot: &mut Xot,
         sequence: &Sequence,
     ) -> TestOutcome {
-        let expected_sequence = run_xpath(&self.0, runnable, xot);
+        let expected_sequence = run_xpath(&self.0, runnable, variables, xot);
 
         match expected_sequence {
             Ok(expected_sequence) => {
@@ -301,6 +313,7 @@ impl Assertable for AssertCount {
     fn assert_value(
         &self,
         _runnable: &Runnable<'_>,
+        _variables: Variables,
         _xot: &mut Xot,
         sequence: &Sequence,
     ) -> TestOutcome {
@@ -329,6 +342,7 @@ impl Assertable for AssertPermutation {
     fn assert_value(
         &self,
         runnable: &Runnable<'_>,
+        variables: Variables,
         xot: &mut Xot,
         sequence: &Sequence,
     ) -> TestOutcome {
@@ -346,7 +360,7 @@ impl Assertable for AssertPermutation {
         }
         let sequence = sequence.unwrap();
 
-        let result_sequence = run_xpath(&self.0, runnable, xot);
+        let result_sequence = run_xpath(&self.0, runnable, variables, xot);
 
         match result_sequence {
             Ok(result_sequence) => {
@@ -387,6 +401,7 @@ impl Assertable for AssertXml {
     fn assert_value(
         &self,
         _runnable: &Runnable<'_>,
+        _variables: Variables,
         xot: &mut Xot,
         sequence: &Sequence,
     ) -> TestOutcome {
@@ -432,6 +447,7 @@ impl Assertable for AssertEmpty {
     fn assert_value(
         &self,
         _runnable: &Runnable<'_>,
+        _variables: Variables,
         _xot: &mut Xot,
         sequence: &Sequence,
     ) -> TestOutcome {
@@ -462,6 +478,7 @@ impl Assertable for AssertType {
     fn assert_value(
         &self,
         runnable: &Runnable<'_>,
+        _variables: Variables,
         xot: &mut Xot,
         sequence: &Sequence,
     ) -> TestOutcome {
@@ -496,6 +513,7 @@ impl Assertable for AssertTrue {
     fn assert_value(
         &self,
         _runnable: &Runnable<'_>,
+        _variables: Variables,
         _xot: &mut Xot,
         sequence: &Sequence,
     ) -> TestOutcome {
@@ -529,6 +547,7 @@ impl Assertable for AssertFalse {
     fn assert_value(
         &self,
         _runnable: &Runnable<'_>,
+        _variables: Variables,
         _xot: &mut Xot,
         sequence: &Sequence,
     ) -> TestOutcome {
@@ -562,6 +581,7 @@ impl Assertable for AssertStringValue {
     fn assert_value(
         &self,
         _runnable: &Runnable<'_>,
+        _variables: Variables,
         xot: &mut Xot,
         sequence: &Sequence,
     ) -> TestOutcome {
@@ -631,6 +651,7 @@ impl Assertable for AssertError {
     fn assert_result(
         &self,
         _runnable: &Runnable<'_>,
+        _variables: Variables,
         _xot: &mut Xot,
         result: &Result<Sequence>,
     ) -> TestOutcome {
@@ -643,6 +664,7 @@ impl Assertable for AssertError {
     fn assert_value(
         &self,
         _runnable: &Runnable<'_>,
+        _variables: Variables,
         _xot: &mut Xot,
         _sequence: &Sequence,
     ) -> TestOutcome {
@@ -728,25 +750,30 @@ impl TestCaseResult {
     pub(crate) fn assert_result(
         &self,
         runnable: &Runnable<'_>,
+        variables: Variables,
         xot: &mut Xot,
         result: &Result<Sequence>,
     ) -> TestOutcome {
         match self {
-            TestCaseResult::AnyOf(a) => a.assert_result(runnable, xot, result),
-            TestCaseResult::AllOf(a) => a.assert_result(runnable, xot, result),
-            TestCaseResult::Not(a) => a.assert_result(runnable, xot, result),
-            TestCaseResult::AssertEq(a) => a.assert_result(runnable, xot, result),
-            TestCaseResult::AssertDeepEq(a) => a.assert_result(runnable, xot, result),
-            TestCaseResult::AssertTrue(a) => a.assert_result(runnable, xot, result),
-            TestCaseResult::AssertFalse(a) => a.assert_result(runnable, xot, result),
-            TestCaseResult::AssertCount(a) => a.assert_result(runnable, xot, result),
-            TestCaseResult::AssertStringValue(a) => a.assert_result(runnable, xot, result),
-            TestCaseResult::AssertXml(a) => a.assert_result(runnable, xot, result),
-            TestCaseResult::Assert(a) => a.assert_result(runnable, xot, result),
-            TestCaseResult::AssertPermutation(a) => a.assert_result(runnable, xot, result),
-            TestCaseResult::AssertError(a) => a.assert_result(runnable, xot, result),
-            TestCaseResult::AssertEmpty(a) => a.assert_result(runnable, xot, result),
-            TestCaseResult::AssertType(a) => a.assert_result(runnable, xot, result),
+            TestCaseResult::AnyOf(a) => a.assert_result(runnable, variables, xot, result),
+            TestCaseResult::AllOf(a) => a.assert_result(runnable, variables, xot, result),
+            TestCaseResult::Not(a) => a.assert_result(runnable, variables, xot, result),
+            TestCaseResult::AssertEq(a) => a.assert_result(runnable, variables, xot, result),
+            TestCaseResult::AssertDeepEq(a) => a.assert_result(runnable, variables, xot, result),
+            TestCaseResult::AssertTrue(a) => a.assert_result(runnable, variables, xot, result),
+            TestCaseResult::AssertFalse(a) => a.assert_result(runnable, variables, xot, result),
+            TestCaseResult::AssertCount(a) => a.assert_result(runnable, variables, xot, result),
+            TestCaseResult::AssertStringValue(a) => {
+                a.assert_result(runnable, variables, xot, result)
+            }
+            TestCaseResult::AssertXml(a) => a.assert_result(runnable, variables, xot, result),
+            TestCaseResult::Assert(a) => a.assert_result(runnable, variables, xot, result),
+            TestCaseResult::AssertPermutation(a) => {
+                a.assert_result(runnable, variables, xot, result)
+            }
+            TestCaseResult::AssertError(a) => a.assert_result(runnable, variables, xot, result),
+            TestCaseResult::AssertEmpty(a) => a.assert_result(runnable, variables, xot, result),
+            TestCaseResult::AssertType(a) => a.assert_result(runnable, variables, xot, result),
             TestCaseResult::Unsupported => TestOutcome::Unsupported,
             _ => {
                 panic!("unimplemented test case result {:?}", self);
@@ -1002,13 +1029,20 @@ impl fmt::Display for Failure {
     }
 }
 
-fn run_xpath(expr: &XPathExpr, runnable: &Runnable<'_>, xot: &mut Xot) -> Result<Sequence> {
+fn run_xpath(
+    expr: &XPathExpr,
+    runnable: &Runnable<'_>,
+    variables: Variables,
+    xot: &mut Xot,
+) -> Result<Sequence> {
     let program = parse(runnable.static_context(), expr).map_err(|e| e.error)?;
 
     let runnable = program.runnable(runnable.dynamic_context());
-    runnable.many(None, xot).map_err(|e| e.error)
+    runnable.many(None, xot, variables).map_err(|e| e.error)
 }
 
+// TODO: this is making new variables, shouldn't we combine the variables with
+// those known already?
 fn run_xpath_with_result(
     expr: &XPathExpr,
     sequence: &Sequence,
@@ -1024,10 +1058,9 @@ fn run_xpath_with_result(
     let dynamic_context = DynamicContext::new(
         &static_context,
         Cow::Borrowed(&runnable.dynamic_context().documents),
-        Cow::Owned(variables),
     );
     let runnable = program.runnable(&dynamic_context);
-    runnable.many(None, xot).map_err(|e| e.error)
+    runnable.many(None, xot, variables).map_err(|e| e.error)
 }
 
 pub(crate) fn serialize(xot: &Xot, sequence: &Sequence) -> crate::error::Result<String> {
