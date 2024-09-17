@@ -201,6 +201,7 @@ impl Assertable for Assert {
         xot: &mut Xot,
         sequence: &Sequence,
     ) -> TestOutcome {
+        // TODO: should this not take variables too?
         let result_sequence = run_xpath_with_result(&self.0, sequence, runnable, xot);
 
         match result_sequence {
