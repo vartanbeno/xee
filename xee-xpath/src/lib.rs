@@ -10,7 +10,7 @@
 //! and use this to create a [`Session`] to execute queries.
 //!
 //! ```rust
-//! use xee_xpath::{Documents, Queries};
+//! use xee_xpath::{Documents, Queries, Query};
 //!
 //! // create a new documents object
 //! let mut documents = Documents::new();
@@ -51,5 +51,7 @@ pub use queries::Queries;
 pub use query::{ManyQuery, OneQuery, OptionQuery, Query, Recurse};
 pub use session::Session;
 pub use xee_interpreter::atomic::Atomic;
+pub use xee_interpreter::context::Variables;
+// TODO: need to expose sequence too
 
 pub use xee_interpreter::sequence::Item;

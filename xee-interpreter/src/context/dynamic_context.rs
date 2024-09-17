@@ -5,12 +5,16 @@ use std::fmt::Debug;
 
 use xee_xpath_ast::ast;
 
-use crate::error::Error;
 use crate::sequence;
 use crate::xml;
 
 use super::static_context::StaticContext;
 
+/// A map of variables
+///
+/// These are variables to be passed into an XPath evaluation.
+///
+/// The key is the name of a variable, and the value is an item.
 pub type Variables = AHashMap<ast::Name, sequence::Sequence>;
 
 // a dynamic context is created for each xpath evaluation

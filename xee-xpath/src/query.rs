@@ -30,7 +30,17 @@ pub trait Query<V> {
     }
 
     /// Excute the query against an itemable
-    fn execute(&self, session: &mut Session, item: impl Itemable) -> Result<V>;
+    fn execute(&self, session: &mut Session, item: impl Itemable) -> Result<V> {
+        self.execute_with_variables(session, item, Variables::new())
+    }
+
+    /// Execute the query against an itemable, with variables
+    fn execute_with_variables(
+        &self,
+        session: &mut Session,
+        item: impl Itemable,
+        variables: Variables,
+    ) -> Result<V>;
 }
 
 /// This is the core conversion function that can be used to turn
@@ -103,6 +113,7 @@ fn execute_many(
     session: &mut Session,
     query_id: &QueryId,
     item: impl Itemable,
+    variables: Variables,
 ) -> Result<sequence::Sequence> {
     if query_id.queries_id != session.queries.id {
         return Err(error::ErrorValue::UsedQueryWithWrongQueries.into());
@@ -110,7 +121,7 @@ fn execute_many(
     let program = &session.queries.xpath_programs[query_id.id];
     let runnable = program.runnable(&session.dynamic_context);
     let item = item.to_item(session)?;
-    runnable.many(Some(&item), &mut session.documents.xot, Variables::new())
+    runnable.many(Some(&item), &mut session.documents.xot, variables)
 }
 
 impl<V, F> OneQuery<V, F>
@@ -118,8 +129,13 @@ where
     F: Convert<V> + Copy,
 {
     /// Execute the query against an itemable.
-    pub fn execute(&self, session: &mut Session, item: impl Itemable) -> Result<V> {
-        let sequence = execute_many(session, &self.query_id, item)?;
+    pub fn execute_with_variables(
+        &self,
+        session: &mut Session,
+        item: impl Itemable,
+        variables: Variables,
+    ) -> Result<V> {
+        let sequence = execute_many(session, &self.query_id, item, variables)?;
         let mut items = sequence.items()?;
         let item = items.one()?;
         (self.convert)(session, &item)
@@ -130,8 +146,13 @@ impl<V, F> Query<V> for OneQuery<V, F>
 where
     F: Convert<V> + Copy,
 {
-    fn execute(&self, session: &mut Session, item: impl Itemable) -> Result<V> {
-        OneQuery::execute(self, session, item)
+    fn execute_with_variables(
+        &self,
+        session: &mut Session,
+        item: impl Itemable,
+        variables: Variables,
+    ) -> Result<V> {
+        OneQuery::execute_with_variables(self, session, item, variables)
     }
 }
 
@@ -141,13 +162,31 @@ pub struct OneRecurseQuery {
 }
 
 impl OneRecurseQuery {
+    /// Execute the query against an itemable.
+    ///
+    /// To do the conversion pass in a [`Recurse`] object. This
+    /// allows you to use a convert function recursively.
     pub fn execute<V>(
         &self,
         session: &mut Session,
         item: &Item,
         recurse: &Recurse<V>,
     ) -> Result<V> {
-        let sequence = execute_many(session, &self.query_id, item)?;
+        self.execute_with_variables(session, item, Variables::new(), recurse)
+    }
+
+    /// Execute the query against an itemable, with variables.
+    ///
+    /// To do the conversion pass in a [`Recurse`] object. This
+    /// allows you to use a convert function recursively.
+    pub fn execute_with_variables<V>(
+        &self,
+        session: &mut Session,
+        item: &Item,
+        variables: Variables,
+        recurse: &Recurse<V>,
+    ) -> Result<V> {
+        let sequence = execute_many(session, &self.query_id, item, variables)?;
         let mut items = sequence.items()?;
         let item = items.one()?;
         recurse.execute(session, &item)
@@ -179,9 +218,14 @@ impl<V, F> OptionQuery<V, F>
 where
     F: Convert<V> + Copy,
 {
-    /// Execute the query against an itemable.
-    pub fn execute(&self, session: &mut Session, item: impl Itemable) -> Result<Option<V>> {
-        let sequence = execute_many(session, &self.query_id, item)?;
+    /// Execute the query against an itemable, with variables.
+    pub fn execute_with_variables(
+        &self,
+        session: &mut Session,
+        item: impl Itemable,
+        variables: Variables,
+    ) -> Result<Option<V>> {
+        let sequence = execute_many(session, &self.query_id, item, variables)?;
         let mut items = sequence.items()?;
         let item = items.option()?;
         item.map(|item| (self.convert)(session, &item)).transpose()
@@ -192,8 +236,13 @@ impl<V, F> Query<Option<V>> for OptionQuery<V, F>
 where
     F: Convert<V> + Copy,
 {
-    fn execute(&self, session: &mut Session, item: impl Itemable) -> Result<Option<V>> {
-        Self::execute(self, session, item)
+    fn execute_with_variables(
+        &self,
+        session: &mut Session,
+        item: impl Itemable,
+        variables: Variables,
+    ) -> Result<Option<V>> {
+        Self::execute_with_variables(self, session, item, variables)
     }
 }
 
@@ -213,7 +262,21 @@ impl OptionRecurseQuery {
         item: &Item,
         recurse: &Recurse<V>,
     ) -> Result<Option<V>> {
-        let sequence = execute_many(session, &self.query_id, item)?;
+        self.execute_with_variables(session, item, Variables::new(), recurse)
+    }
+
+    /// Execute the query against an itemable, with variables
+    ///
+    /// To do the conversion pass in a [`Recurse`] object. This
+    /// allows you to use a convert function recursively.
+    pub fn execute_with_variables<V>(
+        &self,
+        session: &mut Session,
+        item: &Item,
+        variables: Variables,
+        recurse: &Recurse<V>,
+    ) -> Result<Option<V>> {
+        let sequence = execute_many(session, &self.query_id, item, variables)?;
         let mut items = sequence.items()?;
         let item = items.option()?;
         item.map(|item| recurse.execute(session, &item)).transpose()
@@ -245,8 +308,13 @@ where
     F: Convert<V> + Copy,
 {
     /// Execute the query against an itemable.
-    pub fn execute(&self, session: &mut Session, item: impl Itemable) -> Result<Vec<V>> {
-        let sequence = execute_many(session, &self.query_id, item)?;
+    pub fn execute_with_variables(
+        &self,
+        session: &mut Session,
+        item: impl Itemable,
+        variables: Variables,
+    ) -> Result<Vec<V>> {
+        let sequence = execute_many(session, &self.query_id, item, variables)?;
         let items = sequence
             .items()?
             .map(|item| (self.convert)(session, &item))
@@ -259,8 +327,13 @@ impl<V, F> Query<Vec<V>> for ManyQuery<V, F>
 where
     F: Convert<V> + Copy,
 {
-    fn execute(&self, session: &mut Session, item: impl Itemable) -> Result<Vec<V>> {
-        Self::execute(self, session, item)
+    fn execute_with_variables(
+        &self,
+        session: &mut Session,
+        item: impl Itemable,
+        variables: Variables,
+    ) -> Result<Vec<V>> {
+        Self::execute_with_variables(self, session, item, variables)
     }
 }
 
@@ -280,7 +353,21 @@ impl ManyRecurseQuery {
         item: &Item,
         recurse: &Recurse<V>,
     ) -> Result<Vec<V>> {
-        let sequence = execute_many(session, &self.query_id, item)?;
+        self.execute_with_variables(session, item, Variables::new(), recurse)
+    }
+
+    /// Execute the query against an itemable, with variables.
+    ///
+    /// To do the conversion pass in a [`Recurse`] object. This
+    /// allows you to use a convert function recursively.
+    pub fn execute_with_variables<V>(
+        &self,
+        session: &mut Session,
+        item: &Item,
+        variables: Variables,
+        recurse: &Recurse<V>,
+    ) -> Result<Vec<V>> {
+        let sequence = execute_many(session, &self.query_id, item, variables)?;
         let items = sequence
             .items()?
             .map(|item| recurse.execute(session, &item))
@@ -315,9 +402,16 @@ impl<V, T, Q: Query<V> + Sized, F> Query<T> for MapQuery<V, T, Q, F>
 where
     F: Fn(V, &mut Session, &Item) -> Result<T> + Copy + Clone,
 {
-    fn execute(&self, session: &mut Session, item: impl Itemable) -> Result<T> {
+    fn execute_with_variables(
+        &self,
+        session: &mut Session,
+        item: impl Itemable,
+        variables: Variables,
+    ) -> Result<T> {
         let item = item.to_item(session)?;
-        let v = self.query.execute(session, &item)?;
+        let v = self
+            .query
+            .execute_with_variables(session, &item, variables)?;
         (self.f)(v, session, &item)
     }
 }
