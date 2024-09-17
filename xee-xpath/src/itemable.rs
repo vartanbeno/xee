@@ -25,7 +25,15 @@ impl Itemable for DocumentHandle {
         let document_uri = &session.documents.document_uris[self.id];
         let borrowed_documents = session.dynamic_context.documents().borrow();
         let document = borrowed_documents.get(document_uri).unwrap();
-        Ok(Item::Node(document.root()))
+        // getting the document element to start things off seems to
+        // be the right expectation for the load API, though I'm not sure why
+        // it shouldn't work with the root (document node) instead.
+        let document_element = session
+            .documents
+            .xot
+            .document_element(document.root())
+            .unwrap();
+        Ok(Item::Node(document_element))
     }
 }
 

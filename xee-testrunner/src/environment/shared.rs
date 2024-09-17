@@ -1,9 +1,14 @@
 use anyhow::Result;
 use std::path::Path;
+use xee_name::Namespaces;
 
-use xee_xpath_load::{convert_string, ContextLoadable, Queries, Query};
+use xee_xpath::{Queries, Query};
+use xee_xpath_load::{convert_string, ContextLoadable};
 
-use crate::hashmap::FxIndexMap;
+use crate::{
+    hashmap::FxIndexMap,
+    ns::{namespaces, XPATH_TEST_NS},
+};
 
 use super::core::{Environment, EnvironmentRef};
 
@@ -28,6 +33,10 @@ impl<E: Environment> SharedEnvironments<E> {
 }
 
 impl<E: Environment> ContextLoadable<Path> for SharedEnvironments<E> {
+    fn xpath_namespaces<'n>() -> Namespaces<'n> {
+        namespaces(XPATH_TEST_NS)
+    }
+
     fn load_with_context<'a>(
         mut queries: Queries<'a>,
         path: &'a Path,

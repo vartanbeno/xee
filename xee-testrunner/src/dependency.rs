@@ -1,7 +1,12 @@
 use anyhow::Result;
-use xee_xpath_load::{convert_string, Loadable, Queries, Query};
+use xee_name::Namespaces;
+use xee_xpath::{Queries, Query};
+use xee_xpath_load::{convert_string, Loadable};
 
-use crate::hashmap::FxIndexSet;
+use crate::{
+    hashmap::FxIndexSet,
+    ns::{namespaces, XPATH_TEST_NS},
+};
 
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
 pub(crate) struct DependencySpec {
@@ -190,6 +195,10 @@ impl Dependencies {
 }
 
 impl Loadable for Dependencies {
+    fn xpath_namespaces<'n>() -> Namespaces<'n> {
+        namespaces(XPATH_TEST_NS)
+    }
+
     fn load(queries: Queries) -> Result<(Queries, impl Query<Self>)> {
         let (queries, dependency_query) = Dependency::load(queries)?;
 
@@ -211,7 +220,7 @@ mod tests {
     use xee_xpath_compiler::context::{DynamicContext, StaticContext};
     use xot::Xot;
 
-    use crate::ns::{namespaces, XPATH_NS};
+    use crate::ns::{namespaces, XPATH_TEST_NS};
 
     #[test]
     fn test_load_dependencies() {
@@ -221,12 +230,10 @@ mod tests {
   <dependency type="feature" value="non_unicode_codepoint_collation"/>
   <dependency type="spec" value="XP31 XQ31"/>
 </doc>"#,
-            XPATH_NS
+            XPATH_TEST_NS
         );
-        let mut xot = Xot::new();
-        let static_context = StaticContext::from_namespaces(namespaces(XPATH_NS));
 
-        let dependencies = Dependencies::load_from_xml(&mut xot, &static_context, &xml).unwrap();
+        let dependencies = Dependencies::load_from_xml(&xml).unwrap();
 
         assert_eq!(
             dependencies,

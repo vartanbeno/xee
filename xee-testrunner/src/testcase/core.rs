@@ -1,14 +1,17 @@
 use std::path::Path;
 
+use xee_name::Namespaces;
 // use anyhow::Result;
+use xee_xpath::{Queries, Query};
 use xee_xpath_compiler::{context::Variables, sequence};
-use xee_xpath_load::{convert_string, ContextLoadable, Loadable, Queries, Query};
+use xee_xpath_load::{convert_string, ContextLoadable, Loadable};
 
 use crate::{
     catalog::Catalog,
     dependency::{Dependencies, Dependency},
     environment::{Environment, EnvironmentIterator, EnvironmentRef, TestCaseEnvironment},
     metadata::Metadata,
+    ns::{namespaces, XPATH_TEST_NS},
     runcontext::RunContext,
     testset::TestSet,
 };
@@ -102,6 +105,10 @@ impl<E: Environment> TestCase<E> {
 }
 
 impl<E: Environment> ContextLoadable<Path> for TestCase<E> {
+    fn xpath_namespaces<'n>() -> Namespaces<'n> {
+        namespaces(XPATH_TEST_NS)
+    }
+
     fn load_with_context<'a>(
         mut queries: Queries<'a>,
         path: &'a Path,
@@ -158,7 +165,7 @@ mod tests {
     use crate::{
         environment::XPathEnvironmentSpec,
         metadata::Attribution,
-        ns::{namespaces, XPATH_NS},
+        ns::{namespaces, XPATH_TEST_NS},
         testcase::assert::AssertTrue,
     };
 
@@ -176,21 +183,13 @@ mod tests {
     <assert-true/>
   </result>
 </test-case>"#,
-            XPATH_NS
+            XPATH_TEST_NS
         );
 
-        let mut xot = Xot::new();
-
         let path = PathBuf::from("bar/foo");
-        let static_context = StaticContext::from_namespaces(namespaces(XPATH_NS));
 
-        let test_case = TestCase::<XPathEnvironmentSpec>::load_from_xml_with_context(
-            &mut xot,
-            &static_context,
-            &xml,
-            &path,
-        )
-        .unwrap();
+        let test_case =
+            TestCase::<XPathEnvironmentSpec>::load_from_xml_with_context(&xml, &path).unwrap();
         assert_eq!(
             test_case,
             TestCase {

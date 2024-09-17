@@ -1,5 +1,9 @@
 use anyhow::Result;
-use xee_xpath_load::{convert_string, Loadable, Queries, Query};
+use xee_name::Namespaces;
+use xee_xpath::{Queries, Query};
+use xee_xpath_load::{convert_string, Loadable};
+
+use crate::ns::{namespaces, XPATH_TEST_NS};
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub(crate) struct Metadata {
@@ -21,6 +25,10 @@ pub(crate) struct Attribution {
 }
 
 impl Loadable for Metadata {
+    fn xpath_namespaces<'n>() -> Namespaces<'n> {
+        namespaces(XPATH_TEST_NS)
+    }
+
     fn load(mut queries: Queries) -> Result<(Queries, impl Query<Metadata>)> {
         let description_query = queries.option("description/string()", convert_string)?;
         let by_query = queries.one("@by/string()", convert_string)?;
@@ -73,19 +81,16 @@ mod tests {
     use xee_xpath_compiler::context::{DynamicContext, StaticContext};
     use xot::Xot;
 
-    use crate::ns::{namespaces, XPATH_NS};
+    use crate::ns::{namespaces, XPATH_TEST_NS};
 
     #[test]
     fn test_load() {
-        let mut xot = Xot::new();
-        let static_context = StaticContext::from_namespaces(namespaces(XPATH_NS));
-
         let xml = r#"
 <container xmlns="http://www.w3.org/2010/09/qt-fots-catalog">
   <description>Description</description>
   <created by="Foo Barson" on="2024-01-01"/>
 </container>"#;
-        let metadata = Metadata::load_from_xml(&mut xot, &static_context, xml).unwrap();
+        let metadata = Metadata::load_from_xml(xml).unwrap();
         assert_eq!(
             metadata,
             Metadata {

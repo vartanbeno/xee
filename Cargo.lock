@@ -3005,6 +3005,7 @@ dependencies = [
  "tempfile",
  "thiserror",
  "xee-name",
+ "xee-xpath",
  "xee-xpath-compiler",
  "xee-xpath-load",
  "xee-xslt-compiler",
@@ -3096,6 +3097,7 @@ dependencies = [
  "insta",
  "rust_decimal",
  "thiserror",
+ "xee-xpath",
  "xee-xpath-compiler",
  "xot",
 ]

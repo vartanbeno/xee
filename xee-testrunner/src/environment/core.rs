@@ -4,14 +4,18 @@ use std::{
     fmt::{self, Display, Formatter},
     path::{Path, PathBuf},
 };
+use xee_name::Namespaces;
+use xee_xpath::{Queries, Query};
 use xee_xpath_compiler::{
     context::{DynamicContext, StaticContext, Variables},
     parse, sequence,
     xml::Documents,
     Name,
 };
-use xee_xpath_load::{convert_string, ContextLoadable, Queries, Query};
+use xee_xpath_load::{convert_string, ContextLoadable};
 use xot::Xot;
+
+use crate::ns::{namespaces, XPATH_TEST_NS};
 
 use super::{
     collation::Collation,
@@ -153,6 +157,10 @@ impl EnvironmentSpec {
 }
 
 impl ContextLoadable<Path> for EnvironmentSpec {
+    fn xpath_namespaces<'n>() -> Namespaces<'n> {
+        namespaces(XPATH_TEST_NS)
+    }
+
     fn load_with_context<'a>(
         queries: Queries<'a>,
         path: &'a Path,
@@ -219,7 +227,7 @@ mod tests {
     use crate::{
         environment::source::SourceContent,
         metadata::Metadata,
-        ns::{namespaces, XPATH_NS},
+        ns::{namespaces, XPATH_TEST_NS},
     };
 
     use super::*;
@@ -234,15 +242,11 @@ mod tests {
                 <param name="p1" select="'1'"/>
                 <param name="p2" select="'2'"/>
             </environment>"#,
-            XPATH_NS
+            XPATH_TEST_NS
         );
 
-        let mut xot = Xot::new();
-        let static_context = StaticContext::from_namespaces(namespaces(XPATH_NS));
         let path = Path::new("bar/foo");
-        let environment_spec =
-            EnvironmentSpec::load_from_xml_with_context(&mut xot, &static_context, &xml, path)
-                .unwrap();
+        let environment_spec = EnvironmentSpec::load_from_xml_with_context(&xml, path).unwrap();
         assert_eq!(
             environment_spec,
             EnvironmentSpec {
@@ -301,16 +305,12 @@ mod tests {
             <environment xmlns="{}">
                 <source role="."><content>Foo</content></source>
             </environment>"#,
-            XPATH_NS
+            XPATH_TEST_NS
         );
 
-        let mut xot = Xot::new();
         let path = Path::new("bar/foo");
-        let static_context = StaticContext::from_namespaces(namespaces(XPATH_NS));
 
-        let environment_spec =
-            EnvironmentSpec::load_from_xml_with_context(&mut xot, &static_context, &xml, path)
-                .unwrap();
+        let environment_spec = EnvironmentSpec::load_from_xml_with_context(&xml, path).unwrap();
         assert_eq!(
             environment_spec,
             EnvironmentSpec {

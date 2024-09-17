@@ -1,6 +1,7 @@
 use anyhow::Result;
 use std::path::Path;
-use xee_xpath_load::{convert_string, ContextLoadable, Queries, Query};
+use xee_xpath::{Queries, Query};
+use xee_xpath_load::{convert_string, ContextLoadable};
 
 use super::{
     core::{Environment, EnvironmentSpec},

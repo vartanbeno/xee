@@ -12,7 +12,7 @@ use crate::catalog::Catalog;
 use crate::dependency::xpath_known_dependencies;
 use crate::environment::{Environment, XPathEnvironmentSpec};
 use crate::filter::{ExcludedNamesFilter, IncludeAllFilter, NameFilter, TestFilter};
-use crate::ns::{namespaces, XPATH_NS};
+use crate::ns::{namespaces, XPATH_TEST_NS};
 use crate::outcomes::{CatalogOutcomes, Outcomes, TestSetOutcomes};
 use crate::paths::{paths, PathInfo};
 use crate::runcontext::RunContext;
@@ -91,7 +91,7 @@ pub fn cli() -> Result<()> {
     let path_info = paths(path)?;
 
     let xot = Xot::new();
-    let ns = XPATH_NS;
+    let ns = XPATH_TEST_NS;
     let static_context = StaticContext::from_namespaces(namespaces(ns));
     let documents = RefCell::new(Documents::new());
     let dynamic_context = DynamicContext::from_documents(&static_context, &documents);
@@ -208,19 +208,11 @@ impl<'a, E: Environment, R: Runnable<E>> Runner<'a, E, R> {
     }
 
     fn load_catalog(&mut self) -> Result<Catalog<E, R>> {
-        Catalog::load_from_file(
-            &mut self.run_context.xot,
-            self.run_context.dynamic_context.static_context,
-            &self.path_info.catalog_path,
-        )
+        Catalog::load_from_file(&self.path_info.catalog_path)
     }
 
     fn load_test_set(&mut self) -> Result<TestSet<E, R>> {
-        TestSet::load_from_file(
-            &mut self.run_context.xot,
-            self.run_context.dynamic_context.static_context,
-            &self.path_info.test_file(),
-        )
+        TestSet::load_from_file(&self.path_info.test_file())
     }
 
     fn load_check_test_filter(&self) -> Result<impl TestFilter<E, R>> {

@@ -16,8 +16,8 @@ pub trait Query<V> {
     /// the session, and the item, and returns a new result.
     fn map<T>(
         self,
-        f: impl Fn(V, &mut Session, &Item) -> Result<T> + Copy + Clone,
-    ) -> MapQuery<V, T, Self, impl Fn(V, &mut Session, &Item) -> Result<T> + Copy + Clone>
+        f: impl Fn(V, &mut Session, &Item) -> Result<T> + Clone,
+    ) -> MapQuery<V, T, Self, impl Fn(V, &mut Session, &Item) -> Result<T> + Clone>
     where
         Self: Sized,
     {
@@ -102,7 +102,7 @@ impl QueryId {
 #[derive(Debug, Clone, Copy)]
 pub struct OneQuery<V, F>
 where
-    F: Convert<V> + Copy,
+    F: Convert<V>,
 {
     pub(crate) query_id: QueryId,
     pub(crate) convert: F,
@@ -126,7 +126,7 @@ fn execute_many(
 
 impl<V, F> OneQuery<V, F>
 where
-    F: Convert<V> + Copy,
+    F: Convert<V>,
 {
     /// Execute the query against an itemable.
     pub fn execute_with_variables(
@@ -144,7 +144,7 @@ where
 
 impl<V, F> Query<V> for OneQuery<V, F>
 where
-    F: Convert<V> + Copy,
+    F: Convert<V>,
 {
     fn execute_with_variables(
         &self,
@@ -207,7 +207,7 @@ impl OneRecurseQuery {
 #[derive(Debug, Clone, Copy)]
 pub struct OptionQuery<V, F>
 where
-    F: Convert<V> + Copy,
+    F: Convert<V>,
 {
     pub(crate) query_id: QueryId,
     pub(crate) convert: F,
@@ -216,7 +216,7 @@ where
 
 impl<V, F> OptionQuery<V, F>
 where
-    F: Convert<V> + Copy,
+    F: Convert<V>,
 {
     /// Execute the query against an itemable, with variables.
     pub fn execute_with_variables(
@@ -234,7 +234,7 @@ where
 
 impl<V, F> Query<Option<V>> for OptionQuery<V, F>
 where
-    F: Convert<V> + Copy,
+    F: Convert<V>,
 {
     fn execute_with_variables(
         &self,
@@ -293,10 +293,10 @@ impl OptionRecurseQuery {
 ///
 /// The result is converted into a Rust value using the `convert` function
 /// when constructing this query.
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Copy)]
 pub struct ManyQuery<V, F>
 where
-    F: Convert<V> + Copy,
+    F: Convert<V>,
 {
     pub(crate) query_id: QueryId,
     pub(crate) convert: F,
@@ -305,7 +305,7 @@ where
 
 impl<V, F> ManyQuery<V, F>
 where
-    F: Convert<V> + Copy,
+    F: Convert<V>,
 {
     /// Execute the query against an itemable.
     pub fn execute_with_variables(
@@ -325,7 +325,7 @@ where
 
 impl<V, F> Query<Vec<V>> for ManyQuery<V, F>
 where
-    F: Convert<V> + Copy,
+    F: Convert<V>,
 {
     fn execute_with_variables(
         &self,
@@ -379,7 +379,7 @@ impl ManyRecurseQuery {
 #[derive(Debug, Copy, Clone)]
 pub struct MapQuery<V, T, Q: Query<V> + Sized, F>
 where
-    F: Fn(V, &mut Session, &Item) -> Result<T> + Clone + Copy,
+    F: Fn(V, &mut Session, &Item) -> Result<T> + Clone,
 {
     query: Q,
     f: F,
@@ -390,7 +390,7 @@ where
 impl<V, T, Q, F> MapQuery<V, T, Q, F>
 where
     Q: Query<V> + Sized,
-    F: Fn(V, &mut Session, &Item) -> Result<T> + Clone + Copy,
+    F: Fn(V, &mut Session, &Item) -> Result<T> + Clone,
 {
     pub fn execute(&self, session: &mut Session, item: &Item) -> Result<T> {
         let v = self.query.execute(session, item)?;
@@ -400,7 +400,7 @@ where
 
 impl<V, T, Q: Query<V> + Sized, F> Query<T> for MapQuery<V, T, Q, F>
 where
-    F: Fn(V, &mut Session, &Item) -> Result<T> + Copy + Clone,
+    F: Fn(V, &mut Session, &Item) -> Result<T> + Clone,
 {
     fn execute_with_variables(
         &self,

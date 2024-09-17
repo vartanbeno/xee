@@ -18,6 +18,7 @@ ahash = { workspace = true }
 xot = { workspace = true }
 xee-xpath-compiler = { path = "../xee-xpath-compiler" }
 xee-xpath-load = { path = "../xee-xpath-load" }
+xee-xpath = { path = "../xee-xpath" }
 xee-xslt-compiler = { path = "../xee-xslt-compiler" }
 xee-name = { path = "../xee-name" }
 fxhash = "0.2.1"

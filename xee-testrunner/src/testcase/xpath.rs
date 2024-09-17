@@ -1,14 +1,19 @@
 use anyhow::Result;
 use std::{borrow::Cow, path::Path};
 use xee_name::Namespaces;
+use xee_xpath::{Queries, Query};
 use xee_xpath_compiler::{
     context::{DynamicContext, StaticContext},
     parse,
 };
-use xee_xpath_load::{convert_string, ContextLoadable, Queries, Query};
+use xee_xpath_load::{convert_string, ContextLoadable};
 
 use crate::{
-    catalog::Catalog, environment::XPathEnvironmentSpec, runcontext::RunContext, testset::TestSet,
+    catalog::Catalog,
+    environment::XPathEnvironmentSpec,
+    ns::{namespaces, XPATH_TEST_NS},
+    runcontext::RunContext,
+    testset::TestSet,
 };
 
 use super::{
@@ -125,6 +130,10 @@ impl Runnable<XPathEnvironmentSpec> for XPathTestCase {
 }
 
 impl ContextLoadable<Path> for XPathTestCase {
+    fn xpath_namespaces<'n>() -> Namespaces<'n> {
+        namespaces(XPATH_TEST_NS)
+    }
+
     fn load_with_context<'a>(
         mut queries: Queries<'a>,
         path: &'a Path,

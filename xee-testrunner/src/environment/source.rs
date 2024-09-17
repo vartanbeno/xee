@@ -4,8 +4,9 @@ use std::fs::File;
 use std::io::{BufReader, Read};
 use std::path::{Path, PathBuf};
 
+use xee_xpath::{Queries, Query};
 use xee_xpath_compiler::xml::{Documents, Uri};
-use xee_xpath_load::{convert_string, Loadable, Queries, Query};
+use xee_xpath_load::{convert_string, Loadable};
 use xot::Xot;
 
 use crate::metadata::Metadata;

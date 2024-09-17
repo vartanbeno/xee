@@ -2,6 +2,7 @@ use ahash::AHashMap;
 use chrono::Offset;
 use std::borrow::Cow;
 use std::fmt;
+use xee_xpath::{Queries, Query, Recurse, Session};
 use xee_xpath_compiler::context::Variables;
 use xee_xpath_compiler::error::Result;
 use xee_xpath_compiler::{
@@ -13,8 +14,10 @@ use xee_xpath_compiler::{
     string::Collation,
     Name, Namespaces, Runnable, VariableNames,
 };
-use xee_xpath_load::{convert_boolean, convert_string, Loadable, Queries, Query, Recurse, Session};
+use xee_xpath_load::{convert_boolean, convert_string, Loadable};
 use xot::Xot;
+
+use crate::ns::{namespaces, XPATH_TEST_NS};
 
 use super::outcome::{TestOutcome, UnexpectedError};
 
@@ -784,6 +787,10 @@ impl TestCaseResult {
 }
 
 impl Loadable for TestCaseResult {
+    fn xpath_namespaces<'n>() -> Namespaces<'n> {
+        namespaces(XPATH_TEST_NS)
+    }
+
     fn load(mut queries: Queries) -> anyhow::Result<(Queries, impl Query<Self>)> {
         let code_query = queries.one("@code/string()", convert_string)?;
         let error_query = queries.one(".", move |session, item| {
@@ -1087,19 +1094,15 @@ mod tests {
 
     use super::*;
 
-    use crate::ns::{namespaces, XPATH_NS};
+    use crate::ns::{namespaces, XPATH_TEST_NS};
 
     #[test]
     fn test_test_case_result() {
         let xml = format!(
             r#"<doc xmlns="{}"><result><assert-eq>0</assert-eq></result></doc>"#,
-            XPATH_NS
+            XPATH_TEST_NS
         );
-        let static_context = StaticContext::from_namespaces(namespaces(XPATH_NS));
-
-        let mut xot = Xot::new();
-        let test_case_result =
-            TestCaseResult::load_from_xml(&mut xot, &static_context, &xml).unwrap();
+        let test_case_result = TestCaseResult::load_from_xml(&xml).unwrap();
         assert_eq!(
             test_case_result,
             TestCaseResult::AssertEq(AssertEq::new("0".to_string()))
@@ -1118,13 +1121,9 @@ mod tests {
    </any-of>
   </result>
 </doc>"#,
-            XPATH_NS
+            XPATH_TEST_NS
         );
-        let mut xot = Xot::new();
-        let static_context = StaticContext::from_namespaces(namespaces(XPATH_NS));
-
-        let test_case_result =
-            TestCaseResult::load_from_xml(&mut xot, &static_context, &xml).unwrap();
+        let test_case_result = TestCaseResult::load_from_xml(&xml).unwrap();
         assert_eq!(
             test_case_result,
             TestCaseResult::AnyOf(AssertAnyOf::new(vec![

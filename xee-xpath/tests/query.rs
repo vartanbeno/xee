@@ -120,7 +120,7 @@ fn test_option_query_recurse() -> error::Result<()> {
     })?;
 
     // a result is either a "value" or an "any-of" element
-    let result_query = queries.one("doc/result", |session, item| {
+    let result_query = queries.one("/doc/result", |session, item| {
         let f = |session: &mut Session, item: &Item, recurse: &Recurse<_>| {
             // we either call the any of query, which recursively
             // calls this function
@@ -178,7 +178,7 @@ fn test_many_query_recurse() -> error::Result<()> {
     })?;
 
     // a result is either a "value" or an "any-of" element
-    let result_query = queries.one("doc/result", |session, item| {
+    let result_query = queries.one("/doc/result", |session, item| {
         let f = |session: &mut Session, item: &Item, recurse: &Recurse<_>| {
             // we either call the any of query, which recursively
             // calls this function

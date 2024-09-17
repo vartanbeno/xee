@@ -1,11 +1,14 @@
 use anyhow::Result;
 use std::io::Stdout;
 use std::path::{Path, PathBuf};
-use xee_xpath_load::{convert_string, ContextLoadable, PathLoadable, Queries, Query};
+use xee_name::Namespaces;
+use xee_xpath::{Queries, Query};
+use xee_xpath_load::{convert_string, ContextLoadable, PathLoadable};
 
 use crate::environment::{Environment, SharedEnvironments};
 use crate::filter::TestFilter;
 use crate::hashmap::FxIndexSet;
+use crate::ns::{namespaces, XPATH_TEST_NS};
 use crate::outcomes::CatalogOutcomes;
 use crate::renderer::Renderer;
 use crate::runcontext::RunContext;
@@ -44,11 +47,7 @@ impl<E: Environment, R: Runnable<E>> Catalog<E, R> {
         let mut catalog_outcomes = CatalogOutcomes::new();
         for file_path in &self.file_paths {
             let full_path = self.base_dir().join(file_path);
-            let test_set = TestSet::load_from_file(
-                &mut run_context.xot,
-                run_context.dynamic_context.static_context,
-                &full_path,
-            )?;
+            let test_set = TestSet::load_from_file(&full_path)?;
             let test_set_outcomes = test_set.run(run_context, self, test_filter, out, renderer)?;
             catalog_outcomes.add_outcomes(test_set_outcomes);
         }
@@ -57,6 +56,10 @@ impl<E: Environment, R: Runnable<E>> Catalog<E, R> {
 }
 
 impl<E: Environment, R: Runnable<E>> ContextLoadable<Path> for Catalog<E, R> {
+    fn xpath_namespaces<'n>() -> Namespaces<'n> {
+        namespaces(XPATH_TEST_NS)
+    }
+
     fn load_with_context<'a>(
         mut queries: Queries<'a>,
         path: &'a Path,

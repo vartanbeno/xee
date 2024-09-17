@@ -16,6 +16,7 @@ homepage = "https://github.com/Paligo/xee"
 thiserror = { workspace = true }
 xot = { workspace = true }
 xee-xpath-compiler = { path = "../xee-xpath-compiler" }
+xee-xpath = { path = "../xee-xpath" }
 ibig = { workspace = true }
 rust_decimal = { workspace = true }
 anyhow = { workspace = true }

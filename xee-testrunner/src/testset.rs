@@ -4,13 +4,16 @@ use std::{
 };
 
 use anyhow::Result;
-use xee_xpath_load::{convert_string, ContextLoadable, Queries, Query};
+use xee_name::Namespaces;
+use xee_xpath::{Queries, Query};
+use xee_xpath_load::{convert_string, ContextLoadable};
 
 use crate::{
     catalog::Catalog,
     dependency::{Dependencies, Dependency},
     environment::{Environment, SharedEnvironments},
     filter::TestFilter,
+    ns::{namespaces, XPATH_TEST_NS},
     outcomes::TestSetOutcomes,
     renderer::Renderer,
     runcontext::RunContext,
@@ -76,6 +79,10 @@ impl<E: Environment, R: Runnable<E>> TestSet<E, R> {
 }
 
 impl<E: Environment, R: Runnable<E>> ContextLoadable<Path> for TestSet<E, R> {
+    fn xpath_namespaces<'n>() -> Namespaces<'n> {
+        namespaces(XPATH_TEST_NS)
+    }
+
     fn load_with_context<'a>(
         mut queries: Queries<'a>,
         path: &'a Path,
@@ -117,7 +124,7 @@ impl<E: Environment, R: Runnable<E>> ContextLoadable<Path> for TestSet<E, R> {
 mod tests {
     use crate::{
         environment::{EnvironmentRef, XPathEnvironmentSpec},
-        ns::{namespaces, XPATH_NS},
+        ns::{namespaces, XPATH_TEST_NS},
         testcase::XPathTestCase,
     };
 
@@ -163,17 +170,10 @@ mod tests {
    </test-case>
 </test-set>"#;
 
-        let mut xot = Xot::new();
-        let static_context = StaticContext::from_namespaces(namespaces(XPATH_NS));
-
         let path = PathBuf::from("bar/foo");
-        let test_set = TestSet::<XPathEnvironmentSpec, XPathTestCase>::load_from_xml_with_context(
-            &mut xot,
-            &static_context,
-            xml,
-            &path,
-        )
-        .unwrap();
+        let test_set =
+            TestSet::<XPathEnvironmentSpec, XPathTestCase>::load_from_xml_with_context(xml, &path)
+                .unwrap();
         assert_eq!(test_set.name, "testset-name");
         assert_eq!(test_set.test_cases.len(), 2);
         assert!(test_set
