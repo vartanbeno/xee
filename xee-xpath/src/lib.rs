@@ -46,7 +46,7 @@ mod queries;
 pub mod query;
 mod session;
 
-pub use documents::Documents;
+pub use documents::OwnedDocuments as Documents;
 pub use itemable::Itemable;
 pub use queries::Queries;
 pub use query::{Query, Recurse};

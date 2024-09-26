@@ -35,6 +35,13 @@ impl Sequence {
         }
     }
 
+    /// Construct an absent sequence
+    pub fn absent() -> Self {
+        Self {
+            stack_value: stack::Value::Absent,
+        }
+    }
+
     /// Check whether the sequence is empty
     pub fn is_empty(&self) -> bool {
         self.stack_value.is_empty_sequence()

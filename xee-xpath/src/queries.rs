@@ -4,7 +4,7 @@ use xee_xpath_compiler::parse;
 use std::sync::atomic;
 
 use crate::{
-    documents::Documents,
+    documents::OwnedDocuments,
     query::{
         Convert, ManyQuery, ManyRecurseQuery, OneQuery, OneRecurseQuery, OptionQuery,
         OptionRecurseQuery, QueryId, SequenceQuery,
@@ -70,7 +70,7 @@ impl<'namespaces> Queries<'namespaces> {
     /// Construct a [`Session`] with a collection of documents
     ///
     /// You need a session to be able to execute queries against documents.
-    pub fn session(&self, documents: Documents) -> Session {
+    pub fn session(&self, documents: OwnedDocuments) -> Session {
         Session::new(self, documents)
     }
 
@@ -189,7 +189,7 @@ mod tests {
 
     #[test]
     fn test_one_query() -> Result<()> {
-        let mut documents = Documents::new();
+        let mut documents = OwnedDocuments::new();
         let uri = Uri::new("http://example.com");
         let doc = documents.add_string(&uri, "<root>foo</root>").unwrap();
 
