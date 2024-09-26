@@ -1,6 +1,7 @@
 use std::cell::RefCell;
 use std::rc::Rc;
 
+use ibig::ibig;
 use xee_name::Name;
 use xot::Xot;
 
@@ -9,6 +10,7 @@ use crate::context::StaticContext;
 use crate::context::Variables;
 use crate::error::SpannedError;
 use crate::function;
+use crate::interpreter::interpret::ContextInfo;
 use crate::occurrence::Occurrence;
 use crate::sequence;
 use crate::stack;
@@ -65,7 +67,21 @@ impl<'a> Runnable<'a> {
         let arguments = self.arguments(variables)?;
         let mut interpreter = Interpreter::new(self, xot);
 
-        interpreter.start(context_item.map(|item| item.clone().into()), arguments);
+        let context_info = if let Some(context_item) = context_item {
+            ContextInfo {
+                item: stack::Value::One(context_item.clone()),
+                position: ibig!(1).into(),
+                size: ibig!(1).into(),
+            }
+        } else {
+            ContextInfo {
+                item: stack::Value::Absent,
+                position: stack::Value::Absent,
+                size: stack::Value::Absent,
+            }
+        };
+
+        interpreter.start(context_info, arguments);
         interpreter.run(0)?;
 
         let state = interpreter.state();

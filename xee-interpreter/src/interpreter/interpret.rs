@@ -34,9 +34,9 @@ pub struct Interpreter<'a> {
 }
 
 pub struct ContextInfo {
-    pub item: sequence::Sequence,
-    pub position: sequence::Sequence,
-    pub size: sequence::Sequence,
+    pub item: stack::Value,
+    pub position: stack::Value,
+    pub size: stack::Value,
 }
 
 impl From<sequence::Item> for ContextInfo {
@@ -65,14 +65,14 @@ impl<'a> Interpreter<'a> {
         self.runnable
     }
 
-    pub fn start(&mut self, context_info: Option<ContextInfo>, arguments: Vec<sequence::Sequence>) {
+    pub fn start(&mut self, context_info: ContextInfo, arguments: Vec<sequence::Sequence>) {
         self.start_function(self.runnable.program().main_id(), context_info, arguments)
     }
 
     fn start_function(
         &mut self,
         function_id: function::InlineFunctionId,
-        context_info: Option<ContextInfo>,
+        context_info: ContextInfo,
         arguments: Vec<sequence::Sequence>,
     ) {
         self.state.push_start_frame(function_id);
@@ -84,18 +84,10 @@ impl<'a> Interpreter<'a> {
         }
     }
 
-    fn push_context_info(&mut self, context_info: Option<ContextInfo>) {
-        if let Some(context_info) = context_info {
-            // the context item
-            self.state.push(context_info.item.into());
-            self.state.push(context_info.position.into());
-            self.state.push(context_info.size.into());
-        } else {
-            // absent context, position and size
-            self.state.push(stack::Value::Absent);
-            self.state.push(stack::Value::Absent);
-            self.state.push(stack::Value::Absent);
-        }
+    fn push_context_info(&mut self, context_info: ContextInfo) {
+        self.state.push(context_info.item.into());
+        self.state.push(context_info.position.into());
+        self.state.push(context_info.size.into());
     }
 
     pub fn run(&mut self, start_base: usize) -> error::SpannedResult<()> {
