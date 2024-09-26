@@ -1,6 +1,5 @@
 /// XML integration.
 mod annotation;
-mod document;
 mod document2;
 mod kind_test;
 mod step;
