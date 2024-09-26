@@ -1,7 +1,7 @@
 use anyhow::Result;
 use std::{borrow::Cow, path::Path};
 use xee_name::Namespaces;
-use xee_xpath::{Queries, Query};
+use xee_xpath::{Queries, Query, Variables};
 use xee_xpath_compiler::{
     context::{DynamicContext, StaticContext},
     parse,
@@ -122,7 +122,7 @@ impl Runnable<XPathEnvironmentSpec> for XPathTestCase {
         let test_case_query = test_case_query.map(move |test_case, session, item| {
             Ok(XPathTestCase {
                 test_case,
-                test: test_query.execute(session, item)?,
+                test: test_query.execute_with_variables(session, item, Variables::new())?,
             })
         });
         Ok((queries, test_case_query))
@@ -146,7 +146,7 @@ impl ContextLoadable<Path> for XPathTestCase {
         let test_case_query = test_case_query.map(move |test_case, session, item| {
             Ok(XPathTestCase {
                 test_case,
-                test: test_query.execute(session, item)?,
+                test: test_query.execute_with_variables(session, item, Variables::new())?,
             })
         });
         Ok((queries, test_case_query))

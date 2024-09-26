@@ -20,12 +20,10 @@ pub trait Query<V> {
     ///
     /// You need to provide a function that takes the result of the query,
     /// the session, and the item, and returns a new result.
-    fn map<T>(
-        self,
-        f: impl Fn(V, &mut Session, &Item) -> Result<T> + Clone,
-    ) -> MapQuery<V, T, Self, impl Fn(V, &mut Session, &Item) -> Result<T> + Clone>
+    fn map<T, F>(self, f: F) -> MapQuery<V, T, Self, F>
     where
         Self: Sized,
+        F: Fn(V, &mut Session, Option<&Item>) -> Result<T> + Clone,
     {
         MapQuery {
             query: self,
@@ -37,14 +35,26 @@ pub trait Query<V> {
 
     /// Excute the query against an itemable
     fn execute(&self, session: &mut Session, item: impl Itemable) -> Result<V> {
-        self.execute_with_variables(session, item, Variables::new())
+        self.execute_with_variables(session, Some(item), Variables::new())
     }
 
-    /// Execute the query against an itemable, with variables
+    /// Execute the query without a context item
+    fn execute_without_context<T: Itemable>(
+        &self,
+        session: &mut Session,
+        variables: Variables,
+    ) -> Result<V> {
+        self.execute_with_variables(session, None::<T>, variables)
+    }
+
+    /// Execute the query against an optional itemable, with variables
+    ///
+    /// This is also useful in a [`MapQuery`] invocation where you get an
+    /// Option<Item> in your closure.
     fn execute_with_variables(
         &self,
         session: &mut Session,
-        item: impl Itemable,
+        item: Option<impl Itemable>,
         variables: Variables,
     ) -> Result<V>;
 }
@@ -118,7 +128,7 @@ where
 fn execute_many(
     session: &mut Session,
     query_id: &QueryId,
-    item: impl Itemable,
+    item: Option<impl Itemable>,
     variables: Variables,
 ) -> Result<sequence::Sequence> {
     if query_id.queries_id != session.queries.id {
@@ -126,8 +136,12 @@ fn execute_many(
     }
     let program = &session.queries.xpath_programs[query_id.id];
     let runnable = program.runnable(&session.dynamic_context);
-    let item = item.to_item(session)?;
-    runnable.many(Some(&item), &mut session.xot, variables)
+    let item = if let Some(item) = item {
+        Some(item.to_item(session)?)
+    } else {
+        None
+    };
+    runnable.many(item.as_ref(), &mut session.xot, variables)
 }
 
 impl<V, F> OneQuery<V, F>
@@ -138,7 +152,7 @@ where
     pub fn execute_with_variables(
         &self,
         session: &mut Session,
-        item: impl Itemable,
+        item: Option<impl Itemable>,
         variables: Variables,
     ) -> Result<V> {
         let sequence = execute_many(session, &self.query_id, item, variables)?;
@@ -155,7 +169,7 @@ where
     fn execute_with_variables(
         &self,
         session: &mut Session,
-        item: impl Itemable,
+        item: Option<impl Itemable>,
         variables: Variables,
     ) -> Result<V> {
         OneQuery::execute_with_variables(self, session, item, variables)
@@ -179,7 +193,7 @@ impl OneRecurseQuery {
         item: &Item,
         recurse: &Recurse<V>,
     ) -> Result<V> {
-        self.execute_with_variables(session, item, Variables::new(), recurse)
+        self.execute_with_variables(session, Some(item), Variables::new(), recurse)
     }
 
     /// Execute the query against an itemable, with variables.
@@ -189,7 +203,7 @@ impl OneRecurseQuery {
     pub fn execute_with_variables<V>(
         &self,
         session: &mut Session,
-        item: &Item,
+        item: Option<&Item>,
         variables: Variables,
         recurse: &Recurse<V>,
     ) -> Result<V> {
@@ -229,7 +243,7 @@ where
     pub fn execute_with_variables(
         &self,
         session: &mut Session,
-        item: impl Itemable,
+        item: Option<impl Itemable>,
         variables: Variables,
     ) -> Result<Option<V>> {
         let sequence = execute_many(session, &self.query_id, item, variables)?;
@@ -246,7 +260,7 @@ where
     fn execute_with_variables(
         &self,
         session: &mut Session,
-        item: impl Itemable,
+        item: Option<impl Itemable>,
         variables: Variables,
     ) -> Result<Option<V>> {
         Self::execute_with_variables(self, session, item, variables)
@@ -270,7 +284,7 @@ impl OptionRecurseQuery {
         item: &Item,
         recurse: &Recurse<V>,
     ) -> Result<Option<V>> {
-        self.execute_with_variables(session, item, Variables::new(), recurse)
+        self.execute_with_variables(session, Some(item), Variables::new(), recurse)
     }
 
     /// Execute the query against an itemable, with variables
@@ -280,7 +294,7 @@ impl OptionRecurseQuery {
     pub fn execute_with_variables<V>(
         &self,
         session: &mut Session,
-        item: &Item,
+        item: Option<&Item>,
         variables: Variables,
         recurse: &Recurse<V>,
     ) -> Result<Option<V>> {
@@ -319,7 +333,7 @@ where
     pub fn execute_with_variables(
         &self,
         session: &mut Session,
-        item: impl Itemable,
+        item: Option<impl Itemable>,
         variables: Variables,
     ) -> Result<Vec<V>> {
         let sequence = execute_many(session, &self.query_id, item, variables)?;
@@ -338,7 +352,7 @@ where
     fn execute_with_variables(
         &self,
         session: &mut Session,
-        item: impl Itemable,
+        item: Option<impl Itemable>,
         variables: Variables,
     ) -> Result<Vec<V>> {
         Self::execute_with_variables(self, session, item, variables)
@@ -362,7 +376,7 @@ impl ManyRecurseQuery {
         item: &Item,
         recurse: &Recurse<V>,
     ) -> Result<Vec<V>> {
-        self.execute_with_variables(session, item, Variables::new(), recurse)
+        self.execute_with_variables(session, Some(item), Variables::new(), recurse)
     }
 
     /// Execute the query against an itemable, with variables.
@@ -372,7 +386,7 @@ impl ManyRecurseQuery {
     pub fn execute_with_variables<V>(
         &self,
         session: &mut Session,
-        item: &Item,
+        item: Option<&Item>,
         variables: Variables,
         recurse: &Recurse<V>,
     ) -> Result<Vec<V>> {
@@ -404,7 +418,7 @@ impl SequenceQuery {
     pub fn execute_with_variables(
         &self,
         session: &mut Session,
-        item: impl Itemable,
+        item: Option<impl Itemable>,
         variables: Variables,
     ) -> Result<Sequence> {
         execute_many(session, &self.query_id, item, variables)
@@ -415,7 +429,7 @@ impl Query<Sequence> for SequenceQuery {
     fn execute_with_variables(
         &self,
         session: &mut Session,
-        item: impl Itemable,
+        item: Option<impl Itemable>,
         variables: Variables,
     ) -> Result<Sequence> {
         Self::execute_with_variables(self, session, item, variables)
@@ -426,7 +440,7 @@ impl Query<Sequence> for SequenceQuery {
 #[derive(Debug, Copy, Clone)]
 pub struct MapQuery<V, T, Q: Query<V> + Sized, F>
 where
-    F: Fn(V, &mut Session, &Item) -> Result<T> + Clone,
+    F: Fn(V, &mut Session, Option<&Item>) -> Result<T> + Clone,
 {
     query: Q,
     f: F,
@@ -437,29 +451,33 @@ where
 impl<V, T, Q, F> MapQuery<V, T, Q, F>
 where
     Q: Query<V> + Sized,
-    F: Fn(V, &mut Session, &Item) -> Result<T> + Clone,
+    F: Fn(V, &mut Session, Option<&Item>) -> Result<T> + Clone,
 {
     /// Execute the query against an item.
     pub fn execute(&self, session: &mut Session, item: &Item) -> Result<T> {
         let v = self.query.execute(session, item)?;
-        (self.f)(v, session, item)
+        (self.f)(v, session, Some(item))
     }
 }
 
 impl<V, T, Q: Query<V> + Sized, F> Query<T> for MapQuery<V, T, Q, F>
 where
-    F: Fn(V, &mut Session, &Item) -> Result<T> + Clone,
+    F: Fn(V, &mut Session, Option<&Item>) -> Result<T> + Clone,
 {
     fn execute_with_variables(
         &self,
         session: &mut Session,
-        item: impl Itemable,
+        item: Option<impl Itemable>,
         variables: Variables,
     ) -> Result<T> {
-        let item = item.to_item(session)?;
+        let item = if let Some(item) = item {
+            Some(item.to_item(session)?)
+        } else {
+            None
+        };
         let v = self
             .query
-            .execute_with_variables(session, &item, variables)?;
-        (self.f)(v, session, &item)
+            .execute_with_variables(session, item.as_ref(), variables)?;
+        (self.f)(v, session, item.as_ref())
     }
 }
