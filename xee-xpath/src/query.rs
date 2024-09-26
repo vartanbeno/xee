@@ -127,7 +127,7 @@ fn execute_many(
     let program = &session.queries.xpath_programs[query_id.id];
     let runnable = program.runnable(&session.dynamic_context);
     let item = item.to_item(session)?;
-    runnable.many(Some(&item), &mut session.documents.xot, variables)
+    runnable.many(Some(&item), &mut session.xot, variables)
 }
 
 impl<V, F> OneQuery<V, F>

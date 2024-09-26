@@ -37,8 +37,9 @@ pub fn evaluate_root(
     // TODO: isn't the right URI
     let uri = Uri::new("http://example.com");
     let documents = RefCell::new(Documents::new());
-    documents.borrow_mut().add_root(xot, &uri, root);
-    let root = documents.borrow().get(&uri).unwrap().root;
+    // TODO: The unwrap here is bad, but DocumentsError isn't integrated int
+    // the general error system yet
+    documents.borrow_mut().add_root(xot, &uri, root).unwrap();
     let context = DynamicContext::from_documents(&static_context, &documents);
 
     let program = parse(context.static_context, xpath)?;

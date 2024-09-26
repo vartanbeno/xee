@@ -10,12 +10,12 @@
 //! and use this to create a [`Session`] to execute queries.
 //!
 //! ```rust
-//! use xee_xpath::{Documents, Queries, Query};
+//! use xee_xpath::{Documents, Queries, Query, Uri};
 //!
 //! // create a new documents object
 //! let mut documents = Documents::new();
 //! // load a document from a string
-//! let doc = documents.load_string("http://example.com", "<root>foo</root>").unwrap();
+//! let doc = documents.add_string(&Uri::new("http://example.com"), "<root>foo</root>").unwrap();
 //!
 //! // create a new queries object
 //! let mut queries = Queries::default();
@@ -46,7 +46,7 @@ mod queries;
 pub mod query;
 mod session;
 
-pub use documents::{DocumentHandle, Documents};
+pub use documents::Documents;
 pub use itemable::Itemable;
 pub use queries::Queries;
 pub use query::{Query, Recurse};
@@ -55,3 +55,4 @@ pub use xee_interpreter::atomic::Atomic;
 pub use xee_interpreter::context::Variables;
 pub use xee_interpreter::function::{Array, Map};
 pub use xee_interpreter::sequence::{Item, Sequence};
+pub use xee_interpreter::xml::{DocumentHandle, Uri};

@@ -7,7 +7,7 @@ use std::{
 
 use xee_xpath_compiler::{context::StaticContext, sequence::Item, Namespaces};
 
-use xee_xpath::error::Result as XPathResult;
+use xee_xpath::{error::Result as XPathResult, Uri};
 use xee_xpath::{DocumentHandle, Documents, Queries, Query, Session};
 
 pub fn convert_string(_: &mut Session, item: &Item) -> XPathResult<String> {
@@ -31,7 +31,7 @@ pub trait ContextLoadable<C: ?Sized>: Sized {
     fn load_from_xml_with_context(xml: &str, context: &C) -> Result<Self> {
         let mut documents = Documents::new();
         // TODO: default document URI is just hardcoded
-        let document_id = documents.load_string("http://example.com", xml)?;
+        let document_id = documents.add_string(&Uri::new("http://example.com"), xml)?;
 
         Self::load_from_node_with_context(documents, document_id, context)
     }

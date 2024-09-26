@@ -1,7 +1,6 @@
-use crate::{
-    documents::{Documents, InnerDocuments},
-    queries::Queries,
-};
+use xot::Xot;
+
+use crate::{documents::Documents, queries::Queries};
 
 /// A session in which queries can be executed
 ///
@@ -10,7 +9,7 @@ use crate::{
 pub struct Session<'namespaces> {
     pub(crate) queries: &'namespaces Queries<'namespaces>,
     pub(crate) dynamic_context: xee_interpreter::context::DynamicContext<'namespaces>,
-    pub(crate) documents: InnerDocuments,
+    pub(crate) xot: Xot,
 }
 
 impl<'namespaces> Session<'namespaces> {
@@ -22,7 +21,7 @@ impl<'namespaces> Session<'namespaces> {
         Self {
             queries,
             dynamic_context,
-            documents: documents.inner,
+            xot: documents.xot,
         }
     }
 }

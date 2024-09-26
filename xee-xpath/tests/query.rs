@@ -1,19 +1,22 @@
 use ibig::{ibig, IBig};
 use xee_interpreter::sequence::Sequence;
-use xee_xpath::{error, Documents, Item, Queries, Query, Recurse, Session};
+use xee_xpath::{error, Documents, Item, Queries, Query, Recurse, Session, Uri};
 
 #[test]
 fn test_duplicate_document_uri() -> error::Result<()> {
     let mut documents = Documents::new();
     let _doc1 = documents
-        .load_string(
-            "doc1",
+        .add_string(
+            &Uri::new("doc1"),
             r#"<doc><result><any-of><value>A</value></any-of></result></doc>"#,
         )
         .unwrap();
     // try to load doc with the same URI
     let doc2_err = documents
-        .load_string("doc1", r#"<doc><result><value>A</value></result></doc>"#)
+        .add_string(
+            &Uri::new("doc1"),
+            r#"<doc><result><value>A</value></result></doc>"#,
+        )
         .unwrap_err();
     assert_eq!(doc2_err.to_string(), "Duplicate URI: doc1");
     Ok(())
@@ -23,7 +26,7 @@ fn test_duplicate_document_uri() -> error::Result<()> {
 fn test_simple_query() -> error::Result<()> {
     let mut documents = Documents::new();
     let doc = documents
-        .load_string("http://example.com", "<root>foo</root>")
+        .add_string(&Uri::new("http://example.com"), "<root>foo</root>")
         .unwrap();
 
     let mut queries = Queries::default();
@@ -41,7 +44,7 @@ fn test_simple_query() -> error::Result<()> {
 fn test_sequence_query() -> error::Result<()> {
     let mut documents = Documents::new();
     let doc = documents
-        .load_string("http://example.com", "<root>foo</root>")
+        .add_string(&Uri::new("http://example.com"), "<root>foo</root>")
         .unwrap();
 
     let mut queries = Queries::default();
@@ -58,13 +61,16 @@ fn test_sequence_query() -> error::Result<()> {
 fn test_option_query() -> error::Result<()> {
     let mut documents = Documents::new();
     let doc_with_value = documents
-        .load_string(
-            "http://example.com/with_value",
+        .add_string(
+            &Uri::new("http://example.com/with_value"),
             "<root><value>Foo</value></root>",
         )
         .unwrap();
     let doc_without_value = documents
-        .load_string("http://example.com/without_value", "<root></root>")
+        .add_string(
+            &Uri::new("http://example.com/without_value"),
+            "<root></root>",
+        )
         .unwrap();
 
     let mut queries = Queries::default();
@@ -84,7 +90,10 @@ fn test_option_query() -> error::Result<()> {
 fn test_nested_query() -> error::Result<()> {
     let mut documents = Documents::new();
     let doc = documents
-        .load_string("http://example.com", "<root><a>1</a><a>2</a></root>")
+        .add_string(
+            &Uri::new("http://example.com"),
+            "<root><a>1</a><a>2</a></root>",
+        )
         .unwrap();
 
     let mut queries = Queries::default();
@@ -103,7 +112,7 @@ fn test_nested_query() -> error::Result<()> {
 fn test_wrong_queries() -> error::Result<()> {
     let mut documents = Documents::new();
     let doc = documents
-        .load_string("http://example.com", "<root>foo</root>")
+        .add_string(&Uri::new("http://example.com"), "<root>foo</root>")
         .unwrap();
 
     let queries = Queries::default();
@@ -158,13 +167,16 @@ fn test_option_query_recurse() -> error::Result<()> {
 
     let mut documents = Documents::new();
     let doc1 = documents
-        .load_string(
-            "doc1",
+        .add_string(
+            &Uri::new("doc1"),
             r#"<doc><result><any-of><value>A</value></any-of></result></doc>"#,
         )
         .unwrap();
     let doc2 = documents
-        .load_string("doc2", r#"<doc><result><value>A</value></result></doc>"#)
+        .add_string(
+            &Uri::new("doc2"),
+            r#"<doc><result><value>A</value></result></doc>"#,
+        )
         .unwrap();
 
     let mut session = queries.session(documents);
@@ -217,13 +229,16 @@ fn test_many_query_recurse() -> error::Result<()> {
 
     let mut documents = Documents::new();
     let doc1 = documents
-        .load_string(
-            "doc1",
+        .add_string(
+            &Uri::new("doc1"),
             r#"<doc><result><any-of><value>A</value></any-of><any-of><value>B</value></any-of></result></doc>"#,
         )
         .unwrap();
     let doc2 = documents
-        .load_string("doc2", r#"<doc><result><value>A</value></result></doc>"#)
+        .add_string(
+            &Uri::new("doc2"),
+            r#"<doc><result><value>A</value></result></doc>"#,
+        )
         .unwrap();
 
     let mut session = queries.session(documents);

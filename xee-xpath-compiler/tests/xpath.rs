@@ -54,8 +54,8 @@ where
     let mut xot = Xot::new();
     let uri = Uri::new("http://example.com");
     let mut documents = Documents::new();
-    documents.add(&mut xot, &uri, xml).unwrap();
-    let document = documents.get(&uri).unwrap();
+    documents.add_string(&mut xot, &uri, xml).unwrap();
+    let document = documents.get_by_uri(&uri).unwrap();
     let root = document.root;
     let nodes = get_nodes(&xot, document);
 

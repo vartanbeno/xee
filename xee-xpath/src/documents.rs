@@ -1,36 +1,7 @@
-use std::{cell::RefCell, sync::atomic};
+use std::cell::RefCell;
 
-static DOCUMENTS_COUNTER: atomic::AtomicUsize = atomic::AtomicUsize::new(0);
-
-fn get_documents_id() -> usize {
-    DOCUMENTS_COUNTER.fetch_add(1, atomic::Ordering::Relaxed)
-}
-
-/// Something went wrong loading [`Documents`]
-#[derive(Debug)]
-pub enum DocumentsError {
-    /// An attempt as made to add a document with a URI that was already known.
-    DuplicateUri(String),
-    /// An error occurred loading the document XML (using the [`xot`] crate).
-    Xot(xot::Error),
-}
-
-impl std::error::Error for DocumentsError {}
-
-impl std::fmt::Display for DocumentsError {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        match self {
-            DocumentsError::DuplicateUri(uri) => write!(f, "Duplicate URI: {}", uri),
-            DocumentsError::Xot(e) => write!(f, "Xot error: {}", e),
-        }
-    }
-}
-
-impl From<xot::Error> for DocumentsError {
-    fn from(e: xot::Error) -> Self {
-        DocumentsError::Xot(e)
-    }
-}
+use xee_interpreter::xml::{DocumentHandle, DocumentsError, Uri};
+use xot::Xot;
 
 /// A collection of XML documents as can be used by XPath and XSLT.
 ///
@@ -41,39 +12,15 @@ impl From<xot::Error> for DocumentsError {
 /// a URL is present, it won't be changed.
 #[derive(Debug)]
 pub struct Documents {
-    pub(crate) inner: InnerDocuments,
+    pub(crate) xot: Xot,
     pub(crate) documents: RefCell<xee_interpreter::xml::Documents>,
-}
-
-#[derive(Debug)]
-pub(crate) struct InnerDocuments {
-    pub(crate) id: usize,
-    pub(crate) xot: xot::Xot,
-    pub(crate) document_uris: Vec<xee_interpreter::xml::Uri>,
-}
-
-/// A handle to a document.
-///
-/// This is an identifier into a [`Documents`] collection. You can
-/// freely copy it.
-///
-/// You can use it to evaluate XPath expressions on the document using
-/// [`Queries`](`crate::Queries`).
-#[derive(Debug, Clone, Copy, Eq, PartialEq, Hash)]
-pub struct DocumentHandle {
-    pub(crate) documents_id: usize,
-    pub(crate) id: usize,
 }
 
 impl Documents {
     /// Create a new empty collection of documents.
     pub fn new() -> Self {
         Self {
-            inner: InnerDocuments {
-                id: get_documents_id(),
-                xot: xot::Xot::new(),
-                document_uris: Vec::new(),
-            },
+            xot: Xot::new(),
             documents: RefCell::new(xee_interpreter::xml::Documents::new()),
         }
     }
@@ -82,21 +29,9 @@ impl Documents {
     ///
     /// Something may go wrong during processing of the XML document; this is
     /// a [`xot::Error`].
-    pub fn load_string(&mut self, uri: &str, xml: &str) -> Result<DocumentHandle, DocumentsError> {
-        let uri = xee_interpreter::xml::Uri::new(uri);
-        if self.inner.document_uris.contains(&uri) {
-            // duplicate URI is an error
-            return Err(DocumentsError::DuplicateUri(uri.as_str().to_string()));
-        }
-        let id = self.inner.document_uris.len();
-
+    pub fn add_string(&mut self, uri: &Uri, xml: &str) -> Result<DocumentHandle, DocumentsError> {
         self.documents
             .borrow_mut()
-            .add(&mut self.inner.xot, &uri, xml)?;
-        self.inner.document_uris.push(uri);
-        Ok(DocumentHandle {
-            documents_id: self.inner.id,
-            id,
-        })
+            .add_string(&mut self.xot, uri, xml)
     }
 }

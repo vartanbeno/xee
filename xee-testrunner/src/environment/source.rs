@@ -62,7 +62,7 @@ impl Source {
                     // scope borrowed_documents so we drop it afterward
                     let borrowed_documents = documents.borrow();
 
-                    let document = borrowed_documents.get(&uri);
+                    let document = borrowed_documents.get_by_uri(&uri);
                     if let Some(document) = document {
                         let root = document.root();
                         return Ok(root);
@@ -75,9 +75,9 @@ impl Source {
                 let mut xml = String::new();
                 buf_reader.read_to_string(&mut xml)?;
 
-                documents.borrow_mut().add(xot, &uri, &xml)?;
+                documents.borrow_mut().add_string(xot, &uri, &xml)?;
                 // now obtain what we just added
-                Ok(documents.borrow().get(&uri).unwrap().root())
+                Ok(documents.borrow().get_by_uri(&uri).unwrap().root())
             }
             SourceContent::String(value) => {
                 // create a new unique uri
@@ -85,8 +85,8 @@ impl Source {
                 // we don't try to get a cached version of the document, as
                 // that would be different each time. we just add it to documents
                 // and return it
-                documents.borrow_mut().add(xot, &uri, value)?;
-                Ok(documents.borrow().get(&uri).unwrap().root())
+                documents.borrow_mut().add_string(xot, &uri, value)?;
+                Ok(documents.borrow().get_by_uri(&uri).unwrap().root())
             }
         }
     }
