@@ -34,15 +34,15 @@ pub struct Interpreter<'a> {
 }
 
 pub struct ContextInfo {
-    pub item: sequence::Item,
-    pub position: sequence::Item,
-    pub size: sequence::Item,
+    pub item: sequence::Sequence,
+    pub position: sequence::Sequence,
+    pub size: sequence::Sequence,
 }
 
 impl From<sequence::Item> for ContextInfo {
     fn from(item: sequence::Item) -> Self {
         ContextInfo {
-            item,
+            item: item.into(),
             position: ibig!(1).into(),
             size: ibig!(1).into(),
         }
