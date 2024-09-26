@@ -1,7 +1,7 @@
 use std::cmp::Ordering;
 use std::rc::Rc;
 
-use ibig::IBig;
+use ibig::{ibig, IBig};
 
 use xee_name::Name;
 use xee_schema_type::Xs;
@@ -35,16 +35,16 @@ pub struct Interpreter<'a> {
 
 pub struct ContextInfo {
     pub item: sequence::Item,
-    pub position: IBig,
-    pub size: IBig,
+    pub position: sequence::Item,
+    pub size: sequence::Item,
 }
 
 impl From<sequence::Item> for ContextInfo {
     fn from(item: sequence::Item) -> Self {
         ContextInfo {
             item,
-            position: 1.into(),
-            size: 1.into(),
+            position: ibig!(1).into(),
+            size: ibig!(1).into(),
         }
     }
 }
