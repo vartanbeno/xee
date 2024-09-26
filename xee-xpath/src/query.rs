@@ -1,7 +1,7 @@
 use xee_interpreter::context::Variables;
 use xee_interpreter::error::SpannedResult as Result;
 use xee_interpreter::occurrence::Occurrence;
-use xee_interpreter::sequence::{self, Item};
+use xee_interpreter::sequence::{self, Item, Sequence};
 
 use crate::session::Session;
 use crate::{error, Itemable};
@@ -373,6 +373,43 @@ impl ManyRecurseQuery {
             .map(|item| recurse.execute(session, &item))
             .collect::<Result<Vec<V>>>()?;
         Ok(items)
+    }
+}
+
+/// A query that returns a sequence.
+///
+/// This query returns a [`Sequence`] object that can be used to access
+/// the items in the sequence. It represents an XPath sequence. The items
+/// in the sequence are not converted.
+///
+/// Construct this using [`Queries::sequence`].
+///
+/// This is useful if you want to work with the sequence directly.
+#[derive(Debug, Clone, Copy)]
+pub struct SequenceQuery {
+    pub(crate) query_id: QueryId,
+}
+
+impl SequenceQuery {
+    /// Execute the query against an itemable.
+    pub fn execute_with_variables(
+        &self,
+        session: &mut Session,
+        item: impl Itemable,
+        variables: Variables,
+    ) -> Result<Sequence> {
+        execute_many(session, &self.query_id, item, variables)
+    }
+}
+
+impl Query<Sequence> for SequenceQuery {
+    fn execute_with_variables(
+        &self,
+        session: &mut Session,
+        item: impl Itemable,
+        variables: Variables,
+    ) -> Result<Sequence> {
+        Self::execute_with_variables(self, session, item, variables)
     }
 }
 

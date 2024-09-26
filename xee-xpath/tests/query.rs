@@ -1,4 +1,5 @@
 use ibig::{ibig, IBig};
+use xee_interpreter::sequence::Sequence;
 use xee_xpath::{error, Documents, Item, Queries, Query, Recurse, Session};
 
 #[test]
@@ -33,6 +34,23 @@ fn test_simple_query() -> error::Result<()> {
     let mut session = queries.session(documents);
     let r = q.execute(&mut session, doc)?;
     assert_eq!(r, "foo");
+    Ok(())
+}
+
+#[test]
+fn test_sequence_query() -> error::Result<()> {
+    let mut documents = Documents::new();
+    let doc = documents
+        .load_string("http://example.com", "<root>foo</root>")
+        .unwrap();
+
+    let mut queries = Queries::default();
+    let q = queries.sequence("/root/string()")?;
+
+    let mut session = queries.session(documents);
+    let r = q.execute(&mut session, doc)?;
+    let sequence: Sequence = "foo".into();
+    assert_eq!(r, sequence);
     Ok(())
 }
 

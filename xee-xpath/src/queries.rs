@@ -7,7 +7,7 @@ use crate::{
     documents::Documents,
     query::{
         Convert, ManyQuery, ManyRecurseQuery, OneQuery, OneRecurseQuery, OptionQuery,
-        OptionRecurseQuery, QueryId,
+        OptionRecurseQuery, QueryId, SequenceQuery,
     },
     session::Session,
 };
@@ -162,6 +162,17 @@ impl<'namespaces> Queries<'namespaces> {
     pub fn many_recurse(&mut self, s: &str) -> Result<ManyRecurseQuery> {
         let id = self.register(s)?;
         Ok(ManyRecurseQuery {
+            query_id: QueryId::new(self.id, id),
+        })
+    }
+
+    /// Construct a query that gets a [`Sequence`] as a result.
+    ///
+    /// This is a low-level API that allows you to get the raw sequence
+    /// without converting it into Rust values.
+    pub fn sequence(&mut self, s: &str) -> Result<SequenceQuery> {
+        let id = self.register(s)?;
+        Ok(SequenceQuery {
             query_id: QueryId::new(self.id, id),
         })
     }
