@@ -3,7 +3,7 @@ use std::{cell::RefCell, sync::atomic};
 static DOCUMENTS_COUNTER: atomic::AtomicUsize = atomic::AtomicUsize::new(0);
 
 fn get_documents_id() -> usize {
-    DOCUMENTS_COUNTER.fetch_add(1, atomic::Ordering::SeqCst)
+    DOCUMENTS_COUNTER.fetch_add(1, atomic::Ordering::Relaxed)
 }
 
 /// Something went wrong loading [`Documents`]

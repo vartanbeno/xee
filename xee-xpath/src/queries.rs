@@ -15,7 +15,7 @@ use crate::{
 static QUERIES_COUNTER: atomic::AtomicUsize = atomic::AtomicUsize::new(0);
 
 fn get_queries_id() -> usize {
-    QUERIES_COUNTER.fetch_add(1, atomic::Ordering::SeqCst)
+    QUERIES_COUNTER.fetch_add(1, atomic::Ordering::Relaxed)
 }
 
 /// A collection of XPath queries
