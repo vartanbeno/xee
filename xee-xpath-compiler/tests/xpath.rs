@@ -54,9 +54,9 @@ where
     let mut xot = Xot::new();
     let uri = Uri::new("http://example.com");
     let mut documents = Documents::new();
-    documents.add_string(&mut xot, &uri, xml).unwrap();
-    let document = documents.get_by_uri(&uri).unwrap();
-    let root = document.root;
+    let handle = documents.add_string(&mut xot, &uri, xml).unwrap();
+    let document = documents.get_by_handle(handle).unwrap();
+    let root = document.root();
     let nodes = get_nodes(&xot, document);
 
     let namespaces = Namespaces::new(Namespaces::default_namespaces(), "", "");
@@ -453,7 +453,7 @@ fn test_sequence_predicate_sequence_empty() {
 #[test]
 fn test_child_axis_step1() -> SpannedResult<()> {
     assert_nodes(r#"<doc><a/><b/></doc>"#, "doc/*", |xot, document| {
-        let doc_el = xot.document_element(document.root).unwrap();
+        let doc_el = xot.document_element(document.root()).unwrap();
         let a = xot.first_child(doc_el).unwrap();
         let b = xot.next_sibling(a).unwrap();
         vec![a, b]
@@ -463,7 +463,7 @@ fn test_child_axis_step1() -> SpannedResult<()> {
 #[test]
 fn test_child_axis_step2() -> SpannedResult<()> {
     assert_nodes(r#"<doc><a/><b/></doc>"#, "doc/a", |xot, document| {
-        let doc_el = xot.document_element(document.root).unwrap();
+        let doc_el = xot.document_element(document.root()).unwrap();
         let a = xot.first_child(doc_el).unwrap();
         vec![a]
     })
@@ -475,7 +475,7 @@ fn test_step_with_predicate() -> SpannedResult<()> {
         r#"<doc><a/><b/></doc>"#,
         "doc/*[fn:position() eq 2]",
         |xot, document| {
-            let doc_el = xot.document_element(document.root).unwrap();
+            let doc_el = xot.document_element(document.root()).unwrap();
             let a = xot.first_child(doc_el).unwrap();
             let b = xot.next_sibling(a).unwrap();
             vec![b]
@@ -489,7 +489,7 @@ fn test_descendant_axis_step() -> SpannedResult<()> {
         r#"<doc><a/><b><c/></b></doc>"#,
         "descendant::*",
         |xot, document| {
-            let doc_el = xot.document_element(document.root).unwrap();
+            let doc_el = xot.document_element(document.root()).unwrap();
             let a = xot.first_child(doc_el).unwrap();
             let b = xot.next_sibling(a).unwrap();
             let c = xot.first_child(b).unwrap();
@@ -512,7 +512,7 @@ fn test_descendant_axis_step2() -> SpannedResult<()> {
         r#"<doc><a><c/></a><b/></doc>"#,
         "descendant::*",
         |xot, document| {
-            let doc_el = xot.document_element(document.root).unwrap();
+            let doc_el = xot.document_element(document.root()).unwrap();
             let a = xot.first_child(doc_el).unwrap();
             let b = xot.next_sibling(a).unwrap();
             let c = xot.first_child(a).unwrap();
@@ -524,7 +524,7 @@ fn test_descendant_axis_step2() -> SpannedResult<()> {
 #[test]
 fn test_comma_nodes() -> SpannedResult<()> {
     assert_nodes(r#"<doc><a/><b/></doc>"#, "doc/b, doc/a", |xot, document| {
-        let doc_el = xot.document_element(document.root).unwrap();
+        let doc_el = xot.document_element(document.root()).unwrap();
         let a = xot.first_child(doc_el).unwrap();
         let b = xot.next_sibling(a).unwrap();
         vec![b, a]
@@ -537,7 +537,7 @@ fn test_union() -> SpannedResult<()> {
         r#"<doc><a/><b/><c/></doc>"#,
         "doc/c | doc/a | doc/b | doc/a",
         |xot, document| {
-            let doc_el = xot.document_element(document.root).unwrap();
+            let doc_el = xot.document_element(document.root()).unwrap();
             let a = xot.first_child(doc_el).unwrap();
             let b = xot.next_sibling(a).unwrap();
             let c = xot.next_sibling(b).unwrap();
@@ -756,7 +756,7 @@ fn test_attribute_predicate() -> SpannedResult<()> {
         r#"<doc><a/><b foo="FOO"/><c/></doc>"#,
         "//*[@foo eq 'FOO']",
         |xot, document| {
-            let doc_el = xot.document_element(document.root).unwrap();
+            let doc_el = xot.document_element(document.root()).unwrap();
             let a = xot.first_child(doc_el).unwrap();
             let b = xot.next_sibling(a).unwrap();
             vec![b]
@@ -1267,7 +1267,7 @@ fn test_kind_test_in_path() -> SpannedResult<()> {
         r#"<doc><a/>foo<b/></doc>"#,
         "doc/element()",
         |xot, document| {
-            let doc_el = xot.document_element(document.root).unwrap();
+            let doc_el = xot.document_element(document.root()).unwrap();
             let a = xot.first_child(doc_el).unwrap();
             let text = xot.next_sibling(a).unwrap();
             let b = xot.next_sibling(text).unwrap();

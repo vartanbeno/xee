@@ -53,15 +53,16 @@ impl Uri {
 #[derive(Debug, Clone)]
 pub struct Document {
     pub(crate) uri: Uri,
-    pub root: xot::Node,
+    root: xot::Node,
 }
 
 impl Document {
+    /// The document root node
     pub fn root(&self) -> xot::Node {
         self.root
     }
 
-    pub fn cleanup(&self, xot: &mut Xot) {
+    pub(crate) fn cleanup(&self, xot: &mut Xot) {
         xot.remove(self.root).unwrap();
     }
 }
@@ -159,10 +160,20 @@ impl Documents {
         self.documents.get(handle.id)
     }
 
+    /// Obtain document node by handle
+    pub fn get_node_by_handle(&self, handle: DocumentHandle) -> Option<xot::Node> {
+        Some(self.get_by_handle(handle)?.root)
+    }
+
     /// Obtain a document by URI
     pub fn get_by_uri(&self, uri: &Uri) -> Option<&Document> {
         let handle = self.by_uri.get(uri)?;
         self.get_by_handle(*handle)
+    }
+
+    /// Obtain document node by URI
+    pub fn get_node_by_uri(&self, uri: &Uri) -> Option<xot::Node> {
+        Some(self.get_by_uri(uri)?.root)
     }
 
     /// How many documents are stored.

@@ -20,9 +20,9 @@ pub fn evaluate_program(
 ) -> error::SpannedResult<sequence::Sequence> {
     let uri = xee_interpreter::xml::Uri::new("http://example.com");
     let mut documents = xee_interpreter::xml::Documents::new();
-    documents.add_root(xot, &uri, root).unwrap();
-    let document = documents.get_by_uri(&uri).unwrap();
-    let item: sequence::Item = document.root.into();
+    let handle = documents.add_root(xot, &uri, root).unwrap();
+    let root = documents.get_node_by_handle(handle).unwrap();
+    let item: sequence::Item = root.into();
     let documents = RefCell::new(documents);
     let context = DynamicContext::from_documents(&static_context, &documents);
     let runnable = program.runnable(&context);
