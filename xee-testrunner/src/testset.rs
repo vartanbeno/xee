@@ -124,14 +124,10 @@ impl<E: Environment, R: Runnable<E>> ContextLoadable<Path> for TestSet<E, R> {
 mod tests {
     use crate::{
         environment::{EnvironmentRef, XPathEnvironmentSpec},
-        ns::{namespaces, XPATH_TEST_NS},
         testcase::XPathTestCase,
     };
 
     use super::*;
-
-    use xee_xpath_compiler::context::{DynamicContext, StaticContext};
-    use xot::Xot;
 
     #[test]
     fn test_load_set_set() {

@@ -78,11 +78,6 @@ impl Loadable for Metadata {
 mod tests {
     use super::*;
 
-    use xee_xpath_compiler::context::{DynamicContext, StaticContext};
-    use xot::Xot;
-
-    use crate::ns::{namespaces, XPATH_TEST_NS};
-
     #[test]
     fn test_load() {
         let xml = r#"

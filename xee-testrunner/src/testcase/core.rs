@@ -159,13 +159,8 @@ impl<E: Environment> ContextLoadable<Path> for TestCase<E> {
 mod tests {
     use std::path::PathBuf;
 
-    use xee_xpath_compiler::context::{DynamicContext, StaticContext};
-    use xot::Xot;
-
     use crate::{
-        environment::XPathEnvironmentSpec,
-        metadata::Attribution,
-        ns::{namespaces, XPATH_TEST_NS},
+        environment::XPathEnvironmentSpec, metadata::Attribution, ns::XPATH_TEST_NS,
         testcase::assert::AssertTrue,
     };
 

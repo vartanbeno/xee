@@ -217,10 +217,7 @@ impl Loadable for Dependencies {
 mod tests {
     use super::*;
 
-    use xee_xpath_compiler::context::{DynamicContext, StaticContext};
-    use xot::Xot;
-
-    use crate::ns::{namespaces, XPATH_TEST_NS};
+    use crate::ns::XPATH_TEST_NS;
 
     #[test]
     fn test_load_dependencies() {
