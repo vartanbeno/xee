@@ -181,7 +181,7 @@ impl<'namespaces> Queries<'namespaces> {
 #[cfg(test)]
 mod tests {
 
-    use crate::Query;
+    use crate::query::Query;
 
     use super::*;
 

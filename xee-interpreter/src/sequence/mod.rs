@@ -8,7 +8,8 @@ mod matching;
 mod sequence_core;
 mod sequence_type;
 
+pub use crate::stack::AtomizedIter;
 pub(crate) use item::AtomizedItemIter;
 pub use item::Item;
-pub use sequence_core::ItemIter;
 pub use sequence_core::Sequence;
+pub use sequence_core::{ItemIter, NodeIter};

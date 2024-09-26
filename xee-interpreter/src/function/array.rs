@@ -4,8 +4,9 @@ use xot::Xot;
 
 use crate::{error, sequence, string};
 
+/// An XPath Array
 #[derive(Debug, Clone, PartialEq)]
-pub struct Array(pub Rc<Vec<sequence::Sequence>>);
+pub struct Array(pub(crate) Rc<Vec<sequence::Sequence>>);
 
 impl Array {
     pub(crate) fn new(vec: Vec<sequence::Sequence>) -> Self {

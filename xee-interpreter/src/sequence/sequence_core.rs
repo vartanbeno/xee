@@ -15,6 +15,9 @@ use crate::sequence::Item;
 use crate::stack;
 use crate::string::Collation;
 
+/// A XPath sequence of items.
+///
+/// <https://www.w3.org/TR/xpath-datamodel-31/#sequences>
 #[derive(Debug, Clone, PartialEq)]
 pub struct Sequence {
     stack_value: stack::Value,
@@ -25,16 +28,19 @@ impl Sequence {
         Self { stack_value }
     }
 
+    /// Construct an empty sequence
     pub fn empty() -> Self {
         Self {
             stack_value: stack::Value::Empty,
         }
     }
 
+    /// Check whether the sequence is empty
     pub fn is_empty(&self) -> bool {
         self.stack_value.is_empty_sequence()
     }
 
+    /// Get the length of the sequence
     pub fn len(&self) -> usize {
         match &self.stack_value {
             stack::Value::Empty => 0,
@@ -52,10 +58,12 @@ impl Sequence {
         Ok(array.into())
     }
 
+    /// Check whether this sequence is the absent value
     pub fn is_absent(&self) -> bool {
         matches!(&self.stack_value, stack::Value::Absent)
     }
 
+    /// Ensure the sequence is empty, and if not, return XPTY0004 error.
     pub fn ensure_empty(&self) -> error::Result<&Self> {
         if self.is_empty() {
             Ok(self)
@@ -64,28 +72,51 @@ impl Sequence {
         }
     }
 
+    /// Access an iterator over the items in the sequence
+    ///
+    /// This is fallible, as an Absent value is not iterable.
     pub fn items(&self) -> error::Result<ItemIter> {
         Ok(ItemIter {
             value_iter: self.stack_value.items()?,
         })
     }
 
+    /// Access an iterator over the nodes in the sequence
+    ///
+    /// This is fallible as an Absent value is not iterable.
+    ///
+    /// An error is returned for items that are not a node.
     pub fn nodes(&self) -> error::Result<NodeIter> {
         Ok(NodeIter {
             value_iter: self.stack_value.items()?,
         })
     }
 
+    /// Access an iterator over the XPath maps in the sequence
+    ///
+    /// This is fallible as an Absent value is not iterable.
+    ///
+    /// An error is returned for items that are not a map.
     pub fn map_iter(&self) -> error::Result<impl Iterator<Item = error::Result<function::Map>>> {
         Ok(self.items()?.map(|item| item.to_map()))
     }
 
+    /// Access an iterator over the XPath arrays in the sequence
+    ///
+    /// This is fallible as an Absent value is not iterable.
+    ///
+    /// An error is returned for items that are not an array.
     pub fn array_iter(
         &self,
     ) -> error::Result<impl Iterator<Item = error::Result<function::Array>>> {
         Ok(self.items()?.map(|item| item.to_array()))
     }
 
+    /// Access an iterator over elements nodes in the sequence
+    ///
+    /// This is fallible as an Absent value is not iterable.
+    ///
+    /// An error is returned for items that are not an element.
     pub fn elements<'a>(
         &self,
         xot: &'a Xot,
@@ -102,10 +133,14 @@ impl Sequence {
         }))
     }
 
+    /// Access an iterator over the atomized values in the sequence
+    ///
+    /// <https://www.w3.org/TR/xpath-31/#id-atomization>
     pub fn atomized<'a>(&self, xot: &'a Xot) -> stack::AtomizedIter<'a> {
         self.stack_value.atomized(xot)
     }
 
+    /// Is used internally by the library macro.
     pub fn unboxed_atomized<'a, T>(
         &self,
         xot: &'a Xot,
@@ -123,6 +158,9 @@ impl Sequence {
         })
     }
 
+    /// Get the effective boolean value of the sequence
+    ///
+    /// <https://www.w3.org/TR/xpath-31/#id-ebv>
     pub fn effective_boolean_value(&self) -> error::Result<bool> {
         // TODO: error conversion is a bit blunt
         self.stack_value
@@ -130,12 +168,16 @@ impl Sequence {
             .map_err(|_| error::Error::FORG0006)
     }
 
+    /// Concatenate two sequences producing a new sequence.
     pub fn concat(&self, other: &sequence::Sequence) -> Self {
         let a: stack::Value = self.clone().into();
         let b: stack::Value = other.clone().into();
         a.concat(b).into()
     }
 
+    /// Compare two sequences using XPath deep equal rules.
+    ///
+    /// <https://www.w3.org/TR/xpath-functions-31/#func-deep-equal>
     pub fn deep_equal(
         &self,
         other: &Sequence,
@@ -377,6 +419,7 @@ where
     }
 }
 
+/// An iterator over the items in a sequence.
 pub struct ItemIter {
     value_iter: stack::ValueIter,
 }
@@ -423,6 +466,7 @@ impl Iterator for ItemIter {
     }
 }
 
+/// An iterator over the nodes in a sequence.
 pub struct NodeIter {
     value_iter: stack::ValueIter,
 }

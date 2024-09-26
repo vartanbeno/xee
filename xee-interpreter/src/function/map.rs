@@ -5,8 +5,9 @@ use xot::Xot;
 
 use crate::{atomic, error, sequence, string};
 
+/// An XPath Map (a collection of key-value pairs).
 #[derive(Debug, Clone, PartialEq)]
-pub struct Map(pub Rc<HashMap<atomic::MapKey, (atomic::Atomic, sequence::Sequence)>>);
+pub struct Map(pub(crate) Rc<HashMap<atomic::MapKey, (atomic::Atomic, sequence::Sequence)>>);
 
 impl Map {
     pub(crate) fn new(entries: Vec<(atomic::Atomic, sequence::Sequence)>) -> error::Result<Self> {

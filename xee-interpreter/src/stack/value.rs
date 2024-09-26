@@ -401,6 +401,7 @@ impl Iterator for ValueIter {
     }
 }
 
+/// Iterate over the atomized values of a sequence.
 #[derive(Clone)]
 pub enum AtomizedIter<'a> {
     Empty,

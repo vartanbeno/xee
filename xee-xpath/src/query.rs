@@ -1,3 +1,5 @@
+//! Queries you can execute against a session.
+
 use xee_interpreter::context::Variables;
 use xee_interpreter::error::SpannedResult as Result;
 use xee_interpreter::occurrence::Occurrence;
@@ -156,6 +158,7 @@ where
     }
 }
 
+/// A recursive query that expects a single item as a result.
 #[derive(Debug, Clone)]
 pub struct OneRecurseQuery {
     pub(crate) query_id: QueryId,
@@ -246,6 +249,7 @@ where
     }
 }
 
+/// A recursive query that expects an optional single item.
 #[derive(Debug, Clone)]
 pub struct OptionRecurseQuery {
     pub(crate) query_id: QueryId,
@@ -337,6 +341,7 @@ where
     }
 }
 
+/// A recursive query that expects many items as a result.
 #[derive(Debug, Clone)]
 pub struct ManyRecurseQuery {
     pub(crate) query_id: QueryId,
@@ -413,6 +418,7 @@ impl Query<Sequence> for SequenceQuery {
     }
 }
 
+/// A query maps the result of another query to a different type.
 #[derive(Debug, Copy, Clone)]
 pub struct MapQuery<V, T, Q: Query<V> + Sized, F>
 where
@@ -429,6 +435,7 @@ where
     Q: Query<V> + Sized,
     F: Fn(V, &mut Session, &Item) -> Result<T> + Clone,
 {
+    /// Execute the query against an item.
     pub fn execute(&self, session: &mut Session, item: &Item) -> Result<T> {
         let v = self.query.execute(session, item)?;
         (self.f)(v, session, item)

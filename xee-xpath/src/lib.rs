@@ -41,17 +41,17 @@ pub mod atomic;
 mod documents;
 pub mod error;
 mod itemable;
+pub mod iter;
 mod queries;
-mod query;
+pub mod query;
 mod session;
 
 pub use documents::{DocumentHandle, Documents};
 pub use itemable::Itemable;
 pub use queries::Queries;
-pub use query::{ManyQuery, OneQuery, OptionQuery, Query, Recurse};
+pub use query::{Query, Recurse};
 pub use session::Session;
 pub use xee_interpreter::atomic::Atomic;
 pub use xee_interpreter::context::Variables;
-// TODO: need to expose sequence too
-
-pub use xee_interpreter::sequence::Item;
+pub use xee_interpreter::function::{Array, Map};
+pub use xee_interpreter::sequence::{Item, Sequence};
