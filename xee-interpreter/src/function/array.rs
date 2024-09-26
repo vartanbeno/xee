@@ -5,6 +5,9 @@ use xot::Xot;
 use crate::{error, sequence, string};
 
 /// An XPath Array
+///
+/// Not to be confused with an XPath sequence, this is a type of item that can exist
+/// in a sequence when you need to have an actual list.
 #[derive(Debug, Clone, PartialEq)]
 pub struct Array(pub(crate) Rc<Vec<sequence::Sequence>>);
 
