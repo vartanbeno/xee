@@ -8,6 +8,10 @@ use xee_interpreter::sequence::{self, Item, Sequence};
 use crate::session::Session;
 use crate::{error, Itemable};
 
+// import only for documentation purposes
+#[cfg(doc)]
+use crate::Queries;
+
 /// A query that can be executed against an [`Itemable`]
 ///
 /// It gives back a result of type `V`
