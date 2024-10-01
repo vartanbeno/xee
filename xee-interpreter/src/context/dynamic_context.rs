@@ -36,33 +36,18 @@ pub struct DynamicContext<'a> {
 }
 
 impl<'a> DynamicContext<'a> {
-    pub fn new(
+    pub(crate) fn new(
         static_context: &'a StaticContext<'a>,
         documents: Cow<'a, RefCell<xml::Documents>>,
         variables: Variables,
+        current_datetime: chrono::DateTime<chrono::offset::FixedOffset>,
     ) -> Self {
         Self {
             static_context,
             documents,
             variables,
-            current_datetime: Self::create_current_datetime(),
+            current_datetime,
         }
-    }
-
-    pub fn from_documents(
-        static_context: &'a StaticContext<'a>,
-        documents: &'a RefCell<xml::Documents>,
-        variables: Variables,
-    ) -> Self {
-        Self::new(static_context, Cow::Borrowed(documents), variables)
-    }
-
-    pub fn from_owned_documents(
-        static_context: &'a StaticContext<'a>,
-        documents: RefCell<xml::Documents>,
-        variables: Variables,
-    ) -> Self {
-        Self::new(static_context, Cow::Owned(documents), variables)
     }
 
     pub fn arguments(&self) -> Result<Vec<sequence::Sequence>, Error> {

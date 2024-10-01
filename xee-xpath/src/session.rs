@@ -23,11 +23,10 @@ impl<'namespaces> Session<'namespaces> {
         queries: &'namespaces Queries<'namespaces>,
         documents: OwnedDocuments,
     ) -> Self {
-        let dynamic_context = xee_interpreter::context::DynamicContext::from_owned_documents(
-            &queries.static_context,
-            documents.documents,
-            Variables::new(),
-        );
+        let mut dynamic_context_builder =
+            xee_interpreter::context::DynamicContextBuilder::new(&queries.static_context);
+        dynamic_context_builder.owned_documents(documents.documents.into_inner());
+        let dynamic_context = dynamic_context_builder.build();
         Self {
             queries,
             dynamic_context,

@@ -1,8 +1,5 @@
-use std::cell::RefCell;
-
-use xee_interpreter::context::DynamicContext;
+use xee_interpreter::context::DynamicContextBuilder;
 use xee_interpreter::context::StaticContext;
-use xee_interpreter::context::Variables;
 use xee_interpreter::error;
 use xee_interpreter::interpreter::Program;
 use xee_interpreter::sequence;
@@ -23,8 +20,9 @@ pub fn evaluate_program(
     let handle = documents.add_root(xot, &uri, root).unwrap();
     let root = documents.get_node_by_handle(handle).unwrap();
     let item: sequence::Item = root.into();
-    let documents = RefCell::new(documents);
-    let context = DynamicContext::from_documents(&static_context, &documents, Variables::new());
+    let mut dynamic_context_builder = DynamicContextBuilder::new(&static_context);
+    dynamic_context_builder.owned_documents(documents);
+    let context = dynamic_context_builder.build();
     let runnable = program.runnable(&context);
     runnable.many(Some(&item), xot)
 }

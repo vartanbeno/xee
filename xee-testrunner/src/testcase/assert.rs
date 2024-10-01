@@ -3,7 +3,7 @@ use chrono::Offset;
 use std::borrow::Cow;
 use std::fmt;
 use xee_xpath::{Queries, Query, Recurse, Session};
-use xee_xpath_compiler::context::{StaticContextBuilder, Variables};
+use xee_xpath_compiler::context::{DynamicContextBuilder, StaticContextBuilder, Variables};
 use xee_xpath_compiler::error::Result;
 use xee_xpath_compiler::{
     context::{DynamicContext, StaticContext},
@@ -1032,11 +1032,11 @@ fn run_xpath_with_result(
     let static_context = builder.build();
     let program = parse(&static_context, expr).map_err(|e| e.error)?;
     let variables = AHashMap::from([(name, sequence.clone())]);
-    let dynamic_context = DynamicContext::new(
-        &static_context,
-        Cow::Borrowed(&runnable.dynamic_context().documents),
-        variables,
-    );
+    let mut dynamic_context_builder = DynamicContextBuilder::new(&static_context);
+    dynamic_context_builder.ref_documents(&runnable.dynamic_context().documents);
+    dynamic_context_builder.variables(variables);
+
+    let dynamic_context = dynamic_context_builder.build();
     let runnable = program.runnable(&dynamic_context);
     runnable.many(None, xot).map_err(|e| e.error)
 }

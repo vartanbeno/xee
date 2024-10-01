@@ -3,7 +3,7 @@ use xot::xmlname::OwnedName;
 
 use crate::context;
 
-#[derive(Clone, Default)]
+#[derive(Debug, Clone, Default)]
 pub struct StaticContextBuilder<'a> {
     variable_names: Vec<OwnedName>,
     namespaces: Vec<(&'a str, &'a str)>,

@@ -19,6 +19,7 @@
 use std::borrow::Cow;
 use std::cell::RefCell;
 
+use xee_xpath_compiler::context::DynamicContextBuilder;
 use xot::{NameId, Node, Xot};
 
 use xee_xpath_ast::ast as xpath_ast;
@@ -231,13 +232,11 @@ impl StaticEvaluator {
         let parser_context = content.parser_context();
         let static_context = parser_context.into();
         let program = compile(&static_context, xpath)?;
-        let documents = RefCell::new(xee_xpath_compiler::xml::Documents::new());
-        let dynamic_context = DynamicContext::from_documents(
-            &static_context,
-            &documents,
-            // TODO doing the clone here of the global variables isn't ideal
-            self.static_global_variables.clone(),
-        );
+        let mut dynamic_context_builder = DynamicContextBuilder::new(&static_context);
+        // TODO doing the clone here of the global variables isn't ideal
+        dynamic_context_builder.variables(self.static_global_variables.clone());
+
+        let dynamic_context = dynamic_context_builder.build();
         let runnable = program.runnable(&dynamic_context);
 
         runnable.many(None, xot)

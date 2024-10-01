@@ -3,7 +3,9 @@ use std::{borrow::Cow, cell::RefCell};
 use xot::Xot;
 
 use xee_interpreter::{
-    context::{DynamicContext, StaticContext, StaticContextBuilder, Variables},
+    context::{
+        DynamicContext, DynamicContextBuilder, StaticContext, StaticContextBuilder, Variables,
+    },
     error::SpannedResult,
     sequence::Sequence,
     xml::{Documents, Uri},
@@ -38,11 +40,14 @@ pub fn evaluate_root(
     let static_context = StaticContext::from_namespaces(namespaces);
     // TODO: isn't the right URI
     let uri = Uri::new("http://example.com");
-    let documents = RefCell::new(Documents::new());
+    let mut documents = Documents::new();
     // TODO: The unwrap here is bad, but DocumentsError isn't integrated int
     // the general error system yet
-    documents.borrow_mut().add_root(xot, &uri, root).unwrap();
-    let context = DynamicContext::from_documents(&static_context, &documents, Variables::new());
+    documents.add_root(xot, &uri, root).unwrap();
+
+    let mut dynamic_context_builder = DynamicContextBuilder::new(&static_context);
+    dynamic_context_builder.owned_documents(documents);
+    let context = dynamic_context_builder.build();
 
     let program = parse(context.static_context, xpath)?;
     let runnable = program.runnable(&context);
@@ -52,8 +57,9 @@ pub fn evaluate_root(
 pub fn evaluate_without_focus(s: &str) -> SpannedResult<Sequence> {
     let mut xot = Xot::new();
     let static_context = StaticContext::default();
-    let documents = RefCell::new(Documents::new());
-    let context = DynamicContext::from_documents(&static_context, &documents, Variables::new());
+
+    let dynamic_context_buidler = DynamicContextBuilder::new(&static_context);
+    let context = dynamic_context_buidler.build();
 
     let program = parse(context.static_context, s)?;
     let runnable = program.runnable(&context);
@@ -69,8 +75,10 @@ pub fn evaluate_without_focus_with_variables(
     let variable_names = variables.keys().cloned();
     builder.variable_names(variable_names);
     let static_context = builder.build();
-    let documents = RefCell::new(Documents::new());
-    let context = DynamicContext::from_documents(&static_context, &documents, variables);
+
+    let mut dynamic_context_builder = DynamicContextBuilder::new(&static_context);
+    dynamic_context_builder.variables(variables);
+    let context = dynamic_context_builder.build();
     let program = parse(context.static_context, s)?;
     let runnable = program.runnable(&context);
     runnable.many(None, &mut xot)

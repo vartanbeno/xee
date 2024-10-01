@@ -3,7 +3,7 @@ use std::{borrow::Cow, path::Path};
 use xee_name::Namespaces;
 use xee_xpath::{Queries, Query, Variables};
 use xee_xpath_compiler::{
-    context::{DynamicContext, StaticContext, StaticContextBuilder},
+    context::{DynamicContext, DynamicContextBuilder, StaticContext, StaticContextBuilder},
     parse,
 };
 use xee_xpath_load::{convert_string, ContextLoadable};
@@ -96,11 +96,10 @@ impl Runnable<XPathEnvironmentSpec> for XPathTestCase {
             }
         };
 
-        let dynamic_context = DynamicContext::new(
-            &static_context,
-            Cow::Borrowed(&run_context.dynamic_context.documents),
-            variables,
-        );
+        let mut dynamic_context_builder = DynamicContextBuilder::new(&static_context);
+        dynamic_context_builder.ref_documents(&run_context.dynamic_context.documents);
+        dynamic_context_builder.variables(variables);
+        let dynamic_context = dynamic_context_builder.build();
         let runnable = program.runnable(&dynamic_context);
         let result = runnable.many(context_item.as_ref(), &mut run_context.xot);
         self.test_case.result.assert_result(

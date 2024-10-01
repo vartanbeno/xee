@@ -3,7 +3,7 @@ use std::cell::RefCell;
 use ahash::HashMapExt;
 use insta::assert_debug_snapshot;
 
-use xee_interpreter::context::{DynamicContext, StaticContext, Variables};
+use xee_interpreter::context::{DynamicContext, DynamicContextBuilder, StaticContext, Variables};
 use xee_interpreter::interpreter::{instruction::decode_instructions, Program};
 use xee_interpreter::occurrence::Occurrence;
 use xee_ir::{ir, FunctionBuilder, FunctionCompiler, ModeIds, Scopes};
@@ -102,9 +102,9 @@ fn test_generate_element() {
 
     // we now should run the generated code
     let static_context = StaticContext::default();
-    let documents = RefCell::new(xee_interpreter::xml::Documents::new());
-    let variables = Variables::new();
-    let context = DynamicContext::from_documents(&static_context, &documents, variables);
+
+    let dynamic_context_builder = DynamicContextBuilder::new(&static_context);
+    let context = dynamic_context_builder.build();
 
     let mut xot = xot::Xot::new();
     let runnable = program.runnable(&context);

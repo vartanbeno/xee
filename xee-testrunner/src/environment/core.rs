@@ -7,7 +7,7 @@ use std::{
 use xee_name::Namespaces;
 use xee_xpath::{Queries, Query};
 use xee_xpath_compiler::{
-    context::{DynamicContext, StaticContext, Variables},
+    context::{DynamicContext, DynamicContextBuilder, StaticContext, Variables},
     parse, sequence,
     xml::Documents,
     Name,
@@ -137,7 +137,6 @@ impl EnvironmentSpec {
         }
         for param in &self.params {
             let static_context = StaticContext::default();
-            let documents = RefCell::new(Documents::new());
             let select = (param.select.as_ref()).expect("param: missing select not supported");
             let program = parse(&static_context, select);
             if program.is_err() {
@@ -145,8 +144,9 @@ impl EnvironmentSpec {
                 continue;
             }
             let program = program.unwrap();
-            let dynamic_context =
-                DynamicContext::from_documents(&static_context, &documents, Variables::new());
+
+            let dynamic_context_builder = DynamicContextBuilder::new(&static_context);
+            let dynamic_context = dynamic_context_builder.build();
             let runnable = program.runnable(&dynamic_context);
             let result = runnable.many(None, xot).map_err(|e| e.error)?;
             variables.insert(param.name.clone(), result);

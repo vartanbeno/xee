@@ -5,9 +5,11 @@ use xee_xpath_ast::{ast, Namespaces};
 use xot::Xot;
 
 use xee_interpreter::{
-    atomic::Atomic, context::DynamicContext, context::StaticContext, context::Variables,
-    error::SpannedResult, sequence::Item, sequence::Sequence, xml::Document, xml::Documents,
-    xml::Uri,
+    atomic::Atomic,
+    context::{DynamicContext, DynamicContextBuilder, StaticContext, Variables},
+    error::SpannedResult,
+    sequence::{Item, Sequence},
+    xml::{Document, Documents, Uri},
 };
 use xee_xpath_compiler::{
     evaluate, evaluate_without_focus, evaluate_without_focus_with_variables, parse,
@@ -61,8 +63,10 @@ where
 
     let namespaces = Namespaces::new(Namespaces::default_namespaces(), "", "");
     let static_context = StaticContext::from_namespaces(namespaces);
-    let documents = RefCell::new(documents);
-    let context = DynamicContext::from_documents(&static_context, &documents, Variables::new());
+
+    let mut dynamic_context_builder = DynamicContextBuilder::new(&static_context);
+    dynamic_context_builder.owned_documents(documents);
+    let context = dynamic_context_builder.build();
 
     let xpath = parse(&context.static_context, xpath)?;
     let result = xpath.runnable(&context).many_xot_node(root, &mut xot)?;
