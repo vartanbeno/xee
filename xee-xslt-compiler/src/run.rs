@@ -19,12 +19,12 @@ pub fn evaluate_program(
     let mut documents = xee_interpreter::xml::Documents::new();
     let handle = documents.add_root(xot, &uri, root).unwrap();
     let root = documents.get_node_by_handle(handle).unwrap();
-    let item: sequence::Item = root.into();
     let mut dynamic_context_builder = DynamicContextBuilder::new(&static_context);
+    dynamic_context_builder.context_node(root);
     dynamic_context_builder.owned_documents(documents);
     let context = dynamic_context_builder.build();
     let runnable = program.runnable(&context);
-    runnable.many(Some(&item), xot)
+    runnable.many(xot)
 }
 
 pub fn evaluate(xot: &mut Xot, xml: &str, xslt: &str) -> error::SpannedResult<sequence::Sequence> {

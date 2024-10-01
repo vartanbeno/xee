@@ -46,12 +46,13 @@ pub fn evaluate_root(
     documents.add_root(xot, &uri, root).unwrap();
 
     let mut dynamic_context_builder = DynamicContextBuilder::new(&static_context);
+    dynamic_context_builder.context_node(root);
     dynamic_context_builder.owned_documents(documents);
     let context = dynamic_context_builder.build();
 
     let program = parse(context.static_context, xpath)?;
     let runnable = program.runnable(&context);
-    runnable.many_xot_node(root, xot)
+    runnable.many(xot)
 }
 
 pub fn evaluate_without_focus(s: &str) -> SpannedResult<Sequence> {
@@ -63,7 +64,7 @@ pub fn evaluate_without_focus(s: &str) -> SpannedResult<Sequence> {
 
     let program = parse(context.static_context, s)?;
     let runnable = program.runnable(&context);
-    runnable.many(None, &mut xot)
+    runnable.many(&mut xot)
 }
 
 pub fn evaluate_without_focus_with_variables(
@@ -81,5 +82,5 @@ pub fn evaluate_without_focus_with_variables(
     let context = dynamic_context_builder.build();
     let program = parse(context.static_context, s)?;
     let runnable = program.runnable(&context);
-    runnable.many(None, &mut xot)
+    runnable.many(&mut xot)
 }

@@ -25,6 +25,9 @@ pub struct DynamicContext<'a> {
     // to mutate it, and we want to be able create a new dynamic context from
     // the same static context quickly.
     pub static_context: &'a StaticContext<'a>,
+
+    /// An optional context item
+    pub context_item: Option<sequence::Item>,
     // we want to mutate documents during evaluation, and this happens in
     // multiple spots. We use RefCell to manage that during runtime so we don't
     // need to make the whole thing immutable.
@@ -38,12 +41,14 @@ pub struct DynamicContext<'a> {
 impl<'a> DynamicContext<'a> {
     pub(crate) fn new(
         static_context: &'a StaticContext<'a>,
+        context_item: Option<sequence::Item>,
         documents: Cow<'a, RefCell<xml::Documents>>,
         variables: Variables,
         current_datetime: chrono::DateTime<chrono::offset::FixedOffset>,
     ) -> Self {
         Self {
             static_context,
+            context_item,
             documents,
             variables,
             current_datetime,

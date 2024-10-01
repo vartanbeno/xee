@@ -58,15 +58,11 @@ impl<'a> Runnable<'a> {
         Ok(arguments)
     }
 
-    fn run_value(
-        &self,
-        context_item: Option<&sequence::Item>,
-        xot: &'a mut Xot,
-    ) -> error::SpannedResult<stack::Value> {
+    fn run_value(&self, xot: &'a mut Xot) -> error::SpannedResult<stack::Value> {
         let arguments = self.dynamic_context.arguments().unwrap();
         let mut interpreter = Interpreter::new(self, xot);
 
-        let context_info = if let Some(context_item) = context_item {
+        let context_info = if let Some(context_item) = &self.dynamic_context.context_item {
             ContextInfo {
                 item: stack::Value::One(context_item.clone()),
                 position: ibig!(1).into(),
@@ -105,31 +101,23 @@ impl<'a> Runnable<'a> {
     }
 
     /// Run the program against a sequence item.
-    pub fn many(
-        &self,
-        item: Option<&sequence::Item>,
-        xot: &'a mut Xot,
-    ) -> error::SpannedResult<sequence::Sequence> {
-        Ok(self.run_value(item, xot)?.into())
+    pub fn many(&self, xot: &'a mut Xot) -> error::SpannedResult<sequence::Sequence> {
+        Ok(self.run_value(xot)?.into())
     }
 
-    /// Run the program against a xot Node.
-    pub fn many_xot_node(
-        &self,
-        node: xot::Node,
-        xot: &'a mut Xot,
-    ) -> error::SpannedResult<sequence::Sequence> {
-        let item = sequence::Item::Node(node);
-        self.many(Some(&item), xot)
-    }
+    // /// Run the program against a xot Node.
+    // pub fn many_xot_node(
+    //     &self,
+    //     node: xot::Node,
+    //     xot: &'a mut Xot,
+    // ) -> error::SpannedResult<sequence::Sequence> {
+    //     let item = sequence::Item::Node(node);
+    //     self.many(Some(&item), xot)
+    // }
 
     /// Run the program, expect a single item as the result.
-    pub fn one(
-        &self,
-        item: Option<&sequence::Item>,
-        xot: &'a mut Xot,
-    ) -> error::SpannedResult<sequence::Item> {
-        let sequence = self.many(item, xot)?;
+    pub fn one(&self, xot: &'a mut Xot) -> error::SpannedResult<sequence::Item> {
+        let sequence = self.many(xot)?;
         let mut items = sequence.items().map_err(|error| SpannedError {
             error,
             span: Some(self.program.span().into()),
@@ -141,12 +129,8 @@ impl<'a> Runnable<'a> {
     }
 
     /// Run the program, expect an optional single item as the result.
-    pub fn option(
-        &self,
-        item: Option<&sequence::Item>,
-        xot: &'a mut Xot,
-    ) -> error::SpannedResult<Option<sequence::Item>> {
-        let sequence = self.many(item, xot)?;
+    pub fn option(&self, xot: &'a mut Xot) -> error::SpannedResult<Option<sequence::Item>> {
+        let sequence = self.many(xot)?;
         let mut items = sequence.items().map_err(|error| SpannedError {
             error,
             span: Some(self.program.span().into()),

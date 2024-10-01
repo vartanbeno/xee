@@ -98,10 +98,13 @@ impl Runnable<XPathEnvironmentSpec> for XPathTestCase {
 
         let mut dynamic_context_builder = DynamicContextBuilder::new(&static_context);
         dynamic_context_builder.ref_documents(&run_context.dynamic_context.documents);
+        if let Some(context_item) = context_item {
+            dynamic_context_builder.context_item(context_item);
+        }
         dynamic_context_builder.variables(variables);
         let dynamic_context = dynamic_context_builder.build();
         let runnable = program.runnable(&dynamic_context);
-        let result = runnable.many(context_item.as_ref(), &mut run_context.xot);
+        let result = runnable.many(&mut run_context.xot);
         self.test_case.result.assert_result(
             &runnable,
             &mut run_context.xot,

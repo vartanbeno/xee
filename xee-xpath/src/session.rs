@@ -14,7 +14,8 @@ use crate::{
 #[derive(Debug)]
 pub struct Session<'namespaces> {
     pub(crate) queries: &'namespaces Queries<'namespaces>,
-    pub(crate) dynamic_context: xee_interpreter::context::DynamicContext<'namespaces>,
+    pub(crate) dynamic_context_builder:
+        xee_interpreter::context::DynamicContextBuilder<'namespaces>,
     pub(crate) xot: Xot,
 }
 
@@ -26,10 +27,9 @@ impl<'namespaces> Session<'namespaces> {
         let mut dynamic_context_builder =
             xee_interpreter::context::DynamicContextBuilder::new(&queries.static_context);
         dynamic_context_builder.owned_documents(documents.documents.into_inner());
-        let dynamic_context = dynamic_context_builder.build();
         Self {
             queries,
-            dynamic_context,
+            dynamic_context_builder,
             xot: documents.xot,
         }
     }
@@ -43,10 +43,10 @@ impl<'namespaces> Session<'namespaces> {
     }
 
     pub fn documents_mut(&mut self) -> MutableDocuments {
-        MutableDocuments::new(&mut self.xot, &self.dynamic_context.documents)
+        MutableDocuments::new(&mut self.xot, self.dynamic_context_builder.get_documents())
     }
 
     pub fn documents(&self) -> RefDocuments {
-        RefDocuments::new(&self.dynamic_context.documents)
+        RefDocuments::new(&self.dynamic_context_builder.get_documents())
     }
 }

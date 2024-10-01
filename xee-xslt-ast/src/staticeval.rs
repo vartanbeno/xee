@@ -16,16 +16,11 @@
 // statically we need to pass in the names of any known global variables that
 // we've encountered before.
 
-use std::borrow::Cow;
-use std::cell::RefCell;
-
 use xee_xpath_compiler::context::DynamicContextBuilder;
 use xot::{NameId, Node, Xot};
 
 use xee_xpath_ast::ast as xpath_ast;
-use xee_xpath_compiler::{
-    compile, context::DynamicContext, context::Variables, sequence::Sequence,
-};
+use xee_xpath_compiler::{compile, context::Variables, sequence::Sequence};
 
 use crate::attributes::Attributes;
 use crate::content::Content;
@@ -239,7 +234,7 @@ impl StaticEvaluator {
         let dynamic_context = dynamic_context_builder.build();
         let runnable = program.runnable(&dynamic_context);
 
-        runnable.many(None, xot)
+        runnable.many(xot)
     }
 }
 

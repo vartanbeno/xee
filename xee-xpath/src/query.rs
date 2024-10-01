@@ -129,13 +129,16 @@ fn execute_many(
         return Err(error::ErrorValue::UsedQueryWithWrongQueries.into());
     }
     let program = &session.queries.xpath_programs[query_id.id];
-    let runnable = program.runnable(&session.dynamic_context);
-    let item = if let Some(item) = item {
-        Some(item.to_item(session)?)
-    } else {
-        None
-    };
-    runnable.many(item.as_ref(), &mut session.xot)
+    let mut dynamic_context_builder = session.dynamic_context_builder.clone();
+    if let Some(item) = item {
+        dynamic_context_builder.context_item(item.to_item(session)?);
+    }
+
+    let dynamic_context = dynamic_context_builder.build();
+
+    let runnable = program.runnable(&dynamic_context);
+
+    runnable.many(&mut session.xot)
 }
 
 impl<V, F> OneQuery<V, F>

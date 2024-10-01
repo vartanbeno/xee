@@ -1015,7 +1015,7 @@ fn run_xpath(expr: &XPathExpr, runnable: &Runnable<'_>, xot: &mut Xot) -> Result
     let program = parse(runnable.static_context(), expr).map_err(|e| e.error)?;
 
     let runnable = program.runnable(runnable.dynamic_context());
-    runnable.many(None, xot).map_err(|e| e.error)
+    runnable.many(xot).map_err(|e| e.error)
 }
 
 // TODO: this is making new variables, shouldn't we combine the variables with
@@ -1038,7 +1038,7 @@ fn run_xpath_with_result(
 
     let dynamic_context = dynamic_context_builder.build();
     let runnable = program.runnable(&dynamic_context);
-    runnable.many(None, xot).map_err(|e| e.error)
+    runnable.many(xot).map_err(|e| e.error)
 }
 
 pub(crate) fn serialize(xot: &Xot, sequence: &Sequence) -> crate::error::Result<String> {

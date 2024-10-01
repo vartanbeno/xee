@@ -108,7 +108,7 @@ fn test_generate_element() {
 
     let mut xot = xot::Xot::new();
     let runnable = program.runnable(&context);
-    let sequence = runnable.many(None, &mut xot).unwrap();
+    let sequence = runnable.many(&mut xot).unwrap();
     // we should have the newly created element on top of the stack
     assert_eq!(
         xot.to_string(sequence.items().unwrap().one().unwrap().to_node().unwrap())

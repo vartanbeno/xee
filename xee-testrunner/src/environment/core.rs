@@ -148,7 +148,7 @@ impl EnvironmentSpec {
             let dynamic_context_builder = DynamicContextBuilder::new(&static_context);
             let dynamic_context = dynamic_context_builder.build();
             let runnable = program.runnable(&dynamic_context);
-            let result = runnable.many(None, xot).map_err(|e| e.error)?;
+            let result = runnable.many(xot).map_err(|e| e.error)?;
             variables.insert(param.name.clone(), result);
         }
         Ok(variables)

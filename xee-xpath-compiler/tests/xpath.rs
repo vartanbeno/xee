@@ -65,11 +65,12 @@ where
     let static_context = StaticContext::from_namespaces(namespaces);
 
     let mut dynamic_context_builder = DynamicContextBuilder::new(&static_context);
+    dynamic_context_builder.context_node(root);
     dynamic_context_builder.owned_documents(documents);
     let context = dynamic_context_builder.build();
 
     let xpath = parse(&context.static_context, xpath)?;
-    let result = xpath.runnable(&context).many_xot_node(root, &mut xot)?;
+    let result = xpath.runnable(&context).many(&mut xot)?;
     assert_eq!(result, xot_nodes_to_items(&nodes));
     Ok(())
 }
