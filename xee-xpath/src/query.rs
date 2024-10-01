@@ -1,5 +1,7 @@
 //! Queries you can execute against a session.
 
+use std::borrow::Cow;
+
 use xee_interpreter::context::{self, Variables};
 use xee_interpreter::error::SpannedResult as Result;
 use xee_interpreter::occurrence::Occurrence;
@@ -110,11 +112,12 @@ impl QueryId {
 /// when constructing this query.
 ///
 /// This is useful if you expect a single item to be returned from an XPath query.
-#[derive(Debug, Clone, Copy)]
+#[derive(Debug, Clone)]
 pub struct OneQuery<V, F>
 where
     F: Convert<V>,
 {
+    // pub(crate) static_context_builder: context::StaticContextBuilder<'a>,
     pub(crate) query_id: QueryId,
     pub(crate) convert: F,
     pub(crate) phantom: std::marker::PhantomData<V>,
@@ -148,7 +151,7 @@ where
     F: Convert<V>,
 {
     /// Execute the query against an itemable.
-    pub fn execute_with_variables(
+    pub fn execute_with_optional_itemable(
         &self,
         session: &mut Session,
         item: Option<impl Itemable>,
@@ -169,7 +172,7 @@ where
         session: &mut Session,
         item: Option<impl Itemable>,
     ) -> Result<V> {
-        OneQuery::execute_with_variables(self, session, item)
+        OneQuery::execute_with_optional_itemable(self, session, item)
     }
 }
 
@@ -190,14 +193,14 @@ impl OneRecurseQuery {
         item: &Item,
         recurse: &Recurse<V>,
     ) -> Result<V> {
-        self.execute_with_variables(session, Some(item), recurse)
+        self.execute_with_optional_item(session, Some(item), recurse)
     }
 
     /// Execute the query against an itemable, with variables.
     ///
     /// To do the conversion pass in a [`Recurse`] object. This
     /// allows you to use a convert function recursively.
-    pub fn execute_with_variables<V>(
+    pub fn execute_with_optional_item<V>(
         &self,
         session: &mut Session,
         item: Option<&Item>,
@@ -236,7 +239,7 @@ where
     F: Convert<V>,
 {
     /// Execute the query against an itemable, with variables.
-    pub fn execute_with_variables(
+    pub fn execute_with_optional_itemable(
         &self,
         session: &mut Session,
         item: Option<impl Itemable>,
@@ -257,7 +260,7 @@ where
         session: &mut Session,
         item: Option<impl Itemable>,
     ) -> Result<Option<V>> {
-        Self::execute_with_variables(self, session, item)
+        Self::execute_with_optional_itemable(self, session, item)
     }
 }
 
@@ -278,14 +281,14 @@ impl OptionRecurseQuery {
         item: &Item,
         recurse: &Recurse<V>,
     ) -> Result<Option<V>> {
-        self.execute_with_variables(session, Some(item), recurse)
+        self.execute_with_optional_item(session, Some(item), recurse)
     }
 
     /// Execute the query against an itemable, with variables
     ///
     /// To do the conversion pass in a [`Recurse`] object. This
     /// allows you to use a convert function recursively.
-    pub fn execute_with_variables<V>(
+    pub fn execute_with_optional_item<V>(
         &self,
         session: &mut Session,
         item: Option<&Item>,
@@ -323,7 +326,7 @@ where
     F: Convert<V>,
 {
     /// Execute the query against an itemable.
-    pub fn execute_with_variables(
+    pub fn execute_with_optional_itemable(
         &self,
         session: &mut Session,
         item: Option<impl Itemable>,
@@ -346,7 +349,7 @@ where
         session: &mut Session,
         item: Option<impl Itemable>,
     ) -> Result<Vec<V>> {
-        Self::execute_with_variables(self, session, item)
+        Self::execute_with_optional_itemable(self, session, item)
     }
 }
 
@@ -367,14 +370,14 @@ impl ManyRecurseQuery {
         item: &Item,
         recurse: &Recurse<V>,
     ) -> Result<Vec<V>> {
-        self.execute_with_variables(session, Some(item), recurse)
+        self.execute_with_optional_item(session, Some(item), recurse)
     }
 
     /// Execute the query against an itemable, with variables.
     ///
     /// To do the conversion pass in a [`Recurse`] object. This
     /// allows you to use a convert function recursively.
-    pub fn execute_with_variables<V>(
+    pub fn execute_with_optional_item<V>(
         &self,
         session: &mut Session,
         item: Option<&Item>,
@@ -405,7 +408,7 @@ pub struct SequenceQuery {
 
 impl SequenceQuery {
     /// Execute the query against an itemable.
-    pub fn execute_with_variables(
+    pub fn execute_with_optional_itemable(
         &self,
         session: &mut Session,
         item: Option<impl Itemable>,
@@ -420,7 +423,7 @@ impl Query<Sequence> for SequenceQuery {
         session: &mut Session,
         item: Option<impl Itemable>,
     ) -> Result<Sequence> {
-        Self::execute_with_variables(self, session, item)
+        Self::execute_with_optional_itemable(self, session, item)
     }
 }
 

@@ -124,7 +124,7 @@ impl Runnable<XPathEnvironmentSpec> for XPathTestCase {
         let test_case_query = test_case_query.map(move |test_case, session, item| {
             Ok(XPathTestCase {
                 test_case,
-                test: test_query.execute_with_variables(session, item)?,
+                test: test_query.execute_with_optional_itemable(session, item)?,
             })
         });
         Ok((queries, test_case_query))
@@ -148,7 +148,7 @@ impl ContextLoadable<Path> for XPathTestCase {
         let test_case_query = test_case_query.map(move |test_case, session, item| {
             Ok(XPathTestCase {
                 test_case,
-                test: test_query.execute_with_variables(session, item)?,
+                test: test_query.execute_with_optional_itemable(session, item)?,
             })
         });
         Ok((queries, test_case_query))
