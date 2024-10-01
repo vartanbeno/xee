@@ -1,6 +1,6 @@
 //! Queries you can execute against a session.
 
-use xee_interpreter::context::Variables;
+use xee_interpreter::context::{self, Variables};
 use xee_interpreter::error::SpannedResult as Result;
 use xee_interpreter::occurrence::Occurrence;
 use xee_interpreter::sequence::{self, Item, Sequence};
@@ -128,14 +128,16 @@ fn execute_many(
     if query_id.queries_id != session.queries.id {
         return Err(error::ErrorValue::UsedQueryWithWrongQueries.into());
     }
-    let program = &session.queries.xpath_programs[query_id.id];
-    let mut dynamic_context_builder = session.dynamic_context_builder.clone();
+
+    let mut dynamic_context_builder =
+        context::DynamicContextBuilder::new(&session.queries.static_context);
     if let Some(item) = item {
         dynamic_context_builder.context_item(item.to_item(session)?);
     }
-
+    dynamic_context_builder.ref_documents(&session.documents);
     let dynamic_context = dynamic_context_builder.build();
 
+    let program = &session.queries.xpath_programs[query_id.id];
     let runnable = program.runnable(&dynamic_context);
 
     runnable.many(&mut session.xot)

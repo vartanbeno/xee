@@ -22,7 +22,7 @@ impl Itemable for xot::Node {
 impl Itemable for DocumentHandle {
     fn to_item(&self, session: &Session) -> Result<Item> {
         // TODO: This unwrap is not great; we should turn this into an error
-        let documents = session.dynamic_context_builder.get_documents().borrow();
+        let documents = session.documents.borrow();
         let document = documents.get_by_handle(*self).unwrap();
 
         // getting the document element to start things off seems to

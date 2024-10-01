@@ -84,11 +84,6 @@ impl<'a> DynamicContextBuilder<'a> {
             self.current_datetime,
         )
     }
-
-    // TODO: temporary hack during refactoring
-    pub fn get_documents(&self) -> &Cow<'a, RefCell<xml::Documents>> {
-        &self.documents
-    }
 }
 
 #[cfg(test)]
