@@ -3,7 +3,7 @@ use std::{borrow::Cow, path::Path};
 use xee_name::Namespaces;
 use xee_xpath::{Queries, Query, Variables};
 use xee_xpath_compiler::{
-    context::{DynamicContext, StaticContext},
+    context::{DynamicContext, StaticContext, StaticContextBuilder},
     parse,
 };
 use xee_xpath_load::{convert_string, ContextLoadable};
@@ -33,15 +33,16 @@ impl XPathTestCase {
         &'a self,
         catalog: &'a Catalog<XPathEnvironmentSpec, Self>,
         test_set: &'a TestSet<XPathEnvironmentSpec, Self>,
-    ) -> anyhow::Result<Namespaces<'a>> {
+    ) -> anyhow::Result<Vec<(&'a str, &'a str)>> {
         let environments = self
             .test_case
             .environments(catalog, test_set)
             .collect::<Result<Vec<_>, crate::error::Error>>()?;
-        let mut namespaces = Namespaces::default();
-        for environment in environments {
-            namespaces.add(&environment.namespace_pairs())
-        }
+        let namespaces = environments
+            .iter()
+            .flat_map(|environment| environment.namespace_pairs())
+            .collect();
+
         Ok(namespaces)
     }
 }
@@ -75,8 +76,11 @@ impl Runnable<XPathEnvironmentSpec> for XPathTestCase {
             Err(error) => return TestOutcome::EnvironmentError(error.to_string()),
         };
 
-        let variable_names = variables.iter().map(|(name, _)| name.clone()).collect();
-        let static_context = StaticContext::new(namespaces, variable_names);
+        let variable_names: Vec<_> = variables.iter().map(|(name, _)| name.clone()).collect();
+        let mut static_context_builder = StaticContextBuilder::default();
+        static_context_builder.namespaces(namespaces);
+        static_context_builder.variable_names(variable_names);
+        let static_context = static_context_builder.build();
         let program = parse(&static_context, &self.test);
         let program = match program {
             Ok(xpath) => xpath,

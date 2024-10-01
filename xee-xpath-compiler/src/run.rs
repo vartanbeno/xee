@@ -3,8 +3,10 @@ use std::{borrow::Cow, cell::RefCell};
 use xot::Xot;
 
 use xee_interpreter::{
-    context::DynamicContext, context::StaticContext, context::Variables, error::SpannedResult,
-    sequence::Sequence, xml::Documents, xml::Uri,
+    context::{DynamicContext, StaticContext, StaticContextBuilder, Variables},
+    error::SpannedResult,
+    sequence::Sequence,
+    xml::{Documents, Uri},
 };
 use xee_xpath_ast::{Namespaces, FN_NAMESPACE};
 
@@ -63,9 +65,10 @@ pub fn evaluate_without_focus_with_variables(
     variables: Variables,
 ) -> SpannedResult<Sequence> {
     let mut xot = Xot::new();
-    let namespaces = Namespaces::default();
-    let variable_names = variables.keys().cloned().collect();
-    let static_context = StaticContext::new(namespaces, variable_names);
+    let mut builder = StaticContextBuilder::default();
+    let variable_names = variables.keys().cloned();
+    builder.variable_names(variable_names);
+    let static_context = builder.build();
     let documents = RefCell::new(Documents::new());
     let context = DynamicContext::from_documents(&static_context, &documents);
     let program = parse(context.static_context, s)?;

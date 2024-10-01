@@ -31,12 +31,20 @@ impl<'a> StaticContextBuilder<'a> {
     /// This is an iterable of tuples where the first element is the prefix and
     /// the second element is the namespace URI.
     ///
+    /// If a prefix is empty, it sets the default namespace.
+    ///
     /// Calling this multiple times will override the namespaces.
     pub fn namespaces(
         &mut self,
         namespaces: impl IntoIterator<Item = (&'a str, &'a str)>,
     ) -> &mut Self {
-        self.namespaces = namespaces.into_iter().collect();
+        for (prefix, uri) in namespaces {
+            if prefix.is_empty() {
+                self.default_element_namespace = uri;
+            } else {
+                self.namespaces.push((prefix, uri));
+            }
+        }
         self
     }
 
@@ -79,6 +87,8 @@ impl<'a> StaticContextBuilder<'a> {
 
 #[cfg(test)]
 mod tests {
+    use ahash::HashSet;
+
     use super::*;
 
     #[test]
@@ -88,5 +98,21 @@ mod tests {
         let bar = OwnedName::new("bar".to_string(), "".to_string(), "".to_string());
         builder.variable_names([foo.clone(), bar.clone()]);
         assert_eq!(builder.variable_names, vec![foo, bar]);
+    }
+
+    #[test]
+    fn test_default_behavior() {
+        let builder = StaticContextBuilder::default();
+        let static_context = builder.build();
+        assert_eq!(static_context.namespaces().default_element_namespace(), "");
+        assert_eq!(
+            static_context.namespaces().default_function_namespace,
+            Namespaces::FN_NAMESPACE
+        );
+        assert_eq!(static_context.variable_names(), &HashSet::default());
+        assert_eq!(
+            static_context.namespaces().by_prefix("xml"),
+            Some("http://www.w3.org/XML/1998/namespace")
+        );
     }
 }
