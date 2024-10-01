@@ -62,9 +62,8 @@ impl<'a> Runnable<'a> {
         &self,
         context_item: Option<&sequence::Item>,
         xot: &'a mut Xot,
-        variables: Variables,
     ) -> error::SpannedResult<stack::Value> {
-        let arguments = self.arguments(variables)?;
+        let arguments = self.dynamic_context.arguments().unwrap();
         let mut interpreter = Interpreter::new(self, xot);
 
         let context_info = if let Some(context_item) = context_item {
@@ -110,9 +109,8 @@ impl<'a> Runnable<'a> {
         &self,
         item: Option<&sequence::Item>,
         xot: &'a mut Xot,
-        variables: Variables,
     ) -> error::SpannedResult<sequence::Sequence> {
-        Ok(self.run_value(item, xot, variables)?.into())
+        Ok(self.run_value(item, xot)?.into())
     }
 
     /// Run the program against a xot Node.
@@ -122,7 +120,7 @@ impl<'a> Runnable<'a> {
         xot: &'a mut Xot,
     ) -> error::SpannedResult<sequence::Sequence> {
         let item = sequence::Item::Node(node);
-        self.many(Some(&item), xot, Variables::new())
+        self.many(Some(&item), xot)
     }
 
     /// Run the program, expect a single item as the result.
@@ -131,7 +129,7 @@ impl<'a> Runnable<'a> {
         item: Option<&sequence::Item>,
         xot: &'a mut Xot,
     ) -> error::SpannedResult<sequence::Item> {
-        let sequence = self.many(item, xot, Variables::new())?;
+        let sequence = self.many(item, xot)?;
         let mut items = sequence.items().map_err(|error| SpannedError {
             error,
             span: Some(self.program.span().into()),
@@ -148,7 +146,7 @@ impl<'a> Runnable<'a> {
         item: Option<&sequence::Item>,
         xot: &'a mut Xot,
     ) -> error::SpannedResult<Option<sequence::Item>> {
-        let sequence = self.many(item, xot, Variables::new())?;
+        let sequence = self.many(item, xot)?;
         let mut items = sequence.items().map_err(|error| SpannedError {
             error,
             span: Some(self.program.span().into()),

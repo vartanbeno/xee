@@ -24,9 +24,9 @@ pub fn evaluate_program(
     let root = documents.get_node_by_handle(handle).unwrap();
     let item: sequence::Item = root.into();
     let documents = RefCell::new(documents);
-    let context = DynamicContext::from_documents(&static_context, &documents);
+    let context = DynamicContext::from_documents(&static_context, &documents, Variables::new());
     let runnable = program.runnable(&context);
-    runnable.many(Some(&item), xot, Variables::new())
+    runnable.many(Some(&item), xot)
 }
 
 pub fn evaluate(xot: &mut Xot, xml: &str, xslt: &str) -> error::SpannedResult<sequence::Sequence> {

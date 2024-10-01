@@ -3,6 +3,7 @@ use clap::{Parser, Subcommand};
 use std::cell::RefCell;
 use std::fs;
 use std::path::{Path, PathBuf};
+use xee_xpath::Variables;
 use xee_xpath_compiler::context::{DynamicContext, StaticContext};
 use xee_xpath_compiler::xml::Documents;
 use xee_xpath_load::PathLoadable;
@@ -94,7 +95,8 @@ pub fn cli() -> Result<()> {
     let ns = XPATH_TEST_NS;
     let static_context = StaticContext::from_namespaces(namespaces(ns));
     let documents = RefCell::new(Documents::new());
-    let dynamic_context = DynamicContext::from_documents(&static_context, &documents);
+    let variables = Variables::new();
+    let dynamic_context = DynamicContext::from_documents(&static_context, &documents, variables);
 
     let run_context = RunContext::new(
         xot,

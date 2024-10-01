@@ -42,7 +42,7 @@ pub fn evaluate_root(
     // TODO: The unwrap here is bad, but DocumentsError isn't integrated int
     // the general error system yet
     documents.borrow_mut().add_root(xot, &uri, root).unwrap();
-    let context = DynamicContext::from_documents(&static_context, &documents);
+    let context = DynamicContext::from_documents(&static_context, &documents, Variables::new());
 
     let program = parse(context.static_context, xpath)?;
     let runnable = program.runnable(&context);
@@ -53,11 +53,11 @@ pub fn evaluate_without_focus(s: &str) -> SpannedResult<Sequence> {
     let mut xot = Xot::new();
     let static_context = StaticContext::default();
     let documents = RefCell::new(Documents::new());
-    let context = DynamicContext::from_documents(&static_context, &documents);
+    let context = DynamicContext::from_documents(&static_context, &documents, Variables::new());
 
     let program = parse(context.static_context, s)?;
     let runnable = program.runnable(&context);
-    runnable.many(None, &mut xot, Variables::new())
+    runnable.many(None, &mut xot)
 }
 
 pub fn evaluate_without_focus_with_variables(
@@ -70,8 +70,8 @@ pub fn evaluate_without_focus_with_variables(
     builder.variable_names(variable_names);
     let static_context = builder.build();
     let documents = RefCell::new(Documents::new());
-    let context = DynamicContext::from_documents(&static_context, &documents);
+    let context = DynamicContext::from_documents(&static_context, &documents, variables);
     let program = parse(context.static_context, s)?;
     let runnable = program.runnable(&context);
-    runnable.many(None, &mut xot, variables)
+    runnable.many(None, &mut xot)
 }

@@ -1,5 +1,6 @@
 use std::cell::{RefCell, RefMut};
 
+use xee_interpreter::context::Variables;
 use xot::Xot;
 
 use crate::{
@@ -25,6 +26,7 @@ impl<'namespaces> Session<'namespaces> {
         let dynamic_context = xee_interpreter::context::DynamicContext::from_owned_documents(
             &queries.static_context,
             documents.documents,
+            Variables::new(),
         );
         Self {
             queries,

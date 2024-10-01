@@ -232,10 +232,15 @@ impl StaticEvaluator {
         let static_context = parser_context.into();
         let program = compile(&static_context, xpath)?;
         let documents = RefCell::new(xee_xpath_compiler::xml::Documents::new());
-        let dynamic_context = DynamicContext::from_documents(&static_context, &documents);
+        let dynamic_context = DynamicContext::from_documents(
+            &static_context,
+            &documents,
+            // TODO doing the clone here of the global variables isn't ideal
+            self.static_global_variables.clone(),
+        );
         let runnable = program.runnable(&dynamic_context);
-        // TODO doing the clone here of the global variables isn't ideal
-        runnable.many(None, xot, self.static_global_variables.clone())
+
+        runnable.many(None, xot)
     }
 }
 

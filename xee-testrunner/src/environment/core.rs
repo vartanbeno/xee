@@ -145,11 +145,10 @@ impl EnvironmentSpec {
                 continue;
             }
             let program = program.unwrap();
-            let dynamic_context = DynamicContext::from_documents(&static_context, &documents);
+            let dynamic_context =
+                DynamicContext::from_documents(&static_context, &documents, Variables::new());
             let runnable = program.runnable(&dynamic_context);
-            let result = runnable
-                .many(None, xot, Variables::new())
-                .map_err(|e| e.error)?;
+            let result = runnable.many(None, xot).map_err(|e| e.error)?;
             variables.insert(param.name.clone(), result);
         }
         Ok(variables)

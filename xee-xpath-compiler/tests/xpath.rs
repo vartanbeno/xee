@@ -62,7 +62,7 @@ where
     let namespaces = Namespaces::new(Namespaces::default_namespaces(), "", "");
     let static_context = StaticContext::from_namespaces(namespaces);
     let documents = RefCell::new(documents);
-    let context = DynamicContext::from_documents(&static_context, &documents);
+    let context = DynamicContext::from_documents(&static_context, &documents, Variables::new());
 
     let xpath = parse(&context.static_context, xpath)?;
     let result = xpath.runnable(&context).many_xot_node(root, &mut xot)?;

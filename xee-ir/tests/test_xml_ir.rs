@@ -103,11 +103,12 @@ fn test_generate_element() {
     // we now should run the generated code
     let static_context = StaticContext::default();
     let documents = RefCell::new(xee_interpreter::xml::Documents::new());
-    let context = DynamicContext::from_documents(&static_context, &documents);
+    let variables = Variables::new();
+    let context = DynamicContext::from_documents(&static_context, &documents, variables);
 
     let mut xot = xot::Xot::new();
     let runnable = program.runnable(&context);
-    let sequence = runnable.many(None, &mut xot, Variables::new()).unwrap();
+    let sequence = runnable.many(None, &mut xot).unwrap();
     // we should have the newly created element on top of the stack
     assert_eq!(
         xot.to_string(sequence.items().unwrap().one().unwrap().to_node().unwrap())

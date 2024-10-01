@@ -5,6 +5,7 @@ use std::fmt::Debug;
 
 use xee_xpath_ast::ast;
 
+use crate::error::Error;
 use crate::sequence;
 use crate::xml;
 
@@ -28,6 +29,7 @@ pub struct DynamicContext<'a> {
     // multiple spots. We use RefCell to manage that during runtime so we don't
     // need to make the whole thing immutable.
     pub documents: Cow<'a, RefCell<xml::Documents>>,
+    pub variables: Variables,
     // TODO: we want to be able to control the creation of this outside,
     // as it needs to be the same for all evalutions of XSLT I believe
     current_datetime: chrono::DateTime<chrono::offset::FixedOffset>,
@@ -37,10 +39,12 @@ impl<'a> DynamicContext<'a> {
     pub fn new(
         static_context: &'a StaticContext<'a>,
         documents: Cow<'a, RefCell<xml::Documents>>,
+        variables: Variables,
     ) -> Self {
         Self {
             static_context,
             documents,
+            variables,
             current_datetime: Self::create_current_datetime(),
         }
     }
@@ -48,15 +52,26 @@ impl<'a> DynamicContext<'a> {
     pub fn from_documents(
         static_context: &'a StaticContext<'a>,
         documents: &'a RefCell<xml::Documents>,
+        variables: Variables,
     ) -> Self {
-        Self::new(static_context, Cow::Borrowed(documents))
+        Self::new(static_context, Cow::Borrowed(documents), variables)
     }
 
     pub fn from_owned_documents(
         static_context: &'a StaticContext<'a>,
         documents: RefCell<xml::Documents>,
+        variables: Variables,
     ) -> Self {
-        Self::new(static_context, Cow::Owned(documents))
+        Self::new(static_context, Cow::Owned(documents), variables)
+    }
+
+    pub fn arguments(&self) -> Result<Vec<sequence::Sequence>, Error> {
+        let mut arguments = Vec::new();
+        for variable_name in &self.static_context.parser_context.variable_names {
+            let items = self.variables.get(variable_name).ok_or(Error::XPDY0002)?;
+            arguments.push(items.clone());
+        }
+        Ok(arguments)
     }
 
     fn create_current_datetime() -> chrono::DateTime<chrono::offset::FixedOffset> {

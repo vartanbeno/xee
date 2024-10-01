@@ -35,16 +35,12 @@ pub trait Query<V> {
 
     /// Excute the query against an itemable
     fn execute(&self, session: &mut Session, item: impl Itemable) -> Result<V> {
-        self.execute_with_variables(session, Some(item), Variables::new())
+        self.execute_with_variables(session, Some(item))
     }
 
     /// Execute the query without a context item
-    fn execute_without_context<T: Itemable>(
-        &self,
-        session: &mut Session,
-        variables: Variables,
-    ) -> Result<V> {
-        self.execute_with_variables(session, None::<T>, variables)
+    fn execute_without_context<T: Itemable>(&self, session: &mut Session) -> Result<V> {
+        self.execute_with_variables(session, None::<T>)
     }
 
     /// Execute the query against an optional itemable, with variables
@@ -55,7 +51,6 @@ pub trait Query<V> {
         &self,
         session: &mut Session,
         item: Option<impl Itemable>,
-        variables: Variables,
     ) -> Result<V>;
 }
 
@@ -129,7 +124,6 @@ fn execute_many(
     session: &mut Session,
     query_id: &QueryId,
     item: Option<impl Itemable>,
-    variables: Variables,
 ) -> Result<sequence::Sequence> {
     if query_id.queries_id != session.queries.id {
         return Err(error::ErrorValue::UsedQueryWithWrongQueries.into());
@@ -141,7 +135,7 @@ fn execute_many(
     } else {
         None
     };
-    runnable.many(item.as_ref(), &mut session.xot, variables)
+    runnable.many(item.as_ref(), &mut session.xot)
 }
 
 impl<V, F> OneQuery<V, F>
@@ -153,9 +147,8 @@ where
         &self,
         session: &mut Session,
         item: Option<impl Itemable>,
-        variables: Variables,
     ) -> Result<V> {
-        let sequence = execute_many(session, &self.query_id, item, variables)?;
+        let sequence = execute_many(session, &self.query_id, item)?;
         let mut items = sequence.items()?;
         let item = items.one()?;
         (self.convert)(session, &item)
@@ -170,9 +163,8 @@ where
         &self,
         session: &mut Session,
         item: Option<impl Itemable>,
-        variables: Variables,
     ) -> Result<V> {
-        OneQuery::execute_with_variables(self, session, item, variables)
+        OneQuery::execute_with_variables(self, session, item)
     }
 }
 
@@ -193,7 +185,7 @@ impl OneRecurseQuery {
         item: &Item,
         recurse: &Recurse<V>,
     ) -> Result<V> {
-        self.execute_with_variables(session, Some(item), Variables::new(), recurse)
+        self.execute_with_variables(session, Some(item), recurse)
     }
 
     /// Execute the query against an itemable, with variables.
@@ -204,10 +196,9 @@ impl OneRecurseQuery {
         &self,
         session: &mut Session,
         item: Option<&Item>,
-        variables: Variables,
         recurse: &Recurse<V>,
     ) -> Result<V> {
-        let sequence = execute_many(session, &self.query_id, item, variables)?;
+        let sequence = execute_many(session, &self.query_id, item)?;
         let mut items = sequence.items()?;
         let item = items.one()?;
         recurse.execute(session, &item)
@@ -244,9 +235,8 @@ where
         &self,
         session: &mut Session,
         item: Option<impl Itemable>,
-        variables: Variables,
     ) -> Result<Option<V>> {
-        let sequence = execute_many(session, &self.query_id, item, variables)?;
+        let sequence = execute_many(session, &self.query_id, item)?;
         let mut items = sequence.items()?;
         let item = items.option()?;
         item.map(|item| (self.convert)(session, &item)).transpose()
@@ -261,9 +251,8 @@ where
         &self,
         session: &mut Session,
         item: Option<impl Itemable>,
-        variables: Variables,
     ) -> Result<Option<V>> {
-        Self::execute_with_variables(self, session, item, variables)
+        Self::execute_with_variables(self, session, item)
     }
 }
 
@@ -284,7 +273,7 @@ impl OptionRecurseQuery {
         item: &Item,
         recurse: &Recurse<V>,
     ) -> Result<Option<V>> {
-        self.execute_with_variables(session, Some(item), Variables::new(), recurse)
+        self.execute_with_variables(session, Some(item), recurse)
     }
 
     /// Execute the query against an itemable, with variables
@@ -295,10 +284,9 @@ impl OptionRecurseQuery {
         &self,
         session: &mut Session,
         item: Option<&Item>,
-        variables: Variables,
         recurse: &Recurse<V>,
     ) -> Result<Option<V>> {
-        let sequence = execute_many(session, &self.query_id, item, variables)?;
+        let sequence = execute_many(session, &self.query_id, item)?;
         let mut items = sequence.items()?;
         let item = items.option()?;
         item.map(|item| recurse.execute(session, &item)).transpose()
@@ -334,9 +322,8 @@ where
         &self,
         session: &mut Session,
         item: Option<impl Itemable>,
-        variables: Variables,
     ) -> Result<Vec<V>> {
-        let sequence = execute_many(session, &self.query_id, item, variables)?;
+        let sequence = execute_many(session, &self.query_id, item)?;
         let items = sequence
             .items()?
             .map(|item| (self.convert)(session, &item))
@@ -353,9 +340,8 @@ where
         &self,
         session: &mut Session,
         item: Option<impl Itemable>,
-        variables: Variables,
     ) -> Result<Vec<V>> {
-        Self::execute_with_variables(self, session, item, variables)
+        Self::execute_with_variables(self, session, item)
     }
 }
 
@@ -376,7 +362,7 @@ impl ManyRecurseQuery {
         item: &Item,
         recurse: &Recurse<V>,
     ) -> Result<Vec<V>> {
-        self.execute_with_variables(session, Some(item), Variables::new(), recurse)
+        self.execute_with_variables(session, Some(item), recurse)
     }
 
     /// Execute the query against an itemable, with variables.
@@ -387,10 +373,9 @@ impl ManyRecurseQuery {
         &self,
         session: &mut Session,
         item: Option<&Item>,
-        variables: Variables,
         recurse: &Recurse<V>,
     ) -> Result<Vec<V>> {
-        let sequence = execute_many(session, &self.query_id, item, variables)?;
+        let sequence = execute_many(session, &self.query_id, item)?;
         let items = sequence
             .items()?
             .map(|item| recurse.execute(session, &item))
@@ -419,9 +404,8 @@ impl SequenceQuery {
         &self,
         session: &mut Session,
         item: Option<impl Itemable>,
-        variables: Variables,
     ) -> Result<Sequence> {
-        execute_many(session, &self.query_id, item, variables)
+        execute_many(session, &self.query_id, item)
     }
 }
 
@@ -430,9 +414,8 @@ impl Query<Sequence> for SequenceQuery {
         &self,
         session: &mut Session,
         item: Option<impl Itemable>,
-        variables: Variables,
     ) -> Result<Sequence> {
-        Self::execute_with_variables(self, session, item, variables)
+        Self::execute_with_variables(self, session, item)
     }
 }
 
@@ -468,16 +451,13 @@ where
         &self,
         session: &mut Session,
         item: Option<impl Itemable>,
-        variables: Variables,
     ) -> Result<T> {
         let item = if let Some(item) = item {
             Some(item.to_item(session)?)
         } else {
             None
         };
-        let v = self
-            .query
-            .execute_with_variables(session, item.as_ref(), variables)?;
+        let v = self.query.execute_with_variables(session, item.as_ref())?;
         (self.f)(v, session, item.as_ref())
     }
 }

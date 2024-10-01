@@ -99,16 +99,12 @@ impl Runnable<XPathEnvironmentSpec> for XPathTestCase {
         let dynamic_context = DynamicContext::new(
             &static_context,
             Cow::Borrowed(&run_context.dynamic_context.documents),
+            variables,
         );
         let runnable = program.runnable(&dynamic_context);
-        let result = runnable.many(
-            context_item.as_ref(),
-            &mut run_context.xot,
-            variables.clone(),
-        );
+        let result = runnable.many(context_item.as_ref(), &mut run_context.xot);
         self.test_case.result.assert_result(
             &runnable,
-            variables,
             &mut run_context.xot,
             &result.map_err(|error| error.error),
         )
@@ -126,7 +122,7 @@ impl Runnable<XPathEnvironmentSpec> for XPathTestCase {
         let test_case_query = test_case_query.map(move |test_case, session, item| {
             Ok(XPathTestCase {
                 test_case,
-                test: test_query.execute_with_variables(session, item, Variables::new())?,
+                test: test_query.execute_with_variables(session, item)?,
             })
         });
         Ok((queries, test_case_query))
@@ -150,7 +146,7 @@ impl ContextLoadable<Path> for XPathTestCase {
         let test_case_query = test_case_query.map(move |test_case, session, item| {
             Ok(XPathTestCase {
                 test_case,
-                test: test_query.execute_with_variables(session, item, Variables::new())?,
+                test: test_query.execute_with_variables(session, item)?,
             })
         });
         Ok((queries, test_case_query))
