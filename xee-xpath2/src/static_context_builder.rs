@@ -1,0 +1,91 @@
+use xee_interpreter::context;
+use xee_name::Namespaces;
+use xot::xmlname::OwnedName;
+
+#[derive(Clone, Default)]
+struct StaticContextBuilder<'a> {
+    variable_names: Vec<OwnedName>,
+    namespaces: Vec<(&'a str, &'a str)>,
+    default_element_namespace: &'a str,
+    default_function_namespace: &'a str,
+}
+
+impl<'a> StaticContextBuilder<'a> {
+    /// Set the variable names that the XPath expression expects.
+    ///
+    /// They should be supplied in the order that they would be passed into if
+    /// the XPath expression was a function.
+    ///
+    /// Calling this multiple times will override the variable names.
+    pub fn variable_names(
+        &mut self,
+        variable_names: impl IntoIterator<Item = OwnedName>,
+    ) -> &mut Self {
+        self.variable_names = variable_names.into_iter().collect();
+        self
+    }
+
+    /// Set the namespace prefixes that the XPath expression can use.
+    ///
+    /// This is an iterable of tuples where the first element is the prefix and
+    /// the second element is the namespace URI.
+    ///
+    /// Calling this multiple times will override the namespaces.
+    pub fn namespaces(
+        &mut self,
+        namespaces: impl IntoIterator<Item = (&'a str, &'a str)>,
+    ) -> &mut Self {
+        self.namespaces = namespaces.into_iter().collect();
+        self
+    }
+
+    /// Set the default namespace for element references in the XPath expression.
+    pub fn default_element_namespace(&mut self, default_element_namespace: &'a str) -> &mut Self {
+        self.default_element_namespace = default_element_namespace;
+        self
+    }
+
+    /// Set the default namespace for function references in the XPath expression.
+    pub fn default_function_namespace(&mut self, default_function_namespace: &'a str) -> &mut Self {
+        self.default_function_namespace = default_function_namespace;
+        self
+    }
+
+    /// Build the static context.
+    ///
+    /// This will always include the default known namespaces for
+    /// XPath, and the default function namespace will be the `fn` namespace
+    /// if not set.
+    pub fn build(&self) -> context::StaticContext<'a> {
+        let mut namespaces = Namespaces::default_namespaces();
+        for (prefix, uri) in &self.namespaces {
+            namespaces.insert(prefix, uri);
+        }
+        let default_function_namespace = if !self.default_function_namespace.is_empty() {
+            self.default_function_namespace
+        } else {
+            Namespaces::FN_NAMESPACE
+        };
+        let namespaces = xee_name::Namespaces::new(
+            namespaces,
+            self.default_element_namespace,
+            default_function_namespace,
+        );
+        let variable_names = self.variable_names.clone().into_iter().collect();
+        context::StaticContext::new(namespaces, variable_names)
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_variable_names() {
+        let mut builder = StaticContextBuilder::default();
+        let foo = OwnedName::new("foo".to_string(), "".to_string(), "".to_string());
+        let bar = OwnedName::new("bar".to_string(), "".to_string(), "".to_string());
+        builder.variable_names([foo.clone(), bar.clone()]);
+        assert_eq!(builder.variable_names, vec![foo, bar]);
+    }
+}
