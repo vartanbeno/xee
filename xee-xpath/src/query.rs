@@ -35,19 +35,19 @@ pub trait Query<V> {
 
     /// Excute the query against an itemable
     fn execute(&self, session: &mut Session, item: impl Itemable) -> Result<V> {
-        self.execute_with_variables(session, Some(item))
+        self.execute_with_optional_itemable(session, Some(item))
     }
 
     /// Execute the query without a context item
     fn execute_without_context<T: Itemable>(&self, session: &mut Session) -> Result<V> {
-        self.execute_with_variables(session, None::<T>)
+        self.execute_with_optional_itemable(session, None::<T>)
     }
 
-    /// Execute the query against an optional itemable, with variables
+    /// Execute the query against an optional itemable
     ///
     /// This is also useful in a [`MapQuery`] invocation where you get an
     /// Option<Item> in your closure.
-    fn execute_with_variables(
+    fn execute_with_optional_itemable(
         &self,
         session: &mut Session,
         item: Option<impl Itemable>,
@@ -164,7 +164,7 @@ impl<V, F> Query<V> for OneQuery<V, F>
 where
     F: Convert<V>,
 {
-    fn execute_with_variables(
+    fn execute_with_optional_itemable(
         &self,
         session: &mut Session,
         item: Option<impl Itemable>,
@@ -252,7 +252,7 @@ impl<V, F> Query<Option<V>> for OptionQuery<V, F>
 where
     F: Convert<V>,
 {
-    fn execute_with_variables(
+    fn execute_with_optional_itemable(
         &self,
         session: &mut Session,
         item: Option<impl Itemable>,
@@ -341,7 +341,7 @@ impl<V, F> Query<Vec<V>> for ManyQuery<V, F>
 where
     F: Convert<V>,
 {
-    fn execute_with_variables(
+    fn execute_with_optional_itemable(
         &self,
         session: &mut Session,
         item: Option<impl Itemable>,
@@ -415,7 +415,7 @@ impl SequenceQuery {
 }
 
 impl Query<Sequence> for SequenceQuery {
-    fn execute_with_variables(
+    fn execute_with_optional_itemable(
         &self,
         session: &mut Session,
         item: Option<impl Itemable>,
@@ -452,7 +452,7 @@ impl<V, T, Q: Query<V> + Sized, F> Query<T> for MapQuery<V, T, Q, F>
 where
     F: Fn(V, &mut Session, Option<&Item>) -> Result<T> + Clone,
 {
-    fn execute_with_variables(
+    fn execute_with_optional_itemable(
         &self,
         session: &mut Session,
         item: Option<impl Itemable>,
@@ -462,7 +462,9 @@ where
         } else {
             None
         };
-        let v = self.query.execute_with_variables(session, item.as_ref())?;
+        let v = self
+            .query
+            .execute_with_optional_itemable(session, item.as_ref())?;
         (self.f)(v, session, item.as_ref())
     }
 }
