@@ -39,7 +39,7 @@ impl<'a> From<XPathParserContext<'a>> for StaticContext<'a> {
 }
 
 impl<'a> StaticContext<'a> {
-    pub fn new(namespaces: Namespaces<'a>, variable_names: VariableNames) -> Self {
+    pub(crate) fn new(namespaces: Namespaces<'a>, variable_names: VariableNames) -> Self {
         Self {
             parser_context: XPathParserContext::new(namespaces, variable_names),
             functions: StaticFunctions::new(),
