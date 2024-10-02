@@ -1034,7 +1034,7 @@ fn run_xpath_with_result(
     let program = parse(&static_context, expr).map_err(|e| e.error)?;
     let variables = AHashMap::from([(name, sequence.clone())]);
     let mut dynamic_context_builder = DynamicContextBuilder::new(Rc::new(static_context));
-    dynamic_context_builder.ref_documents(&runnable.dynamic_context().documents);
+    dynamic_context_builder.ref_documents(Rc::clone(&runnable.dynamic_context().documents));
     dynamic_context_builder.variables(variables);
 
     let dynamic_context = dynamic_context_builder.build();

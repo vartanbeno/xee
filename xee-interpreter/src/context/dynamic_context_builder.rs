@@ -8,7 +8,7 @@ use super::{DynamicContext, StaticContext, Variables};
 pub struct DynamicContextBuilder<'a> {
     static_context: Rc<StaticContext<'a>>,
     context_item: Option<sequence::Item>,
-    documents: Cow<'a, RefCell<xml::Documents>>,
+    documents: Rc<RefCell<xml::Documents>>,
     variables: Variables,
     current_datetime: chrono::DateTime<chrono::offset::FixedOffset>,
 }
@@ -19,7 +19,7 @@ impl<'a> DynamicContextBuilder<'a> {
         Self {
             static_context,
             context_item: None,
-            documents: Cow::Owned(RefCell::new(xml::Documents::new())),
+            documents: Rc::new(RefCell::new(xml::Documents::new())),
             variables: Variables::new(),
             current_datetime: chrono::offset::Local::now().into(),
         }
@@ -43,15 +43,15 @@ impl<'a> DynamicContextBuilder<'a> {
     ///
     /// Give it owned documents and the [`DynamicContext`] will own them.
     pub fn owned_documents(&mut self, documents: xml::Documents) -> &mut Self {
-        self.documents = Cow::Owned(RefCell::new(documents));
+        self.documents = Rc::new(RefCell::new(documents));
         self
     }
 
     /// Set the documents of the [`DynamicContext`].
     ///
     /// Give it a RefCell of documents and the [`DynamicContext`] will borrow them.
-    pub fn ref_documents(&mut self, documents: &'a RefCell<xml::Documents>) -> &mut Self {
-        self.documents = Cow::Borrowed(documents);
+    pub fn ref_documents(&mut self, documents: Rc<RefCell<xml::Documents>>) -> &mut Self {
+        self.documents = documents;
         self
     }
 

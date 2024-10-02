@@ -1,5 +1,4 @@
 use xee_interpreter::{context, error::SpannedResult as Result};
-use xee_xpath_ast::VariableNames;
 use xee_xpath_compiler::parse;
 
 use std::{rc::Rc, sync::atomic};
@@ -116,6 +115,8 @@ impl<'a> Queries<'a> {
         self.one_recurse_with_context(s, self.default_static_context_builder.build())
     }
 
+    /// Construct a query that expects a single item result, with explicit
+    /// static context.
     pub fn one_recurse_with_context(
         &mut self,
         s: &str,
@@ -128,7 +129,7 @@ impl<'a> Queries<'a> {
         })
     }
 
-    /// Connstruct a query that expects an optional single item result.
+    /// Construct a query that expects an optional single item result.
     ///
     /// This item is converted into a Rust value using supplied `convert` function.
     pub fn option<V, F>(&mut self, s: &str, convert: F) -> Result<OptionQuery<'a, V, F>>
@@ -138,6 +139,8 @@ impl<'a> Queries<'a> {
         self.option_with_context(s, convert, self.default_static_context_builder.build())
     }
 
+    /// Construct a query that expects an optional single item result with
+    /// explicit static context.
     pub fn option_with_context<V, F>(
         &mut self,
         s: &str,
@@ -156,7 +159,7 @@ impl<'a> Queries<'a> {
         })
     }
 
-    /// Construct a query that expects an optional single item result.
+    /// Construct a recursive query that expects an optional single item result.
     ///
     /// This item is converted into a Rust value not using a convert
     /// function but through a recursive call that's passed in during
@@ -165,6 +168,8 @@ impl<'a> Queries<'a> {
         self.option_recurse_with_context(s, self.default_static_context_builder.build())
     }
 
+    /// Construct a recursive query that expects an optional single item result, with
+    /// explicit static context.
     pub fn option_recurse_with_context(
         &mut self,
         s: &str,
@@ -187,6 +192,8 @@ impl<'a> Queries<'a> {
         self.many_with_builder(s, convert, self.default_static_context_builder.build())
     }
 
+    /// Construct a query that expects many items as a result, with explicit
+    /// static context.
     pub fn many_with_builder<V, F>(
         &mut self,
         s: &str,
@@ -214,6 +221,8 @@ impl<'a> Queries<'a> {
         self.many_recurse_with_context(s, self.default_static_context_builder.build())
     }
 
+    /// Construct a recursive query that expects many items as a result, with explicit
+    /// static context.
     pub fn many_recurse_with_context(
         &mut self,
         s: &str,
@@ -234,6 +243,8 @@ impl<'a> Queries<'a> {
         self.sequence_with_context(s, self.default_static_context_builder.build())
     }
 
+    /// Construct a query that gets a [`Sequence`] as a result, with explicit
+    /// static context.
     pub fn sequence_with_context(
         &mut self,
         s: &str,

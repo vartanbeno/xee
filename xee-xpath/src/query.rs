@@ -12,12 +12,17 @@ use crate::{error, Itemable};
 
 // import only for documentation purposes
 #[cfg(doc)]
+use crate::DynamicContextBuilder;
+#[cfg(doc)]
 use crate::Queries;
 
 /// A query that can be executed against an [`Itemable`]
 ///
 /// It gives back a result of type `V`
 pub trait Query<V> {
+    /// Get the static context for the query.
+    fn static_context(&self) -> &Rc<context::StaticContext>;
+
     /// Map the the result of the query to a different type.
     ///
     /// You need to provide a function that takes the result of the query,
@@ -25,7 +30,7 @@ pub trait Query<V> {
     fn map<T, F>(self, f: F) -> MapQuery<V, T, Self, F>
     where
         Self: Sized,
-        F: Fn(V, &mut Session, Option<&Item>) -> Result<T> + Clone,
+        F: Fn(V, &mut Session, &context::DynamicContext<'_>) -> Result<T> + Clone,
     {
         MapQuery {
             query: self,
@@ -37,22 +42,22 @@ pub trait Query<V> {
 
     /// Excute the query against an itemable
     fn execute(&self, session: &mut Session, item: impl Itemable) -> Result<V> {
-        self.execute_with_optional_itemable(session, Some(item))
+        let mut dynamic_context_builder =
+            context::DynamicContextBuilder::new(Rc::clone(self.static_context()));
+        let context_item = item.to_item(session)?;
+        dynamic_context_builder.context_item(context_item);
+        dynamic_context_builder.ref_documents(Rc::clone(&session.documents));
+        let dynamic_context = dynamic_context_builder.build();
+        self.execute_with_context(session, &dynamic_context)
     }
 
-    /// Execute the query without a context item
-    fn execute_without_context<T: Itemable>(&self, session: &mut Session) -> Result<V> {
-        self.execute_with_optional_itemable(session, None::<T>)
-    }
-
-    /// Execute the query against an optional itemable
+    /// Execute the query against a dynamic context
     ///
-    /// This is also useful in a [`MapQuery`] invocation where you get an
-    /// Option<Item> in your closure.
-    fn execute_with_optional_itemable(
+    /// You can construct one using a [`DynamicContextBuilder`]
+    fn execute_with_context(
         &self,
         session: &mut Session,
-        item: Option<impl Itemable>,
+        dynamic_context: &context::DynamicContext,
     ) -> Result<V>;
 }
 
@@ -123,24 +128,14 @@ where
     pub(crate) phantom: std::marker::PhantomData<V>,
 }
 
-fn execute_many(
+fn execute_many_dynamic_context(
     session: &mut Session,
     query_id: QueryId,
-    static_context: &Rc<context::StaticContext>,
-    item: Option<impl Itemable>,
+    dynamic_context: &context::DynamicContext,
 ) -> Result<sequence::Sequence> {
     if query_id.queries_id != session.queries.id {
         return Err(error::ErrorValue::UsedQueryWithWrongQueries.into());
     }
-
-    let mut dynamic_context_builder =
-        context::DynamicContextBuilder::new(Rc::clone(&static_context));
-    if let Some(item) = item {
-        dynamic_context_builder.context_item(item.to_item(session)?);
-    }
-    dynamic_context_builder.ref_documents(&session.documents);
-    let dynamic_context = dynamic_context_builder.build();
-
     let program = &session.queries.xpath_programs[query_id.id];
     let runnable = program.runnable(&dynamic_context);
 
@@ -151,13 +146,13 @@ impl<'a, V, F> OneQuery<'a, V, F>
 where
     F: Convert<V>,
 {
-    /// Execute the query against an itemable.
-    pub fn execute_with_optional_itemable(
+    /// Execute the query against a context
+    pub fn execute_with_context(
         &self,
         session: &mut Session,
-        item: Option<impl Itemable>,
+        dynamic_context: &context::DynamicContext,
     ) -> Result<V> {
-        let sequence = execute_many(session, self.query_id, &self.static_context, item)?;
+        let sequence = execute_many_dynamic_context(session, self.query_id, dynamic_context)?;
         let mut items = sequence.items()?;
         let item = items.one()?;
         (self.convert)(session, &item)
@@ -168,12 +163,16 @@ impl<'a, V, F> Query<V> for OneQuery<'a, V, F>
 where
     F: Convert<V>,
 {
-    fn execute_with_optional_itemable(
+    fn static_context(&self) -> &Rc<context::StaticContext> {
+        &self.static_context
+    }
+
+    fn execute_with_context(
         &self,
         session: &mut Session,
-        item: Option<impl Itemable>,
+        dynamic_context: &context::DynamicContext,
     ) -> Result<V> {
-        OneQuery::execute_with_optional_itemable(self, session, item)
+        OneQuery::execute_with_context(self, session, dynamic_context)
     }
 }
 
@@ -195,20 +194,24 @@ impl<'a> OneRecurseQuery<'a> {
         item: &Item,
         recurse: &Recurse<V>,
     ) -> Result<V> {
-        self.execute_with_optional_item(session, Some(item), recurse)
+        let mut dynamic_context_builder =
+            context::DynamicContextBuilder::new(Rc::clone(&self.static_context));
+        dynamic_context_builder.context_item(item.clone());
+        let dynamic_context = dynamic_context_builder.build();
+        self.execute_with_context(session, &dynamic_context, recurse)
     }
 
-    /// Execute the query against an itemable, with variables.
+    /// Execute the query against an itemable, with context.
     ///
     /// To do the conversion pass in a [`Recurse`] object. This
     /// allows you to use a convert function recursively.
-    pub fn execute_with_optional_item<V>(
+    pub fn execute_with_context<V>(
         &self,
         session: &mut Session,
-        item: Option<&Item>,
+        context: &context::DynamicContext,
         recurse: &Recurse<V>,
     ) -> Result<V> {
-        let sequence = execute_many(session, self.query_id, &self.static_context, item)?;
+        let sequence = execute_many_dynamic_context(session, self.query_id, context)?;
         let mut items = sequence.items()?;
         let item = items.one()?;
         recurse.execute(session, &item)
@@ -241,13 +244,14 @@ impl<'a, V, F> OptionQuery<'a, V, F>
 where
     F: Convert<V>,
 {
-    /// Execute the query against an itemable, with variables.
-    pub fn execute_with_optional_itemable(
+    /// Execute the query against an itemable, with explicit
+    /// dynamic context.
+    pub fn execute_with_context(
         &self,
         session: &mut Session,
-        item: Option<impl Itemable>,
+        dynamic_context: &context::DynamicContext,
     ) -> Result<Option<V>> {
-        let sequence = execute_many(session, self.query_id, &self.static_context, item)?;
+        let sequence = execute_many_dynamic_context(session, self.query_id, dynamic_context)?;
         let mut items = sequence.items()?;
         let item = items.option()?;
         item.map(|item| (self.convert)(session, &item)).transpose()
@@ -258,12 +262,16 @@ impl<'a, V, F> Query<Option<V>> for OptionQuery<'a, V, F>
 where
     F: Convert<V>,
 {
-    fn execute_with_optional_itemable(
+    fn static_context(&self) -> &Rc<context::StaticContext> {
+        &self.static_context
+    }
+
+    fn execute_with_context(
         &self,
         session: &mut Session,
-        item: Option<impl Itemable>,
+        dynamic_context: &context::DynamicContext,
     ) -> Result<Option<V>> {
-        Self::execute_with_optional_itemable(self, session, item)
+        Self::execute_with_context(self, session, dynamic_context)
     }
 }
 
@@ -285,20 +293,21 @@ impl<'a> OptionRecurseQuery<'a> {
         item: &Item,
         recurse: &Recurse<V>,
     ) -> Result<Option<V>> {
-        self.execute_with_optional_item(session, Some(item), recurse)
+        let mut dynamic_context_builder =
+            context::DynamicContextBuilder::new(Rc::clone(&self.static_context));
+        dynamic_context_builder.context_item(item.clone());
+        let dynamic_context = dynamic_context_builder.build();
+        self.execute_with_context(session, &dynamic_context, recurse)
     }
 
-    /// Execute the query against an itemable, with variables
-    ///
-    /// To do the conversion pass in a [`Recurse`] object. This
-    /// allows you to use a convert function recursively.
-    pub fn execute_with_optional_item<V>(
+    /// Execute the recursive query against an explicit dynamic context.
+    pub fn execute_with_context<V>(
         &self,
         session: &mut Session,
-        item: Option<&Item>,
+        dynamic_context: &context::DynamicContext,
         recurse: &Recurse<V>,
     ) -> Result<Option<V>> {
-        let sequence = execute_many(session, self.query_id, &self.static_context, item)?;
+        let sequence = execute_many_dynamic_context(session, self.query_id, dynamic_context)?;
         let mut items = sequence.items()?;
         let item = items.option()?;
         item.map(|item| recurse.execute(session, &item)).transpose()
@@ -330,13 +339,12 @@ impl<'a, V, F> ManyQuery<'a, V, F>
 where
     F: Convert<V>,
 {
-    /// Execute the query against an itemable.
-    pub fn execute_with_optional_itemable(
+    fn execute_with_context(
         &self,
         session: &mut Session,
-        item: Option<impl Itemable>,
+        dynamic_context: &context::DynamicContext,
     ) -> Result<Vec<V>> {
-        let sequence = execute_many(session, self.query_id, &self.static_context, item)?;
+        let sequence = execute_many_dynamic_context(session, self.query_id, dynamic_context)?;
         let items = sequence
             .items()?
             .map(|item| (self.convert)(session, &item))
@@ -349,12 +357,16 @@ impl<'a, V, F> Query<Vec<V>> for ManyQuery<'a, V, F>
 where
     F: Convert<V>,
 {
-    fn execute_with_optional_itemable(
+    fn static_context(&self) -> &Rc<context::StaticContext> {
+        &self.static_context
+    }
+
+    fn execute_with_context(
         &self,
         session: &mut Session,
-        item: Option<impl Itemable>,
+        dynamic_context: &context::DynamicContext,
     ) -> Result<Vec<V>> {
-        Self::execute_with_optional_itemable(self, session, item)
+        Self::execute_with_context(self, session, dynamic_context)
     }
 }
 
@@ -376,20 +388,24 @@ impl<'a> ManyRecurseQuery<'a> {
         item: &Item,
         recurse: &Recurse<V>,
     ) -> Result<Vec<V>> {
-        self.execute_with_optional_item(session, Some(item), recurse)
+        let mut dynamic_context_builder =
+            context::DynamicContextBuilder::new(Rc::clone(&self.static_context));
+        dynamic_context_builder.context_item(item.clone());
+        let dynamic_context = dynamic_context_builder.build();
+        self.execute_with_context(session, &dynamic_context, recurse)
     }
 
     /// Execute the query against an itemable, with variables.
     ///
     /// To do the conversion pass in a [`Recurse`] object. This
     /// allows you to use a convert function recursively.
-    pub fn execute_with_optional_item<V>(
+    pub fn execute_with_context<V>(
         &self,
         session: &mut Session,
-        item: Option<&Item>,
+        context: &context::DynamicContext,
         recurse: &Recurse<V>,
     ) -> Result<Vec<V>> {
-        let sequence = execute_many(session, self.query_id, &self.static_context, item)?;
+        let sequence = execute_many_dynamic_context(session, self.query_id, context)?;
         let items = sequence
             .items()?
             .map(|item| recurse.execute(session, &item))
@@ -414,23 +430,27 @@ pub struct SequenceQuery<'a> {
 }
 
 impl<'a> SequenceQuery<'a> {
-    /// Execute the query against an itemable.
-    pub fn execute_with_optional_itemable(
+    /// Execute the query against an itemable with an explict dynamic context.
+    pub fn execute_with_context(
         &self,
         session: &mut Session,
-        item: Option<impl Itemable>,
+        dynamic_context: &context::DynamicContext,
     ) -> Result<Sequence> {
-        execute_many(session, self.query_id, &self.static_context, item)
+        execute_many_dynamic_context(session, self.query_id, dynamic_context)
     }
 }
 
 impl<'a> Query<Sequence> for SequenceQuery<'a> {
-    fn execute_with_optional_itemable(
+    fn static_context(&self) -> &Rc<context::StaticContext> {
+        &self.static_context
+    }
+
+    fn execute_with_context(
         &self,
         session: &mut Session,
-        item: Option<impl Itemable>,
+        dynamic_context: &context::DynamicContext,
     ) -> Result<Sequence> {
-        Self::execute_with_optional_itemable(self, session, item)
+        Self::execute_with_context(self, session, dynamic_context)
     }
 }
 
@@ -438,7 +458,7 @@ impl<'a> Query<Sequence> for SequenceQuery<'a> {
 #[derive(Debug, Clone)]
 pub struct MapQuery<V, T, Q: Query<V> + Sized, F>
 where
-    F: Fn(V, &mut Session, Option<&Item>) -> Result<T> + Clone,
+    F: Fn(V, &mut Session, &context::DynamicContext<'_>) -> Result<T> + Clone,
 {
     query: Q,
     f: F,
@@ -449,32 +469,43 @@ where
 impl<V, T, Q, F> MapQuery<V, T, Q, F>
 where
     Q: Query<V> + Sized,
-    F: Fn(V, &mut Session, Option<&Item>) -> Result<T> + Clone,
+    F: Fn(V, &mut Session, &context::DynamicContext<'_>) -> Result<T> + Clone,
 {
     /// Execute the query against an item.
     pub fn execute(&self, session: &mut Session, item: &Item) -> Result<T> {
-        let v = self.query.execute(session, item)?;
-        (self.f)(v, session, Some(item))
+        let mut dynamic_context_builder =
+            context::DynamicContextBuilder::new(Rc::clone(self.query.static_context()));
+        dynamic_context_builder.context_item(item.clone());
+        let context = dynamic_context_builder.build();
+        self.execute_with_context(session, &context)
+    }
+
+    /// Execute the query against a dynamic context.
+    pub fn execute_with_context(
+        &self,
+        session: &mut Session,
+        dynamic_context: &context::DynamicContext,
+    ) -> Result<T> {
+        let v = self.query.execute_with_context(session, dynamic_context)?;
+        // TODO: this isn't right. need to rewrite in terms of dynamic context too?
+        (self.f)(v, session, dynamic_context)
     }
 }
 
 impl<V, T, Q: Query<V> + Sized, F> Query<T> for MapQuery<V, T, Q, F>
 where
-    F: Fn(V, &mut Session, Option<&Item>) -> Result<T> + Clone,
+    F: Fn(V, &mut Session, &context::DynamicContext<'_>) -> Result<T> + Clone,
 {
-    fn execute_with_optional_itemable(
+    fn static_context(&self) -> &Rc<context::StaticContext> {
+        self.query.static_context()
+    }
+
+    fn execute_with_context(
         &self,
         session: &mut Session,
-        item: Option<impl Itemable>,
+        dynamic_context: &context::DynamicContext,
     ) -> Result<T> {
-        let item = if let Some(item) = item {
-            Some(item.to_item(session)?)
-        } else {
-            None
-        };
-        let v = self
-            .query
-            .execute_with_optional_itemable(session, item.as_ref())?;
-        (self.f)(v, session, item.as_ref())
+        let v = self.query.execute_with_context(session, dynamic_context)?;
+        (self.f)(v, session, dynamic_context)
     }
 }

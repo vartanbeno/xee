@@ -32,7 +32,7 @@ pub struct DynamicContext<'a> {
     // we want to mutate documents during evaluation, and this happens in
     // multiple spots. We use RefCell to manage that during runtime so we don't
     // need to make the whole thing immutable.
-    pub documents: Cow<'a, RefCell<xml::Documents>>,
+    pub documents: Rc<RefCell<xml::Documents>>,
     pub variables: Variables,
     // TODO: we want to be able to control the creation of this outside,
     // as it needs to be the same for all evalutions of XSLT I believe
@@ -43,7 +43,7 @@ impl<'a> DynamicContext<'a> {
     pub(crate) fn new(
         static_context: Rc<StaticContext<'a>>,
         context_item: Option<sequence::Item>,
-        documents: Cow<'a, RefCell<xml::Documents>>,
+        documents: Rc<RefCell<xml::Documents>>,
         variables: Variables,
         current_datetime: chrono::DateTime<chrono::offset::FixedOffset>,
     ) -> Self {
