@@ -250,26 +250,22 @@ fn normalize_unicode(
         if normalization_form.is_empty() {
             return Ok(arg.to_string());
         }
-        let provider = context.static_context.icu_provider();
+
         match normalization_form.as_ref() {
             "NFC" => {
-                let normalizer = ComposingNormalizer::try_new_nfc_with_buffer_provider(provider)
-                    .map_err(|_| error::Error::FOCH0003)?;
+                let normalizer = ComposingNormalizer::new_nfc();
                 Ok(normalizer.normalize(arg))
             }
             "NFD" => {
-                let normalizer = DecomposingNormalizer::try_new_nfd_with_buffer_provider(provider)
-                    .map_err(|_| error::Error::FOCH0003)?;
+                let normalizer = DecomposingNormalizer::new_nfd();
                 Ok(normalizer.normalize(arg))
             }
             "NFKC" => {
-                let normalizer = ComposingNormalizer::try_new_nfkc_with_buffer_provider(provider)
-                    .map_err(|_| error::Error::FOCH0003)?;
+                let normalizer = ComposingNormalizer::new_nfkc();
                 Ok(normalizer.normalize(arg))
             }
             "NFKD" => {
-                let normalizer = DecomposingNormalizer::try_new_nfkd_with_buffer_provider(provider)
-                    .map_err(|_| error::Error::FOCH0003)?;
+                let normalizer = DecomposingNormalizer::new_nfkd();
                 Ok(normalizer.normalize(arg))
             }
             // TODO: FULLY-NORMALIZED

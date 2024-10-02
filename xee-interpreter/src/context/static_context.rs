@@ -1,8 +1,7 @@
 use std::cell::RefCell;
 use std::fmt::Debug;
 use std::rc::Rc;
-
-use icu_provider_blob::BlobDataProvider;
+use std::sync::LazyLock;
 
 use xee_name::{Namespaces, VariableNames};
 use xee_xpath_ast::ast;
@@ -10,14 +9,15 @@ use xee_xpath_ast::XPathParserContext;
 
 use crate::error;
 use crate::function::StaticFunctions;
-use crate::string::provider;
 use crate::string::{Collation, Collations};
+
+static STATIC_FUNCTIONS: LazyLock<StaticFunctions> = LazyLock::new(|| StaticFunctions::new());
 
 #[derive(Debug)]
 pub struct StaticContext<'a> {
     pub(crate) parser_context: XPathParserContext<'a>,
-    pub functions: StaticFunctions,
-    provider: BlobDataProvider,
+    pub functions: &'static StaticFunctions,
+    // TODO: try to make collations static
     pub(crate) collations: RefCell<Collations>,
 }
 
@@ -31,9 +31,8 @@ impl<'a> From<XPathParserContext<'a>> for StaticContext<'a> {
     fn from(parser_context: XPathParserContext<'a>) -> Self {
         Self {
             parser_context,
-            functions: StaticFunctions::new(),
+            functions: &STATIC_FUNCTIONS,
             collations: RefCell::new(Collations::new()),
-            provider: provider(),
         }
     }
 }
@@ -42,9 +41,8 @@ impl<'a> StaticContext<'a> {
     pub(crate) fn new(namespaces: Namespaces<'a>, variable_names: VariableNames) -> Self {
         Self {
             parser_context: XPathParserContext::new(namespaces, variable_names),
-            functions: StaticFunctions::new(),
+            functions: &STATIC_FUNCTIONS,
             collations: RefCell::new(Collations::new()),
-            provider: provider(),
         }
     }
 
@@ -70,13 +68,7 @@ impl<'a> StaticContext<'a> {
 
     pub(crate) fn collation(&self, uri: &str) -> error::Result<Rc<Collation>> {
         // TODO: supply static base URI
-        self.collations
-            .borrow_mut()
-            .load(self.provider.clone(), None, uri)
-    }
-
-    pub(crate) fn icu_provider(&self) -> &BlobDataProvider {
-        &self.provider
+        self.collations.borrow_mut().load(None, uri)
     }
 
     /// Given an XPath string, parse into an XPath AST
