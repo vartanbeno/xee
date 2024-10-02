@@ -1,4 +1,4 @@
-use std::{borrow::Cow, cell::RefCell};
+use std::{borrow::Cow, cell::RefCell, rc::Rc};
 
 use xot::Xot;
 
@@ -45,12 +45,12 @@ pub fn evaluate_root(
     // the general error system yet
     documents.add_root(xot, &uri, root).unwrap();
 
-    let mut dynamic_context_builder = DynamicContextBuilder::new(&static_context);
+    let mut dynamic_context_builder = DynamicContextBuilder::new(Rc::new(static_context));
     dynamic_context_builder.context_node(root);
     dynamic_context_builder.owned_documents(documents);
     let context = dynamic_context_builder.build();
 
-    let program = parse(context.static_context, xpath)?;
+    let program = parse(context.static_context.as_ref(), xpath)?;
     let runnable = program.runnable(&context);
     runnable.many(xot)
 }
@@ -59,10 +59,10 @@ pub fn evaluate_without_focus(s: &str) -> SpannedResult<Sequence> {
     let mut xot = Xot::new();
     let static_context = StaticContext::default();
 
-    let dynamic_context_buidler = DynamicContextBuilder::new(&static_context);
+    let dynamic_context_buidler = DynamicContextBuilder::new(Rc::new(static_context));
     let context = dynamic_context_buidler.build();
 
-    let program = parse(context.static_context, s)?;
+    let program = parse(context.static_context.as_ref(), s)?;
     let runnable = program.runnable(&context);
     runnable.many(&mut xot)
 }
@@ -77,10 +77,10 @@ pub fn evaluate_without_focus_with_variables(
     builder.variable_names(variable_names);
     let static_context = builder.build();
 
-    let mut dynamic_context_builder = DynamicContextBuilder::new(&static_context);
+    let mut dynamic_context_builder = DynamicContextBuilder::new(Rc::new(static_context));
     dynamic_context_builder.variables(variables);
     let context = dynamic_context_builder.build();
-    let program = parse(context.static_context, s)?;
+    let program = parse(context.static_context.as_ref(), s)?;
     let runnable = program.runnable(&context);
     runnable.many(&mut xot)
 }

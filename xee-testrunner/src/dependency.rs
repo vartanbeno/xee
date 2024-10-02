@@ -1,12 +1,9 @@
 use anyhow::Result;
-use xee_name::Namespaces;
-use xee_xpath::{Queries, Query};
+
+use xee_xpath::{Queries, Query, StaticContextBuilder};
 use xee_xpath_load::{convert_string, Loadable};
 
-use crate::{
-    hashmap::FxIndexSet,
-    ns::{namespaces, XPATH_TEST_NS},
-};
+use crate::{hashmap::FxIndexSet, ns::XPATH_TEST_NS};
 
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
 pub(crate) struct DependencySpec {
@@ -82,9 +79,9 @@ impl KnownDependencies {
 }
 
 impl Dependency {
-    pub(crate) fn load(
-        mut queries: Queries,
-    ) -> Result<(Queries, impl Query<Vec<Vec<Dependency>>>)> {
+    pub(crate) fn load<'a>(
+        mut queries: Queries<'a>,
+    ) -> Result<(Queries<'a>, impl Query<Vec<Vec<Dependency>>> + 'a)> {
         let satisfied_query = queries.option("@satisfied/string()", convert_string)?;
         let type_query = queries.one("@type/string()", convert_string)?;
         let value_query = queries.one("@value/string()", convert_string)?;
@@ -195,8 +192,10 @@ impl Dependencies {
 }
 
 impl Loadable for Dependencies {
-    fn xpath_namespaces<'n>() -> Namespaces<'n> {
-        namespaces(XPATH_TEST_NS)
+    fn static_context_builder<'n>() -> StaticContextBuilder<'n> {
+        let mut builder = StaticContextBuilder::default();
+        builder.default_element_namespace(XPATH_TEST_NS);
+        builder
     }
 
     fn load(queries: Queries) -> Result<(Queries, impl Query<Self>)> {

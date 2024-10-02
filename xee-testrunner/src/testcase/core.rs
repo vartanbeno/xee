@@ -1,8 +1,6 @@
 use std::path::Path;
 
-use xee_name::Namespaces;
-// use anyhow::Result;
-use xee_xpath::{Queries, Query};
+use xee_xpath::{Queries, Query, StaticContextBuilder};
 use xee_xpath_compiler::{context::Variables, sequence};
 use xee_xpath_load::{convert_string, ContextLoadable, Loadable};
 
@@ -11,7 +9,7 @@ use crate::{
     dependency::{Dependencies, Dependency},
     environment::{Environment, EnvironmentIterator, EnvironmentRef, TestCaseEnvironment},
     metadata::Metadata,
-    ns::{namespaces, XPATH_TEST_NS},
+    ns::XPATH_TEST_NS,
     runcontext::RunContext,
     testset::TestSet,
 };
@@ -105,8 +103,10 @@ impl<E: Environment> TestCase<E> {
 }
 
 impl<E: Environment> ContextLoadable<Path> for TestCase<E> {
-    fn xpath_namespaces<'n>() -> Namespaces<'n> {
-        namespaces(XPATH_TEST_NS)
+    fn static_context_builder<'n>() -> StaticContextBuilder<'n> {
+        let mut builder = StaticContextBuilder::default();
+        builder.default_element_namespace(XPATH_TEST_NS);
+        builder
     }
 
     fn load_with_context<'a>(

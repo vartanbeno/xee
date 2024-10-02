@@ -1,8 +1,8 @@
 //! Queries you can execute against a session.
 
-use std::borrow::Cow;
+use std::rc::Rc;
 
-use xee_interpreter::context::{self, Variables};
+use xee_interpreter::context;
 use xee_interpreter::error::SpannedResult as Result;
 use xee_interpreter::occurrence::Occurrence;
 use xee_interpreter::sequence::{self, Item, Sequence};
@@ -113,19 +113,20 @@ impl QueryId {
 ///
 /// This is useful if you expect a single item to be returned from an XPath query.
 #[derive(Debug, Clone)]
-pub struct OneQuery<V, F>
+pub struct OneQuery<'a, V, F>
 where
     F: Convert<V>,
 {
-    // pub(crate) static_context_builder: context::StaticContextBuilder<'a>,
     pub(crate) query_id: QueryId,
+    pub(crate) static_context: Rc<context::StaticContext<'a>>,
     pub(crate) convert: F,
     pub(crate) phantom: std::marker::PhantomData<V>,
 }
 
 fn execute_many(
     session: &mut Session,
-    query_id: &QueryId,
+    query_id: QueryId,
+    static_context: &Rc<context::StaticContext>,
     item: Option<impl Itemable>,
 ) -> Result<sequence::Sequence> {
     if query_id.queries_id != session.queries.id {
@@ -133,7 +134,7 @@ fn execute_many(
     }
 
     let mut dynamic_context_builder =
-        context::DynamicContextBuilder::new(&session.queries.static_context);
+        context::DynamicContextBuilder::new(Rc::clone(&static_context));
     if let Some(item) = item {
         dynamic_context_builder.context_item(item.to_item(session)?);
     }
@@ -146,7 +147,7 @@ fn execute_many(
     runnable.many(&mut session.xot)
 }
 
-impl<V, F> OneQuery<V, F>
+impl<'a, V, F> OneQuery<'a, V, F>
 where
     F: Convert<V>,
 {
@@ -156,14 +157,14 @@ where
         session: &mut Session,
         item: Option<impl Itemable>,
     ) -> Result<V> {
-        let sequence = execute_many(session, &self.query_id, item)?;
+        let sequence = execute_many(session, self.query_id, &self.static_context, item)?;
         let mut items = sequence.items()?;
         let item = items.one()?;
         (self.convert)(session, &item)
     }
 }
 
-impl<V, F> Query<V> for OneQuery<V, F>
+impl<'a, V, F> Query<V> for OneQuery<'a, V, F>
 where
     F: Convert<V>,
 {
@@ -178,11 +179,12 @@ where
 
 /// A recursive query that expects a single item as a result.
 #[derive(Debug, Clone)]
-pub struct OneRecurseQuery {
+pub struct OneRecurseQuery<'a> {
     pub(crate) query_id: QueryId,
+    pub(crate) static_context: Rc<context::StaticContext<'a>>,
 }
 
-impl OneRecurseQuery {
+impl<'a> OneRecurseQuery<'a> {
     /// Execute the query against an itemable.
     ///
     /// To do the conversion pass in a [`Recurse`] object. This
@@ -206,7 +208,7 @@ impl OneRecurseQuery {
         item: Option<&Item>,
         recurse: &Recurse<V>,
     ) -> Result<V> {
-        let sequence = execute_many(session, &self.query_id, item)?;
+        let sequence = execute_many(session, self.query_id, &self.static_context, item)?;
         let mut items = sequence.items()?;
         let item = items.one()?;
         recurse.execute(session, &item)
@@ -224,17 +226,18 @@ impl OneRecurseQuery {
 /// when constructing this query.
 ///
 /// This is useful if you expect an optional single item to be returned from an XPath query.
-#[derive(Debug, Clone, Copy)]
-pub struct OptionQuery<V, F>
+#[derive(Debug, Clone)]
+pub struct OptionQuery<'a, V, F>
 where
     F: Convert<V>,
 {
     pub(crate) query_id: QueryId,
+    pub(crate) static_context: Rc<context::StaticContext<'a>>,
     pub(crate) convert: F,
     pub(crate) phantom: std::marker::PhantomData<V>,
 }
 
-impl<V, F> OptionQuery<V, F>
+impl<'a, V, F> OptionQuery<'a, V, F>
 where
     F: Convert<V>,
 {
@@ -244,14 +247,14 @@ where
         session: &mut Session,
         item: Option<impl Itemable>,
     ) -> Result<Option<V>> {
-        let sequence = execute_many(session, &self.query_id, item)?;
+        let sequence = execute_many(session, self.query_id, &self.static_context, item)?;
         let mut items = sequence.items()?;
         let item = items.option()?;
         item.map(|item| (self.convert)(session, &item)).transpose()
     }
 }
 
-impl<V, F> Query<Option<V>> for OptionQuery<V, F>
+impl<'a, V, F> Query<Option<V>> for OptionQuery<'a, V, F>
 where
     F: Convert<V>,
 {
@@ -266,11 +269,12 @@ where
 
 /// A recursive query that expects an optional single item.
 #[derive(Debug, Clone)]
-pub struct OptionRecurseQuery {
+pub struct OptionRecurseQuery<'a> {
     pub(crate) query_id: QueryId,
+    pub(crate) static_context: Rc<context::StaticContext<'a>>,
 }
 
-impl OptionRecurseQuery {
+impl<'a> OptionRecurseQuery<'a> {
     /// Execute the query against an itemable.
     ///
     /// To do the conversion pass in a [`Recurse`] object. This
@@ -294,7 +298,7 @@ impl OptionRecurseQuery {
         item: Option<&Item>,
         recurse: &Recurse<V>,
     ) -> Result<Option<V>> {
-        let sequence = execute_many(session, &self.query_id, item)?;
+        let sequence = execute_many(session, self.query_id, &self.static_context, item)?;
         let mut items = sequence.items()?;
         let item = items.option()?;
         item.map(|item| recurse.execute(session, &item)).transpose()
@@ -311,17 +315,18 @@ impl OptionRecurseQuery {
 ///
 /// The result is converted into a Rust value using the `convert` function
 /// when constructing this query.
-#[derive(Debug, Clone, Copy)]
-pub struct ManyQuery<V, F>
+#[derive(Debug, Clone)]
+pub struct ManyQuery<'a, V, F>
 where
     F: Convert<V>,
 {
     pub(crate) query_id: QueryId,
+    pub(crate) static_context: Rc<context::StaticContext<'a>>,
     pub(crate) convert: F,
     pub(crate) phantom: std::marker::PhantomData<V>,
 }
 
-impl<V, F> ManyQuery<V, F>
+impl<'a, V, F> ManyQuery<'a, V, F>
 where
     F: Convert<V>,
 {
@@ -331,7 +336,7 @@ where
         session: &mut Session,
         item: Option<impl Itemable>,
     ) -> Result<Vec<V>> {
-        let sequence = execute_many(session, &self.query_id, item)?;
+        let sequence = execute_many(session, self.query_id, &self.static_context, item)?;
         let items = sequence
             .items()?
             .map(|item| (self.convert)(session, &item))
@@ -340,7 +345,7 @@ where
     }
 }
 
-impl<V, F> Query<Vec<V>> for ManyQuery<V, F>
+impl<'a, V, F> Query<Vec<V>> for ManyQuery<'a, V, F>
 where
     F: Convert<V>,
 {
@@ -355,11 +360,12 @@ where
 
 /// A recursive query that expects many items as a result.
 #[derive(Debug, Clone)]
-pub struct ManyRecurseQuery {
+pub struct ManyRecurseQuery<'a> {
     pub(crate) query_id: QueryId,
+    pub(crate) static_context: Rc<context::StaticContext<'a>>,
 }
 
-impl ManyRecurseQuery {
+impl<'a> ManyRecurseQuery<'a> {
     /// Execute the query against an itemable.
     ///
     /// To do the conversion pass in a [`Recurse`] object. This
@@ -383,7 +389,7 @@ impl ManyRecurseQuery {
         item: Option<&Item>,
         recurse: &Recurse<V>,
     ) -> Result<Vec<V>> {
-        let sequence = execute_many(session, &self.query_id, item)?;
+        let sequence = execute_many(session, self.query_id, &self.static_context, item)?;
         let items = sequence
             .items()?
             .map(|item| recurse.execute(session, &item))
@@ -401,23 +407,24 @@ impl ManyRecurseQuery {
 /// Construct this using [`Queries::sequence`].
 ///
 /// This is useful if you want to work with the sequence directly.
-#[derive(Debug, Clone, Copy)]
-pub struct SequenceQuery {
+#[derive(Debug, Clone)]
+pub struct SequenceQuery<'a> {
     pub(crate) query_id: QueryId,
+    pub(crate) static_context: Rc<context::StaticContext<'a>>,
 }
 
-impl SequenceQuery {
+impl<'a> SequenceQuery<'a> {
     /// Execute the query against an itemable.
     pub fn execute_with_optional_itemable(
         &self,
         session: &mut Session,
         item: Option<impl Itemable>,
     ) -> Result<Sequence> {
-        execute_many(session, &self.query_id, item)
+        execute_many(session, self.query_id, &self.static_context, item)
     }
 }
 
-impl Query<Sequence> for SequenceQuery {
+impl<'a> Query<Sequence> for SequenceQuery<'a> {
     fn execute_with_optional_itemable(
         &self,
         session: &mut Session,
@@ -428,7 +435,7 @@ impl Query<Sequence> for SequenceQuery {
 }
 
 /// A query maps the result of another query to a different type.
-#[derive(Debug, Copy, Clone)]
+#[derive(Debug, Clone)]
 pub struct MapQuery<V, T, Q: Query<V> + Sized, F>
 where
     F: Fn(V, &mut Session, Option<&Item>) -> Result<T> + Clone,

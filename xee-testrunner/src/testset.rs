@@ -4,8 +4,7 @@ use std::{
 };
 
 use anyhow::Result;
-use xee_name::Namespaces;
-use xee_xpath::{Queries, Query};
+use xee_xpath::{Queries, Query, StaticContextBuilder};
 use xee_xpath_load::{convert_string, ContextLoadable};
 
 use crate::{
@@ -13,7 +12,7 @@ use crate::{
     dependency::{Dependencies, Dependency},
     environment::{Environment, SharedEnvironments},
     filter::TestFilter,
-    ns::{namespaces, XPATH_TEST_NS},
+    ns::XPATH_TEST_NS,
     outcomes::TestSetOutcomes,
     renderer::Renderer,
     runcontext::RunContext,
@@ -79,8 +78,10 @@ impl<E: Environment, R: Runnable<E>> TestSet<E, R> {
 }
 
 impl<E: Environment, R: Runnable<E>> ContextLoadable<Path> for TestSet<E, R> {
-    fn xpath_namespaces<'n>() -> Namespaces<'n> {
-        namespaces(XPATH_TEST_NS)
+    fn static_context_builder<'n>() -> StaticContextBuilder<'n> {
+        let mut builder = StaticContextBuilder::default();
+        builder.default_element_namespace(XPATH_TEST_NS);
+        builder
     }
 
     fn load_with_context<'a>(

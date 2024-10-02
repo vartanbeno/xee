@@ -1,23 +1,22 @@
 use ahash::AHashMap;
 use chrono::Offset;
-use std::borrow::Cow;
 use std::fmt;
+use std::rc::Rc;
 use xee_xpath::{Queries, Query, Recurse, Session};
 use xee_xpath_compiler::context::{DynamicContextBuilder, StaticContextBuilder, Variables};
 use xee_xpath_compiler::error::Result;
 use xee_xpath_compiler::{
-    context::{DynamicContext, StaticContext},
     error::Error,
     occurrence::Occurrence,
     parse,
     sequence::{self, Sequence},
     string::Collation,
-    Name, Namespaces, Runnable, VariableNames,
+    Name, Runnable,
 };
 use xee_xpath_load::{convert_boolean, convert_string, Loadable};
 use xot::Xot;
 
-use crate::ns::{namespaces, XPATH_TEST_NS};
+use crate::ns::XPATH_TEST_NS;
 
 use super::outcome::{TestOutcome, UnexpectedError};
 
@@ -761,8 +760,10 @@ impl TestCaseResult {
 }
 
 impl Loadable for TestCaseResult {
-    fn xpath_namespaces<'n>() -> Namespaces<'n> {
-        namespaces(XPATH_TEST_NS)
+    fn static_context_builder<'n>() -> StaticContextBuilder<'n> {
+        let mut builder = StaticContextBuilder::default();
+        builder.default_element_namespace(XPATH_TEST_NS);
+        builder
     }
 
     fn load(mut queries: Queries) -> anyhow::Result<(Queries, impl Query<Self>)> {
@@ -1032,7 +1033,7 @@ fn run_xpath_with_result(
     let static_context = builder.build();
     let program = parse(&static_context, expr).map_err(|e| e.error)?;
     let variables = AHashMap::from([(name, sequence.clone())]);
-    let mut dynamic_context_builder = DynamicContextBuilder::new(&static_context);
+    let mut dynamic_context_builder = DynamicContextBuilder::new(Rc::new(static_context));
     dynamic_context_builder.ref_documents(&runnable.dynamic_context().documents);
     dynamic_context_builder.variables(variables);
 
@@ -1064,7 +1065,7 @@ mod tests {
 
     use super::*;
 
-    use crate::ns::{namespaces, XPATH_TEST_NS};
+    use crate::ns::XPATH_TEST_NS;
 
     #[test]
     fn test_test_case_result() {

@@ -1,11 +1,12 @@
 use anyhow::Result;
 use clap::{Parser, Subcommand};
-use std::cell::RefCell;
+use xee_xpath::StaticContextBuilder;
+
 use std::fs;
 use std::path::{Path, PathBuf};
-use xee_xpath::Variables;
-use xee_xpath_compiler::context::{DynamicContext, DynamicContextBuilder, StaticContext};
-use xee_xpath_compiler::xml::Documents;
+use std::rc::Rc;
+
+use xee_xpath_compiler::context::DynamicContextBuilder;
 use xee_xpath_load::PathLoadable;
 use xot::Xot;
 
@@ -13,7 +14,7 @@ use crate::catalog::Catalog;
 use crate::dependency::xpath_known_dependencies;
 use crate::environment::{Environment, XPathEnvironmentSpec};
 use crate::filter::{ExcludedNamesFilter, IncludeAllFilter, NameFilter, TestFilter};
-use crate::ns::{namespaces, XPATH_TEST_NS};
+use crate::ns::XPATH_TEST_NS;
 use crate::outcomes::{CatalogOutcomes, Outcomes, TestSetOutcomes};
 use crate::paths::{paths, PathInfo};
 use crate::runcontext::RunContext;
@@ -92,10 +93,12 @@ pub fn cli() -> Result<()> {
     let path_info = paths(path)?;
 
     let xot = Xot::new();
-    let ns = XPATH_TEST_NS;
-    let static_context = StaticContext::from_namespaces(namespaces(ns));
 
-    let dynamic_context_builder = DynamicContextBuilder::new(&static_context);
+    let mut static_context_builder = StaticContextBuilder::default();
+    static_context_builder.default_element_namespace(XPATH_TEST_NS);
+    let static_context = static_context_builder.build();
+
+    let dynamic_context_builder = DynamicContextBuilder::new(Rc::new(static_context));
     let dynamic_context = dynamic_context_builder.build();
 
     let run_context = RunContext::new(

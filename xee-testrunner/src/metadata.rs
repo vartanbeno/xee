@@ -1,9 +1,9 @@
 use anyhow::Result;
-use xee_name::Namespaces;
-use xee_xpath::{Queries, Query};
+
+use xee_xpath::{Queries, Query, StaticContextBuilder};
 use xee_xpath_load::{convert_string, Loadable};
 
-use crate::ns::{namespaces, XPATH_TEST_NS};
+use crate::ns::XPATH_TEST_NS;
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub(crate) struct Metadata {
@@ -25,8 +25,10 @@ pub(crate) struct Attribution {
 }
 
 impl Loadable for Metadata {
-    fn xpath_namespaces<'n>() -> Namespaces<'n> {
-        namespaces(XPATH_TEST_NS)
+    fn static_context_builder<'n>() -> StaticContextBuilder<'n> {
+        let mut builder = StaticContextBuilder::default();
+        builder.default_element_namespace(XPATH_TEST_NS);
+        builder
     }
 
     fn load(mut queries: Queries) -> Result<(Queries, impl Query<Metadata>)> {

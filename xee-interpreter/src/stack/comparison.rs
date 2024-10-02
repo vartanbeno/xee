@@ -20,7 +20,7 @@ where
     for a in a_atoms {
         let a = a?;
         for b in b_atoms.iter() {
-            let (a, b) = cast(a.clone(), b.clone()?, context.static_context)?;
+            let (a, b) = cast(a.clone(), b.clone()?, context.static_context.as_ref())?;
             // 2c do value comparison
             if O::atomic_compare(
                 a,

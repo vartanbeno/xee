@@ -1,18 +1,15 @@
 use anyhow::Result;
-use std::{borrow::Cow, path::Path};
-use xee_name::Namespaces;
-use xee_xpath::{Queries, Query, Variables};
+use std::{path::Path, rc::Rc};
+
+use xee_xpath::{Queries, Query};
 use xee_xpath_compiler::{
-    context::{DynamicContext, DynamicContextBuilder, StaticContext, StaticContextBuilder},
+    context::{DynamicContextBuilder, StaticContextBuilder},
     parse,
 };
 use xee_xpath_load::{convert_string, ContextLoadable};
 
 use crate::{
-    catalog::Catalog,
-    environment::XPathEnvironmentSpec,
-    ns::{namespaces, XPATH_TEST_NS},
-    runcontext::RunContext,
+    catalog::Catalog, environment::XPathEnvironmentSpec, ns::XPATH_TEST_NS, runcontext::RunContext,
     testset::TestSet,
 };
 
@@ -96,7 +93,7 @@ impl Runnable<XPathEnvironmentSpec> for XPathTestCase {
             }
         };
 
-        let mut dynamic_context_builder = DynamicContextBuilder::new(&static_context);
+        let mut dynamic_context_builder = DynamicContextBuilder::new(Rc::new(static_context));
         dynamic_context_builder.ref_documents(&run_context.dynamic_context.documents);
         if let Some(context_item) = context_item {
             dynamic_context_builder.context_item(context_item);
@@ -132,8 +129,10 @@ impl Runnable<XPathEnvironmentSpec> for XPathTestCase {
 }
 
 impl ContextLoadable<Path> for XPathTestCase {
-    fn xpath_namespaces<'n>() -> Namespaces<'n> {
-        namespaces(XPATH_TEST_NS)
+    fn static_context_builder<'n>() -> StaticContextBuilder<'n> {
+        let mut builder = StaticContextBuilder::default();
+        builder.default_element_namespace(XPATH_TEST_NS);
+        builder
     }
 
     fn load_with_context<'a>(

@@ -1,3 +1,5 @@
+use std::rc::Rc;
+
 use xee_interpreter::context::DynamicContextBuilder;
 use xee_interpreter::context::StaticContext;
 use xee_interpreter::error;
@@ -19,7 +21,7 @@ pub fn evaluate_program(
     let mut documents = xee_interpreter::xml::Documents::new();
     let handle = documents.add_root(xot, &uri, root).unwrap();
     let root = documents.get_node_by_handle(handle).unwrap();
-    let mut dynamic_context_builder = DynamicContextBuilder::new(&static_context);
+    let mut dynamic_context_builder = DynamicContextBuilder::new(Rc::new(static_context));
     dynamic_context_builder.context_node(root);
     dynamic_context_builder.owned_documents(documents);
     let context = dynamic_context_builder.build();

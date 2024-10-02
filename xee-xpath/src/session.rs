@@ -16,7 +16,7 @@ pub struct Session<'namespaces> {
 }
 
 impl<'namespaces> Session<'namespaces> {
-    pub(crate) fn new(queries: &'namespaces Queries<'namespaces>, documents: Documents) -> Self {
+    pub(crate) fn new(queries: &'namespaces Queries, documents: Documents) -> Self {
         Self {
             queries,
             documents: documents.documents,

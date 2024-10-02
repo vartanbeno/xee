@@ -1,14 +1,13 @@
 use anyhow::Result;
 use std::io::Stdout;
 use std::path::{Path, PathBuf};
-use xee_name::Namespaces;
-use xee_xpath::{Queries, Query};
+use xee_xpath::{Queries, Query, StaticContextBuilder};
 use xee_xpath_load::{convert_string, ContextLoadable, PathLoadable};
 
 use crate::environment::{Environment, SharedEnvironments};
 use crate::filter::TestFilter;
 use crate::hashmap::FxIndexSet;
-use crate::ns::{namespaces, XPATH_TEST_NS};
+use crate::ns::XPATH_TEST_NS;
 use crate::outcomes::CatalogOutcomes;
 use crate::renderer::Renderer;
 use crate::runcontext::RunContext;
@@ -56,8 +55,10 @@ impl<E: Environment, R: Runnable<E>> Catalog<E, R> {
 }
 
 impl<E: Environment, R: Runnable<E>> ContextLoadable<Path> for Catalog<E, R> {
-    fn xpath_namespaces<'n>() -> Namespaces<'n> {
-        namespaces(XPATH_TEST_NS)
+    fn static_context_builder<'n>() -> StaticContextBuilder<'n> {
+        let mut builder = StaticContextBuilder::default();
+        builder.default_element_namespace(XPATH_TEST_NS);
+        builder
     }
 
     fn load_with_context<'a>(

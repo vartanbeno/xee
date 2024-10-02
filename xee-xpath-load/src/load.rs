@@ -5,9 +5,9 @@ use std::{
     path::Path,
 };
 
-use xee_xpath_compiler::{context::StaticContext, sequence::Item, Namespaces};
+use xee_xpath_compiler::sequence::Item;
 
-use xee_xpath::{error::Result as XPathResult, Uri};
+use xee_xpath::{error::Result as XPathResult, StaticContextBuilder, Uri};
 use xee_xpath::{DocumentHandle, Documents, Queries, Query, Session};
 
 pub fn convert_string(_: &mut Session, item: &Item) -> XPathResult<String> {
@@ -19,7 +19,7 @@ pub fn convert_boolean(session: &mut Session, item: &Item) -> XPathResult<bool> 
 }
 
 pub trait ContextLoadable<C: ?Sized>: Sized {
-    fn xpath_namespaces<'namespaces>() -> Namespaces<'namespaces>;
+    fn static_context_builder<'namespaces>() -> StaticContextBuilder<'namespaces>;
 
     fn load_with_context<'a>(
         queries: Queries<'a>,
@@ -41,8 +41,8 @@ pub trait ContextLoadable<C: ?Sized>: Sized {
         document_id: DocumentHandle,
         context: &C,
     ) -> Result<Self> {
-        let static_context = StaticContext::from_namespaces(Self::xpath_namespaces());
-        let queries = Queries::new(static_context);
+        let static_context_builder = Self::static_context_builder();
+        let queries = Queries::new(static_context_builder);
 
         let (queries, query) = Self::load_with_context(queries, context)?;
 
@@ -53,7 +53,7 @@ pub trait ContextLoadable<C: ?Sized>: Sized {
 }
 
 pub trait Loadable: Sized {
-    fn xpath_namespaces<'namespaces>() -> Namespaces<'namespaces>;
+    fn static_context_builder<'namespaces>() -> StaticContextBuilder<'namespaces>;
 
     fn load(queries: Queries) -> Result<(Queries, impl Query<Self>)>;
 
@@ -67,8 +67,8 @@ pub trait Loadable: Sized {
 }
 
 impl<T: Loadable> ContextLoadable<()> for T {
-    fn xpath_namespaces<'namespaces>() -> Namespaces<'namespaces> {
-        T::xpath_namespaces()
+    fn static_context_builder<'namespaces>() -> StaticContextBuilder<'namespaces> {
+        T::static_context_builder()
     }
 
     fn load_with_context<'a>(

@@ -1,7 +1,8 @@
-use xee_interpreter::error::SpannedResult as Result;
+use xee_interpreter::{context, error::SpannedResult as Result};
+use xee_xpath_ast::VariableNames;
 use xee_xpath_compiler::parse;
 
-use std::sync::atomic;
+use std::{rc::Rc, sync::atomic};
 
 use crate::{
     documents::Documents,
@@ -23,48 +24,34 @@ fn get_queries_id() -> usize {
 /// You can register xpath expressions with conversion functions
 /// to turn the results into Rust values.
 #[derive(Debug)]
-pub struct Queries<'namespaces> {
+pub struct Queries<'a> {
     pub(crate) id: usize,
+    pub(crate) default_static_context_builder: context::StaticContextBuilder<'a>,
     pub(crate) xpath_programs: Vec<xee_interpreter::interpreter::Program>,
-    pub(crate) static_context: xee_interpreter::context::StaticContext<'namespaces>,
 }
 
 impl Default for Queries<'_> {
     fn default() -> Self {
-        let default_element_namespace = "";
-        let namespaces = xee_xpath_ast::Namespaces::new(
-            xee_xpath_ast::Namespaces::default_namespaces(),
-            default_element_namespace,
-            xee_xpath_ast::FN_NAMESPACE,
-        );
-        let static_context = xee_interpreter::context::StaticContext::from_namespaces(namespaces);
         Self {
             id: get_queries_id(),
+            default_static_context_builder: context::StaticContextBuilder::default(),
             xpath_programs: Vec::new(),
-            static_context,
         }
     }
 }
 
-impl<'namespaces> Queries<'namespaces> {
+impl<'a> Queries<'a> {
     /// Construct a new collection of queries
-    pub fn new(static_context: xee_interpreter::context::StaticContext<'namespaces>) -> Self {
+    ///
+    /// Supply a default static context builder, which will be used
+    /// by default to construct a static context if none is supplied
+    /// explicitly.
+    pub fn new(default_static_context_builder: context::StaticContextBuilder<'a>) -> Self {
         Self {
             id: get_queries_id(),
+            default_static_context_builder,
             xpath_programs: Vec::new(),
-            static_context,
         }
-    }
-
-    /// Construct a new collection of queries with a default namespace for XPath
-    pub fn with_default_namespace(default_ns: &'namespaces str) -> Self {
-        let namespaces = xee_xpath_ast::Namespaces::new(
-            xee_xpath_ast::Namespaces::default_namespaces(),
-            default_ns,
-            xee_xpath_ast::FN_NAMESPACE,
-        );
-        let static_context = xee_interpreter::context::StaticContext::from_namespaces(namespaces);
-        Self::new(static_context)
     }
 
     /// Construct a [`Session`] with a collection of documents
@@ -74,8 +61,8 @@ impl<'namespaces> Queries<'namespaces> {
         Session::new(self, documents)
     }
 
-    fn register(&mut self, s: &str) -> Result<usize> {
-        let program = parse(&self.static_context, s)?;
+    fn register(&mut self, s: &str, static_context: &context::StaticContext<'a>) -> Result<usize> {
+        let program = parse(&static_context, s)?;
         let id = self.xpath_programs.len();
         self.xpath_programs.push(program);
         Ok(id)
@@ -84,13 +71,33 @@ impl<'namespaces> Queries<'namespaces> {
     /// Construct a query that expects a single item result.
     ///
     /// This item is converted into a Rust value using supplied `convert` function.
-    pub fn one<V, F>(&mut self, s: &str, convert: F) -> Result<OneQuery<V, F>>
+    ///
+    /// This uses a default static context.
+    pub fn one<V, F>(&mut self, s: &str, convert: F) -> Result<OneQuery<'a, V, F>>
     where
         F: Convert<V>,
     {
-        let id = self.register(s)?;
+        self.one_with_context(s, convert, self.default_static_context_builder.build())
+    }
+
+    /// Construct a query that expects a single item result.
+    ///
+    /// This item is converted into a Rust value using supplied `convert` function.
+    ///
+    /// You can supply a static context explicitly.
+    pub fn one_with_context<V, F>(
+        &mut self,
+        s: &str,
+        convert: F,
+        static_context: context::StaticContext<'a>,
+    ) -> Result<OneQuery<'a, V, F>>
+    where
+        F: Convert<V>,
+    {
+        let id = self.register(s, &static_context)?;
         Ok(OneQuery {
             query_id: QueryId::new(self.id, id),
+            static_context: Rc::new(static_context),
             convert,
             phantom: std::marker::PhantomData,
         })
@@ -105,23 +112,45 @@ impl<'namespaces> Queries<'namespaces> {
     /// expects one value always - unlike `option_recurse` and `many_recurse`
     /// which have the None or empty value. I think this means that
     /// `one_recurse` is not in fact useful.
-    pub fn one_recurse(&mut self, s: &str) -> Result<OneRecurseQuery> {
-        let id = self.register(s)?;
+    pub fn one_recurse(&mut self, s: &str) -> Result<OneRecurseQuery<'a>> {
+        self.one_recurse_with_context(s, self.default_static_context_builder.build())
+    }
+
+    pub fn one_recurse_with_context(
+        &mut self,
+        s: &str,
+        static_context: context::StaticContext<'a>,
+    ) -> Result<OneRecurseQuery<'a>> {
+        let id = self.register(s, &static_context)?;
         Ok(OneRecurseQuery {
             query_id: QueryId::new(self.id, id),
+            static_context: Rc::new(static_context),
         })
     }
 
     /// Connstruct a query that expects an optional single item result.
     ///
     /// This item is converted into a Rust value using supplied `convert` function.
-    pub fn option<V, F>(&mut self, s: &str, convert: F) -> Result<OptionQuery<V, F>>
+    pub fn option<V, F>(&mut self, s: &str, convert: F) -> Result<OptionQuery<'a, V, F>>
     where
         F: Convert<V>,
     {
-        let id = self.register(s)?;
+        self.option_with_context(s, convert, self.default_static_context_builder.build())
+    }
+
+    pub fn option_with_context<V, F>(
+        &mut self,
+        s: &str,
+        convert: F,
+        static_context: context::StaticContext<'a>,
+    ) -> Result<OptionQuery<'a, V, F>>
+    where
+        F: Convert<V>,
+    {
+        let id = self.register(s, &static_context)?;
         Ok(OptionQuery {
             query_id: QueryId::new(self.id, id),
+            static_context: Rc::new(static_context),
             convert,
             phantom: std::marker::PhantomData,
         })
@@ -132,22 +161,44 @@ impl<'namespaces> Queries<'namespaces> {
     /// This item is converted into a Rust value not using a convert
     /// function but through a recursive call that's passed in during
     /// execution.
-    pub fn option_recurse(&mut self, s: &str) -> Result<OptionRecurseQuery> {
-        let id = self.register(s)?;
+    pub fn option_recurse(&mut self, s: &str) -> Result<OptionRecurseQuery<'a>> {
+        self.option_recurse_with_context(s, self.default_static_context_builder.build())
+    }
+
+    pub fn option_recurse_with_context(
+        &mut self,
+        s: &str,
+        static_context: context::StaticContext<'a>,
+    ) -> Result<OptionRecurseQuery<'a>> {
+        let id = self.register(s, &static_context)?;
         Ok(OptionRecurseQuery {
             query_id: QueryId::new(self.id, id),
+            static_context: Rc::new(static_context),
         })
     }
 
     /// Construct a query that expects many items as a result.
     ///
     /// These items are converted into Rust values using supplied `convert` function.
-    pub fn many<V, F>(&mut self, s: &str, convert: F) -> Result<ManyQuery<V, F>>
+    pub fn many<V, F>(&mut self, s: &str, convert: F) -> Result<ManyQuery<'a, V, F>>
     where
         F: Convert<V>,
     {
-        let id = self.register(s)?;
+        self.many_with_builder(s, convert, self.default_static_context_builder.build())
+    }
+
+    pub fn many_with_builder<V, F>(
+        &mut self,
+        s: &str,
+        convert: F,
+        static_context: context::StaticContext<'a>,
+    ) -> Result<ManyQuery<'a, V, F>>
+    where
+        F: Convert<V>,
+    {
+        let id = self.register(s, &static_context)?;
         Ok(ManyQuery {
+            static_context: Rc::new(static_context),
             query_id: QueryId::new(self.id, id),
             convert,
             phantom: std::marker::PhantomData,
@@ -159,10 +210,19 @@ impl<'namespaces> Queries<'namespaces> {
     /// These items are converted into Rust values not using a convert
     /// function but through a recursive call that's passed in during
     /// execution.
-    pub fn many_recurse(&mut self, s: &str) -> Result<ManyRecurseQuery> {
-        let id = self.register(s)?;
+    pub fn many_recurse(&mut self, s: &str) -> Result<ManyRecurseQuery<'a>> {
+        self.many_recurse_with_context(s, self.default_static_context_builder.build())
+    }
+
+    pub fn many_recurse_with_context(
+        &mut self,
+        s: &str,
+        static_context: context::StaticContext<'a>,
+    ) -> Result<ManyRecurseQuery<'a>> {
+        let id = self.register(s, &static_context)?;
         Ok(ManyRecurseQuery {
             query_id: QueryId::new(self.id, id),
+            static_context: Rc::new(static_context),
         })
     }
 
@@ -170,10 +230,19 @@ impl<'namespaces> Queries<'namespaces> {
     ///
     /// This is a low-level API that allows you to get the raw sequence
     /// without converting it into Rust values.
-    pub fn sequence(&mut self, s: &str) -> Result<SequenceQuery> {
-        let id = self.register(s)?;
+    pub fn sequence(&mut self, s: &str) -> Result<SequenceQuery<'a>> {
+        self.sequence_with_context(s, self.default_static_context_builder.build())
+    }
+
+    pub fn sequence_with_context(
+        &mut self,
+        s: &str,
+        static_context: context::StaticContext<'a>,
+    ) -> Result<SequenceQuery<'a>> {
+        let id = self.register(s, &static_context)?;
         Ok(SequenceQuery {
             query_id: QueryId::new(self.id, id),
+            static_context: Rc::new(static_context),
         })
     }
 }

@@ -3,11 +3,12 @@ use std::{
     cell::RefCell,
     fmt::{self, Display, Formatter},
     path::{Path, PathBuf},
+    rc::Rc,
 };
-use xee_name::Namespaces;
-use xee_xpath::{Queries, Query};
+
+use xee_xpath::{Queries, Query, StaticContextBuilder};
 use xee_xpath_compiler::{
-    context::{DynamicContext, DynamicContextBuilder, StaticContext, Variables},
+    context::{DynamicContextBuilder, StaticContext, Variables},
     parse, sequence,
     xml::Documents,
     Name,
@@ -15,7 +16,7 @@ use xee_xpath_compiler::{
 use xee_xpath_load::{convert_string, ContextLoadable};
 use xot::Xot;
 
-use crate::ns::{namespaces, XPATH_TEST_NS};
+use crate::ns::XPATH_TEST_NS;
 
 use super::{
     collation::Collation,
@@ -145,7 +146,7 @@ impl EnvironmentSpec {
             }
             let program = program.unwrap();
 
-            let dynamic_context_builder = DynamicContextBuilder::new(&static_context);
+            let dynamic_context_builder = DynamicContextBuilder::new(Rc::new(static_context));
             let dynamic_context = dynamic_context_builder.build();
             let runnable = program.runnable(&dynamic_context);
             let result = runnable.many(xot).map_err(|e| e.error)?;
@@ -156,8 +157,10 @@ impl EnvironmentSpec {
 }
 
 impl ContextLoadable<Path> for EnvironmentSpec {
-    fn xpath_namespaces<'n>() -> Namespaces<'n> {
-        namespaces(XPATH_TEST_NS)
+    fn static_context_builder<'n>() -> StaticContextBuilder<'n> {
+        let mut builder = StaticContextBuilder::default();
+        builder.default_element_namespace(XPATH_TEST_NS);
+        builder
     }
 
     fn load_with_context<'a>(
@@ -223,11 +226,7 @@ impl ContextLoadable<Path> for EnvironmentSpec {
 
 #[cfg(test)]
 mod tests {
-    use crate::{
-        environment::source::SourceContent,
-        metadata::Metadata,
-        ns::{namespaces, XPATH_TEST_NS},
-    };
+    use crate::{environment::source::SourceContent, metadata::Metadata, ns::XPATH_TEST_NS};
 
     use super::*;
 

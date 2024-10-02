@@ -2,6 +2,7 @@ use ahash::AHashMap;
 use std::borrow::Cow;
 use std::cell::RefCell;
 use std::fmt::Debug;
+use std::rc::Rc;
 
 use xee_xpath_ast::ast;
 
@@ -24,7 +25,7 @@ pub struct DynamicContext<'a> {
     // we keep a reference to the static context. we don't need
     // to mutate it, and we want to be able create a new dynamic context from
     // the same static context quickly.
-    pub static_context: &'a StaticContext<'a>,
+    pub static_context: Rc<StaticContext<'a>>,
 
     /// An optional context item
     pub context_item: Option<sequence::Item>,
@@ -40,7 +41,7 @@ pub struct DynamicContext<'a> {
 
 impl<'a> DynamicContext<'a> {
     pub(crate) fn new(
-        static_context: &'a StaticContext<'a>,
+        static_context: Rc<StaticContext<'a>>,
         context_item: Option<sequence::Item>,
         documents: Cow<'a, RefCell<xml::Documents>>,
         variables: Variables,

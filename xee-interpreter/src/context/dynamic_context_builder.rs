@@ -1,4 +1,4 @@
-use std::{borrow::Cow, cell::RefCell};
+use std::{borrow::Cow, cell::RefCell, rc::Rc};
 
 use crate::{sequence, xml};
 
@@ -6,7 +6,7 @@ use super::{DynamicContext, StaticContext, Variables};
 
 #[derive(Debug, Clone)]
 pub struct DynamicContextBuilder<'a> {
-    static_context: &'a StaticContext<'a>,
+    static_context: Rc<StaticContext<'a>>,
     context_item: Option<sequence::Item>,
     documents: Cow<'a, RefCell<xml::Documents>>,
     variables: Variables,
@@ -15,7 +15,7 @@ pub struct DynamicContextBuilder<'a> {
 
 impl<'a> DynamicContextBuilder<'a> {
     /// Construct a new `DynamicContextBuilder` with the given `StaticContext`.
-    pub fn new(static_context: &'a StaticContext<'a>) -> Self {
+    pub fn new(static_context: Rc<StaticContext<'a>>) -> Self {
         Self {
             static_context,
             context_item: None,
@@ -77,7 +77,7 @@ impl<'a> DynamicContextBuilder<'a> {
     /// Build the `DynamicContext`.
     pub fn build(&self) -> DynamicContext<'a> {
         DynamicContext::new(
-            self.static_context,
+            Rc::clone(&self.static_context),
             self.context_item.clone(),
             self.documents.clone(),
             self.variables.clone(),
@@ -93,7 +93,7 @@ mod tests {
     #[test]
     fn test_dynamic_context_builder() {
         let static_context = StaticContext::default();
-        let builder = DynamicContextBuilder::new(&static_context);
+        let builder = DynamicContextBuilder::new(Rc::new(static_context));
         let dynamic_context = builder.build();
         assert_eq!(dynamic_context.documents().borrow().len(), 0);
     }

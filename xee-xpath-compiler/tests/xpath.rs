@@ -1,4 +1,4 @@
-use std::cell::RefCell;
+use std::{cell::RefCell, rc::Rc};
 
 use insta::assert_debug_snapshot;
 use xee_xpath_ast::{ast, Namespaces};
@@ -64,7 +64,7 @@ where
     let namespaces = Namespaces::new(Namespaces::default_namespaces(), "", "");
     let static_context = StaticContext::from_namespaces(namespaces);
 
-    let mut dynamic_context_builder = DynamicContextBuilder::new(&static_context);
+    let mut dynamic_context_builder = DynamicContextBuilder::new(Rc::new(static_context));
     dynamic_context_builder.context_node(root);
     dynamic_context_builder.owned_documents(documents);
     let context = dynamic_context_builder.build();

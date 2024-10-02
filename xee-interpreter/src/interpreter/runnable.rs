@@ -154,7 +154,7 @@ impl<'a> Runnable<'a> {
     }
 
     pub fn static_context(&self) -> &'a StaticContext {
-        self.dynamic_context.static_context
+        self.dynamic_context.static_context.as_ref()
     }
 
     pub fn default_collation_uri(&self) -> &str {
