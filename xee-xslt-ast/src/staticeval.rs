@@ -229,7 +229,7 @@ impl StaticEvaluator {
         let parser_context = content.parser_context();
         let static_context = parser_context.into();
         let program = compile(&static_context, xpath)?;
-        let mut dynamic_context_builder = DynamicContextBuilder::new(Rc::new(static_context));
+        let mut dynamic_context_builder = DynamicContextBuilder::new(static_context);
         // TODO doing the clone here of the global variables isn't ideal
         dynamic_context_builder.variables(self.static_global_variables.clone());
 

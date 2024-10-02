@@ -104,7 +104,7 @@ fn test_generate_element() {
     // we now should run the generated code
     let static_context = StaticContext::default();
 
-    let dynamic_context_builder = DynamicContextBuilder::new(Rc::new(static_context));
+    let dynamic_context_builder = DynamicContextBuilder::new(static_context);
     let context = dynamic_context_builder.build();
 
     let mut xot = xot::Xot::new();

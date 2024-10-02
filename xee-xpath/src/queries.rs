@@ -88,15 +88,16 @@ impl<'a> Queries<'a> {
         &mut self,
         s: &str,
         convert: F,
-        static_context: context::StaticContext<'a>,
+        static_context: impl Into<context::StaticContextRef<'a>>,
     ) -> Result<OneQuery<'a, V, F>>
     where
         F: Convert<V>,
     {
+        let static_context = static_context.into();
         let id = self.register(s, &static_context)?;
         Ok(OneQuery {
             query_id: QueryId::new(self.id, id),
-            static_context: Rc::new(static_context),
+            static_context: static_context.into(),
             convert,
             phantom: std::marker::PhantomData,
         })
@@ -120,12 +121,13 @@ impl<'a> Queries<'a> {
     pub fn one_recurse_with_context(
         &mut self,
         s: &str,
-        static_context: context::StaticContext<'a>,
+        static_context: impl Into<context::StaticContextRef<'a>>,
     ) -> Result<OneRecurseQuery<'a>> {
+        let static_context = static_context.into();
         let id = self.register(s, &static_context)?;
         Ok(OneRecurseQuery {
             query_id: QueryId::new(self.id, id),
-            static_context: Rc::new(static_context),
+            static_context,
         })
     }
 
@@ -145,15 +147,16 @@ impl<'a> Queries<'a> {
         &mut self,
         s: &str,
         convert: F,
-        static_context: context::StaticContext<'a>,
+        static_context: impl Into<context::StaticContextRef<'a>>,
     ) -> Result<OptionQuery<'a, V, F>>
     where
         F: Convert<V>,
     {
+        let static_context = static_context.into();
         let id = self.register(s, &static_context)?;
         Ok(OptionQuery {
             query_id: QueryId::new(self.id, id),
-            static_context: Rc::new(static_context),
+            static_context,
             convert,
             phantom: std::marker::PhantomData,
         })
@@ -173,12 +176,13 @@ impl<'a> Queries<'a> {
     pub fn option_recurse_with_context(
         &mut self,
         s: &str,
-        static_context: context::StaticContext<'a>,
+        static_context: impl Into<context::StaticContextRef<'a>>,
     ) -> Result<OptionRecurseQuery<'a>> {
+        let static_context = static_context.into();
         let id = self.register(s, &static_context)?;
         Ok(OptionRecurseQuery {
             query_id: QueryId::new(self.id, id),
-            static_context: Rc::new(static_context),
+            static_context,
         })
     }
 
@@ -198,14 +202,15 @@ impl<'a> Queries<'a> {
         &mut self,
         s: &str,
         convert: F,
-        static_context: context::StaticContext<'a>,
+        static_context: impl Into<context::StaticContextRef<'a>>,
     ) -> Result<ManyQuery<'a, V, F>>
     where
         F: Convert<V>,
     {
+        let static_context = static_context.into();
         let id = self.register(s, &static_context)?;
         Ok(ManyQuery {
-            static_context: Rc::new(static_context),
+            static_context,
             query_id: QueryId::new(self.id, id),
             convert,
             phantom: std::marker::PhantomData,
@@ -226,12 +231,13 @@ impl<'a> Queries<'a> {
     pub fn many_recurse_with_context(
         &mut self,
         s: &str,
-        static_context: context::StaticContext<'a>,
+        static_context: impl Into<context::StaticContextRef<'a>>,
     ) -> Result<ManyRecurseQuery<'a>> {
+        let static_context = static_context.into();
         let id = self.register(s, &static_context)?;
         Ok(ManyRecurseQuery {
             query_id: QueryId::new(self.id, id),
-            static_context: Rc::new(static_context),
+            static_context,
         })
     }
 
@@ -248,12 +254,13 @@ impl<'a> Queries<'a> {
     pub fn sequence_with_context(
         &mut self,
         s: &str,
-        static_context: context::StaticContext<'a>,
+        static_context: impl Into<context::StaticContextRef<'a>>,
     ) -> Result<SequenceQuery<'a>> {
+        let static_context = static_context.into();
         let id = self.register(s, &static_context)?;
         Ok(SequenceQuery {
             query_id: QueryId::new(self.id, id),
-            static_context: Rc::new(static_context),
+            static_context,
         })
     }
 }

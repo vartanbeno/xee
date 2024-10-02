@@ -10,7 +10,9 @@ use crate::error::Error;
 use crate::sequence;
 use crate::xml;
 
+use super::dynamic_context_builder::StaticContextRef;
 use super::static_context::StaticContext;
+use super::DocumentsRef;
 
 /// A map of variables
 ///
@@ -25,14 +27,14 @@ pub struct DynamicContext<'a> {
     // we keep a reference to the static context. we don't need
     // to mutate it, and we want to be able create a new dynamic context from
     // the same static context quickly.
-    pub static_context: Rc<StaticContext<'a>>,
+    pub static_context: StaticContextRef<'a>,
 
     /// An optional context item
     pub context_item: Option<sequence::Item>,
     // we want to mutate documents during evaluation, and this happens in
     // multiple spots. We use RefCell to manage that during runtime so we don't
     // need to make the whole thing immutable.
-    pub documents: Rc<RefCell<xml::Documents>>,
+    pub documents: DocumentsRef,
     pub variables: Variables,
     // TODO: we want to be able to control the creation of this outside,
     // as it needs to be the same for all evalutions of XSLT I believe
@@ -41,9 +43,9 @@ pub struct DynamicContext<'a> {
 
 impl<'a> DynamicContext<'a> {
     pub(crate) fn new(
-        static_context: Rc<StaticContext<'a>>,
+        static_context: StaticContextRef<'a>,
         context_item: Option<sequence::Item>,
-        documents: Rc<RefCell<xml::Documents>>,
+        documents: DocumentsRef,
         variables: Variables,
         current_datetime: chrono::DateTime<chrono::offset::FixedOffset>,
     ) -> Self {
@@ -77,7 +79,7 @@ impl<'a> DynamicContext<'a> {
         self.current_datetime.timezone()
     }
 
-    pub fn documents(&self) -> &RefCell<xml::Documents> {
-        &self.documents
+    pub fn documents(&self) -> DocumentsRef {
+        self.documents.clone()
     }
 }

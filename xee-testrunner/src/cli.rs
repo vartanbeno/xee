@@ -98,7 +98,7 @@ pub fn cli() -> Result<()> {
     static_context_builder.default_element_namespace(XPATH_TEST_NS);
     let static_context = static_context_builder.build();
 
-    let dynamic_context_builder = DynamicContextBuilder::new(Rc::new(static_context));
+    let dynamic_context_builder = DynamicContextBuilder::new(static_context);
     let dynamic_context = dynamic_context_builder.build();
 
     let run_context = RunContext::new(

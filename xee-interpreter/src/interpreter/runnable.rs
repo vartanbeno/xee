@@ -5,8 +5,10 @@ use ibig::ibig;
 use xee_name::Name;
 use xot::Xot;
 
+use crate::context::DocumentsRef;
 use crate::context::DynamicContext;
 use crate::context::StaticContext;
+use crate::context::StaticContextRef;
 use crate::context::Variables;
 use crate::error::SpannedError;
 use crate::function;
@@ -149,12 +151,12 @@ impl<'a> Runnable<'a> {
         self.dynamic_context
     }
 
-    pub fn documents(&self) -> &RefCell<xml::Documents> {
-        &self.dynamic_context.documents
+    pub fn documents(&self) -> DocumentsRef {
+        self.dynamic_context.documents.clone()
     }
 
-    pub fn static_context(&self) -> &'a StaticContext {
-        self.dynamic_context.static_context.as_ref()
+    pub fn static_context(&self) -> StaticContextRef {
+        self.dynamic_context.static_context.clone()
     }
 
     pub fn default_collation_uri(&self) -> &str {

@@ -1,7 +1,7 @@
 use std::{cell::RefCell, rc::Rc};
 use xot::Xot;
 
-use xee_interpreter::xml;
+use xee_interpreter::{context::DocumentsRef, xml};
 
 use crate::{documents::Documents, queries::Queries};
 
@@ -11,7 +11,7 @@ use crate::{documents::Documents, queries::Queries};
 #[derive(Debug)]
 pub struct Session<'namespaces> {
     pub(crate) queries: &'namespaces Queries<'namespaces>,
-    pub(crate) documents: Rc<RefCell<xml::Documents>>,
+    pub(crate) documents: DocumentsRef,
     pub(crate) xot: Xot,
 }
 
@@ -19,7 +19,7 @@ impl<'namespaces> Session<'namespaces> {
     pub(crate) fn new(queries: &'namespaces Queries, documents: Documents) -> Self {
         Self {
             queries,
-            documents: Rc::new(documents.documents),
+            documents: documents.documents.into(),
             xot: documents.xot,
         }
     }

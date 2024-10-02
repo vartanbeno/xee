@@ -1,4 +1,4 @@
-use std::{borrow::Cow, cell::RefCell, rc::Rc};
+use std::{borrow::Cow, cell::RefCell, ops::Deref, rc::Rc};
 
 use crate::{sequence, xml};
 
@@ -6,20 +6,60 @@ use super::{DynamicContext, StaticContext, Variables};
 
 #[derive(Debug, Clone)]
 pub struct DynamicContextBuilder<'a> {
-    static_context: Rc<StaticContext<'a>>,
+    static_context: StaticContextRef<'a>,
     context_item: Option<sequence::Item>,
-    documents: Rc<RefCell<xml::Documents>>,
+    documents: DocumentsRef,
     variables: Variables,
     current_datetime: chrono::DateTime<chrono::offset::FixedOffset>,
 }
 
+#[derive(Debug, Clone)]
+pub struct StaticContextRef<'a>(Rc<StaticContext<'a>>);
+
+impl<'a> From<StaticContext<'a>> for StaticContextRef<'a> {
+    fn from(static_context: StaticContext<'a>) -> Self {
+        Self(Rc::new(static_context))
+    }
+}
+
+impl<'a> Deref for StaticContextRef<'a> {
+    type Target = StaticContext<'a>;
+
+    fn deref(&self) -> &Self::Target {
+        &self.0
+    }
+}
+
+#[derive(Debug, Clone)]
+pub struct DocumentsRef(Rc<RefCell<xml::Documents>>);
+
+impl Deref for DocumentsRef {
+    type Target = RefCell<xml::Documents>;
+
+    fn deref(&self) -> &Self::Target {
+        &self.0
+    }
+}
+
+impl From<xml::Documents> for DocumentsRef {
+    fn from(documents: xml::Documents) -> Self {
+        Self(Rc::new(RefCell::new(documents)))
+    }
+}
+
+impl DocumentsRef {
+    pub fn new() -> Self {
+        Self(Rc::new(RefCell::new(xml::Documents::new())))
+    }
+}
+
 impl<'a> DynamicContextBuilder<'a> {
     /// Construct a new `DynamicContextBuilder` with the given `StaticContext`.
-    pub fn new(static_context: Rc<StaticContext<'a>>) -> Self {
+    pub fn new(static_context: impl Into<StaticContextRef<'a>>) -> Self {
         Self {
-            static_context,
+            static_context: static_context.into(),
             context_item: None,
-            documents: Rc::new(RefCell::new(xml::Documents::new())),
+            documents: DocumentsRef::new(),
             variables: Variables::new(),
             current_datetime: chrono::offset::Local::now().into(),
         }
@@ -41,19 +81,12 @@ impl<'a> DynamicContextBuilder<'a> {
 
     /// Set the documents of the [`DynamicContext`].
     ///
-    /// Give it owned documents and the [`DynamicContext`] will own them.
-    pub fn owned_documents(&mut self, documents: xml::Documents) -> &mut Self {
-        self.documents = Rc::new(RefCell::new(documents));
+    /// You can give it either owned documents or a [`DocumentsRef`].
+    pub fn documents(&mut self, documents: impl Into<DocumentsRef>) -> &mut Self {
+        self.documents = documents.into();
         self
     }
 
-    /// Set the documents of the [`DynamicContext`].
-    ///
-    /// Give it a RefCell of documents and the [`DynamicContext`] will borrow them.
-    pub fn ref_documents(&mut self, documents: Rc<RefCell<xml::Documents>>) -> &mut Self {
-        self.documents = documents;
-        self
-    }
 
     /// Set the variables of the [`DynamicContext`].
     ///
@@ -77,7 +110,7 @@ impl<'a> DynamicContextBuilder<'a> {
     /// Build the `DynamicContext`.
     pub fn build(&self) -> DynamicContext<'a> {
         DynamicContext::new(
-            Rc::clone(&self.static_context),
+            self.static_context.clone(),
             self.context_item.clone(),
             self.documents.clone(),
             self.variables.clone(),
@@ -93,7 +126,7 @@ mod tests {
     #[test]
     fn test_dynamic_context_builder() {
         let static_context = StaticContext::default();
-        let builder = DynamicContextBuilder::new(Rc::new(static_context));
+        let builder = DynamicContextBuilder::new(static_context);
         let dynamic_context = builder.build();
         assert_eq!(dynamic_context.documents().borrow().len(), 0);
     }

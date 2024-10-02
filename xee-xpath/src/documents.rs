@@ -1,6 +1,9 @@
 use std::cell::RefCell;
 
-use xee_interpreter::xml::{DocumentHandle, DocumentsError, Uri};
+use xee_interpreter::{
+    context::DocumentsRef,
+    xml::{DocumentHandle, DocumentsError, Uri},
+};
 use xot::Xot;
 
 /// A collection of XML documents as can be used by XPath and XSLT.
@@ -13,7 +16,7 @@ use xot::Xot;
 #[derive(Debug)]
 pub struct Documents {
     pub(crate) xot: Xot,
-    pub(crate) documents: RefCell<xee_interpreter::xml::Documents>,
+    pub(crate) documents: DocumentsRef,
 }
 
 impl Documents {
@@ -21,7 +24,7 @@ impl Documents {
     pub fn new() -> Self {
         Self {
             xot: Xot::new(),
-            documents: RefCell::new(xee_interpreter::xml::Documents::new()),
+            documents: DocumentsRef::new(),
         }
     }
 

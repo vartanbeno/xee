@@ -1013,7 +1013,7 @@ impl fmt::Display for Failure {
 }
 
 fn run_xpath(expr: &XPathExpr, runnable: &Runnable<'_>, xot: &mut Xot) -> Result<Sequence> {
-    let program = parse(runnable.static_context(), expr).map_err(|e| e.error)?;
+    let program = parse(&runnable.static_context(), expr).map_err(|e| e.error)?;
 
     let runnable = program.runnable(runnable.dynamic_context());
     runnable.many(xot).map_err(|e| e.error)
@@ -1033,8 +1033,8 @@ fn run_xpath_with_result(
     let static_context = builder.build();
     let program = parse(&static_context, expr).map_err(|e| e.error)?;
     let variables = AHashMap::from([(name, sequence.clone())]);
-    let mut dynamic_context_builder = DynamicContextBuilder::new(Rc::new(static_context));
-    dynamic_context_builder.ref_documents(Rc::clone(&runnable.dynamic_context().documents));
+    let mut dynamic_context_builder = DynamicContextBuilder::new(static_context);
+    dynamic_context_builder.documents(runnable.dynamic_context().documents.clone());
     dynamic_context_builder.variables(variables);
 
     let dynamic_context = dynamic_context_builder.build();

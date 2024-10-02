@@ -2,7 +2,7 @@
 
 use std::rc::Rc;
 
-use xee_interpreter::context;
+use xee_interpreter::context::{self, StaticContextRef};
 use xee_interpreter::error::SpannedResult as Result;
 use xee_interpreter::occurrence::Occurrence;
 use xee_interpreter::sequence::{self, Item, Sequence};
@@ -21,7 +21,7 @@ use crate::Queries;
 /// It gives back a result of type `V`
 pub trait Query<V> {
     /// Get the static context for the query.
-    fn static_context(&self) -> &Rc<context::StaticContext>;
+    fn static_context(&self) -> StaticContextRef<'_>;
 
     /// Map the the result of the query to a different type.
     ///
@@ -43,10 +43,10 @@ pub trait Query<V> {
     /// Excute the query against an itemable
     fn execute(&self, session: &mut Session, item: impl Itemable) -> Result<V> {
         let mut dynamic_context_builder =
-            context::DynamicContextBuilder::new(Rc::clone(self.static_context()));
+            context::DynamicContextBuilder::new(self.static_context());
         let context_item = item.to_item(session)?;
         dynamic_context_builder.context_item(context_item);
-        dynamic_context_builder.ref_documents(Rc::clone(&session.documents));
+        dynamic_context_builder.documents(session.documents.clone());
         let dynamic_context = dynamic_context_builder.build();
         self.execute_with_context(session, &dynamic_context)
     }
@@ -123,7 +123,7 @@ where
     F: Convert<V>,
 {
     pub(crate) query_id: QueryId,
-    pub(crate) static_context: Rc<context::StaticContext<'a>>,
+    pub(crate) static_context: StaticContextRef<'a>,
     pub(crate) convert: F,
     pub(crate) phantom: std::marker::PhantomData<V>,
 }
@@ -163,8 +163,8 @@ impl<'a, V, F> Query<V> for OneQuery<'a, V, F>
 where
     F: Convert<V>,
 {
-    fn static_context(&self) -> &Rc<context::StaticContext> {
-        &self.static_context
+    fn static_context(&self) -> StaticContextRef<'a> {
+        self.static_context.clone()
     }
 
     fn execute_with_context(
@@ -180,7 +180,7 @@ where
 #[derive(Debug, Clone)]
 pub struct OneRecurseQuery<'a> {
     pub(crate) query_id: QueryId,
-    pub(crate) static_context: Rc<context::StaticContext<'a>>,
+    pub(crate) static_context: StaticContextRef<'a>,
 }
 
 impl<'a> OneRecurseQuery<'a> {
@@ -195,7 +195,7 @@ impl<'a> OneRecurseQuery<'a> {
         recurse: &Recurse<V>,
     ) -> Result<V> {
         let mut dynamic_context_builder =
-            context::DynamicContextBuilder::new(Rc::clone(&self.static_context));
+            context::DynamicContextBuilder::new(self.static_context.clone());
         dynamic_context_builder.context_item(item.clone());
         let dynamic_context = dynamic_context_builder.build();
         self.execute_with_context(session, &dynamic_context, recurse)
@@ -235,7 +235,7 @@ where
     F: Convert<V>,
 {
     pub(crate) query_id: QueryId,
-    pub(crate) static_context: Rc<context::StaticContext<'a>>,
+    pub(crate) static_context: StaticContextRef<'a>,
     pub(crate) convert: F,
     pub(crate) phantom: std::marker::PhantomData<V>,
 }
@@ -262,8 +262,8 @@ impl<'a, V, F> Query<Option<V>> for OptionQuery<'a, V, F>
 where
     F: Convert<V>,
 {
-    fn static_context(&self) -> &Rc<context::StaticContext> {
-        &self.static_context
+    fn static_context(&self) -> StaticContextRef<'a> {
+        self.static_context.clone()
     }
 
     fn execute_with_context(
@@ -279,7 +279,7 @@ where
 #[derive(Debug, Clone)]
 pub struct OptionRecurseQuery<'a> {
     pub(crate) query_id: QueryId,
-    pub(crate) static_context: Rc<context::StaticContext<'a>>,
+    pub(crate) static_context: StaticContextRef<'a>,
 }
 
 impl<'a> OptionRecurseQuery<'a> {
@@ -294,7 +294,7 @@ impl<'a> OptionRecurseQuery<'a> {
         recurse: &Recurse<V>,
     ) -> Result<Option<V>> {
         let mut dynamic_context_builder =
-            context::DynamicContextBuilder::new(Rc::clone(&self.static_context));
+            context::DynamicContextBuilder::new(self.static_context.clone());
         dynamic_context_builder.context_item(item.clone());
         let dynamic_context = dynamic_context_builder.build();
         self.execute_with_context(session, &dynamic_context, recurse)
@@ -330,7 +330,7 @@ where
     F: Convert<V>,
 {
     pub(crate) query_id: QueryId,
-    pub(crate) static_context: Rc<context::StaticContext<'a>>,
+    pub(crate) static_context: StaticContextRef<'a>,
     pub(crate) convert: F,
     pub(crate) phantom: std::marker::PhantomData<V>,
 }
@@ -357,8 +357,8 @@ impl<'a, V, F> Query<Vec<V>> for ManyQuery<'a, V, F>
 where
     F: Convert<V>,
 {
-    fn static_context(&self) -> &Rc<context::StaticContext> {
-        &self.static_context
+    fn static_context(&self) -> StaticContextRef<'a> {
+        self.static_context.clone()
     }
 
     fn execute_with_context(
@@ -374,7 +374,7 @@ where
 #[derive(Debug, Clone)]
 pub struct ManyRecurseQuery<'a> {
     pub(crate) query_id: QueryId,
-    pub(crate) static_context: Rc<context::StaticContext<'a>>,
+    pub(crate) static_context: StaticContextRef<'a>,
 }
 
 impl<'a> ManyRecurseQuery<'a> {
@@ -389,7 +389,7 @@ impl<'a> ManyRecurseQuery<'a> {
         recurse: &Recurse<V>,
     ) -> Result<Vec<V>> {
         let mut dynamic_context_builder =
-            context::DynamicContextBuilder::new(Rc::clone(&self.static_context));
+            context::DynamicContextBuilder::new(self.static_context.clone());
         dynamic_context_builder.context_item(item.clone());
         let dynamic_context = dynamic_context_builder.build();
         self.execute_with_context(session, &dynamic_context, recurse)
@@ -426,7 +426,7 @@ impl<'a> ManyRecurseQuery<'a> {
 #[derive(Debug, Clone)]
 pub struct SequenceQuery<'a> {
     pub(crate) query_id: QueryId,
-    pub(crate) static_context: Rc<context::StaticContext<'a>>,
+    pub(crate) static_context: StaticContextRef<'a>,
 }
 
 impl<'a> SequenceQuery<'a> {
@@ -441,8 +441,8 @@ impl<'a> SequenceQuery<'a> {
 }
 
 impl<'a> Query<Sequence> for SequenceQuery<'a> {
-    fn static_context(&self) -> &Rc<context::StaticContext> {
-        &self.static_context
+    fn static_context(&self) -> StaticContextRef<'a> {
+        self.static_context.clone()
     }
 
     fn execute_with_context(
@@ -474,7 +474,7 @@ where
     /// Execute the query against an item.
     pub fn execute(&self, session: &mut Session, item: &Item) -> Result<T> {
         let mut dynamic_context_builder =
-            context::DynamicContextBuilder::new(Rc::clone(self.query.static_context()));
+            context::DynamicContextBuilder::new(self.query.static_context().clone());
         dynamic_context_builder.context_item(item.clone());
         let context = dynamic_context_builder.build();
         self.execute_with_context(session, &context)
@@ -496,8 +496,8 @@ impl<V, T, Q: Query<V> + Sized, F> Query<T> for MapQuery<V, T, Q, F>
 where
     F: Fn(V, &mut Session, &context::DynamicContext<'_>) -> Result<T> + Clone,
 {
-    fn static_context(&self) -> &Rc<context::StaticContext> {
-        self.query.static_context()
+    fn static_context(&self) -> StaticContextRef<'_> {
+        self.query.static_context().clone()
     }
 
     fn execute_with_context(

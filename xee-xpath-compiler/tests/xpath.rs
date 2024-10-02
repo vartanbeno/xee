@@ -64,9 +64,9 @@ where
     let namespaces = Namespaces::new(Namespaces::default_namespaces(), "", "");
     let static_context = StaticContext::from_namespaces(namespaces);
 
-    let mut dynamic_context_builder = DynamicContextBuilder::new(Rc::new(static_context));
+    let mut dynamic_context_builder = DynamicContextBuilder::new(static_context);
     dynamic_context_builder.context_node(root);
-    dynamic_context_builder.owned_documents(documents);
+    dynamic_context_builder.documents(documents);
     let context = dynamic_context_builder.build();
 
     let xpath = parse(&context.static_context, xpath)?;

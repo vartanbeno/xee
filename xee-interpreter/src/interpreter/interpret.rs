@@ -356,7 +356,7 @@ impl<'a> Interpreter<'a> {
 
                     let sequence = sequence.sequence_type_matching_function_conversion(
                         sequence_type,
-                        self.runnable.static_context(),
+                        &self.runnable.static_context(),
                         self.state.xot(),
                         &|function| self.runnable.function_info(function).signature(),
                     )?;
@@ -374,7 +374,7 @@ impl<'a> Interpreter<'a> {
                     let cast_type = &(self.current_inline_function().cast_types[type_id as usize]);
                     if let Some(value) = value {
                         let cast_value = value
-                            .cast_to_schema_type(cast_type.xs, self.runnable.static_context())?;
+                            .cast_to_schema_type(cast_type.xs, &self.runnable.static_context())?;
                         self.state.push(cast_value.into());
                     } else if cast_type.empty_sequence_allowed {
                         self.state.push(stack::Value::Empty);
@@ -387,8 +387,8 @@ impl<'a> Interpreter<'a> {
                     let value = self.pop_atomic_option()?;
                     let cast_type = &(self.current_inline_function().cast_types[type_id as usize]);
                     if let Some(value) = value {
-                        let cast_value =
-                            value.cast_to_schema_type(cast_type.xs, self.runnable.static_context());
+                        let cast_value = value
+                            .cast_to_schema_type(cast_type.xs, &self.runnable.static_context());
                         self.state.push(cast_value.is_ok().into());
                     } else if cast_type.empty_sequence_allowed {
                         self.state.push(true.into())
@@ -779,7 +779,7 @@ impl<'a> Interpreter<'a> {
                 // matching also takes care of function conversion rules
                 let sequence = sequence.sequence_type_matching_function_conversion(
                     type_,
-                    self.runnable.static_context(),
+                    &self.runnable.static_context(),
                     self.state.xot(),
                     &|function| self.runnable.function_info(function).signature(),
                 )?;

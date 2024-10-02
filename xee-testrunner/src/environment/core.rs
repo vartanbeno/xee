@@ -146,7 +146,7 @@ impl EnvironmentSpec {
             }
             let program = program.unwrap();
 
-            let dynamic_context_builder = DynamicContextBuilder::new(Rc::new(static_context));
+            let dynamic_context_builder = DynamicContextBuilder::new(static_context);
             let dynamic_context = dynamic_context_builder.build();
             let runnable = program.runnable(&dynamic_context);
             let result = runnable.many(xot).map_err(|e| e.error)?;

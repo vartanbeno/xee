@@ -93,8 +93,8 @@ impl Runnable<XPathEnvironmentSpec> for XPathTestCase {
             }
         };
 
-        let mut dynamic_context_builder = DynamicContextBuilder::new(Rc::new(static_context));
-        dynamic_context_builder.ref_documents(Rc::clone(&run_context.dynamic_context.documents));
+        let mut dynamic_context_builder = DynamicContextBuilder::new(static_context);
+        dynamic_context_builder.documents(run_context.dynamic_context.documents.clone());
         if let Some(context_item) = context_item {
             dynamic_context_builder.context_item(context_item);
         }
