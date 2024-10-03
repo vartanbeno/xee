@@ -79,9 +79,9 @@ impl KnownDependencies {
 }
 
 impl Dependency {
-    pub(crate) fn load<'a>(
-        mut queries: Queries<'a>,
-    ) -> Result<(Queries<'a>, impl Query<Vec<Vec<Dependency>>> + 'a)> {
+    pub(crate) fn load(
+        mut queries: Queries,
+    ) -> Result<(Queries, impl Query<Vec<Vec<Dependency>>> + '_)> {
         let satisfied_query = queries.option("@satisfied/string()", convert_string)?;
         let type_query = queries.one("@type/string()", convert_string)?;
         let value_query = queries.one("@value/string()", convert_string)?;
@@ -117,6 +117,7 @@ impl Dependency {
 }
 
 impl Dependencies {
+    #[cfg(test)]
     pub(crate) fn empty() -> Self {
         Self {
             dependencies: Vec::new(),
