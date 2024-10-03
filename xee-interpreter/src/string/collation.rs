@@ -208,7 +208,7 @@ impl Collations {
     ) -> error::Result<Rc<Collation>> {
         // try to find cached collator. we cache by uri
         match self.collations.entry(uri.to_string()) {
-            Entry::Occupied(entry) => Ok(entry.into_mut().clone()),
+            Entry::Occupied(entry) => Ok(entry.get().clone()),
             Entry::Vacant(entry) => {
                 let collation = Collation::new(base_uri, uri)?;
                 Ok(entry.insert(Rc::new(collation)).clone())
