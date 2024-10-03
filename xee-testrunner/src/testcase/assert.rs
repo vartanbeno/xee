@@ -1,13 +1,12 @@
 use ahash::AHashMap;
 use chrono::Offset;
 use std::fmt;
+use xot::xmlname::OwnedName as Name;
 use xot::Xot;
 
 use xee_xpath::query::RecurseQuery;
 use xee_xpath::{context, error, item, Queries, Query, Recurse, Sequence, Session};
-use xee_xpath_compiler::{
-    error::Error, occurrence::Occurrence, parse, string::Collation, Name, Runnable,
-};
+use xee_xpath_compiler::{occurrence::Occurrence, parse, string::Collation, Runnable};
 use xee_xpath_load::{convert_boolean, convert_string, Loadable};
 
 use crate::ns::XPATH_TEST_NS;
@@ -45,7 +44,7 @@ impl AssertAnyOf {
         Self(test_case_results)
     }
 
-    pub(crate) fn assert_error(&self, error: &Error) -> TestOutcome {
+    pub(crate) fn assert_error(&self, error: &error::ErrorValue) -> TestOutcome {
         let mut failed_test_results = Vec::new();
         for test_case_result in &self.0 {
             if let TestCaseResult::AssertError(assert_error) = test_case_result {
@@ -610,7 +609,7 @@ impl AssertError {
         Self(code)
     }
 
-    pub(crate) fn assert_error(&self, error: &Error) -> TestOutcome {
+    pub(crate) fn assert_error(&self, error: &error::ErrorValue) -> TestOutcome {
         // all errors are officially a pass, but we check whether the error
         // code matches too
         let code = error.to_string();

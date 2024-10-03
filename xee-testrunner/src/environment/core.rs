@@ -1,12 +1,14 @@
-use anyhow::Result;
 use std::{
     cell::RefCell,
     fmt::{self, Display, Formatter},
     path::{Path, PathBuf},
 };
 
+use anyhow::Result;
+use xot::xmlname::OwnedName as Name;
+
 use xee_xpath::{context, item, Queries, Query};
-use xee_xpath_compiler::{parse, xml::Documents, Name};
+use xee_xpath_compiler::{parse, xml::Documents};
 use xee_xpath_load::{convert_string, ContextLoadable};
 use xot::Xot;
 
