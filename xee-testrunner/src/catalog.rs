@@ -1,6 +1,7 @@
 use anyhow::Result;
 use std::io::Stdout;
 use std::path::{Path, PathBuf};
+
 use xee_xpath::{context, Queries, Query};
 use xee_xpath_load::{convert_string, ContextLoadable, PathLoadable};
 

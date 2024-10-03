@@ -4,6 +4,7 @@ use std::{
 };
 
 use anyhow::Result;
+
 use xee_xpath::{context, Queries, Query};
 use xee_xpath_load::{convert_string, ContextLoadable};
 

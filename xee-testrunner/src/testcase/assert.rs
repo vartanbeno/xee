@@ -4,15 +4,10 @@ use std::fmt;
 use xot::Xot;
 
 use xee_xpath::query::RecurseQuery;
-use xee_xpath::{context, Queries, Query, Recurse, Session};
+use xee_xpath::{context, item, Queries, Query, Recurse, Sequence, Session};
 use xee_xpath_compiler::error::Result;
 use xee_xpath_compiler::{
-    error::Error,
-    occurrence::Occurrence,
-    parse,
-    sequence::{self, Sequence},
-    string::Collation,
-    Name, Runnable,
+    error::Error, occurrence::Occurrence, parse, string::Collation, Name, Runnable,
 };
 use xee_xpath_load::{convert_boolean, convert_string, Loadable};
 
@@ -836,9 +831,9 @@ impl Loadable for TestCaseResult {
         let local_name_query = queries.one("local-name()", convert_string)?;
         let result_query = queries.one(
             "result/*",
-            move |session: &mut Session, item: &sequence::Item| {
+            move |session: &mut Session, item: &item::Item| {
                 let f = |session: &mut Session,
-                         item: &sequence::Item,
+                         item: &item::Item,
                          recurse: &Recurse<TestCaseResult>| {
                     let local_name = local_name_query.execute(session, item)?;
                     let r = match local_name.as_ref() {

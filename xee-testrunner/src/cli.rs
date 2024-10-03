@@ -1,13 +1,12 @@
-use anyhow::Result;
-use clap::{Parser, Subcommand};
-
 use std::fs;
 use std::path::{Path, PathBuf};
 
-use xee_xpath::context;
-use xee_xpath_compiler::context::DynamicContextBuilder;
-use xee_xpath_load::PathLoadable;
+use anyhow::Result;
+use clap::{Parser, Subcommand};
 use xot::Xot;
+
+use xee_xpath::context;
+use xee_xpath_load::PathLoadable;
 
 use crate::catalog::Catalog;
 use crate::dependency::xpath_known_dependencies;
@@ -97,7 +96,7 @@ pub fn cli() -> Result<()> {
     static_context_builder.default_element_namespace(XPATH_TEST_NS);
     let static_context = static_context_builder.build();
 
-    let dynamic_context_builder = DynamicContextBuilder::new(static_context);
+    let dynamic_context_builder = context::DynamicContextBuilder::new(static_context);
     let dynamic_context = dynamic_context_builder.build();
 
     let run_context = RunContext::new(

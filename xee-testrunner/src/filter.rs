@@ -1,12 +1,12 @@
-use anyhow::Error;
-use fxhash::{FxHashMap, FxHashSet};
 use std::fs;
 use std::path::Path;
 use std::str::FromStr;
 
+use anyhow::Error;
+use fxhash::{FxHashMap, FxHashSet};
+
 use crate::environment::Environment;
 use crate::outcomes::{CatalogOutcomes, TestSetOutcomes};
-// use crate::outcome::{CatalogOutcomes, TestSetOutcomes};
 use crate::testcase::{Runnable, TestCase};
 use crate::testset::TestSet;
 

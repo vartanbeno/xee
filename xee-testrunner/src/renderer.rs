@@ -1,8 +1,9 @@
+use std::io::Stdout;
+
 use crossterm::{
     execute,
     style::{self, Stylize},
 };
-use std::io::Stdout;
 
 use crate::{
     catalog::Catalog,

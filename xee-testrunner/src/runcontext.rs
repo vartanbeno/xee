@@ -1,5 +1,6 @@
-use xee_xpath_compiler::context::DynamicContext;
 use xot::Xot;
+
+use xee_xpath::context;
 
 use crate::{
     dependency::KnownDependencies,
@@ -10,7 +11,7 @@ use crate::{
 
 pub(crate) struct RunContext<'a> {
     pub(crate) xot: Xot,
-    pub(crate) dynamic_context: DynamicContext<'a>,
+    pub(crate) dynamic_context: context::DynamicContext<'a>,
     pub(crate) known_dependencies: KnownDependencies,
     pub(crate) verbose: bool,
 }
@@ -18,7 +19,7 @@ pub(crate) struct RunContext<'a> {
 impl<'a> RunContext<'a> {
     pub(crate) fn new(
         xot: Xot,
-        dynamic_context: DynamicContext<'a>,
+        dynamic_context: context::DynamicContext<'a>,
         known_dependencies: KnownDependencies,
         verbose: bool,
     ) -> Self {

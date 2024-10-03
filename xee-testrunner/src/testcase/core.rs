@@ -1,7 +1,6 @@
 use std::path::Path;
 
-use xee_xpath::{context, Queries, Query};
-use xee_xpath_compiler::{context::Variables, sequence};
+use xee_xpath::{context, item, Queries, Query};
 use xee_xpath_load::{convert_string, ContextLoadable, Loadable};
 
 use crate::{
@@ -62,7 +61,7 @@ impl<E: Environment> TestCase<E> {
         run_context: &mut RunContext,
         catalog: &Catalog<E, R>,
         test_set: &TestSet<E, R>,
-    ) -> anyhow::Result<Option<sequence::Item>> {
+    ) -> anyhow::Result<Option<item::Item>> {
         let environments = self
             .environments(catalog, test_set)
             .collect::<std::result::Result<Vec<_>, crate::error::Error>>()?;
@@ -84,11 +83,11 @@ impl<E: Environment> TestCase<E> {
         run_context: &mut RunContext,
         catalog: &Catalog<E, R>,
         test_set: &TestSet<E, R>,
-    ) -> anyhow::Result<Variables> {
+    ) -> anyhow::Result<context::Variables> {
         let environments = self
             .environments(catalog, test_set)
             .collect::<std::result::Result<Vec<_>, crate::error::Error>>()?;
-        let mut variables = Variables::new();
+        let mut variables = context::Variables::new();
         let xot = &mut run_context.xot;
         let source_cache = &run_context.dynamic_context.documents;
         for environment in environments {
