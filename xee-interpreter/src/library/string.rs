@@ -222,26 +222,18 @@ fn normalize_space(arg: Option<&str>) -> String {
 }
 
 #[xpath_fn("fn:normalize-unicode($arg as xs:string?) as xs:string")]
-fn normalize_unicode1(context: &DynamicContext, arg: Option<&str>) -> error::Result<String> {
-    normalize_unicode(context, arg, "NFC")
+fn normalize_unicode1(arg: Option<&str>) -> error::Result<String> {
+    normalize_unicode(arg, "NFC")
 }
 
 #[xpath_fn(
     "fn:normalize-unicode($arg as xs:string?, $normalizationForm as xs:string) as xs:string"
 )]
-fn normalize_unicode2(
-    context: &DynamicContext,
-    arg: Option<&str>,
-    normalization_form: &str,
-) -> error::Result<String> {
-    normalize_unicode(context, arg, normalization_form)
+fn normalize_unicode2(arg: Option<&str>, normalization_form: &str) -> error::Result<String> {
+    normalize_unicode(arg, normalization_form)
 }
 
-fn normalize_unicode(
-    context: &DynamicContext,
-    arg: Option<&str>,
-    normalization_form: &str,
-) -> error::Result<String> {
+fn normalize_unicode(arg: Option<&str>, normalization_form: &str) -> error::Result<String> {
     if let Some(arg) = arg {
         let normalization_form = normalization_form
             .split_ascii_whitespace()
