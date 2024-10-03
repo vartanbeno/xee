@@ -77,7 +77,7 @@ fn insert_before(
     let mut result = Vec::with_capacity(target.len() + inserts.len());
     let mut i = 0;
     if position > 0 {
-        while let Some(item) = target_items.next() {
+        for item in target_items.by_ref() {
             result.push(item.clone());
             i += 1;
             if i == position {
@@ -88,7 +88,7 @@ fn insert_before(
     for item in inserts.items()? {
         result.push(item);
     }
-    while let Some(item) = target_items.next() {
+    for item in target_items {
         result.push(item);
     }
     Ok(result.into())
