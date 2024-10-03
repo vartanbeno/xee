@@ -132,7 +132,7 @@ impl Documents {
         uri: &Uri,
         root: xot::Node,
     ) -> Result<DocumentHandle, DocumentsError> {
-        if self.by_uri.contains_key(&uri) {
+        if self.by_uri.contains_key(uri) {
             // duplicate URI is an error
             return Err(DocumentsError::DuplicateUri(uri.as_str().to_string()));
         }
@@ -190,5 +190,11 @@ impl Documents {
     /// Get the annotations object
     pub(crate) fn annotations(&self) -> &Annotations {
         &self.annotations
+    }
+}
+
+impl Default for Documents {
+    fn default() -> Self {
+        Self::new()
     }
 }

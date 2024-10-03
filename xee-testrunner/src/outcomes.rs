@@ -91,10 +91,6 @@ impl TestSetOutcomes {
         }
     }
 
-    pub(crate) fn has_failures(&self) -> bool {
-        self.unexpected_error() > 0 || self.failed() > 0 || self.erroring() > 0
-    }
-
     pub(crate) fn add_outcome(&mut self, test_case_name: &str, outcome: TestOutcome) {
         self.outcomes
             .push(TestCaseOutcome::new(test_case_name, outcome));

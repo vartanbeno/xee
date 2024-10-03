@@ -1,5 +1,5 @@
 use anyhow::Result;
-use std::{path::Path, rc::Rc};
+use std::path::Path;
 
 use xee_xpath::{Queries, Query};
 use xee_xpath_compiler::{

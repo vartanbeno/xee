@@ -1,11 +1,7 @@
-use std::{borrow::Cow, cell::RefCell, rc::Rc};
-
 use xot::Xot;
 
 use xee_interpreter::{
-    context::{
-        DynamicContext, DynamicContextBuilder, StaticContext, StaticContextBuilder, Variables,
-    },
+    context::{DynamicContextBuilder, StaticContext, StaticContextBuilder, Variables},
     error::SpannedResult,
     sequence::Sequence,
     xml::{Documents, Uri},

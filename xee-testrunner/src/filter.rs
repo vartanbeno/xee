@@ -48,11 +48,6 @@ impl<E: Environment, R: Runnable<E>> TestFilter<E, R> for NameFilter {
     }
 }
 
-struct ExcludedName {
-    name: String,
-    comment: Option<String>,
-}
-
 pub(crate) struct ExcludedNamesFilter {
     names: FxHashMap<String, FxHashSet<String>>,
     comments: FxHashMap<String, FxHashMap<String, String>>,

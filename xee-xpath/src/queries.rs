@@ -61,7 +61,7 @@ impl<'a> Queries<'a> {
     }
 
     fn register(&mut self, s: &str, static_context: &context::StaticContext<'a>) -> Result<usize> {
-        let program = parse(&static_context, s)?;
+        let program = parse(static_context, s)?;
         let id = self.xpath_programs.len();
         self.xpath_programs.push(program);
         Ok(id)
@@ -97,7 +97,7 @@ impl<'a> Queries<'a> {
         let id = self.register(s, &static_context)?;
         Ok(OneQuery {
             query_id: QueryId::new(self.id, id),
-            static_context: static_context.into(),
+            static_context,
             convert,
             phantom: std::marker::PhantomData,
         })

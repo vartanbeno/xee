@@ -215,7 +215,7 @@ fn execute_many_dynamic_context(
         return Err(error::ErrorValue::UsedQueryWithWrongQueries.into());
     }
     let program = &session.queries.xpath_programs[query_id.id];
-    let runnable = program.runnable(&dynamic_context);
+    let runnable = program.runnable(dynamic_context);
 
     runnable.many(&mut session.xot)
 }

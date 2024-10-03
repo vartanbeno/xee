@@ -1,5 +1,3 @@
-use std::cell::RefCell;
-
 use xee_interpreter::{
     context::DocumentsRef,
     xml::{DocumentHandle, DocumentsError, Uri},
@@ -36,5 +34,11 @@ impl Documents {
         self.documents
             .borrow_mut()
             .add_string(&mut self.xot, uri, xml)
+    }
+}
+
+impl Default for Documents {
+    fn default() -> Self {
+        Self::new()
     }
 }

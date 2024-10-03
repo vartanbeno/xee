@@ -1,13 +1,11 @@
-use std::rc::Rc;
+use xee_name::{Namespaces, FN_NAMESPACE};
+use xot::{Node, Xot};
 
 use xee_interpreter::context::DynamicContextBuilder;
 use xee_interpreter::context::StaticContext;
 use xee_interpreter::error;
 use xee_interpreter::interpreter::Program;
 use xee_interpreter::sequence;
-
-use xee_name::{Namespaces, FN_NAMESPACE};
-use xot::{Node, Xot};
 
 use crate::ast_ir::parse;
 

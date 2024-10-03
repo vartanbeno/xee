@@ -16,8 +16,6 @@
 // statically we need to pass in the names of any known global variables that
 // we've encountered before.
 
-use std::rc::Rc;
-
 use xee_xpath_compiler::context::DynamicContextBuilder;
 use xot::{NameId, Node, Xot};
 

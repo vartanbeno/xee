@@ -1,7 +1,6 @@
-use std::{cell::RefCell, rc::Rc};
 use xot::Xot;
 
-use xee_interpreter::{context::DocumentsRef, xml};
+use xee_interpreter::context::DocumentsRef;
 
 use crate::{documents::Documents, queries::Queries};
 
@@ -19,15 +18,17 @@ impl<'namespaces> Session<'namespaces> {
     pub(crate) fn new(queries: &'namespaces Queries, documents: Documents) -> Self {
         Self {
             queries,
-            documents: documents.documents.into(),
+            documents: documents.documents,
             xot: documents.xot,
         }
     }
 
+    /// Get a reference to the Xot arena
     pub fn xot(&self) -> &Xot {
         &self.xot
     }
 
+    /// Get a mutable reference to the Xot arena
     pub fn xot_mut(&mut self) -> &mut Xot {
         &mut self.xot
     }
