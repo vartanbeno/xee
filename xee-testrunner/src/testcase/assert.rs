@@ -2,6 +2,7 @@ use ahash::AHashMap;
 use chrono::Offset;
 use std::fmt;
 use std::rc::Rc;
+use xee_xpath::query::RecurseQuery;
 use xee_xpath::{Queries, Query, Recurse, Session};
 use xee_xpath_compiler::context::{DynamicContextBuilder, StaticContextBuilder, Variables};
 use xee_xpath_compiler::error::Result;

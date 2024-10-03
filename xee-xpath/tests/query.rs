@@ -1,6 +1,8 @@
 use ibig::{ibig, IBig};
 use xee_interpreter::sequence::Sequence;
-use xee_xpath::{error, Documents, Item, Queries, Query, Recurse, Session, Uri};
+use xee_xpath::{
+    error, query::RecurseQuery, Documents, Item, Queries, Query, Recurse, Session, Uri,
+};
 
 #[test]
 fn test_duplicate_document_uri() -> error::Result<()> {

@@ -2,12 +2,14 @@
 
 //! This module provides a high level API to use XPath from Rust.
 //!
-//! You can compile XPath expressions using the [`Queries`] store. You
-//! can use this to configure how to turn the result sequence into
-//! a Rust value.
+//! You can compile XPath expressions into queries using the [`Queries`] store.
+//! For each query you supply a conversion function that turns the result XPath
+//! sequence into a Rust value.
 //!
-//! You can create a [`Documents`] store and load documents into it,
-//! and use this to create a [`Session`] to execute queries.
+//! You can create a [`Documents`] store and load XML documents into it.
+//!
+//! You can then combine the queries and documents into a [`Session`]. You use
+//! this to execute queries.
 //!
 //! ```rust
 //! use xee_xpath::{Documents, Queries, Query, Uri};
