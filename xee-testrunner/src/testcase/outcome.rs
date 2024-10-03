@@ -5,10 +5,7 @@ use xee_xpath_compiler::error::Error;
 use super::assert::Failure;
 
 #[derive(Debug, PartialEq)]
-pub enum UnexpectedError {
-    Code(String),
-    Error(Error),
-}
+pub struct UnexpectedError(pub String);
 
 #[derive(Debug, PartialEq)]
 pub enum TestOutcome {
@@ -33,10 +30,7 @@ impl std::fmt::Display for TestOutcome {
         match self {
             TestOutcome::Passed => write!(f, "{}", "PASS".green()),
             TestOutcome::UnexpectedError(error) => match error {
-                UnexpectedError::Code(s) => write!(f, "{} code: {}", "WRONG ERROR".yellow(), s),
-                UnexpectedError::Error(e) => {
-                    write!(f, "{} error: {}", "WRONG ERROR".yellow(), e)
-                }
+                UnexpectedError(s) => write!(f, "{} code: {}", "WRONG ERROR".yellow(), s),
             },
             TestOutcome::Failed(failure) => {
                 write!(f, "{} {}", "FAIL".red(), failure)

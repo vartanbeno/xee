@@ -623,7 +623,7 @@ impl AssertError {
         if code == self.0 {
             TestOutcome::Passed
         } else {
-            TestOutcome::UnexpectedError(UnexpectedError::Code(code.to_string()))
+            TestOutcome::UnexpectedError(UnexpectedError(code.to_string()))
         }
     }
 }
