@@ -193,12 +193,12 @@ impl<'a> Queries<'a> {
     where
         F: Convert<V>,
     {
-        self.many_with_builder(s, convert, self.default_static_context_builder.build())
+        self.many_with_context(s, convert, self.default_static_context_builder.build())
     }
 
     /// Construct a query that expects many items as a result, with explicit
     /// static context.
-    pub fn many_with_builder<V, F>(
+    pub fn many_with_context<V, F>(
         &mut self,
         s: &str,
         convert: F,
