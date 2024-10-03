@@ -1,4 +1,3 @@
-use std::cell::RefCell;
 use std::rc::Rc;
 
 use ibig::ibig;
@@ -7,7 +6,6 @@ use xot::Xot;
 
 use crate::context::DocumentsRef;
 use crate::context::DynamicContext;
-use crate::context::StaticContext;
 use crate::context::StaticContextRef;
 use crate::context::Variables;
 use crate::error::SpannedError;
@@ -16,7 +14,6 @@ use crate::interpreter::interpret::ContextInfo;
 use crate::occurrence::Occurrence;
 use crate::sequence;
 use crate::stack;
-use crate::xml;
 use crate::{error, string};
 
 use super::Interpreter;
@@ -107,16 +104,6 @@ impl<'a> Runnable<'a> {
         Ok(self.run_value(xot)?.into())
     }
 
-    // /// Run the program against a xot Node.
-    // pub fn many_xot_node(
-    //     &self,
-    //     node: xot::Node,
-    //     xot: &'a mut Xot,
-    // ) -> error::SpannedResult<sequence::Sequence> {
-    //     let item = sequence::Item::Node(node);
-    //     self.many(Some(&item), xot)
-    // }
-
     /// Run the program, expect a single item as the result.
     pub fn one(&self, xot: &'a mut Xot) -> error::SpannedResult<sequence::Item> {
         let sequence = self.many(xot)?;
@@ -124,10 +111,10 @@ impl<'a> Runnable<'a> {
             error,
             span: Some(self.program.span().into()),
         })?;
-        Ok(items.one().map_err(|error| SpannedError {
+        items.one().map_err(|error| SpannedError {
             error,
             span: Some(self.program.span().into()),
-        })?)
+        })
     }
 
     /// Run the program, expect an optional single item as the result.
@@ -137,10 +124,10 @@ impl<'a> Runnable<'a> {
             error,
             span: Some(self.program.span().into()),
         })?;
-        Ok(items.option().map_err(|error| SpannedError {
+        items.option().map_err(|error| SpannedError {
             error,
             span: Some(self.program.span().into()),
-        })?)
+        })
     }
 
     pub(crate) fn program(&self) -> &'a Program {

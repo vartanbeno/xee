@@ -1,12 +1,10 @@
-use std::{cell::RefCell, rc::Rc};
-
 use insta::assert_debug_snapshot;
 use xee_xpath_ast::{ast, Namespaces};
 use xot::Xot;
 
 use xee_interpreter::{
     atomic::Atomic,
-    context::{DynamicContext, DynamicContextBuilder, StaticContext, Variables},
+    context::{DynamicContextBuilder, StaticContext, Variables},
     error::SpannedResult,
     sequence::{Item, Sequence},
     xml::{Document, Documents, Uri},
