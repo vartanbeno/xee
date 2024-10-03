@@ -52,32 +52,39 @@ impl Runnable<XPathEnvironmentSpec> for XPathTestCase {
         catalog: &Catalog<XPathEnvironmentSpec, Self>,
         test_set: &TestSet<XPathEnvironmentSpec, Self>,
     ) -> TestOutcome {
+        // first construct static context
+        let mut static_context_builder = context::StaticContextBuilder::default();
+
+        // we construct the variables immediately, as we need the variable names
         let variables = self.test_case.variables(run_context, catalog, test_set);
         let variables = match variables {
             Ok(variables) => variables,
             Err(error) => return TestOutcome::EnvironmentError(error.to_string()),
         };
 
+        let variable_names: Vec<_> = variables.iter().map(|(name, _)| name.clone()).collect();
+        static_context_builder.variable_names(variable_names);
+
+        // set up the namespaces
+        let namespaces = self.namespaces(catalog, test_set);
+        let namespaces = match namespaces {
+            Ok(namespaces) => namespaces,
+            Err(error) => return TestOutcome::EnvironmentError(error.to_string()),
+        };
+        static_context_builder.namespaces(namespaces);
+
+        let static_context = static_context_builder.build();
+
+        // the context item is loaded
         let context_item = self.test_case.context_item(run_context, catalog, test_set);
         let context_item = match context_item {
             Ok(context_item) => context_item,
             Err(error) => return TestOutcome::EnvironmentError(error.to_string()),
         };
 
-        let namespaces = self.namespaces(catalog, test_set);
-        let namespaces = match namespaces {
-            Ok(namespaces) => namespaces,
-            Err(error) => return TestOutcome::EnvironmentError(error.to_string()),
-        };
-
-        let variable_names: Vec<_> = variables.iter().map(|(name, _)| name.clone()).collect();
-        let mut static_context_builder = context::StaticContextBuilder::default();
-        static_context_builder.namespaces(namespaces);
-        static_context_builder.variable_names(variable_names);
-        let static_context = static_context_builder.build();
         let program = parse(&static_context, &self.test);
         let program = match program {
-            Ok(xpath) => xpath,
+            Ok(query) => query,
             Err(error) => {
                 return match &self.test_case.result {
                     TestCaseResult::AssertError(assert_error) => {

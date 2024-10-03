@@ -57,7 +57,7 @@ impl<'a> Queries<'a> {
     ///
     /// You need a session to be able to execute queries against documents.
     pub fn session(&self, documents: Documents) -> Session {
-        Session::new(self, documents)
+        Session::from_documents(self, documents)
     }
 
     fn register(&mut self, s: &str, static_context: &context::StaticContext<'a>) -> Result<usize> {

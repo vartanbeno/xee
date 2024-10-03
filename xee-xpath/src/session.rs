@@ -15,12 +15,16 @@ pub struct Session<'namespaces> {
 }
 
 impl<'namespaces> Session<'namespaces> {
-    pub(crate) fn new(queries: &'namespaces Queries, documents: Documents) -> Self {
+    pub(crate) fn new(queries: &'namespaces Queries, documents: DocumentsRef, xot: Xot) -> Self {
         Self {
             queries,
-            documents: documents.documents,
-            xot: documents.xot,
+            documents,
+            xot,
         }
+    }
+
+    pub(crate) fn from_documents(queries: &'namespaces Queries, documents: Documents) -> Self {
+        Self::new(queries, documents.documents, documents.xot)
     }
 
     /// Get a reference to the Xot arena
