@@ -95,7 +95,7 @@ fn insert_before(
 }
 
 #[xpath_fn("fn:remove($target as item()*, $position as xs:integer) as item()*")]
-fn remove(target: &[sequence::Item], position: IBig) -> error::Result<sequence::Sequence> {
+fn remove(target: &sequence::Sequence, position: IBig) -> error::Result<sequence::Sequence> {
     let position = if position < IBig::from(0) {
         IBig::from(0)
     } else {
@@ -103,18 +103,20 @@ fn remove(target: &[sequence::Item], position: IBig) -> error::Result<sequence::
     };
     let position: usize = position.try_into().map_err(|_| error::Error::FOAR0002)?;
     if position == 0 || position > target.len() {
-        // TODO: unfortunate we can't just copy sequence
-        return Ok(target.to_vec().into());
+        return Ok(target.clone());
     }
-    let mut target = target.to_vec();
     let position = position.saturating_sub(1);
+    let mut target = target.items()?.collect::<Vec<_>>();
     target.remove(position);
     Ok(target.into())
 }
 
 #[xpath_fn("fn:reverse($arg as item()*) as item()*")]
-fn reverse(arg: &[sequence::Item]) -> sequence::Sequence {
-    let mut items = arg.to_vec();
+fn reverse(arg: &sequence::Sequence) -> sequence::Sequence {
+    if arg.is_empty() || arg.is_absent() {
+        return arg.clone();
+    }
+    let mut items = arg.items().unwrap().collect::<Vec<_>>();
     items.reverse();
     items.into()
 }
@@ -155,9 +157,6 @@ fn subsequence3(
 
 #[xpath_fn("fn:unordered($sourceSeq as item()*) as item()*")]
 fn unordered(source_seq: &sequence::Sequence) -> sequence::Sequence {
-    // TODO: annoying that a clone is needed there.
-    // would be better if we could get an Rc of sequence so the clone is
-    // much more cheap
     source_seq.clone()
 }
 
