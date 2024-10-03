@@ -48,6 +48,7 @@ pub struct EnvironmentRef {
 }
 
 impl EnvironmentRef {
+    #[cfg(test)]
     pub(crate) fn new(ref_: String) -> Self {
         Self { ref_ }
     }

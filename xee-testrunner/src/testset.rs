@@ -30,10 +30,6 @@ pub(crate) struct TestSet<E: Environment, R: Runnable<E>> {
 }
 
 impl<E: Environment, R: Runnable<E>> TestSet<E, R> {
-    fn base_dir(&self) -> &Path {
-        self.full_path.parent().unwrap()
-    }
-
     pub(crate) fn file_path(&self, catalog: &Catalog<E, R>) -> &Path {
         self.full_path.strip_prefix(catalog.base_dir()).unwrap()
     }

@@ -1,10 +1,10 @@
 use ahash::AHashMap;
 use chrono::Offset;
 use std::fmt;
-use std::rc::Rc;
+
 use xee_xpath::query::RecurseQuery;
 use xee_xpath::{Queries, Query, Recurse, Session};
-use xee_xpath_compiler::context::{DynamicContextBuilder, StaticContextBuilder, Variables};
+use xee_xpath_compiler::context::{DynamicContextBuilder, StaticContextBuilder};
 use xee_xpath_compiler::error::Result;
 use xee_xpath_compiler::{
     error::Error,
@@ -313,10 +313,7 @@ impl Assertable for AssertCount {
         if found_len == self.0 {
             TestOutcome::Passed
         } else {
-            TestOutcome::Failed(Failure::Count(
-                self.clone(),
-                AssertCountFailure::WrongCount(found_len),
-            ))
+            TestOutcome::Failed(Failure::Count(self.clone(), AssertCountFailure(found_len)))
         }
     }
 }
@@ -690,11 +687,13 @@ pub(crate) enum TestCaseResult {
     // Asserts the result of serializing the query matches a given regular
     // expression.
     // XXX values not right
+    #[allow(dead_code)]
     SerializationMatches(AssertSerializationMatches),
     // Asserts that the query can be executed without error, but serializing
     // the result produces a serialization error. The result of the query must
     // be serialized using the serialization options specified within the query
     // (if any).
+    #[allow(dead_code)]
     AssertSerializationError(AssertSerializationError),
     // Asserts that the result of the test matches the sequence type given as
     // the value of the assert-type element.
@@ -882,10 +881,7 @@ impl Loadable for TestCaseResult {
     }
 }
 #[derive(Debug, PartialEq)]
-pub enum AssertCountFailure {
-    WrongCount(usize),
-    WrongValue(Sequence),
-}
+pub struct AssertCountFailure(usize);
 
 #[derive(Debug, PartialEq)]
 pub enum AssertStringValueFailure {

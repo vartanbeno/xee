@@ -16,6 +16,7 @@ use crate::testset::TestSet;
 
 #[derive(Debug)]
 pub(crate) struct TestSetRef {
+    #[allow(dead_code)]
     pub(crate) name: String,
     pub(crate) file: PathBuf,
 }
@@ -24,7 +25,9 @@ pub(crate) struct TestSetRef {
 pub(crate) struct Catalog<E: Environment, R: Runnable<E>> {
     pub(crate) shared_environments: SharedEnvironments<E>,
     pub(crate) full_path: PathBuf,
+    #[allow(dead_code)]
     pub(crate) test_suite: String,
+    #[allow(dead_code)]
     pub(crate) version: String,
     // pub(crate) test_sets: Vec<TestSetRef>,
     pub(crate) file_paths: FxIndexSet<PathBuf>,

@@ -28,6 +28,7 @@ pub(crate) enum SourceContent {
     String(String),
 }
 
+#[allow(dead_code)]
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub(crate) enum Validation {
     Strict,

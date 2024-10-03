@@ -7,6 +7,7 @@ mod resource;
 mod shared;
 mod source;
 mod xpath;
+#[allow(dead_code)]
 mod xslt;
 
 pub(crate) use core::{Environment, EnvironmentRef, TestCaseEnvironment};

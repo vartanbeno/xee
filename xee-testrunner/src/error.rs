@@ -24,7 +24,7 @@ pub enum Error {
     #[error("IO error")]
     IO(#[from] std::io::Error),
     #[error("Var error")]
-    VarError(#[from] std::env::VarError),
+    Var(#[from] std::env::VarError),
     #[error("Globset error")]
     GlobSet(#[from] globset::Error),
 }

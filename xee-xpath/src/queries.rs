@@ -1,7 +1,7 @@
 use xee_interpreter::{context, error::SpannedResult as Result};
 use xee_xpath_compiler::parse;
 
-use std::{rc::Rc, sync::atomic};
+use std::sync::atomic;
 
 use crate::{
     documents::Documents,
