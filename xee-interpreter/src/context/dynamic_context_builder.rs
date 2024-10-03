@@ -60,6 +60,12 @@ impl DocumentsRef {
     }
 }
 
+impl Default for DocumentsRef {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl<'a> DynamicContextBuilder<'a> {
     /// Construct a new `DynamicContextBuilder` with the given `StaticContext`.
     pub fn new(static_context: impl Into<StaticContextRef<'a>>) -> Self {

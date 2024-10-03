@@ -11,7 +11,7 @@ use crate::error;
 use crate::function::StaticFunctions;
 use crate::string::{Collation, Collations};
 
-static STATIC_FUNCTIONS: LazyLock<StaticFunctions> = LazyLock::new(|| StaticFunctions::new());
+static STATIC_FUNCTIONS: LazyLock<StaticFunctions> = LazyLock::new(StaticFunctions::new);
 
 #[derive(Debug)]
 pub struct StaticContext<'a> {

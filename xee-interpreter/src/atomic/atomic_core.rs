@@ -308,11 +308,7 @@ impl Atomic {
             |a, b| collation.compare(a, b),
             default_offset,
         );
-        if let Ok(equal) = equal {
-            equal
-        } else {
-            false
-        }
+        equal.unwrap_or_default()
     }
 
     /// Deep-equal comparison.

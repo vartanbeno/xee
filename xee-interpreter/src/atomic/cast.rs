@@ -264,7 +264,7 @@ pub(crate) fn whitespace_replace(s: &str) -> String {
     // XML Schema whitespace: replace
     // all tab, linefeeds and carriage returns are replaced with a space
     // character
-    s.replace(|c| c == '\t' || c == '\n' || c == '\r', " ")
+    s.replace(['\t', '\n', '\r'], " ")
 }
 
 pub(crate) fn whitespace_collapse(s: &str) -> String {
