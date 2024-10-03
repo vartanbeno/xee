@@ -214,32 +214,31 @@ impl FromStr for ExcludedNamesFilter {
     }
 }
 
-impl ToString for ExcludedNamesFilter {
-    fn to_string(&self) -> String {
-        let mut result = String::new();
+impl std::fmt::Display for ExcludedNamesFilter {
+    fn fmt(&self, fmt: &mut std::fmt::Formatter) -> std::result::Result<(), std::fmt::Error> {
         let mut sorted_names = self.names.keys().collect::<Vec<_>>();
         sorted_names.sort();
         for test_set_name in sorted_names {
             let excluded_names = self.names.get(test_set_name).unwrap();
             let comments = self.comments.get(test_set_name);
-            result.push_str(&format!("= {}\n", test_set_name));
+            fmt.write_str(&format!("= {}\n", test_set_name))?;
             let mut sorted_excluded_names = excluded_names.iter().collect::<Vec<_>>();
             sorted_excluded_names.sort();
             for excluded_name in sorted_excluded_names {
-                result.push_str(&excluded_name.to_string());
+                fmt.write_str(excluded_name)?;
                 if let Some(comments) = comments {
                     let comment = comments.get(excluded_name);
                     if let Some(comment) = comment {
                         let comment = comment.trim();
                         if !comment.is_empty() {
-                            result.push_str(&format!(" # {}", comment));
+                            fmt.write_str(&format!(" # {}", comment))?;
                         }
                     }
                 }
-                result.push('\n');
+                fmt.write_str("\n")?;
             }
         }
-        result
+        Ok(())
     }
 }
 
