@@ -15,6 +15,7 @@ pub(crate) fn convert_sequence_type(
 ) -> syn::Result<TokenStream> {
     match sequence_type {
         ast::SequenceType::Empty => Ok(quote!(
+            #[allow(non_snake_case)]
             let #name = #arg.ensure_empty()?;
         )),
         ast::SequenceType::Item(item) => convert_item(item, fn_arg, name, arg),
@@ -33,22 +34,30 @@ fn convert_item(
     Ok(match &item.occurrence {
         ast::Occurrence::One => {
             let as_ref = if borrow {
-                quote!(let #name = #name.as_ref();)
+                quote!(
+                    #[allow(non_snake_case)]
+                    let #name = #name.as_ref();
+                )
             } else {
                 quote!()
             };
             quote!(
+                #[allow(non_snake_case)]
                 let #name = #occurrence::one(&mut #iterator)?;
                 #as_ref
             )
         }
         ast::Occurrence::Option => {
             let as_ref = if borrow {
-                quote!(let #name = #name.as_deref();)
+                quote!(
+                    #[allow(non_snake_case)]
+                    let #name = #name.as_deref();
+                )
             } else {
                 quote!()
             };
             quote!(
+                #[allow(non_snake_case)]
                 let #name = #occurrence::option(&mut #iterator)?;
                 #as_ref
             )
@@ -57,19 +66,27 @@ fn convert_item(
             if is_sequence_arg(fn_arg) {
                 // we already have a reference argument, so
                 // we don't need to do anything to it
-                return Ok(quote!(let #name = &(#arg);));
+                return Ok(quote!(
+                    #[allow(non_snake_case)]
+                    let #name = &(#arg);
+                ));
             }
             let name_temp =
                 syn::Ident::new(&format!("tmp_{}", name), proc_macro2::Span::call_site());
             let as_ref = if borrow {
-                quote!(let #name_temp = #name_temp.iter().map(|s| s.as_ref()).collect::<Vec<_>>();)
+                quote!(
+                    #[allow(non_snake_case)]
+                    let #name_temp = #name_temp.iter().map(|s| s.as_ref()).collect::<Vec<_>>();
+                )
             } else {
                 quote!()
             };
             let many = quote!(#occurrence::many(&mut #iterator)?);
             quote!(
+                #[allow(non_snake_case)]
                 let #name_temp = #many;
                 #as_ref
+                #[allow(non_snake_case)]
                 let #name = #name_temp.as_slice();
             )
         }

@@ -2,4 +2,4 @@
 source: xee-xpath-macros/src/convert.rs
 expression: "convert(\"empty-sequence()\")"
 ---
-"let a = arguments [0] . ensure_empty () ? ;"
+"# [allow (non_snake_case)] let a = arguments [0] . ensure_empty () ? ;"
