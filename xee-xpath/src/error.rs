@@ -1,6 +1,6 @@
 //! Error handling
 
 pub use xee_interpreter::error::{
-    Error as ErrorValue, SpannedError as Error, SpannedResult as Result,
+    Error as ErrorValue, Result as ValueResult, SpannedError as Error, SpannedResult as Result,
 };
 pub use xee_interpreter::xml::DocumentsError;

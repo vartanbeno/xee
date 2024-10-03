@@ -1,6 +1,6 @@
 use crossterm::style::Stylize;
 
-use xee_xpath_compiler::error::Error;
+use xee_xpath::error::ErrorValue;
 
 use super::assert::Failure;
 
@@ -12,9 +12,9 @@ pub enum TestOutcome {
     Passed,
     UnexpectedError(UnexpectedError),
     Failed(Failure),
-    RuntimeError(Error),
-    CompilationError(Error),
-    UnsupportedExpression(Error),
+    RuntimeError(ErrorValue),
+    CompilationError(ErrorValue),
+    UnsupportedExpression(ErrorValue),
     Unsupported,
     EnvironmentError(String),
 }

@@ -4,8 +4,7 @@ use std::fmt;
 use xot::Xot;
 
 use xee_xpath::query::RecurseQuery;
-use xee_xpath::{context, item, Queries, Query, Recurse, Sequence, Session};
-use xee_xpath_compiler::error::Result;
+use xee_xpath::{context, error, item, Queries, Query, Recurse, Sequence, Session};
 use xee_xpath_compiler::{
     error::Error, occurrence::Occurrence, parse, string::Collation, Name, Runnable,
 };
@@ -22,7 +21,7 @@ pub(crate) trait Assertable {
         &self,
         runnable: &Runnable<'_>,
         xot: &mut Xot,
-        result: &Result<Sequence>,
+        result: &error::ValueResult<Sequence>,
     ) -> TestOutcome {
         match result {
             Ok(sequence) => self.assert_value(runnable, xot, sequence),
@@ -69,7 +68,7 @@ impl Assertable for AssertAnyOf {
         &self,
         runnable: &Runnable<'_>,
         xot: &mut Xot,
-        result: &Result<Sequence>,
+        result: &error::ValueResult<Sequence>,
     ) -> TestOutcome {
         let mut failed_test_results = Vec::new();
         for test_case_result in &self.0 {
@@ -109,7 +108,7 @@ impl Assertable for AssertAllOf {
         &self,
         runnable: &Runnable<'_>,
         xot: &mut Xot,
-        result: &Result<Sequence>,
+        result: &error::ValueResult<Sequence>,
     ) -> TestOutcome {
         for test_case_result in &self.0 {
             let result = test_case_result.assert_result(runnable, xot, result);
@@ -145,7 +144,7 @@ impl Assertable for AssertNot {
         &self,
         runnable: &Runnable<'_>,
         xot: &mut Xot,
-        result: &Result<Sequence>,
+        result: &error::ValueResult<Sequence>,
     ) -> TestOutcome {
         let result = self.0.assert_result(runnable, xot, result);
         match result {
@@ -499,7 +498,7 @@ impl Assertable for AssertTrue {
         if let Ok(mut items) = items {
             if let Ok(item) = items.one() {
                 if let Ok(atomic) = item.to_atomic() {
-                    let b: Result<bool> = atomic.try_into();
+                    let b: error::ValueResult<bool> = atomic.try_into();
                     if let Ok(b) = b {
                         if b {
                             return TestOutcome::Passed;
@@ -532,7 +531,7 @@ impl Assertable for AssertFalse {
         if let Ok(mut items) = items {
             if let Ok(item) = items.one() {
                 if let Ok(atomic) = item.to_atomic() {
-                    let b: Result<bool> = atomic.try_into();
+                    let b: error::ValueResult<bool> = atomic.try_into();
                     if let Ok(b) = b {
                         if !b {
                             return TestOutcome::Passed;
@@ -565,7 +564,7 @@ impl Assertable for AssertStringValue {
         if let Ok(items) = items {
             let strings = items
                 .map(|item| item.string_value(xot))
-                .collect::<Result<Vec<_>>>();
+                .collect::<error::ValueResult<Vec<_>>>();
             match strings {
                 Ok(strings) => {
                     let joined = strings.join(" ");
@@ -628,7 +627,7 @@ impl Assertable for AssertError {
         &self,
         _runnable: &Runnable<'_>,
         _xot: &mut Xot,
-        result: &Result<Sequence>,
+        result: &error::ValueResult<Sequence>,
     ) -> TestOutcome {
         match result {
             Ok(sequence) => TestOutcome::Failed(Failure::Error(self.clone(), sequence.clone())),
@@ -727,7 +726,7 @@ impl TestCaseResult {
         &self,
         runnable: &Runnable<'_>,
         xot: &mut Xot,
-        result: &Result<Sequence>,
+        result: &error::ValueResult<Sequence>,
     ) -> TestOutcome {
         match self {
             TestCaseResult::AnyOf(a) => a.assert_result(runnable, xot, result),
@@ -1003,7 +1002,11 @@ impl fmt::Display for Failure {
     }
 }
 
-fn run_xpath(expr: &XPathExpr, runnable: &Runnable<'_>, xot: &mut Xot) -> Result<Sequence> {
+fn run_xpath(
+    expr: &XPathExpr,
+    runnable: &Runnable<'_>,
+    xot: &mut Xot,
+) -> error::ValueResult<Sequence> {
     let program = parse(&runnable.static_context(), expr).map_err(|e| e.error)?;
 
     let runnable = program.runnable(runnable.dynamic_context());
@@ -1017,7 +1020,7 @@ fn run_xpath_with_result(
     sequence: &Sequence,
     runnable: &Runnable<'_>,
     xot: &mut Xot,
-) -> Result<Sequence> {
+) -> error::ValueResult<Sequence> {
     let mut builder = context::StaticContextBuilder::default();
     let name = Name::name("result");
     builder.variable_names([name.clone()]);

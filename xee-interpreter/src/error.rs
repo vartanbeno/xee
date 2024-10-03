@@ -686,7 +686,9 @@ impl From<OutOfBoundsError> for Error {
     }
 }
 
+/// The result type for errors without span information.
 pub type Result<T> = std::result::Result<T, Error>;
+
 /// The result type for errors with (optional) source spans.
 ///
 /// Also known as `SpannedResult` internally.
