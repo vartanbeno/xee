@@ -20,38 +20,45 @@ use crate::string::Collation;
 use crate::wrap_xpath_fn;
 
 #[xpath_fn("fn:empty($arg as item()*) as xs:boolean")]
-fn empty(arg: &[sequence::Item]) -> bool {
+fn empty(arg: &sequence::Sequence) -> bool {
     arg.is_empty()
 }
 
 #[xpath_fn("fn:exists($arg as item()*) as xs:boolean")]
-fn exists(arg: &[sequence::Item]) -> bool {
+fn exists(arg: &sequence::Sequence) -> bool {
     !arg.is_empty()
 }
 
 #[xpath_fn("fn:head($arg as item()*) as item()?")]
-fn head(arg: &[sequence::Item]) -> Option<sequence::Item> {
-    arg.first().cloned()
+fn head(arg: &sequence::Sequence) -> Option<sequence::Item> {
+    if arg.is_absent() {
+        return None;
+    }
+    arg.items().unwrap().next().clone()
 }
 
 #[xpath_fn("fn:tail($arg as item()*) as item()*")]
-fn tail(arg: &[sequence::Item]) -> sequence::Sequence {
-    if arg.is_empty() {
+fn tail(arg: &sequence::Sequence) -> sequence::Sequence {
+    if arg.is_empty() || arg.is_absent() {
         return sequence::Sequence::empty();
     }
-    arg[1..].to_vec().into()
+    let mut items = arg.items().unwrap();
+    // skip first item
+    items.next();
+    // now collect the rest
+    items.collect::<Vec<_>>().into()
 }
 
 #[xpath_fn(
     "fn:insert-before($target as item()*, $position as xs:integer, $inserts as item()*) as item()*"
 )]
 fn insert_before(
-    target: &[sequence::Item],
+    target: &sequence::Sequence,
     position: IBig,
-    inserts: &[sequence::Item],
+    inserts: &sequence::Sequence,
 ) -> error::Result<sequence::Sequence> {
     if target.is_empty() {
-        return Ok(inserts.to_vec().into());
+        return Ok(inserts.clone());
     }
     let position = if position < IBig::from(0) {
         IBig::from(0)
@@ -66,13 +73,25 @@ fn insert_before(
         position
     };
 
-    let items = target[0..position]
-        .iter()
-        .chain(inserts)
-        .chain(target[position..].iter())
-        .cloned()
-        .collect::<Vec<_>>();
-    Ok(items.into())
+    let mut target_items = target.items()?;
+    let mut result = Vec::with_capacity(target.len() + inserts.len());
+    let mut i = 0;
+    if position > 0 {
+        while let Some(item) = target_items.next() {
+            result.push(item.clone());
+            i += 1;
+            if i == position {
+                break;
+            }
+        }
+    }
+    for item in inserts.items()? {
+        result.push(item);
+    }
+    while let Some(item) = target_items.next() {
+        result.push(item);
+    }
+    Ok(result.into())
 }
 
 #[xpath_fn("fn:remove($target as item()*, $position as xs:integer) as item()*")]
@@ -222,34 +241,34 @@ fn deep_equal(
 }
 
 #[xpath_fn("fn:zero-or-one($arg as item()*) as item()?")]
-fn zero_or_one(arg: &[sequence::Item]) -> error::Result<Option<sequence::Item>> {
+fn zero_or_one(arg: &sequence::Sequence) -> error::Result<Option<sequence::Item>> {
     match arg.len() {
         0 => Ok(None),
-        1 => Ok(Some(arg[0].clone())),
+        1 => Ok(arg.items()?.next()),
         _ => Err(error::Error::FORG0003),
     }
 }
 
 #[xpath_fn("fn:one-or-more($arg as item()*) as item()+")]
-fn one_or_more(arg: &[sequence::Item]) -> error::Result<sequence::Sequence> {
+fn one_or_more(arg: &sequence::Sequence) -> error::Result<sequence::Sequence> {
     if arg.is_empty() {
         Err(error::Error::FORG0004)
     } else {
-        Ok(arg.to_vec().into())
+        Ok(arg.clone())
     }
 }
 
 #[xpath_fn("fn:exactly-one($arg as item()*) as item()")]
-fn exactly_one(arg: &[sequence::Item]) -> error::Result<sequence::Item> {
+fn exactly_one(arg: &sequence::Sequence) -> error::Result<sequence::Item> {
     if arg.len() == 1 {
-        Ok(arg[0].clone())
+        Ok(arg.items()?.next().unwrap())
     } else {
         Err(error::Error::FORG0005)
     }
 }
 
 #[xpath_fn("fn:count($arg as item()*) as xs:integer")]
-fn count(arg: &[sequence::Item]) -> IBig {
+fn count(arg: &sequence::Sequence) -> IBig {
     arg.len().into()
 }
 
