@@ -1,4 +1,4 @@
-use std::{borrow::Cow, cell::RefCell, ops::Deref, rc::Rc};
+use std::{cell::RefCell, ops::Deref, rc::Rc};
 
 use crate::{sequence, xml};
 
@@ -86,7 +86,6 @@ impl<'a> DynamicContextBuilder<'a> {
         self.documents = documents.into();
         self
     }
-
 
     /// Set the variables of the [`DynamicContext`].
     ///
