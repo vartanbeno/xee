@@ -8,7 +8,7 @@ mod signature;
 mod static_function;
 
 pub use array::Array;
-pub(crate) use function_core::Function;
+pub use function_core::Function;
 pub use function_core::{InlineFunctionId, StaticFunctionId};
 pub use inline_function::{CastType, InlineFunction, Name};
 pub use map::Map;

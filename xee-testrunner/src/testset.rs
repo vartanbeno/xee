@@ -4,7 +4,7 @@ use std::{
 };
 
 use anyhow::Result;
-use xee_xpath::{Queries, Query, StaticContextBuilder};
+use xee_xpath::{context, Queries, Query};
 use xee_xpath_load::{convert_string, ContextLoadable};
 
 use crate::{
@@ -78,8 +78,8 @@ impl<E: Environment, R: Runnable<E>> TestSet<E, R> {
 }
 
 impl<E: Environment, R: Runnable<E>> ContextLoadable<Path> for TestSet<E, R> {
-    fn static_context_builder<'n>() -> StaticContextBuilder<'n> {
-        let mut builder = StaticContextBuilder::default();
+    fn static_context_builder<'n>() -> context::StaticContextBuilder<'n> {
+        let mut builder = context::StaticContextBuilder::default();
         builder.default_element_namespace(XPATH_TEST_NS);
         builder
     }

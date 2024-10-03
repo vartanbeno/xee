@@ -40,8 +40,10 @@
 //! # Ok::<(), xee_xpath::error::Error>(())
 //! ```
 pub mod atomic;
+pub mod context;
 mod documents;
 pub mod error;
+pub mod item;
 mod itemable;
 pub mod iter;
 mod queries;
@@ -53,8 +55,5 @@ pub use itemable::Itemable;
 pub use queries::Queries;
 pub use query::{Query, Recurse};
 pub use session::Session;
-pub use xee_interpreter::atomic::Atomic;
-pub use xee_interpreter::context::{DynamicContextBuilder, StaticContextBuilder, Variables};
-pub use xee_interpreter::function::{Array, Map};
-pub use xee_interpreter::sequence::{Item, Sequence};
+pub use xee_interpreter::sequence::Sequence;
 pub use xee_interpreter::xml::{DocumentHandle, Uri};

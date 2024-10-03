@@ -3,16 +3,10 @@ use std::{
     cell::RefCell,
     fmt::{self, Display, Formatter},
     path::{Path, PathBuf},
-    rc::Rc,
 };
 
-use xee_xpath::{Queries, Query, StaticContextBuilder};
-use xee_xpath_compiler::{
-    context::{DynamicContextBuilder, StaticContext, Variables},
-    parse, sequence,
-    xml::Documents,
-    Name,
-};
+use xee_xpath::{context, Queries, Query};
+use xee_xpath_compiler::{parse, sequence, xml::Documents, Name};
 use xee_xpath_load::{convert_string, ContextLoadable};
 use xot::Xot;
 
@@ -127,8 +121,8 @@ impl EnvironmentSpec {
         &self,
         xot: &mut Xot,
         documents: &RefCell<Documents>,
-    ) -> Result<Variables> {
-        let mut variables = Variables::new();
+    ) -> Result<context::Variables> {
+        let mut variables = context::Variables::new();
         for source in &self.sources {
             if let SourceRole::Var(name) = &source.role {
                 let name = &name[1..]; // without $
@@ -137,7 +131,7 @@ impl EnvironmentSpec {
             }
         }
         for param in &self.params {
-            let static_context = StaticContext::default();
+            let static_context = context::StaticContext::default();
             let select = (param.select.as_ref()).expect("param: missing select not supported");
             let program = parse(&static_context, select);
             if program.is_err() {
@@ -146,7 +140,7 @@ impl EnvironmentSpec {
             }
             let program = program.unwrap();
 
-            let dynamic_context_builder = DynamicContextBuilder::new(static_context);
+            let dynamic_context_builder = context::DynamicContextBuilder::new(static_context);
             let dynamic_context = dynamic_context_builder.build();
             let runnable = program.runnable(&dynamic_context);
             let result = runnable.many(xot).map_err(|e| e.error)?;
@@ -157,8 +151,8 @@ impl EnvironmentSpec {
 }
 
 impl ContextLoadable<Path> for EnvironmentSpec {
-    fn static_context_builder<'n>() -> StaticContextBuilder<'n> {
-        let mut builder = StaticContextBuilder::default();
+    fn static_context_builder<'n>() -> context::StaticContextBuilder<'n> {
+        let mut builder = context::StaticContextBuilder::default();
         builder.default_element_namespace(XPATH_TEST_NS);
         builder
     }

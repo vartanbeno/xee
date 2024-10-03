@@ -1,7 +1,7 @@
 use anyhow::Result;
 use std::io::Stdout;
 use std::path::{Path, PathBuf};
-use xee_xpath::{Queries, Query, StaticContextBuilder};
+use xee_xpath::{context, Queries, Query};
 use xee_xpath_load::{convert_string, ContextLoadable, PathLoadable};
 
 use crate::environment::{Environment, SharedEnvironments};
@@ -55,8 +55,8 @@ impl<E: Environment, R: Runnable<E>> Catalog<E, R> {
 }
 
 impl<E: Environment, R: Runnable<E>> ContextLoadable<Path> for Catalog<E, R> {
-    fn static_context_builder<'n>() -> StaticContextBuilder<'n> {
-        let mut builder = StaticContextBuilder::default();
+    fn static_context_builder<'n>() -> context::StaticContextBuilder<'n> {
+        let mut builder = context::StaticContextBuilder::default();
         builder.default_element_namespace(XPATH_TEST_NS);
         builder
     }

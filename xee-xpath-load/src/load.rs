@@ -7,7 +7,7 @@ use std::{
 
 use xee_xpath_compiler::sequence::Item;
 
-use xee_xpath::{error::Result as XPathResult, StaticContextBuilder, Uri};
+use xee_xpath::{context::StaticContextBuilder, error::Result as XPathResult, Uri};
 use xee_xpath::{DocumentHandle, Documents, Queries, Query, Session};
 
 pub fn convert_string(_: &mut Session, item: &Item) -> XPathResult<String> {

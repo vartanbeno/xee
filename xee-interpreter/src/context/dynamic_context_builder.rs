@@ -4,6 +4,13 @@ use crate::{sequence, xml};
 
 use super::{DynamicContext, StaticContext, Variables};
 
+/// A builder for constructing a [`DynamicContext`].
+///
+/// This needs to be supplied a [`StaticContext`] (or a reference to one) in
+/// order to construct it.
+///
+/// You can supply a context item, documents, variables and the like in order
+/// to construct a dynamic context used to execute an XPath instruction.
 #[derive(Debug, Clone)]
 pub struct DynamicContextBuilder<'a> {
     static_context: StaticContextRef<'a>,

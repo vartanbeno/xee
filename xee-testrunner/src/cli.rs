@@ -1,11 +1,10 @@
 use anyhow::Result;
 use clap::{Parser, Subcommand};
-use xee_xpath::StaticContextBuilder;
 
 use std::fs;
 use std::path::{Path, PathBuf};
-use std::rc::Rc;
 
+use xee_xpath::context;
 use xee_xpath_compiler::context::DynamicContextBuilder;
 use xee_xpath_load::PathLoadable;
 use xot::Xot;
@@ -94,7 +93,7 @@ pub fn cli() -> Result<()> {
 
     let xot = Xot::new();
 
-    let mut static_context_builder = StaticContextBuilder::default();
+    let mut static_context_builder = context::StaticContextBuilder::default();
     static_context_builder.default_element_namespace(XPATH_TEST_NS);
     let static_context = static_context_builder.build();
 

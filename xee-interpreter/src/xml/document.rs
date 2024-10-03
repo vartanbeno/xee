@@ -37,6 +37,7 @@ impl From<xot::Error> for DocumentsError {
     }
 }
 
+/// A URI for a document.
 #[derive(Debug, Clone, Eq, PartialEq, Hash)]
 pub struct Uri(pub(crate) String);
 

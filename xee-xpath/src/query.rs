@@ -10,7 +10,7 @@ use crate::{error, Itemable};
 
 // import only for documentation purposes
 #[cfg(doc)]
-use crate::DynamicContextBuilder;
+use crate::context::DynamicContextBuilder;
 #[cfg(doc)]
 use crate::Queries;
 

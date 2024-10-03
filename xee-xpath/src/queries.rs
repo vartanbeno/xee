@@ -42,7 +42,7 @@ impl Default for Queries<'_> {
 impl<'a> Queries<'a> {
     /// Construct a new collection of queries
     ///
-    /// Supply a default static context builder, which will be used
+    /// Supply a default static context builder, which is used
     /// by default to construct a static context if none is supplied
     /// explicitly.
     pub fn new(default_static_context_builder: context::StaticContextBuilder<'a>) -> Self {

@@ -1,7 +1,7 @@
 use ibig::{ibig, IBig};
 use xee_interpreter::sequence::Sequence;
 use xee_xpath::{
-    error, query::RecurseQuery, Documents, Item, Queries, Query, Recurse, Session, Uri,
+    error, item, query::RecurseQuery, Documents, Queries, Query, Recurse, Session, Uri,
 };
 
 #[test]
@@ -150,7 +150,7 @@ fn test_option_query_recurse() -> error::Result<()> {
 
     // a result is either a "value" or an "any-of" element
     let result_query = queries.one("/doc/result", |session, item| {
-        let f = |session: &mut Session, item: &Item, recurse: &Recurse<_>| {
+        let f = |session: &mut Session, item: &item::Item, recurse: &Recurse<_>| {
             // we either call the any of query, which recursively
             // calls this function
             if let Some(any_of) = any_of_recurse.execute(session, item, recurse)? {
@@ -211,7 +211,7 @@ fn test_many_query_recurse() -> error::Result<()> {
 
     // a result is either a "value" or an "any-of" element
     let result_query = queries.one("/doc/result", |session, item| {
-        let f = |session: &mut Session, item: &Item, recurse: &Recurse<_>| {
+        let f = |session: &mut Session, item: &item::Item, recurse: &Recurse<_>| {
             // we either call the any of query, which recursively
             // calls this function
             let elements = any_of_recurse.execute(session, item, recurse)?;

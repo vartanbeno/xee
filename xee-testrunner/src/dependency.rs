@@ -1,6 +1,6 @@
 use anyhow::Result;
 
-use xee_xpath::{Queries, Query, StaticContextBuilder};
+use xee_xpath::{context, Queries, Query};
 use xee_xpath_load::{convert_string, Loadable};
 
 use crate::{hashmap::FxIndexSet, ns::XPATH_TEST_NS};
@@ -192,8 +192,8 @@ impl Dependencies {
 }
 
 impl Loadable for Dependencies {
-    fn static_context_builder<'n>() -> StaticContextBuilder<'n> {
-        let mut builder = StaticContextBuilder::default();
+    fn static_context_builder<'n>() -> context::StaticContextBuilder<'n> {
+        let mut builder = context::StaticContextBuilder::default();
         builder.default_element_namespace(XPATH_TEST_NS);
         builder
     }
