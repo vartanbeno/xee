@@ -1,17 +1,12 @@
 use ahash::AHashMap;
-use std::borrow::Cow;
-use std::cell::RefCell;
 use std::fmt::Debug;
-use std::rc::Rc;
 
 use xee_xpath_ast::ast;
 
 use crate::error::Error;
 use crate::sequence;
-use crate::xml;
 
 use super::dynamic_context_builder::StaticContextRef;
-use super::static_context::StaticContext;
 use super::DocumentsRef;
 
 /// A map of variables

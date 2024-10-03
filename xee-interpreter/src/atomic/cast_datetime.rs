@@ -63,7 +63,7 @@ impl atomic::Atomic {
         let offset = date_time.offset;
         let date_time = date_time.date_time;
         s.push_str(&date_time.format("%Y-%m-%dT%H:%M:%S").to_string());
-        let millis = date_time.timestamp_subsec_millis();
+        let millis = date_time.and_utc().timestamp_subsec_millis();
         Self::push_millis(&mut s, millis);
         if let Some(offset) = offset {
             Self::push_canonical_time_zone_offset(&mut s, &offset);

@@ -9,7 +9,6 @@ use icu::{
     collator::{self, AlternateHandling, CaseFirst, Collator, MaxVariable, Strength},
     locid::Locale,
 };
-use icu_provider_adapters::{either::EitherProvider, fallback::LocaleFallbackProvider};
 use url::Url;
 
 use crate::error;
