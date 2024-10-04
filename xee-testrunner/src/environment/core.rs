@@ -30,10 +30,7 @@ pub(crate) trait Environment: Sized {
     fn environment_spec(&self) -> &EnvironmentSpec;
 
     // a query to load it from XML
-    fn load<'a>(
-        queries: Queries<'a>,
-        path: &'a Path,
-    ) -> Result<(Queries<'a>, impl Query<Self> + 'a)>;
+    fn load(queries: &Queries, path: &Path) -> Result<impl Query<Self>>;
 }
 
 // In a test case we can include an environment directly, or refer to an environment
@@ -160,14 +157,8 @@ impl ContextLoadable<Path> for EnvironmentSpec {
         builder
     }
 
-    fn load_with_context<'a>(
-        queries: Queries<'a>,
-        path: &'a Path,
-    ) -> Result<(Queries<'a>, impl Query<Self> + 'a)>
-    where
-        EnvironmentSpec: 'a,
-    {
-        let (queries, sources_query) = Source::load(queries)?;
+    fn load_with_context(queries: &Queries, path: &Path) -> Result<impl Query<Self>> {
+        let sources_query = Source::load(queries)?;
 
         let name_query = queries.one("@name/string()", convert_string)?;
         let select_query = queries.option("@select/string()", convert_string)?;
@@ -217,7 +208,7 @@ impl ContextLoadable<Path> for EnvironmentSpec {
             Ok(environment_spec)
         })?;
 
-        Ok((queries, environment_query))
+        Ok(environment_query)
     }
 }
 

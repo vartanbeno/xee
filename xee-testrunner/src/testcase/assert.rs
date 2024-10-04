@@ -758,7 +758,7 @@ impl Loadable for TestCaseResult {
         builder
     }
 
-    fn load(queries: Queries) -> anyhow::Result<(Queries, impl Query<Self>)> {
+    fn load(queries: &Queries) -> anyhow::Result<impl Query<Self>> {
         let code_query = queries.one("@code/string()", convert_string)?;
         let error_query = queries.one(".", move |session, item| {
             Ok(TestCaseResult::AssertError(AssertError::new(
@@ -862,7 +862,7 @@ impl Loadable for TestCaseResult {
             let recurse = Recurse::new(&f);
             recurse.execute(session, item)
         })?;
-        Ok((queries, result_query))
+        Ok(result_query)
     }
 }
 #[derive(Debug, PartialEq)]

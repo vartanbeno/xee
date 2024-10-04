@@ -79,9 +79,7 @@ impl KnownDependencies {
 }
 
 impl Dependency {
-    pub(crate) fn load(
-        queries: Queries,
-    ) -> Result<(Queries, impl Query<Vec<Vec<Dependency>>> + '_)> {
+    pub(crate) fn load<'a>(queries: &'a Queries) -> Result<impl Query<Vec<Vec<Dependency>>> + 'a> {
         let satisfied_query = queries.option("@satisfied/string()", convert_string)?;
         let type_query = queries.one("@type/string()", convert_string)?;
         let value_query = queries.one("@value/string()", convert_string)?;
@@ -112,7 +110,7 @@ impl Dependency {
                 })
                 .collect::<Vec<Dependency>>())
         })?;
-        Ok((queries, dependency_query))
+        Ok(dependency_query)
     }
 }
 
@@ -199,17 +197,14 @@ impl Loadable for Dependencies {
         builder
     }
 
-    fn load(queries: Queries) -> Result<(Queries, impl Query<Self>)> {
-        let (queries, dependency_query) = Dependency::load(queries)?;
+    fn load(queries: &Queries) -> Result<impl Query<Self>> {
+        let dependency_query = Dependency::load(queries)?;
 
-        Ok((
-            queries,
-            dependency_query.map(|dependencies, _, _| {
-                Ok(Dependencies {
-                    dependencies: dependencies.into_iter().flatten().collect(),
-                })
-            }),
-        ))
+        Ok(dependency_query.map(|dependencies, _, _| {
+            Ok(Dependencies {
+                dependencies: dependencies.into_iter().flatten().collect(),
+            })
+        }))
     }
 }
 

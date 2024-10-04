@@ -90,12 +90,12 @@ impl Source {
         }
     }
 
-    pub(crate) fn load(queries: Queries) -> Result<(Queries, impl Query<Vec<Vec<Self>>> + '_)> {
+    pub(crate) fn load<'a>(queries: &'a Queries) -> Result<impl Query<Vec<Vec<Self>>> + 'a> {
         let file_query = queries.option("@file/string()", convert_string)?;
         let content_query = queries.one("content/string()", convert_string)?;
         let role_query = queries.option("@role/string()", convert_string)?;
         let uri_query = queries.option("@uri/string()", convert_string)?;
-        let (queries, metadata_query) = Metadata::load(queries)?;
+        let metadata_query = Metadata::load(queries)?;
 
         let sources_query = queries.many("source", move |session, item| {
             let content = if let Some(file) = file_query.execute(session, item)? {
@@ -146,6 +146,6 @@ impl Source {
 
             Ok(sources)
         })?;
-        Ok((queries, sources_query))
+        Ok(sources_query)
     }
 }

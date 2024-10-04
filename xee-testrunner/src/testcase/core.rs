@@ -25,12 +25,7 @@ pub(crate) trait Runnable<E: Environment>: std::marker::Sized {
         test_set: &TestSet<E, Self>,
     ) -> TestOutcome;
 
-    fn load<'a>(
-        queries: Queries<'a>,
-        path: &'a Path,
-    ) -> anyhow::Result<(Queries<'a>, impl Query<Self> + 'a)>
-    where
-        E: 'a;
+    fn load(queries: &Queries, path: &Path) -> anyhow::Result<impl Query<Self>>;
 }
 
 #[derive(Debug, PartialEq, Eq)]
@@ -108,18 +103,12 @@ impl<E: Environment> ContextLoadable<Path> for TestCase<E> {
         builder
     }
 
-    fn load_with_context<'a>(
-        queries: Queries<'a>,
-        path: &'a Path,
-    ) -> anyhow::Result<(Queries<'a>, impl Query<Self> + 'a)>
-    where
-        E: 'a,
-    {
+    fn load_with_context(queries: &Queries, path: &Path) -> anyhow::Result<impl Query<Self>> {
         let name_query = queries.one("@name/string()", convert_string)?;
-        let (queries, metadata_query) = Metadata::load(queries)?;
+        let metadata_query = Metadata::load(queries)?;
 
         let ref_query = queries.option("@ref/string()", convert_string)?;
-        let (queries, environment_query) = E::load(queries, path)?;
+        let environment_query = E::load(queries, path)?;
         let local_environment_query = queries.many("environment", move |session, item| {
             let ref_ = ref_query.execute(session, item)?;
             if let Some(ref_) = ref_ {
@@ -131,8 +120,8 @@ impl<E: Environment> ContextLoadable<Path> for TestCase<E> {
             }
         })?;
 
-        let (queries, result_query) = TestCaseResult::load(queries)?;
-        let (queries, dependency_query) = Dependency::load(queries)?;
+        let result_query = TestCaseResult::load(queries)?;
+        let dependency_query = Dependency::load(queries)?;
         let test_case_query = queries.one(".", move |session, item| {
             let test_case = TestCase {
                 name: name_query.execute(session, item)?,
@@ -150,7 +139,7 @@ impl<E: Environment> ContextLoadable<Path> for TestCase<E> {
             Ok(test_case)
         })?;
 
-        Ok((queries, test_case_query))
+        Ok(test_case_query)
     }
 }
 

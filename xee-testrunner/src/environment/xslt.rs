@@ -50,11 +50,8 @@ impl Environment for XsltEnvironmentSpec {
         &self.environment_spec
     }
 
-    fn load<'a>(
-        queries: Queries<'a>,
-        path: &'a Path,
-    ) -> Result<(Queries<'a>, impl Query<Self> + 'a)> {
-        let (queries, environment_spec_query) = EnvironmentSpec::load_with_context(queries, path)?;
+    fn load(queries: &Queries, path: &Path) -> Result<impl Query<Self>> {
+        let environment_spec_query = EnvironmentSpec::load_with_context(queries, path)?;
         let xslt_environment_spec_query = queries.one(".", move |session, item| {
             Ok(XsltEnvironmentSpec {
                 environment_spec: environment_spec_query.execute(session, item)?,
@@ -64,6 +61,6 @@ impl Environment for XsltEnvironmentSpec {
                 outputs: vec![],
             })
         })?;
-        Ok((queries, xslt_environment_spec_query))
+        Ok(xslt_environment_spec_query)
     }
 }

@@ -101,9 +101,7 @@ fn test_nested_query() -> error::Result<()> {
     let queries = Queries::default();
 
     let f_query = queries.one("./number()", |_, item| Ok(item.try_into_value::<f64>()?))?;
-    let q = queries.many("/root/a", |context, item| {
-        Ok(f_query.execute(context, item)?)
-    })?;
+    let q = queries.many("/root/a", |context, item| f_query.execute(context, item))?;
 
     let mut session = queries.session(documents);
     let r = q.execute(&mut session, doc)?;

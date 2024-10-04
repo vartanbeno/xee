@@ -21,12 +21,7 @@ pub fn convert_boolean(session: &mut Session, item: &Item) -> XPathResult<bool> 
 pub trait ContextLoadable<C: ?Sized>: Sized {
     fn static_context_builder<'namespaces>() -> StaticContextBuilder<'namespaces>;
 
-    fn load_with_context<'a>(
-        queries: Queries<'a>,
-        context: &'a C,
-    ) -> Result<(Queries<'a>, impl Query<Self> + 'a)>
-    where
-        Self: 'a;
+    fn load_with_context(queries: &Queries, context: &C) -> Result<impl Query<Self>>;
 
     fn load_from_xml_with_context(xml: &str, context: &C) -> Result<Self> {
         let mut documents = Documents::new();
@@ -44,7 +39,7 @@ pub trait ContextLoadable<C: ?Sized>: Sized {
         let static_context_builder = Self::static_context_builder();
         let queries = Queries::new(static_context_builder);
 
-        let (queries, query) = Self::load_with_context(queries, context)?;
+        let query = Self::load_with_context(&queries, context)?;
 
         let mut session = queries.session(documents);
 
@@ -55,7 +50,7 @@ pub trait ContextLoadable<C: ?Sized>: Sized {
 pub trait Loadable: Sized {
     fn static_context_builder<'namespaces>() -> StaticContextBuilder<'namespaces>;
 
-    fn load(queries: Queries) -> Result<(Queries, impl Query<Self>)>;
+    fn load(queries: &Queries) -> Result<impl Query<Self>>;
 
     fn load_from_xml(xml: &str) -> Result<Self> {
         Self::load_from_xml_with_context(xml, &())
@@ -71,13 +66,7 @@ impl<T: Loadable> ContextLoadable<()> for T {
         T::static_context_builder()
     }
 
-    fn load_with_context<'a>(
-        queries: Queries<'a>,
-        _context: &'a (),
-    ) -> Result<(Queries<'a>, impl Query<Self> + 'a)>
-    where
-        T: 'a,
-    {
+    fn load_with_context(queries: &Queries, _context: &()) -> Result<impl Query<Self>> {
         Self::load(queries)
     }
 }

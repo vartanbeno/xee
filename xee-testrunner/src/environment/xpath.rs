@@ -70,11 +70,8 @@ impl Environment for XPathEnvironmentSpec {
         &self.environment_spec
     }
 
-    fn load<'a>(
-        queries: Queries<'a>,
-        path: &'a Path,
-    ) -> Result<(Queries<'a>, impl Query<Self> + 'a)> {
-        let (queries, environment_spec_query) = EnvironmentSpec::load_with_context(queries, path)?;
+    fn load(queries: &Queries, path: &Path) -> Result<impl Query<Self>> {
+        let environment_spec_query = EnvironmentSpec::load_with_context(queries, path)?;
         let prefix_query = queries.one("@prefix/string()", convert_string)?;
         let namespace_uri_query = queries.one("@uri/string()", convert_string)?;
 
@@ -93,6 +90,6 @@ impl Environment for XPathEnvironmentSpec {
                 static_base_uris: vec![],
             })
         })?;
-        Ok((queries, xpath_environment_spec_query))
+        Ok(xpath_environment_spec_query)
     }
 }
