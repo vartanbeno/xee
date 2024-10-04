@@ -72,13 +72,13 @@ pub trait Query<V> {
     /// settings (such as variables), and then execute a query against it.
     fn execute_build_context(
         &self,
-        sesssion: &mut Session,
+        session: &mut Session,
         build: impl FnOnce(&mut context::DynamicContextBuilder),
     ) -> Result<V> {
         let mut dynamic_context_builder = self.dynamic_context_builder();
         build(&mut dynamic_context_builder);
         let dynamic_context = dynamic_context_builder.build();
-        self.execute_with_context(sesssion, &dynamic_context)
+        self.execute_with_context(session, &dynamic_context)
     }
 }
 
