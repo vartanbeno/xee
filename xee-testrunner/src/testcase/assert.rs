@@ -5,7 +5,7 @@ use xot::xmlname::OwnedName as Name;
 use xot::Xot;
 
 use xee_xpath::query::RecurseQuery;
-use xee_xpath::{context, error, item, Queries, Query, Recurse, Sequence, Session};
+use xee_xpath::{context, error, Item, Queries, Query, Recurse, Sequence, Session};
 use xee_xpath_compiler::{occurrence::Occurrence, parse, string::Collation, Runnable};
 use xee_xpath_load::{convert_boolean, convert_string, Loadable};
 
@@ -827,48 +827,41 @@ impl Loadable for TestCaseResult {
         // `query.option()` to detect entries (like "error", "assert-true", etc)
         // doesn't work for "any-of", as it contains a list of entries.
         let local_name_query = queries.one("local-name()", convert_string)?;
-        let result_query = queries.one(
-            "result/*",
-            move |session: &mut Session, item: &item::Item| {
-                let f = |session: &mut Session,
-                         item: &item::Item,
-                         recurse: &Recurse<TestCaseResult>| {
-                    let local_name = local_name_query.execute(session, item)?;
-                    let r = match local_name.as_ref() {
-                        "any-of" => {
-                            let contents = any_all_recurse.execute(session, item, recurse)?;
-                            TestCaseResult::AnyOf(AssertAnyOf::new(contents))
-                        }
-                        "all-of" => {
-                            let contents = any_all_recurse.execute(session, item, recurse)?;
-                            TestCaseResult::AllOf(AssertAllOf::new(contents))
-                        }
-                        "not" => {
-                            let contents = not_recurse.execute(session, item, recurse)?;
-                            TestCaseResult::Not(AssertNot::new(contents))
-                        }
-                        "error" => error_query.execute(session, item)?,
-                        "assert-true" => TestCaseResult::AssertTrue(AssertTrue::new()),
-                        "assert-false" => TestCaseResult::AssertFalse(AssertFalse::new()),
-                        "assert-count" => assert_count_query.execute(session, item)?,
-                        "assert-xml" => assert_xml_query.execute(session, item)?,
-                        "assert-eq" => assert_eq_query.execute(session, item)?,
-                        "assert-deep-eq" => assert_deep_eq_query.execute(session, item)?,
-                        "assert-string-value" => {
-                            assert_string_value_query.execute(session, item)?
-                        }
-                        "assert" => assert_query.execute(session, item)?,
-                        "assert-permutation" => assert_permutation_query.execute(session, item)?,
-                        "assert-empty" => TestCaseResult::AssertEmpty(AssertEmpty::new()),
-                        "assert-type" => assert_type_query.execute(session, item)?,
-                        _ => TestCaseResult::Unsupported,
-                    };
-                    Ok(r)
+        let result_query = queries.one("result/*", move |session: &mut Session, item: &Item| {
+            let f = |session: &mut Session, item: &Item, recurse: &Recurse<TestCaseResult>| {
+                let local_name = local_name_query.execute(session, item)?;
+                let r = match local_name.as_ref() {
+                    "any-of" => {
+                        let contents = any_all_recurse.execute(session, item, recurse)?;
+                        TestCaseResult::AnyOf(AssertAnyOf::new(contents))
+                    }
+                    "all-of" => {
+                        let contents = any_all_recurse.execute(session, item, recurse)?;
+                        TestCaseResult::AllOf(AssertAllOf::new(contents))
+                    }
+                    "not" => {
+                        let contents = not_recurse.execute(session, item, recurse)?;
+                        TestCaseResult::Not(AssertNot::new(contents))
+                    }
+                    "error" => error_query.execute(session, item)?,
+                    "assert-true" => TestCaseResult::AssertTrue(AssertTrue::new()),
+                    "assert-false" => TestCaseResult::AssertFalse(AssertFalse::new()),
+                    "assert-count" => assert_count_query.execute(session, item)?,
+                    "assert-xml" => assert_xml_query.execute(session, item)?,
+                    "assert-eq" => assert_eq_query.execute(session, item)?,
+                    "assert-deep-eq" => assert_deep_eq_query.execute(session, item)?,
+                    "assert-string-value" => assert_string_value_query.execute(session, item)?,
+                    "assert" => assert_query.execute(session, item)?,
+                    "assert-permutation" => assert_permutation_query.execute(session, item)?,
+                    "assert-empty" => TestCaseResult::AssertEmpty(AssertEmpty::new()),
+                    "assert-type" => assert_type_query.execute(session, item)?,
+                    _ => TestCaseResult::Unsupported,
                 };
-                let recurse = Recurse::new(&f);
-                recurse.execute(session, item)
-            },
-        )?;
+                Ok(r)
+            };
+            let recurse = Recurse::new(&f);
+            recurse.execute(session, item)
+        })?;
         Ok((queries, result_query))
     }
 }

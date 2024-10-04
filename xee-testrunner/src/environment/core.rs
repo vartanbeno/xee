@@ -7,7 +7,7 @@ use std::{
 use anyhow::Result;
 use xot::xmlname::OwnedName as Name;
 
-use xee_xpath::{context, item, Queries, Query};
+use xee_xpath::{context, Item, Queries, Query};
 use xee_xpath_compiler::{parse, xml::Documents};
 use xee_xpath_load::{convert_string, ContextLoadable};
 use xot::Xot;
@@ -110,11 +110,11 @@ impl EnvironmentSpec {
         &self,
         xot: &mut Xot,
         documents: &RefCell<Documents>,
-    ) -> Result<Option<item::Item>> {
+    ) -> Result<Option<Item>> {
         for source in &self.sources {
             if let SourceRole::Context = source.role {
                 let node = source.node(xot, &self.base_dir, documents)?;
-                return Ok(Some(item::Item::from(node)));
+                return Ok(Some(Item::from(node)));
             }
         }
         Ok(None)
@@ -130,7 +130,7 @@ impl EnvironmentSpec {
             if let SourceRole::Var(name) = &source.role {
                 let name = &name[1..]; // without $
                 let node = source.node(xot, &self.base_dir, documents)?;
-                variables.insert(Name::name(name), item::Item::from(node).into());
+                variables.insert(Name::name(name), Item::from(node).into());
             }
         }
         for param in &self.params {

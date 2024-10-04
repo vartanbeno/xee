@@ -1,6 +1,6 @@
 use std::path::Path;
 
-use xee_xpath::{context, item, Queries, Query};
+use xee_xpath::{context, Item, Queries, Query};
 use xee_xpath_load::{convert_string, ContextLoadable, Loadable};
 
 use crate::{
@@ -61,7 +61,7 @@ impl<E: Environment> TestCase<E> {
         run_context: &mut RunContext,
         catalog: &Catalog<E, R>,
         test_set: &TestSet<E, R>,
-    ) -> anyhow::Result<Option<item::Item>> {
+    ) -> anyhow::Result<Option<Item>> {
         let environments = self
             .environments(catalog, test_set)
             .collect::<std::result::Result<Vec<_>, crate::error::Error>>()?;

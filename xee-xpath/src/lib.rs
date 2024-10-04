@@ -55,5 +55,5 @@ pub use itemable::Itemable;
 pub use queries::Queries;
 pub use query::{Query, Recurse};
 pub use session::Session;
-pub use xee_interpreter::sequence::Sequence;
+pub use xee_interpreter::sequence::{Item, Sequence};
 pub use xee_interpreter::xml::{DocumentHandle, Uri};
