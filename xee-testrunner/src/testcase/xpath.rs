@@ -114,7 +114,7 @@ impl Runnable<XPathEnvironmentSpec> for XPathTestCase {
     }
 
     fn load<'a>(
-        mut queries: Queries<'a>,
+        queries: Queries<'a>,
         path: &'a Path,
     ) -> Result<(Queries<'a>, impl Query<Self> + 'a)>
     where
@@ -140,7 +140,7 @@ impl ContextLoadable<Path> for XPathTestCase {
     }
 
     fn load_with_context<'a>(
-        mut queries: Queries<'a>,
+        queries: Queries<'a>,
         path: &'a Path,
     ) -> Result<(Queries<'a>, impl Query<Self> + 'a)>
     where

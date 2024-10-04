@@ -80,7 +80,7 @@ impl KnownDependencies {
 
 impl Dependency {
     pub(crate) fn load(
-        mut queries: Queries,
+        queries: Queries,
     ) -> Result<(Queries, impl Query<Vec<Vec<Dependency>>> + '_)> {
         let satisfied_query = queries.option("@satisfied/string()", convert_string)?;
         let type_query = queries.one("@type/string()", convert_string)?;

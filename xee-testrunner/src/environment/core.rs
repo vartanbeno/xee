@@ -167,7 +167,7 @@ impl ContextLoadable<Path> for EnvironmentSpec {
     where
         EnvironmentSpec: 'a,
     {
-        let (mut queries, sources_query) = Source::load(queries)?;
+        let (queries, sources_query) = Source::load(queries)?;
 
         let name_query = queries.one("@name/string()", convert_string)?;
         let select_query = queries.option("@select/string()", convert_string)?;

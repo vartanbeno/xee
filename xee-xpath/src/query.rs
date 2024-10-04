@@ -1,12 +1,14 @@
 //! Queries you can execute against a session.
 
+use std::rc::Rc;
+
 use xee_interpreter::context::{self, StaticContextRef};
 use xee_interpreter::error::SpannedResult as Result;
+use xee_interpreter::interpreter::Program;
 use xee_interpreter::occurrence::Occurrence;
-use xee_interpreter::sequence::{self, Item, Sequence};
+use xee_interpreter::sequence::{Item, Sequence};
 
-use crate::session::Session;
-use crate::{error, Itemable};
+use crate::{Itemable, Session};
 
 // import only for documentation purposes
 #[cfg(doc)]
@@ -27,7 +29,7 @@ pub trait Query<V> {
     fn execute_with_context(
         &self,
         session: &mut Session,
-        dynamic_context: &context::DynamicContext,
+        context: &context::DynamicContext,
     ) -> Result<V>;
 
     /// Get a dynamic context builder for the query, configured with the
@@ -77,8 +79,8 @@ pub trait Query<V> {
     ) -> Result<V> {
         let mut dynamic_context_builder = self.dynamic_context_builder();
         build(&mut dynamic_context_builder);
-        let dynamic_context = dynamic_context_builder.build();
-        self.execute_with_context(session, &dynamic_context)
+        let context = dynamic_context_builder.build();
+        self.execute_with_context(session, &context)
     }
 }
 
@@ -134,8 +136,8 @@ pub trait RecurseQuery<C, V> {
         let mut dynamic_context_builder =
             context::DynamicContextBuilder::new(self.static_context());
         build(&mut dynamic_context_builder);
-        let dynamic_context = dynamic_context_builder.build();
-        self.execute_with_context(session, &dynamic_context, recurse)
+        let context = dynamic_context_builder.build();
+        self.execute_with_context(session, &context, recurse)
     }
 }
 
@@ -173,18 +175,6 @@ impl<'s, V> Recurse<'s, V> {
     }
 }
 
-#[derive(Debug, Clone, Copy)]
-pub(crate) struct QueryId {
-    queries_id: usize,
-    id: usize,
-}
-
-impl QueryId {
-    pub(crate) fn new(queries_id: usize, id: usize) -> Self {
-        Self { queries_id, id }
-    }
-}
-
 /// This is a query that expects a sequence that contains exactly one single item.
 ///
 /// Construct this using [`Queries::one`].
@@ -200,24 +190,10 @@ pub struct OneQuery<'a, V, F>
 where
     F: Convert<V>,
 {
-    pub(crate) query_id: QueryId,
     pub(crate) static_context: StaticContextRef<'a>,
+    pub(crate) program: Rc<Program>,
     pub(crate) convert: F,
     pub(crate) phantom: std::marker::PhantomData<V>,
-}
-
-fn execute_many_dynamic_context(
-    session: &mut Session,
-    query_id: QueryId,
-    dynamic_context: &context::DynamicContext,
-) -> Result<sequence::Sequence> {
-    if query_id.queries_id != session.queries.id {
-        return Err(error::ErrorValue::UsedQueryWithWrongQueries.into());
-    }
-    let program = &session.queries.xpath_programs[query_id.id];
-    let runnable = program.runnable(dynamic_context);
-
-    runnable.many(&mut session.xot)
 }
 
 impl<'a, V, F> OneQuery<'a, V, F>
@@ -228,9 +204,9 @@ where
     pub fn execute_with_context(
         &self,
         session: &mut Session,
-        dynamic_context: &context::DynamicContext,
+        context: &context::DynamicContext,
     ) -> Result<V> {
-        let sequence = execute_many_dynamic_context(session, self.query_id, dynamic_context)?;
+        let sequence = self.program.runnable(context).many(session.xot_mut())?;
         let mut items = sequence.items()?;
         let item = items.one()?;
         (self.convert)(session, &item)
@@ -248,17 +224,17 @@ where
     fn execute_with_context(
         &self,
         session: &mut Session,
-        dynamic_context: &context::DynamicContext,
+        context: &context::DynamicContext,
     ) -> Result<V> {
-        OneQuery::execute_with_context(self, session, dynamic_context)
+        OneQuery::execute_with_context(self, session, context)
     }
 }
 
 /// A recursive query that expects a single item as a result.
 #[derive(Debug, Clone)]
 pub struct OneRecurseQuery<'a> {
-    pub(crate) query_id: QueryId,
     pub(crate) static_context: StaticContextRef<'a>,
+    pub(crate) program: Rc<Program>,
 }
 
 impl<'a> OneRecurseQuery<'a> {
@@ -272,12 +248,13 @@ impl<'a> OneRecurseQuery<'a> {
         context: &context::DynamicContext,
         recurse: &Recurse<V>,
     ) -> Result<V> {
-        let sequence = execute_many_dynamic_context(session, self.query_id, context)?;
+        let sequence = self.program.runnable(context).many(session.xot_mut())?;
         let mut items = sequence.items()?;
         let item = items.one()?;
         recurse.execute(session, &item)
     }
 }
+
 impl<'a, V> RecurseQuery<V, V> for OneRecurseQuery<'a> {
     fn static_context(&self) -> StaticContextRef<'a> {
         self.static_context.clone()
@@ -309,8 +286,8 @@ pub struct OptionQuery<'a, V, F>
 where
     F: Convert<V>,
 {
-    pub(crate) query_id: QueryId,
     pub(crate) static_context: StaticContextRef<'a>,
+    pub(crate) program: Rc<Program>,
     pub(crate) convert: F,
     pub(crate) phantom: std::marker::PhantomData<V>,
 }
@@ -324,9 +301,9 @@ where
     pub fn execute_with_context(
         &self,
         session: &mut Session,
-        dynamic_context: &context::DynamicContext,
+        context: &context::DynamicContext,
     ) -> Result<Option<V>> {
-        let sequence = execute_many_dynamic_context(session, self.query_id, dynamic_context)?;
+        let sequence = self.program.runnable(context).many(session.xot_mut())?;
         let mut items = sequence.items()?;
         let item = items.option()?;
         item.map(|item| (self.convert)(session, &item)).transpose()
@@ -344,17 +321,17 @@ where
     fn execute_with_context(
         &self,
         session: &mut Session,
-        dynamic_context: &context::DynamicContext,
+        context: &context::DynamicContext,
     ) -> Result<Option<V>> {
-        Self::execute_with_context(self, session, dynamic_context)
+        Self::execute_with_context(self, session, context)
     }
 }
 
 /// A recursive query that expects an optional single item.
 #[derive(Debug, Clone)]
 pub struct OptionRecurseQuery<'a> {
-    pub(crate) query_id: QueryId,
     pub(crate) static_context: StaticContextRef<'a>,
+    pub(crate) program: Rc<Program>,
 }
 
 impl<'a> OptionRecurseQuery<'a> {
@@ -362,10 +339,10 @@ impl<'a> OptionRecurseQuery<'a> {
     pub fn execute_with_context<V>(
         &self,
         session: &mut Session,
-        dynamic_context: &context::DynamicContext,
+        context: &context::DynamicContext,
         recurse: &Recurse<V>,
     ) -> Result<Option<V>> {
-        let sequence = execute_many_dynamic_context(session, self.query_id, dynamic_context)?;
+        let sequence = self.program.runnable(context).many(session.xot_mut())?;
         let mut items = sequence.items()?;
         let item = items.option()?;
         item.map(|item| recurse.execute(session, &item)).transpose()
@@ -402,8 +379,8 @@ pub struct ManyQuery<'a, V, F>
 where
     F: Convert<V>,
 {
-    pub(crate) query_id: QueryId,
     pub(crate) static_context: StaticContextRef<'a>,
+    pub(crate) program: Rc<Program>,
     pub(crate) convert: F,
     pub(crate) phantom: std::marker::PhantomData<V>,
 }
@@ -415,9 +392,9 @@ where
     fn execute_with_context(
         &self,
         session: &mut Session,
-        dynamic_context: &context::DynamicContext,
+        context: &context::DynamicContext,
     ) -> Result<Vec<V>> {
-        let sequence = execute_many_dynamic_context(session, self.query_id, dynamic_context)?;
+        let sequence = self.program.runnable(context).many(session.xot_mut())?;
         let items = sequence
             .items()?
             .map(|item| (self.convert)(session, &item))
@@ -437,17 +414,17 @@ where
     fn execute_with_context(
         &self,
         session: &mut Session,
-        dynamic_context: &context::DynamicContext,
+        context: &context::DynamicContext,
     ) -> Result<Vec<V>> {
-        Self::execute_with_context(self, session, dynamic_context)
+        Self::execute_with_context(self, session, context)
     }
 }
 
 /// A recursive query that expects many items as a result.
 #[derive(Debug, Clone)]
 pub struct ManyRecurseQuery<'a> {
-    pub(crate) query_id: QueryId,
     pub(crate) static_context: StaticContextRef<'a>,
+    pub(crate) program: Rc<Program>,
 }
 
 impl<'a> ManyRecurseQuery<'a> {
@@ -461,7 +438,7 @@ impl<'a> ManyRecurseQuery<'a> {
         context: &context::DynamicContext,
         recurse: &Recurse<V>,
     ) -> Result<Vec<V>> {
-        let sequence = execute_many_dynamic_context(session, self.query_id, context)?;
+        let sequence = self.program.runnable(context).many(session.xot_mut())?;
         let items = sequence
             .items()?
             .map(|item| recurse.execute(session, &item))
@@ -496,8 +473,8 @@ impl<'a, V> RecurseQuery<Vec<V>, V> for ManyRecurseQuery<'a> {
 /// This is useful if you want to work with the sequence directly.
 #[derive(Debug, Clone)]
 pub struct SequenceQuery<'a> {
-    pub(crate) query_id: QueryId,
     pub(crate) static_context: StaticContextRef<'a>,
+    pub(crate) program: Rc<Program>,
 }
 
 impl<'a> SequenceQuery<'a> {
@@ -505,9 +482,9 @@ impl<'a> SequenceQuery<'a> {
     pub fn execute_with_context(
         &self,
         session: &mut Session,
-        dynamic_context: &context::DynamicContext,
+        context: &context::DynamicContext,
     ) -> Result<Sequence> {
-        execute_many_dynamic_context(session, self.query_id, dynamic_context)
+        self.program.runnable(context).many(session.xot_mut())
     }
 }
 
@@ -519,9 +496,9 @@ impl<'a> Query<Sequence> for SequenceQuery<'a> {
     fn execute_with_context(
         &self,
         session: &mut Session,
-        dynamic_context: &context::DynamicContext,
+        context: &context::DynamicContext,
     ) -> Result<Sequence> {
-        Self::execute_with_context(self, session, dynamic_context)
+        Self::execute_with_context(self, session, context)
     }
 }
 
@@ -555,11 +532,11 @@ where
     pub fn execute_with_context(
         &self,
         session: &mut Session,
-        dynamic_context: &context::DynamicContext,
+        context: &context::DynamicContext,
     ) -> Result<T> {
-        let v = self.query.execute_with_context(session, dynamic_context)?;
+        let v = self.query.execute_with_context(session, context)?;
         // TODO: this isn't right. need to rewrite in terms of dynamic context too?
-        (self.f)(v, session, dynamic_context)
+        (self.f)(v, session, context)
     }
 }
 
@@ -574,9 +551,9 @@ where
     fn execute_with_context(
         &self,
         session: &mut Session,
-        dynamic_context: &context::DynamicContext,
+        context: &context::DynamicContext,
     ) -> Result<T> {
-        let v = self.query.execute_with_context(session, dynamic_context)?;
-        (self.f)(v, session, dynamic_context)
+        let v = self.query.execute_with_context(session, context)?;
+        (self.f)(v, session, context)
     }
 }

@@ -82,7 +82,7 @@ impl<E: Environment, R: Runnable<E>> ContextLoadable<Path> for TestSet<E, R> {
     }
 
     fn load_with_context<'a>(
-        mut queries: Queries<'a>,
+        queries: Queries<'a>,
         path: &'a Path,
     ) -> Result<(Queries<'a>, impl Query<TestSet<E, R>> + 'a)>
     where
@@ -95,7 +95,7 @@ impl<E: Environment, R: Runnable<E>> ContextLoadable<Path> for TestSet<E, R> {
         let (queries, shared_environments_query) =
             SharedEnvironments::load_with_context(queries, path)?;
         let (queries, dependency_query) = Dependency::load(queries)?;
-        let (mut queries, test_case_query) = R::load(queries, path)?;
+        let (queries, test_case_query) = R::load(queries, path)?;
         let test_cases_query = queries.many("test-case", move |session, item| {
             test_case_query.execute(session, item)
         })?;

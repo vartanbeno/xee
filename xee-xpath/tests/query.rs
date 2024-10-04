@@ -31,7 +31,7 @@ fn test_simple_query() -> error::Result<()> {
         .add_string(&Uri::new("http://example.com"), "<root>foo</root>")
         .unwrap();
 
-    let mut queries = Queries::default();
+    let queries = Queries::default();
     let q = queries.one("/root/string()", |_, item| {
         Ok(item.try_into_value::<String>()?)
     })?;
@@ -49,7 +49,7 @@ fn test_sequence_query() -> error::Result<()> {
         .add_string(&Uri::new("http://example.com"), "<root>foo</root>")
         .unwrap();
 
-    let mut queries = Queries::default();
+    let queries = Queries::default();
     let q = queries.sequence("/root/string()")?;
 
     let mut session = queries.session(documents);
@@ -75,7 +75,7 @@ fn test_option_query() -> error::Result<()> {
         )
         .unwrap();
 
-    let mut queries = Queries::default();
+    let queries = Queries::default();
     let q = queries.option("/root/value/string()", |_, item| {
         Ok(item.try_into_value::<String>()?)
     })?;
@@ -98,10 +98,11 @@ fn test_nested_query() -> error::Result<()> {
         )
         .unwrap();
 
-    let mut queries = Queries::default();
+    let queries = Queries::default();
+
     let f_query = queries.one("./number()", |_, item| Ok(item.try_into_value::<f64>()?))?;
-    let q = queries.many("/root/a", |session, item| {
-        Ok(f_query.execute(session, item)?)
+    let q = queries.many("/root/a", |context, item| {
+        Ok(f_query.execute(context, item)?)
     })?;
 
     let mut session = queries.session(documents);
@@ -111,27 +112,8 @@ fn test_nested_query() -> error::Result<()> {
 }
 
 #[test]
-fn test_wrong_queries() -> error::Result<()> {
-    let mut documents = Documents::new();
-    let doc = documents
-        .add_string(&Uri::new("http://example.com"), "<root>foo</root>")
-        .unwrap();
-
-    let queries = Queries::default();
-
-    let mut second_queries = Queries::default();
-    let second_q = second_queries.one("/root/string()", |_, item| {
-        Ok(item.try_into_value::<String>()?)
-    })?;
-    let mut session = queries.session(documents);
-    let r = second_q.execute(&mut session, doc).unwrap_err();
-    assert_eq!(r, error::ErrorValue::UsedQueryWithWrongQueries.into());
-    Ok(())
-}
-
-#[test]
 fn test_option_query_recurse() -> error::Result<()> {
-    let mut queries = Queries::default();
+    let queries = Queries::default();
 
     #[derive(Debug, PartialEq, Eq)]
     enum Expr {
@@ -192,7 +174,7 @@ fn test_option_query_recurse() -> error::Result<()> {
 
 #[test]
 fn test_many_query_recurse() -> error::Result<()> {
-    let mut queries = Queries::default();
+    let queries = Queries::default();
 
     #[derive(Debug, PartialEq, Eq)]
     enum Expr {
@@ -260,7 +242,7 @@ fn test_many_query_recurse() -> error::Result<()> {
 
 #[test]
 fn test_map_query() -> error::Result<()> {
-    let mut queries = Queries::default();
+    let queries = Queries::default();
     let q = queries
         .one("1 + 2", |_, item| {
             let v: IBig = item.to_atomic()?.try_into()?;
@@ -278,7 +260,7 @@ fn test_map_query() -> error::Result<()> {
 
 #[test]
 fn test_map_query_clone() -> error::Result<()> {
-    let mut queries = Queries::default();
+    let queries = Queries::default();
     let q = queries
         .one("1 + 2", |_, item| {
             let v: IBig = item.to_atomic()?.try_into()?;
