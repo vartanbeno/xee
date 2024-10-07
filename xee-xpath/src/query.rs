@@ -7,6 +7,7 @@ use xee_interpreter::error::SpannedResult as Result;
 use xee_interpreter::interpreter::Program;
 use xee_interpreter::occurrence::Occurrence;
 use xee_interpreter::sequence::{Item, Sequence};
+use xee_xpath_compiler::Runnable;
 
 use crate::{Itemable, Session};
 
@@ -33,12 +34,14 @@ pub trait Query<V> {
     ) -> Result<V>;
 
     /// Get a dynamic context builder for the query, configured with the
-    /// query's static context.
+    /// query's static context and the session's documents.
     ///
     /// You can use this if you want to construct your own dynamic context
     /// to use with `execute_with_context`.
-    fn dynamic_context_builder(&self) -> context::DynamicContextBuilder {
-        context::DynamicContextBuilder::new(self.static_context().clone())
+    fn dynamic_context_builder(&self, session: &Session) -> context::DynamicContextBuilder {
+        let mut context = context::DynamicContextBuilder::new(self.static_context().clone());
+        context.documents(session.documents.clone());
+        context
     }
 
     /// Map the the result of the query to a different type.
@@ -75,9 +78,7 @@ pub trait Query<V> {
         session: &mut Session,
         build: impl FnOnce(&mut context::DynamicContextBuilder),
     ) -> Result<V> {
-        let mut dynamic_context_builder = self.dynamic_context_builder();
-        let documents = session.documents.clone();
-        dynamic_context_builder.documents(documents);
+        let mut dynamic_context_builder = self.dynamic_context_builder(session);
         build(&mut dynamic_context_builder);
         let context = dynamic_context_builder.build();
         self.execute_with_context(session, &context)
@@ -103,12 +104,14 @@ pub trait RecurseQuery<C, V> {
     ) -> Result<C>;
 
     /// Get a dynamic context builder for the query, configured with the
-    /// query's static context.
+    /// query's static context and the session's documents.
     ///
     /// You can use this if you want to construct your own dynamic context
     /// to use with `execute_with_context`.
-    fn dynamic_context_builder(&self) -> context::DynamicContextBuilder {
-        context::DynamicContextBuilder::new(self.static_context().clone())
+    fn dynamic_context_builder(&self, session: &Session) -> context::DynamicContextBuilder {
+        let mut context = context::DynamicContextBuilder::new(self.static_context().clone());
+        context.documents(session.documents.clone());
+        context
     }
 
     /// Execute the query against an itemable.
@@ -131,10 +134,7 @@ pub trait RecurseQuery<C, V> {
         recurse: &Recurse<V>,
         build: impl FnOnce(&mut context::DynamicContextBuilder),
     ) -> Result<C> {
-        let mut dynamic_context_builder =
-            context::DynamicContextBuilder::new(self.static_context());
-        let documents = session.documents.clone();
-        dynamic_context_builder.documents(documents);
+        let mut dynamic_context_builder = self.dynamic_context_builder(session);
         build(&mut dynamic_context_builder);
         let context = dynamic_context_builder.build();
         self.execute_with_context(session, &context, recurse)
