@@ -61,10 +61,8 @@ pub trait Query<V> {
     /// Excute the query against an itemable
     fn execute(&self, session: &mut Session, item: impl Itemable) -> Result<V> {
         let context_item = item.to_item(session)?;
-        let documents = session.documents.clone();
         self.execute_build_context(session, move |builder| {
             builder.context_item(context_item);
-            builder.documents(documents);
         })
     }
 
@@ -78,6 +76,8 @@ pub trait Query<V> {
         build: impl FnOnce(&mut context::DynamicContextBuilder),
     ) -> Result<V> {
         let mut dynamic_context_builder = self.dynamic_context_builder();
+        let documents = session.documents.clone();
+        dynamic_context_builder.documents(documents);
         build(&mut dynamic_context_builder);
         let context = dynamic_context_builder.build();
         self.execute_with_context(session, &context)
@@ -116,10 +116,8 @@ pub trait RecurseQuery<C, V> {
     /// To do the conversion pass in a [`Recurse`] object. This
     /// allows you to use a convert function recursively.
     fn execute(&self, session: &mut Session, item: &Item, recurse: &Recurse<V>) -> Result<C> {
-        let documents = session.documents.clone();
         self.execute_build_context(session, recurse, |builder| {
             builder.context_item(item.clone());
-            builder.documents(documents);
         })
     }
 
@@ -135,6 +133,8 @@ pub trait RecurseQuery<C, V> {
     ) -> Result<C> {
         let mut dynamic_context_builder =
             context::DynamicContextBuilder::new(self.static_context());
+        let documents = session.documents.clone();
+        dynamic_context_builder.documents(documents);
         build(&mut dynamic_context_builder);
         let context = dynamic_context_builder.build();
         self.execute_with_context(session, &context, recurse)

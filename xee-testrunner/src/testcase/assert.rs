@@ -5,8 +5,8 @@ use xot::xmlname::OwnedName as Name;
 use xot::Xot;
 
 use xee_xpath::query::RecurseQuery;
-use xee_xpath::{context, error, Item, Queries, Query, Recurse, Sequence, Session};
-use xee_xpath_compiler::{occurrence::Occurrence, parse, string::Collation, Runnable};
+use xee_xpath::{context, error, Documents, Item, Queries, Query, Recurse, Sequence, Session};
+use xee_xpath_compiler::{occurrence::Occurrence, string::Collation, Runnable};
 use xee_xpath_load::{convert_boolean, convert_string, Loadable};
 
 use crate::ns::XPATH_TEST_NS;
@@ -19,11 +19,11 @@ pub(crate) trait Assertable {
     fn assert_result(
         &self,
         runnable: &Runnable<'_>,
-        xot: &mut Xot,
+        session: &mut Session,
         result: &error::ValueResult<Sequence>,
     ) -> TestOutcome {
         match result {
-            Ok(sequence) => self.assert_value(runnable, xot, sequence),
+            Ok(sequence) => self.assert_value(runnable, session, sequence),
             Err(error) => TestOutcome::RuntimeError(error.clone()),
         }
     }
@@ -31,7 +31,7 @@ pub(crate) trait Assertable {
     fn assert_value(
         &self,
         runnable: &Runnable<'_>,
-        xot: &mut Xot,
+        session: &mut Session,
         sequence: &Sequence,
     ) -> TestOutcome;
 }
@@ -66,12 +66,12 @@ impl Assertable for AssertAnyOf {
     fn assert_result(
         &self,
         runnable: &Runnable<'_>,
-        xot: &mut Xot,
+        session: &mut Session,
         result: &error::ValueResult<Sequence>,
     ) -> TestOutcome {
         let mut failed_test_results = Vec::new();
         for test_case_result in &self.0 {
-            let result = test_case_result.assert_result(runnable, xot, result);
+            let result = test_case_result.assert_result(runnable, session, result);
             match result {
                 TestOutcome::Passed => return result,
                 _ => failed_test_results.push(result),
@@ -86,7 +86,7 @@ impl Assertable for AssertAnyOf {
     fn assert_value(
         &self,
         _runnable: &Runnable<'_>,
-        _xot: &mut Xot,
+        _session: &mut Session,
         _sequence: &Sequence,
     ) -> TestOutcome {
         unreachable!();
@@ -106,11 +106,11 @@ impl Assertable for AssertAllOf {
     fn assert_result(
         &self,
         runnable: &Runnable<'_>,
-        xot: &mut Xot,
+        session: &mut Session,
         result: &error::ValueResult<Sequence>,
     ) -> TestOutcome {
         for test_case_result in &self.0 {
-            let result = test_case_result.assert_result(runnable, xot, result);
+            let result = test_case_result.assert_result(runnable, session, result);
             match result {
                 TestOutcome::Passed | TestOutcome::UnexpectedError(..) => {}
                 _ => return result,
@@ -122,7 +122,7 @@ impl Assertable for AssertAllOf {
     fn assert_value(
         &self,
         _runnable: &Runnable<'_>,
-        _xot: &mut Xot,
+        _session: &mut Session,
         _sequence: &Sequence,
     ) -> TestOutcome {
         unreachable!();
@@ -142,10 +142,10 @@ impl Assertable for AssertNot {
     fn assert_result(
         &self,
         runnable: &Runnable<'_>,
-        xot: &mut Xot,
+        session: &mut Session,
         result: &error::ValueResult<Sequence>,
     ) -> TestOutcome {
-        let result = self.0.assert_result(runnable, xot, result);
+        let result = self.0.assert_result(runnable, session, result);
         match result {
             TestOutcome::Passed => {
                 TestOutcome::Failed(Failure::Not(self.clone(), Box::new(result)))
@@ -158,7 +158,7 @@ impl Assertable for AssertNot {
     fn assert_value(
         &self,
         _runnable: &Runnable<'_>,
-        _xot: &mut Xot,
+        _session: &mut Session,
         _sequence: &Sequence,
     ) -> TestOutcome {
         unreachable!();
@@ -183,12 +183,11 @@ impl Assert {
 impl Assertable for Assert {
     fn assert_value(
         &self,
-        runnable: &Runnable<'_>,
-        xot: &mut Xot,
+        _runnable: &Runnable<'_>,
+        session: &mut Session,
         sequence: &Sequence,
     ) -> TestOutcome {
-        // TODO: should this not take variables too?
-        let result_sequence = run_xpath_with_result(&self.0, sequence, runnable, xot);
+        let result_sequence = run_xpath_with_result(&self.0, sequence, session);
 
         match result_sequence {
             Ok(result_sequence) => match result_sequence.effective_boolean_value() {
@@ -201,7 +200,7 @@ impl Assertable for Assert {
                 }
                 Err(error) => TestOutcome::RuntimeError(error),
             },
-            Err(error) => TestOutcome::UnsupportedExpression(error),
+            Err(error) => TestOutcome::UnsupportedExpression(error.value()),
         }
     }
 }
@@ -218,21 +217,21 @@ impl AssertEq {
 impl Assertable for AssertEq {
     fn assert_value(
         &self,
-        runnable: &Runnable<'_>,
-        xot: &mut Xot,
+        _runnable: &Runnable<'_>,
+        session: &mut Session,
         sequence: &Sequence,
     ) -> TestOutcome {
-        let expected_sequence = run_xpath(&self.0, runnable, xot);
+        let expected_sequence = run_xpath(&self.0);
 
         match expected_sequence {
             Ok(expected_sequence) => {
-                let atom = sequence.atomized(xot).one();
+                let atom = sequence.atomized(session.xot()).one();
                 let atom = match atom {
                     Ok(atom) => atom,
                     Err(error) => return TestOutcome::RuntimeError(error),
                 };
                 let expected_atom = expected_sequence
-                    .atomized(xot)
+                    .atomized(session.xot())
                     .one()
                     .expect("Should get single atom in sequence");
                 if expected_atom.simple_equal(&atom) {
@@ -241,7 +240,7 @@ impl Assertable for AssertEq {
                     TestOutcome::Failed(Failure::Eq(self.clone(), sequence.clone()))
                 }
             }
-            Err(error) => TestOutcome::UnsupportedExpression(error),
+            Err(error) => TestOutcome::UnsupportedExpression(error.value()),
         }
     }
 }
@@ -258,11 +257,11 @@ impl AssertDeepEq {
 impl Assertable for AssertDeepEq {
     fn assert_value(
         &self,
-        runnable: &Runnable<'_>,
-        xot: &mut Xot,
+        _runnable: &Runnable<'_>,
+        session: &mut Session,
         sequence: &Sequence,
     ) -> TestOutcome {
-        let expected_sequence = run_xpath(&self.0, runnable, xot);
+        let expected_sequence = run_xpath(&self.0);
 
         match expected_sequence {
             Ok(expected_sequence) => {
@@ -271,7 +270,7 @@ impl Assertable for AssertDeepEq {
                         sequence,
                         &Collation::CodePoint,
                         chrono::offset::Utc.fix(),
-                        xot,
+                        session.xot(),
                     )
                     .unwrap_or(false)
                 {
@@ -280,7 +279,7 @@ impl Assertable for AssertDeepEq {
                     TestOutcome::Failed(Failure::DeepEq(self.clone(), sequence.clone()))
                 }
             }
-            Err(error) => TestOutcome::UnsupportedExpression(error),
+            Err(error) => TestOutcome::UnsupportedExpression(error.value()),
         }
     }
 }
@@ -298,7 +297,7 @@ impl Assertable for AssertCount {
     fn assert_value(
         &self,
         _runnable: &Runnable<'_>,
-        _xot: &mut Xot,
+        _session: &mut Session,
         sequence: &Sequence,
     ) -> TestOutcome {
         let found_len = sequence.len();
@@ -323,7 +322,7 @@ impl Assertable for AssertPermutation {
     fn assert_value(
         &self,
         runnable: &Runnable<'_>,
-        xot: &mut Xot,
+        session: &mut Session,
         sequence: &Sequence,
     ) -> TestOutcome {
         // sequence should consist of atoms. sort these so we only have to
@@ -333,25 +332,28 @@ impl Assertable for AssertPermutation {
         let collation = runnable.default_collation().unwrap();
         let default_offset = runnable.implicit_timezone();
 
-        let sequence = sequence.sorted(context, collation_str, xot);
+        let sequence = sequence.sorted(context, collation_str, session.xot());
 
         if let Err(err) = sequence {
             return TestOutcome::RuntimeError(err);
         }
         let sequence = sequence.unwrap();
 
-        let result_sequence = run_xpath(&self.0, runnable, xot);
+        let result_sequence = run_xpath(&self.0);
 
         match result_sequence {
             Ok(result_sequence) => {
                 // sort result sequence too.
-                let result_sequence = result_sequence.sorted(context, collation_str, xot);
+                let result_sequence = result_sequence.sorted(context, collation_str, session.xot());
 
                 match result_sequence {
                     Ok(value) => {
-                        if let Ok(true) =
-                            sequence.deep_equal(&value, collation.as_ref(), default_offset, xot)
-                        {
+                        if let Ok(true) = sequence.deep_equal(
+                            &value,
+                            collation.as_ref(),
+                            default_offset,
+                            session.xot(),
+                        ) {
                             TestOutcome::Passed
                         } else {
                             TestOutcome::Failed(Failure::Permutation(
@@ -363,7 +365,7 @@ impl Assertable for AssertPermutation {
                     Err(error) => TestOutcome::RuntimeError(error),
                 }
             }
-            Err(error) => TestOutcome::UnsupportedExpression(error),
+            Err(error) => TestOutcome::UnsupportedExpression(error.value()),
         }
     }
 }
@@ -381,10 +383,10 @@ impl Assertable for AssertXml {
     fn assert_value(
         &self,
         _runnable: &Runnable<'_>,
-        xot: &mut Xot,
+        session: &mut Session,
         sequence: &Sequence,
     ) -> TestOutcome {
-        let xml = serialize(xot, sequence);
+        let xml = serialize(session.xot(), sequence);
 
         let xml = if let Ok(xml) = xml {
             xml
@@ -426,7 +428,7 @@ impl Assertable for AssertEmpty {
     fn assert_value(
         &self,
         _runnable: &Runnable<'_>,
-        _xot: &mut Xot,
+        _session: &mut Session,
         sequence: &Sequence,
     ) -> TestOutcome {
         if sequence.is_empty() {
@@ -456,10 +458,12 @@ impl Assertable for AssertType {
     fn assert_value(
         &self,
         runnable: &Runnable<'_>,
-        xot: &mut Xot,
+        session: &mut Session,
         sequence: &Sequence,
     ) -> TestOutcome {
-        let matches = sequence.matches_type(&self.0, xot, &|function| runnable.signature(function));
+        let matches = sequence.matches_type(&self.0, session.xot(), &|function| {
+            runnable.signature(function)
+        });
         match matches {
             Ok(matches) => {
                 if matches {
@@ -490,7 +494,7 @@ impl Assertable for AssertTrue {
     fn assert_value(
         &self,
         _runnable: &Runnable<'_>,
-        _xot: &mut Xot,
+        _session: &mut Session,
         sequence: &Sequence,
     ) -> TestOutcome {
         let items = sequence.items();
@@ -523,7 +527,7 @@ impl Assertable for AssertFalse {
     fn assert_value(
         &self,
         _runnable: &Runnable<'_>,
-        _xot: &mut Xot,
+        _session: &mut Session,
         sequence: &Sequence,
     ) -> TestOutcome {
         let items = sequence.items();
@@ -556,13 +560,13 @@ impl Assertable for AssertStringValue {
     fn assert_value(
         &self,
         _runnable: &Runnable<'_>,
-        xot: &mut Xot,
+        session: &mut Session,
         sequence: &Sequence,
     ) -> TestOutcome {
         let items = sequence.items();
         if let Ok(items) = items {
             let strings = items
-                .map(|item| item.string_value(xot))
+                .map(|item| item.string_value(session.xot()))
                 .collect::<error::ValueResult<Vec<_>>>();
             match strings {
                 Ok(strings) => {
@@ -625,7 +629,7 @@ impl Assertable for AssertError {
     fn assert_result(
         &self,
         _runnable: &Runnable<'_>,
-        _xot: &mut Xot,
+        _session: &mut Session,
         result: &error::ValueResult<Sequence>,
     ) -> TestOutcome {
         match result {
@@ -637,7 +641,7 @@ impl Assertable for AssertError {
     fn assert_value(
         &self,
         _runnable: &Runnable<'_>,
-        _xot: &mut Xot,
+        _session: &mut Session,
         _sequence: &Sequence,
     ) -> TestOutcome {
         unreachable!();
@@ -724,25 +728,25 @@ impl TestCaseResult {
     pub(crate) fn assert_result(
         &self,
         runnable: &Runnable<'_>,
-        xot: &mut Xot,
+        session: &mut Session,
         result: &error::ValueResult<Sequence>,
     ) -> TestOutcome {
         match self {
-            TestCaseResult::AnyOf(a) => a.assert_result(runnable, xot, result),
-            TestCaseResult::AllOf(a) => a.assert_result(runnable, xot, result),
-            TestCaseResult::Not(a) => a.assert_result(runnable, xot, result),
-            TestCaseResult::AssertEq(a) => a.assert_result(runnable, xot, result),
-            TestCaseResult::AssertDeepEq(a) => a.assert_result(runnable, xot, result),
-            TestCaseResult::AssertTrue(a) => a.assert_result(runnable, xot, result),
-            TestCaseResult::AssertFalse(a) => a.assert_result(runnable, xot, result),
-            TestCaseResult::AssertCount(a) => a.assert_result(runnable, xot, result),
-            TestCaseResult::AssertStringValue(a) => a.assert_result(runnable, xot, result),
-            TestCaseResult::AssertXml(a) => a.assert_result(runnable, xot, result),
-            TestCaseResult::Assert(a) => a.assert_result(runnable, xot, result),
-            TestCaseResult::AssertPermutation(a) => a.assert_result(runnable, xot, result),
-            TestCaseResult::AssertError(a) => a.assert_result(runnable, xot, result),
-            TestCaseResult::AssertEmpty(a) => a.assert_result(runnable, xot, result),
-            TestCaseResult::AssertType(a) => a.assert_result(runnable, xot, result),
+            TestCaseResult::AnyOf(a) => a.assert_result(runnable, session, result),
+            TestCaseResult::AllOf(a) => a.assert_result(runnable, session, result),
+            TestCaseResult::Not(a) => a.assert_result(runnable, session, result),
+            TestCaseResult::AssertEq(a) => a.assert_result(runnable, session, result),
+            TestCaseResult::AssertDeepEq(a) => a.assert_result(runnable, session, result),
+            TestCaseResult::AssertTrue(a) => a.assert_result(runnable, session, result),
+            TestCaseResult::AssertFalse(a) => a.assert_result(runnable, session, result),
+            TestCaseResult::AssertCount(a) => a.assert_result(runnable, session, result),
+            TestCaseResult::AssertStringValue(a) => a.assert_result(runnable, session, result),
+            TestCaseResult::AssertXml(a) => a.assert_result(runnable, session, result),
+            TestCaseResult::Assert(a) => a.assert_result(runnable, session, result),
+            TestCaseResult::AssertPermutation(a) => a.assert_result(runnable, session, result),
+            TestCaseResult::AssertError(a) => a.assert_result(runnable, session, result),
+            TestCaseResult::AssertEmpty(a) => a.assert_result(runnable, session, result),
+            TestCaseResult::AssertType(a) => a.assert_result(runnable, session, result),
             TestCaseResult::Unsupported => TestOutcome::Unsupported,
             _ => {
                 panic!("unimplemented test case result {:?}", self);
@@ -994,38 +998,35 @@ impl fmt::Display for Failure {
     }
 }
 
-fn run_xpath(
-    expr: &XPathExpr,
-    runnable: &Runnable<'_>,
-    xot: &mut Xot,
-) -> error::ValueResult<Sequence> {
-    let program = parse(&runnable.static_context(), expr).map_err(|e| e.error)?;
+fn run_xpath(expr: &XPathExpr) -> error::Result<Sequence> {
+    let queries = Queries::default();
+    let q = queries.sequence(expr)?;
 
-    let runnable = program.runnable(runnable.dynamic_context());
-    runnable.many(xot).map_err(|e| e.error)
+    let mut documents = Documents::default();
+    let mut session = documents.session();
+
+    // we don't need any particular context to execute this query
+    q.execute_build_context(&mut session, |_build| {})
 }
 
-// TODO: this is making new variables, shouldn't we combine the variables with
-// those known already?
 fn run_xpath_with_result(
     expr: &XPathExpr,
     sequence: &Sequence,
-    runnable: &Runnable<'_>,
-    xot: &mut Xot,
-) -> error::ValueResult<Sequence> {
+    session: &mut Session,
+) -> error::Result<Sequence> {
     let mut builder = context::StaticContextBuilder::default();
     let name = Name::name("result");
     builder.variable_names([name.clone()]);
     let static_context = builder.build();
-    let program = parse(&static_context, expr).map_err(|e| e.error)?;
-    let variables = AHashMap::from([(name, sequence.clone())]);
-    let mut dynamic_context_builder = context::DynamicContextBuilder::new(static_context);
-    dynamic_context_builder.documents(runnable.dynamic_context().documents.clone());
-    dynamic_context_builder.variables(variables);
 
-    let dynamic_context = dynamic_context_builder.build();
-    let runnable = program.runnable(&dynamic_context);
-    runnable.many(xot).map_err(|e| e.error)
+    let queries = Queries::default();
+    let q = queries.sequence_with_context(expr, static_context)?;
+
+    let variables = AHashMap::from([(name, sequence.clone())]);
+
+    q.execute_build_context(session, |build| {
+        build.variables(variables);
+    })
 }
 
 pub(crate) fn serialize(xot: &Xot, sequence: &Sequence) -> crate::error::Result<String> {

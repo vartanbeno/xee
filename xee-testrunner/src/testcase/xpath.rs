@@ -1,7 +1,7 @@
 use anyhow::Result;
 use std::path::Path;
 
-use xee_xpath::{context, Queries, Query};
+use xee_xpath::{context, Queries, Query, Session};
 use xee_xpath_compiler::parse;
 use xee_xpath_load::{convert_string, ContextLoadable};
 
@@ -73,17 +73,13 @@ impl Runnable<XPathEnvironmentSpec> for XPathTestCase {
         };
         static_context_builder.namespaces(namespaces);
 
+        // now construct a query with that static context
         let static_context = static_context_builder.build();
+        let queries = Queries::default();
+        let query = queries.sequence_with_context(&self.test, static_context);
 
-        // the context item is loaded
-        let context_item = self.test_case.context_item(run_context, catalog, test_set);
-        let context_item = match context_item {
-            Ok(context_item) => context_item,
-            Err(error) => return TestOutcome::EnvironmentError(error.to_string()),
-        };
-
-        let program = parse(&static_context, &self.test);
-        let program = match program {
+        // handle any errors during parsing
+        let query = match query {
             Ok(query) => query,
             Err(error) => {
                 return match &self.test_case.result {
@@ -97,18 +93,41 @@ impl Runnable<XPathEnvironmentSpec> for XPathTestCase {
             }
         };
 
+        // the context item is loaded
+        let context_item = self.test_case.context_item(run_context, catalog, test_set);
+        let context_item = match context_item {
+            Ok(context_item) => context_item,
+            Err(error) => return TestOutcome::EnvironmentError(error.to_string()),
+        };
+
+        // construct a session for the same documents as we already have
+        let mut session = Session::new(
+            run_context.dynamic_context.documents.clone(),
+            &mut run_context.xot,
+        );
+
+        // now execute the query with the right dynamic context
+        let result = query.execute_build_context(&mut session, |builder| {
+            if let Some(context_item) = context_item {
+                builder.context_item(context_item);
+            }
+            builder.variables(variables.clone());
+        });
+
+        // TODO: Hacking a lot of duplication so we get a runnable for now
+        let static_context = static_context_builder.build();
+        let program = parse(&static_context, &self.test).unwrap();
         let mut dynamic_context_builder = context::DynamicContextBuilder::new(static_context);
         dynamic_context_builder.documents(run_context.dynamic_context.documents.clone());
-        if let Some(context_item) = context_item {
-            dynamic_context_builder.context_item(context_item);
-        }
         dynamic_context_builder.variables(variables);
         let dynamic_context = dynamic_context_builder.build();
+
         let runnable = program.runnable(&dynamic_context);
-        let result = runnable.many(&mut run_context.xot);
+
+        // let result = runnable.many(&mut run_context.xot);
         self.test_case.result.assert_result(
             &runnable,
-            &mut run_context.xot,
+            &mut session,
             &result.map_err(|error| error.error),
         )
     }

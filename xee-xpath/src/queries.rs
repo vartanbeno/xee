@@ -3,13 +3,9 @@ use std::rc::Rc;
 use xee_interpreter::{context, error::SpannedResult as Result};
 use xee_xpath_compiler::parse;
 
-use crate::{
-    documents::Documents,
-    query::{
-        Convert, ManyQuery, ManyRecurseQuery, OneQuery, OneRecurseQuery, OptionQuery,
-        OptionRecurseQuery, SequenceQuery,
-    },
-    session::Session,
+use crate::query::{
+    Convert, ManyQuery, ManyRecurseQuery, OneQuery, OneRecurseQuery, OptionQuery,
+    OptionRecurseQuery, SequenceQuery,
 };
 
 /// A collection of XPath queries
@@ -231,7 +227,7 @@ mod tests {
 
     use xee_interpreter::xml::Uri;
 
-    use crate::query::Query;
+    use crate::{query::Query, Documents};
 
     use super::*;
 

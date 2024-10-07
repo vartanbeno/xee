@@ -32,7 +32,7 @@ pub trait ContextLoadable<C: ?Sized>: Sized {
     }
 
     fn load_from_node_with_context(
-        documents: Documents,
+        mut documents: Documents,
         document_id: DocumentHandle,
         context: &C,
     ) -> Result<Self> {

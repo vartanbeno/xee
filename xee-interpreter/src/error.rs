@@ -693,3 +693,10 @@ pub type Result<T> = std::result::Result<T, Error>;
 ///
 /// Also known as `SpannedResult` internally.
 pub type SpannedResult<T> = std::result::Result<T, SpannedError>;
+
+impl SpannedError {
+    /// get the underlying [`Error`] value
+    pub fn value(self) -> Error {
+        self.error
+    }
+}

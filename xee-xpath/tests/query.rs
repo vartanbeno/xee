@@ -248,7 +248,7 @@ fn test_map_query() -> error::Result<()> {
         })?
         .map(|v, _, _| Ok(v + ibig!(1)));
 
-    let documents = Documents::new();
+    let mut documents = Documents::new();
 
     let mut session = documents.session();
     let r = q.execute(&mut session, &1i64.into())?;
@@ -266,7 +266,7 @@ fn test_map_query_clone() -> error::Result<()> {
         })?
         .map(|v, _, _| Ok(v + ibig!(1)));
     let q = q.clone();
-    let documents = Documents::new();
+    let mut documents = Documents::new();
 
     let mut session = documents.session();
     let r = q.execute(&mut session, &1i64.into())?;

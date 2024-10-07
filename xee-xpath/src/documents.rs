@@ -41,7 +41,7 @@ impl Documents {
     /// Construct a [`Session`] from a collection of documents
     ///
     /// You need a session to be able to execute queries against documents.
-    pub fn session(self) -> Session {
+    pub fn session(&mut self) -> Session {
         Session::from_documents(self)
     }
 }
