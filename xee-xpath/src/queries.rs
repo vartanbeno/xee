@@ -33,13 +33,6 @@ impl<'a> Queries<'a> {
         }
     }
 
-    /// Construct a [`Session`] with a collection of documents
-    ///
-    /// You need a session to be able to execute queries against documents.
-    pub fn session(&self, documents: Documents) -> Session {
-        Session::from_documents(documents)
-    }
-
     /// Construct a query that expects a single item result.
     ///
     /// This item is converted into a Rust value using supplied `convert` function.
@@ -253,7 +246,7 @@ mod tests {
             Ok(item.try_into_value::<String>()?)
         })?;
 
-        let mut session = queries.session(documents);
+        let mut session = documents.session();
 
         let r = q.execute(&mut session, doc)?;
         assert_eq!(r, "foo");

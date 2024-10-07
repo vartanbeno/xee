@@ -36,7 +36,7 @@ fn test_simple_query() -> error::Result<()> {
         Ok(item.try_into_value::<String>()?)
     })?;
 
-    let mut session = queries.session(documents);
+    let mut session = documents.session();
     let r = q.execute(&mut session, doc)?;
     assert_eq!(r, "foo");
     Ok(())
@@ -52,7 +52,7 @@ fn test_sequence_query() -> error::Result<()> {
     let queries = Queries::default();
     let q = queries.sequence("/root/string()")?;
 
-    let mut session = queries.session(documents);
+    let mut session = documents.session();
     let r = q.execute(&mut session, doc)?;
     let sequence: Sequence = "foo".into();
     assert_eq!(r, sequence);
@@ -80,7 +80,7 @@ fn test_option_query() -> error::Result<()> {
         Ok(item.try_into_value::<String>()?)
     })?;
 
-    let mut session = queries.session(documents);
+    let mut session = documents.session();
     let r = q.execute(&mut session, doc_with_value)?;
     assert_eq!(r, Some("Foo".to_string()));
     let r = q.execute(&mut session, doc_without_value)?;
@@ -103,7 +103,7 @@ fn test_nested_query() -> error::Result<()> {
     let f_query = queries.one("./number()", |_, item| Ok(item.try_into_value::<f64>()?))?;
     let q = queries.many("/root/a", |context, item| f_query.execute(context, item))?;
 
-    let mut session = queries.session(documents);
+    let mut session = documents.session();
     let r = q.execute(&mut session, doc)?;
     assert_eq!(r, vec![1.0, 2.0]);
     Ok(())
@@ -161,7 +161,7 @@ fn test_option_query_recurse() -> error::Result<()> {
         )
         .unwrap();
 
-    let mut session = queries.session(documents);
+    let mut session = documents.session();
     let r = result_query.execute(&mut session, doc1)?;
     assert_eq!(r, Expr::AnyOf(Box::new(Expr::Value("A".to_string()))));
 
@@ -223,7 +223,7 @@ fn test_many_query_recurse() -> error::Result<()> {
         )
         .unwrap();
 
-    let mut session = queries.session(documents);
+    let mut session = documents.session();
     let r = result_query.execute(&mut session, doc1)?;
     assert_eq!(
         r,
@@ -250,7 +250,7 @@ fn test_map_query() -> error::Result<()> {
 
     let documents = Documents::new();
 
-    let mut session = queries.session(documents);
+    let mut session = documents.session();
     let r = q.execute(&mut session, &1i64.into())?;
     assert_eq!(r, ibig!(4));
     Ok(())
@@ -268,7 +268,7 @@ fn test_map_query_clone() -> error::Result<()> {
     let q = q.clone();
     let documents = Documents::new();
 
-    let mut session = queries.session(documents);
+    let mut session = documents.session();
     let r = q.execute(&mut session, &1i64.into())?;
     assert_eq!(r, ibig!(4));
     Ok(())

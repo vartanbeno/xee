@@ -29,7 +29,7 @@
 //! })?;
 //!
 //! // now create a session for the documents and execute the query
-//! let mut session = queries.session(documents);
+//! let mut session = documents.session();
 //!
 //! // when we execute the query, we need to pass the session, and the item
 //! // against which we want to query. We can also pass in a document handle,

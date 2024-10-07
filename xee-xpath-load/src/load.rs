@@ -41,7 +41,7 @@ pub trait ContextLoadable<C: ?Sized>: Sized {
 
         let query = Self::load_with_context(&queries, context)?;
 
-        let mut session = queries.session(documents);
+        let mut session = documents.session();
 
         Ok(query.execute(&mut session, document_id)?)
     }
