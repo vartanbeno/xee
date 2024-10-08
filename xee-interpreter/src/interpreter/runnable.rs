@@ -7,7 +7,6 @@ use xot::Xot;
 use crate::context::DocumentsRef;
 use crate::context::DynamicContext;
 use crate::context::StaticContext;
-use crate::context::Variables;
 use crate::error::SpannedError;
 use crate::function;
 use crate::interpreter::interpret::ContextInfo;
@@ -39,22 +38,6 @@ impl<'a> Runnable<'a> {
             array_signature: function::Signature::array_signature(),
             dynamic_context,
         }
-    }
-
-    fn arguments(&self, variables: Variables) -> error::SpannedResult<Vec<sequence::Sequence>> {
-        // we extract the arguments in the order defined by variable names in the
-        // parser context, so they get added to the stack in that order later
-        let mut arguments = Vec::new();
-        for variable_name in &self
-            .dynamic_context
-            .static_context
-            .parser_context
-            .variable_names
-        {
-            let items = variables.get(variable_name).ok_or(error::Error::XPDY0002)?;
-            arguments.push(items.clone());
-        }
-        Ok(arguments)
     }
 
     fn run_value(&self, xot: &'a mut Xot) -> error::SpannedResult<stack::Value> {
