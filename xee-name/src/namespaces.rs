@@ -15,19 +15,19 @@ const STATIC_NAMESPACES: [(&str, &str); 7] = [
 ];
 
 #[derive(Debug, Clone)]
-pub struct Namespaces<'a> {
-    namespaces: HashMap<&'a str, &'a str>,
-    pub default_element_namespace: &'a str,
-    pub default_function_namespace: &'a str,
+pub struct Namespaces {
+    namespaces: HashMap<String, String>,
+    pub default_element_namespace: String,
+    pub default_function_namespace: String,
 }
 
-impl<'a> Namespaces<'a> {
+impl Namespaces {
     pub const FN_NAMESPACE: &'static str = FN_NAMESPACE;
 
     pub fn new(
-        namespaces: HashMap<&'a str, &'a str>,
-        default_element_namespace: &'a str,
-        default_function_namespace: &'a str,
+        namespaces: HashMap<String, String>,
+        default_element_namespace: String,
+        default_function_namespace: String,
     ) -> Self {
         Self {
             namespaces,
@@ -36,39 +36,44 @@ impl<'a> Namespaces<'a> {
         }
     }
 
-    pub fn default_namespaces() -> HashMap<&'a str, &'a str> {
+    pub fn default_namespaces() -> HashMap<String, String> {
         let mut namespaces = HashMap::new();
-        namespaces.insert("xml", XML_NAMESPACE);
+        namespaces.insert("xml".to_string(), XML_NAMESPACE.to_string());
         for (prefix, uri) in STATIC_NAMESPACES.into_iter() {
-            namespaces.insert(prefix, uri);
+            namespaces.insert(prefix.to_string(), uri.to_string());
         }
         namespaces
     }
 
-    pub fn add(&mut self, namespace_pairs: &[(&'a str, &'a str)]) {
+    pub fn add(&mut self, namespace_pairs: &[(&str, &str)]) {
         for (prefix, namespace) in namespace_pairs {
             if prefix.is_empty() {
-                self.default_element_namespace = namespace;
+                self.default_element_namespace = namespace.to_string();
             } else {
-                self.namespaces.insert(*prefix, *namespace);
+                self.namespaces
+                    .insert(prefix.to_string(), namespace.to_string());
             }
         }
     }
 
     #[inline]
-    pub fn by_prefix<'b>(&'a self, prefix: &'b str) -> Option<&'a str> {
-        self.namespaces.get(prefix).copied()
+    pub fn by_prefix(&self, prefix: &str) -> Option<&str> {
+        self.namespaces.get(prefix).map(String::as_str)
     }
 
     #[inline]
     pub fn default_element_namespace(&self) -> &str {
-        self.default_element_namespace
+        self.default_element_namespace.as_str()
     }
 }
 
-impl Default for Namespaces<'_> {
+impl Default for Namespaces {
     fn default() -> Self {
-        Self::new(Self::default_namespaces(), "", FN_NAMESPACE)
+        Self::new(
+            Self::default_namespaces(),
+            "".to_string(),
+            FN_NAMESPACE.to_string(),
+        )
     }
 }
 
@@ -76,9 +81,9 @@ pub trait NamespaceLookup {
     fn by_prefix(&self, prefix: &str) -> Option<&str>;
 }
 
-impl NamespaceLookup for Namespaces<'_> {
+impl NamespaceLookup for Namespaces {
     fn by_prefix(&self, prefix: &str) -> Option<&str> {
-        self.namespaces.get(prefix).copied()
+        self.namespaces.get(prefix).map(String::as_str)
     }
 }
 

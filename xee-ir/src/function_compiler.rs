@@ -16,7 +16,7 @@ pub(crate) type Scopes = scope::Scopes<ir::Name>;
 
 pub struct FunctionCompiler<'a> {
     pub(crate) scopes: &'a mut Scopes,
-    pub(crate) static_context: &'a context::StaticContext<'a>,
+    pub(crate) static_context: &'a context::StaticContext,
     pub(crate) mode_ids: &'a ModeIds,
     pub(crate) builder: FunctionBuilder<'a>,
 }
@@ -25,7 +25,7 @@ impl<'a> FunctionCompiler<'a> {
     pub fn new(
         builder: FunctionBuilder<'a>,
         scopes: &'a mut Scopes,
-        static_context: &'a context::StaticContext<'a>,
+        static_context: &'a context::StaticContext,
         mode_ids: &'a ModeIds,
     ) -> Self {
         Self {

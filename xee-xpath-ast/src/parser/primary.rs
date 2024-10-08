@@ -78,17 +78,20 @@ where
         .then_ignore(just(Token::Hash))
         .then(integer)
         .try_map_with(|(name, arity), extra| {
-            check_reserved(&name, extra.span())?;
+            let span = extra.span();
+            check_reserved(&name, span)?;
             let arity: u8 = arity
                 .try_into()
-                .map_err(|_| ParserError::ArityOverflow { span: extra.span() })?;
+                .map_err(|_| ParserError::ArityOverflow { span })?;
             Ok(ast::PrimaryExpr::NamedFunctionRef(ast::NamedFunctionRef {
                 name: name.map(|name| {
-                    name.with_default_namespace(extra.state().namespaces.default_function_namespace)
+                    name.with_default_namespace(
+                        &extra.state().namespaces.default_function_namespace,
+                    )
                 }),
                 arity,
             })
-            .with_span(extra.span()))
+            .with_span(span))
         })
         .boxed();
 

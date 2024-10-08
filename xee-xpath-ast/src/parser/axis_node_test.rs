@@ -71,7 +71,7 @@ where
         .clone()
         .map_with(|name, extra| {
             ast::NameTest::Name(name.map(|name| {
-                name.with_default_namespace(extra.state().namespaces.default_element_namespace)
+                name.with_default_namespace(&extra.state().namespaces.default_element_namespace)
             }))
         })
         .boxed();

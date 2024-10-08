@@ -7,7 +7,7 @@ use xot::xmlname::NameStrInfo;
 #[derive(Debug)]
 pub struct IrConverter<'a> {
     variables: &'a mut Variables,
-    static_context: &'a context::StaticContext<'a>,
+    static_context: &'a context::StaticContext,
     fn_position: ast::Name,
     fn_last: ast::Name,
 }

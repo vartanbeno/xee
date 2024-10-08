@@ -18,11 +18,11 @@ pub type Variables = AHashMap<ast::Name, sequence::Sequence>;
 
 // a dynamic context is created for each xpath evaluation
 #[derive(Debug)]
-pub struct DynamicContext<'a> {
+pub struct DynamicContext {
     // we keep a reference to the static context. we don't need
     // to mutate it, and we want to be able create a new dynamic context from
     // the same static context quickly.
-    pub static_context: StaticContextRef<'a>,
+    pub static_context: StaticContextRef,
 
     /// An optional context item
     pub context_item: Option<sequence::Item>,
@@ -36,9 +36,9 @@ pub struct DynamicContext<'a> {
     current_datetime: chrono::DateTime<chrono::offset::FixedOffset>,
 }
 
-impl<'a> DynamicContext<'a> {
+impl DynamicContext {
     pub(crate) fn new(
-        static_context: StaticContextRef<'a>,
+        static_context: StaticContextRef,
         context_item: Option<sequence::Item>,
         documents: DocumentsRef,
         variables: Variables,

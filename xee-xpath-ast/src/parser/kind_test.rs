@@ -40,7 +40,7 @@ where
             // about context, as it's an element name test
             ast::NameOrWildcard::Name(
                 name.value
-                    .with_default_namespace(extra.state().namespaces.default_element_namespace),
+                    .with_default_namespace(&extra.state().namespaces.default_element_namespace),
             )
         }))
         .boxed();

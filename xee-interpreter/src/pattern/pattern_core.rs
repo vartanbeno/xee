@@ -405,11 +405,14 @@ mod tests {
         let item: Item = node.into();
 
         let namespaces = xee_name::Namespaces::new(
-            vec![("d", "different"), ("o", "other")]
-                .into_iter()
-                .collect(),
-            "",
-            "",
+            vec![
+                ("d".to_string(), "different".to_string()),
+                ("o".to_string(), "other".to_string()),
+            ]
+            .into_iter()
+            .collect(),
+            "".to_string(),
+            "".to_string(),
         );
 
         let mut pm = BasicPredicateMatcher::new(&xot);

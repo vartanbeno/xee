@@ -30,8 +30,8 @@ pub fn evaluate_root(
 ) -> SpannedResult<Sequence> {
     let namespaces = Namespaces::new(
         Namespaces::default_namespaces(),
-        default_element_namespace,
-        FN_NAMESPACE,
+        default_element_namespace.to_string(),
+        FN_NAMESPACE.to_string(),
     );
     let static_context = StaticContext::from_namespaces(namespaces);
     // TODO: isn't the right URI

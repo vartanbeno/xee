@@ -12,8 +12,8 @@ use super::{DynamicContext, StaticContext, Variables};
 /// You can supply a context item, documents, variables and the like in order
 /// to construct a dynamic context used to execute an XPath instruction.
 #[derive(Debug, Clone)]
-pub struct DynamicContextBuilder<'a> {
-    static_context: StaticContextRef<'a>,
+pub struct DynamicContextBuilder {
+    static_context: StaticContextRef,
     context_item: Option<sequence::Item>,
     documents: DocumentsRef,
     variables: Variables,
@@ -21,16 +21,16 @@ pub struct DynamicContextBuilder<'a> {
 }
 
 #[derive(Debug, Clone)]
-pub struct StaticContextRef<'a>(Rc<StaticContext<'a>>);
+pub struct StaticContextRef(Rc<StaticContext>);
 
-impl<'a> From<StaticContext<'a>> for StaticContextRef<'a> {
-    fn from(static_context: StaticContext<'a>) -> Self {
+impl From<StaticContext> for StaticContextRef {
+    fn from(static_context: StaticContext) -> Self {
         Self(Rc::new(static_context))
     }
 }
 
-impl<'a> Deref for StaticContextRef<'a> {
-    type Target = StaticContext<'a>;
+impl Deref for StaticContextRef {
+    type Target = StaticContext;
 
     fn deref(&self) -> &Self::Target {
         &self.0
@@ -66,9 +66,9 @@ impl Default for DocumentsRef {
     }
 }
 
-impl<'a> DynamicContextBuilder<'a> {
+impl DynamicContextBuilder {
     /// Construct a new `DynamicContextBuilder` with the given `StaticContext`.
-    pub fn new(static_context: impl Into<StaticContextRef<'a>>) -> Self {
+    pub fn new(static_context: impl Into<StaticContextRef>) -> Self {
         Self {
             static_context: static_context.into(),
             context_item: None,
@@ -120,7 +120,7 @@ impl<'a> DynamicContextBuilder<'a> {
     }
 
     /// Build the `DynamicContext`.
-    pub fn build(&self) -> DynamicContext<'a> {
+    pub fn build(&self) -> DynamicContext {
         DynamicContext::new(
             self.static_context.clone(),
             self.context_item.clone(),

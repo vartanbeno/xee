@@ -116,15 +116,15 @@ pub fn cli() -> Result<()> {
     }
 }
 
-struct Runner<'a, E: Environment, R: Runnable<E>> {
-    run_context: RunContext<'a>,
+struct Runner<E: Environment, R: Runnable<E>> {
+    run_context: RunContext,
     path_info: PathInfo,
     _e: std::marker::PhantomData<E>,
     _r: std::marker::PhantomData<R>,
 }
 
-impl<'a, E: Environment, R: Runnable<E>> Runner<'a, E, R> {
-    fn new(run_context: RunContext<'a>, path_info: PathInfo) -> Self {
+impl<E: Environment, R: Runnable<E>> Runner<E, R> {
+    fn new(run_context: RunContext, path_info: PathInfo) -> Self {
         Self {
             run_context,
             path_info,

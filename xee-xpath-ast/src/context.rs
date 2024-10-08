@@ -4,17 +4,17 @@ use crate::ast;
 use crate::{Namespaces, ParserError};
 
 #[derive(Debug, Default)]
-pub struct XPathParserContext<'a> {
-    pub namespaces: Namespaces<'a>,
+pub struct XPathParserContext {
+    pub namespaces: Namespaces,
     pub variable_names: VariableNames,
 }
 
-impl<'a> XPathParserContext<'a> {
+impl XPathParserContext {
     /// Construct a new XPath parser context.
     ///
     /// This consists of information about namespaces and variable names
     /// available.
-    pub fn new(namespaces: Namespaces<'a>, variable_names: VariableNames) -> Self {
+    pub fn new(namespaces: Namespaces, variable_names: VariableNames) -> Self {
         Self {
             namespaces,
             variable_names,

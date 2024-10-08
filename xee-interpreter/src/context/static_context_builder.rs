@@ -65,10 +65,10 @@ impl<'a> StaticContextBuilder<'a> {
     /// This will always include the default known namespaces for
     /// XPath, and the default function namespace will be the `fn` namespace
     /// if not set.
-    pub fn build(&self) -> context::StaticContext<'a> {
+    pub fn build(&self) -> context::StaticContext {
         let mut namespaces = Namespaces::default_namespaces();
         for (prefix, uri) in &self.namespaces {
-            namespaces.insert(prefix, uri);
+            namespaces.insert(prefix.to_string(), uri.to_string());
         }
         let default_function_namespace = if !self.default_function_namespace.is_empty() {
             self.default_function_namespace
@@ -77,8 +77,8 @@ impl<'a> StaticContextBuilder<'a> {
         };
         let namespaces = xee_name::Namespaces::new(
             namespaces,
-            self.default_element_namespace,
-            default_function_namespace,
+            self.default_element_namespace.to_string(),
+            default_function_namespace.to_string(),
         );
         let variable_names = self.variable_names.clone().into_iter().collect();
         context::StaticContext::new(namespaces, variable_names)

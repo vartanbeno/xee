@@ -5,7 +5,7 @@ use crate::error::ParserError;
 use crate::Namespaces;
 
 pub(crate) struct State<'a> {
-    pub(crate) namespaces: Cow<'a, Namespaces<'a>>,
+    pub(crate) namespaces: Cow<'a, Namespaces>,
 }
 
 type Extra<'a> = Full<ParserError, State<'a>, ()>;

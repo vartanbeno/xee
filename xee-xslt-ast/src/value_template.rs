@@ -46,7 +46,7 @@ pub(crate) struct ValueTemplateTokenizer<'a> {
     span: Span,
     mode: Mode,
     start: usize,
-    parser_context: &'a XPathParserContext<'a>,
+    parser_context: &'a XPathParserContext,
     done: bool,
 }
 
@@ -58,7 +58,7 @@ enum Mode {
 }
 
 impl<'a> ValueTemplateTokenizer<'a> {
-    pub(crate) fn new(s: &'a str, span: Span, parser_context: &'a XPathParserContext<'a>) -> Self {
+    pub(crate) fn new(s: &'a str, span: Span, parser_context: &'a XPathParserContext) -> Self {
         Self {
             s,
             char_indices: s.char_indices().peekable(),
@@ -231,7 +231,7 @@ mod tests {
     fn parse_with_span<'a>(
         s: &'a str,
         span: Span,
-        parser_context: &'a XPathParserContext<'a>,
+        parser_context: &'a XPathParserContext,
     ) -> Result<Vec<ValueTemplateItem<'a>>, Error> {
         let tokenizer = ValueTemplateTokenizer::new(s, span, parser_context);
         tokenizer.collect()
@@ -239,7 +239,7 @@ mod tests {
 
     fn parse<'a>(
         s: &'a str,
-        parser_context: &'a XPathParserContext<'a>,
+        parser_context: &'a XPathParserContext,
     ) -> Result<Vec<ValueTemplateItem<'a>>, Error> {
         let span = Span {
             start: 0,

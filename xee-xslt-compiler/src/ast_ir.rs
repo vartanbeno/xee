@@ -11,7 +11,7 @@ use crate::priority::default_priority;
 
 struct IrConverter<'a> {
     variables: Variables,
-    static_context: &'a StaticContext<'a>,
+    static_context: &'a StaticContext,
 }
 
 pub fn compile(
@@ -32,7 +32,7 @@ pub(crate) fn parse(
 }
 
 impl<'a> IrConverter<'a> {
-    fn new(static_context: &'a StaticContext<'a>) -> Self {
+    fn new(static_context: &'a StaticContext) -> Self {
         IrConverter {
             variables: Variables::new(),
             static_context,

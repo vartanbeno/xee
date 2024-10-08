@@ -14,21 +14,21 @@ use crate::string::{Collation, Collations};
 static STATIC_FUNCTIONS: LazyLock<StaticFunctions> = LazyLock::new(StaticFunctions::new);
 
 #[derive(Debug)]
-pub struct StaticContext<'a> {
-    pub(crate) parser_context: XPathParserContext<'a>,
+pub struct StaticContext {
+    pub(crate) parser_context: XPathParserContext,
     pub functions: &'static StaticFunctions,
     // TODO: try to make collations static
     pub(crate) collations: RefCell<Collations>,
 }
 
-impl<'a> Default for StaticContext<'a> {
+impl Default for StaticContext {
     fn default() -> Self {
         Self::new(Namespaces::default(), VariableNames::default())
     }
 }
 
-impl<'a> From<XPathParserContext<'a>> for StaticContext<'a> {
-    fn from(parser_context: XPathParserContext<'a>) -> Self {
+impl From<XPathParserContext> for StaticContext {
+    fn from(parser_context: XPathParserContext) -> Self {
         Self {
             parser_context,
             functions: &STATIC_FUNCTIONS,
@@ -37,8 +37,8 @@ impl<'a> From<XPathParserContext<'a>> for StaticContext<'a> {
     }
 }
 
-impl<'a> StaticContext<'a> {
-    pub(crate) fn new(namespaces: Namespaces<'a>, variable_names: VariableNames) -> Self {
+impl StaticContext {
+    pub(crate) fn new(namespaces: Namespaces, variable_names: VariableNames) -> Self {
         Self {
             parser_context: XPathParserContext::new(namespaces, variable_names),
             functions: &STATIC_FUNCTIONS,
@@ -46,7 +46,7 @@ impl<'a> StaticContext<'a> {
         }
     }
 
-    pub fn from_namespaces(namespaces: Namespaces<'a>) -> Self {
+    pub fn from_namespaces(namespaces: Namespaces) -> Self {
         Self::new(namespaces, VariableNames::default())
     }
 

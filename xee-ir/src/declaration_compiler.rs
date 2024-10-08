@@ -32,7 +32,7 @@ pub type ModeIds = HashMap<ir::ApplyTemplatesModeValue, ModeId>;
 
 pub struct DeclarationCompiler<'a> {
     program: &'a mut interpreter::Program,
-    pub(crate) static_context: &'a context::StaticContext<'a>,
+    pub(crate) static_context: &'a context::StaticContext,
     scopes: Scopes,
     rule_declaration_order: i64,
     rule_builders: HashMap<ir::ModeValue, Vec<RuleBuilder>>,
@@ -42,7 +42,7 @@ pub struct DeclarationCompiler<'a> {
 impl<'a> DeclarationCompiler<'a> {
     pub fn new(
         program: &'a mut interpreter::Program,
-        static_context: &'a context::StaticContext<'a>,
+        static_context: &'a context::StaticContext,
     ) -> Self {
         Self {
             program,

@@ -175,12 +175,12 @@ impl Context {
         for (prefix, ns) in &self.prefixes {
             let prefix = state.xot.prefix_str(*prefix);
             let uri = state.xot.namespace_str(*ns);
-            namespaces.insert(prefix, uri);
+            namespaces.insert(prefix.to_string(), uri.to_string());
         }
         Namespaces::new(
             namespaces,
-            self.xpath_default_namespace.as_str(),
-            FN_NAMESPACE,
+            self.xpath_default_namespace.to_string(),
+            FN_NAMESPACE.to_string(),
         )
     }
 
@@ -188,7 +188,7 @@ impl Context {
         &self.variable_names
     }
 
-    pub(crate) fn parser_context<'a>(&'a self, state: &'a State) -> XPathParserContext<'a> {
+    pub(crate) fn parser_context(&self, state: &State) -> XPathParserContext {
         let namespaces = self.namespaces(state);
         XPathParserContext::new(namespaces, self.variable_names.clone())
     }

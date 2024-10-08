@@ -35,7 +35,7 @@ fn tokens(src: &str) -> impl ValueInput<'_, Token = Token<'_>, Span = Span> {
 fn parse<'a, I, T>(
     parser: BoxedParser<'a, I, T>,
     input: I,
-    namespaces: Cow<'a, Namespaces<'a>>,
+    namespaces: Cow<'a, Namespaces>,
 ) -> std::result::Result<T, ParserError>
 where
     I: ValueInput<'a, Token = Token<'a>, Span = Span>,
@@ -138,8 +138,11 @@ mod tests {
     }
 
     fn parse_xpath_simple_element_ns(src: &str) -> Result<ast::XPath, ParserError> {
-        let namespaces =
-            Namespaces::new(Namespaces::default_namespaces(), "http://example.com", "");
+        let namespaces = Namespaces::new(
+            Namespaces::default_namespaces(),
+            "http://example.com".to_string(),
+            "".to_string(),
+        );
         parse(parser().xpath, tokens(src), Cow::Owned(namespaces))
     }
 

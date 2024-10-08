@@ -28,7 +28,11 @@ pub fn evaluate_program(
 }
 
 pub fn evaluate(xot: &mut Xot, xml: &str, xslt: &str) -> error::SpannedResult<sequence::Sequence> {
-    let namespaces = Namespaces::new(Namespaces::default_namespaces(), "", FN_NAMESPACE);
+    let namespaces = Namespaces::new(
+        Namespaces::default_namespaces(),
+        "".to_string(),
+        FN_NAMESPACE.to_string(),
+    );
     let static_context = StaticContext::from_namespaces(namespaces);
     let root = xot.parse(xml).unwrap();
     let program = parse(&static_context, xslt).unwrap();

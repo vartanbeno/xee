@@ -179,12 +179,13 @@ where
             .clone()
             .then(argument_list.clone())
             .try_map_with(move |(name, arguments), extra| {
-                check_reserved(&name, extra.span())?;
+                let span = extra.span();
+                check_reserved(&name, span)?;
                 Ok(static_function_call(
                     name,
                     arguments,
-                    extra.state().namespaces.default_function_namespace,
-                    extra.span(),
+                    &extra.state().namespaces.default_function_namespace,
+                    span,
                 ))
             })
             .boxed();
@@ -516,11 +517,12 @@ where
 
                         match specifier {
                             ArrowFunctionSpecifier::EQName(name) => {
+                                let span = extra.span();
                                 primary_expr_to_expr_single(static_function_call(
                                     name.clone(),
                                     argument_list,
-                                    extra.state().namespaces.default_function_namespace,
-                                    extra.span(),
+                                    &extra.state().namespaces.default_function_namespace,
+                                    span,
                                 ))
                             }
                             ArrowFunctionSpecifier::VarRef(primary) => {

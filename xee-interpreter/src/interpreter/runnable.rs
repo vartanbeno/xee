@@ -28,11 +28,11 @@ pub struct Runnable<'a> {
     // to implement call_static without lifetime issues.
     // We could possibly obtain context from the interpreter directly,
     // but this leads to lifetime issues right now.
-    pub(crate) dynamic_context: &'a DynamicContext<'a>,
+    pub(crate) dynamic_context: &'a DynamicContext,
 }
 
 impl<'a> Runnable<'a> {
-    pub(crate) fn new(program: &'a Program, dynamic_context: &'a DynamicContext<'a>) -> Self {
+    pub(crate) fn new(program: &'a Program, dynamic_context: &'a DynamicContext) -> Self {
         Self {
             program,
             map_signature: function::Signature::map_signature(),

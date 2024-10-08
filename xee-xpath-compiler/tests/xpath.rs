@@ -59,7 +59,11 @@ where
     let root = document.root();
     let nodes = get_nodes(&xot, document);
 
-    let namespaces = Namespaces::new(Namespaces::default_namespaces(), "", "");
+    let namespaces = Namespaces::new(
+        Namespaces::default_namespaces(),
+        "".to_string(),
+        "".to_string(),
+    );
     let static_context = StaticContext::from_namespaces(namespaces);
 
     let mut dynamic_context_builder = DynamicContextBuilder::new(static_context);

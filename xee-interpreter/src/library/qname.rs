@@ -38,11 +38,14 @@ fn element_namespaces(node: xot::Node, xot: &Xot) -> Namespaces {
         .inherited_prefixes(node)
         .iter()
         .map(|(prefix_id, namespace_id)| {
-            (xot.prefix_str(*prefix_id), xot.namespace_str(*namespace_id))
+            (
+                xot.prefix_str(*prefix_id).to_string(),
+                xot.namespace_str(*namespace_id).to_string(),
+            )
         })
         .collect::<HashMap<_, _>>();
 
-    Namespaces::new(pairs, "", "")
+    Namespaces::new(pairs, "".to_string(), "".to_string())
 }
 
 #[xpath_fn("fn:QName($paramURI as xs:string?, $paramQName as xs:string) as xs:QName")]
@@ -57,18 +60,18 @@ fn qname(param_uri: Option<&str>, param_qname: &str) -> error::Result<atomic::At
             if param_uri.is_empty() {
                 return Err(error::Error::FOCA0002);
             }
-            vec![(prefix, param_uri)]
+            vec![(prefix.to_string(), param_uri.to_string())]
         } else {
             // no prefix,will be parse error later
-            vec![("", param_uri)]
+            vec![("".to_string(), param_uri.to_string())]
         }
     } else {
         // no prefix, so default namespace
-        vec![("", param_uri)]
+        vec![("".to_string(), param_uri.to_string())]
     };
     let pairs = HashMap::from_iter(pairs);
     // TODO: see efficiency note for resolve-QName
-    let namespaces = Namespaces::new(pairs, "", "");
+    let namespaces = Namespaces::new(pairs, "".to_string(), "".to_string());
     let name = parse_name(param_qname, &namespaces)
         .map_err(|_| error::Error::FOCA0002)?
         .value;

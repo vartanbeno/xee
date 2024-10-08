@@ -34,7 +34,7 @@ impl<'a> Queries<'a> {
     /// This item is converted into a Rust value using supplied `convert` function.
     ///
     /// This uses a default static context.
-    pub fn one<V, F>(&self, s: &str, convert: F) -> Result<OneQuery<'a, V, F>>
+    pub fn one<V, F>(&self, s: &str, convert: F) -> Result<OneQuery<V, F>>
     where
         F: Convert<V>,
     {
@@ -50,8 +50,8 @@ impl<'a> Queries<'a> {
         &self,
         s: &str,
         convert: F,
-        static_context: impl Into<context::StaticContextRef<'a>>,
-    ) -> Result<OneQuery<'a, V, F>>
+        static_context: impl Into<context::StaticContextRef>,
+    ) -> Result<OneQuery<V, F>>
     where
         F: Convert<V>,
     {
@@ -73,7 +73,7 @@ impl<'a> Queries<'a> {
     /// expects one value always - unlike `option_recurse` and `many_recurse`
     /// which have the None or empty value. I think this means that
     /// `one_recurse` is not in fact useful.
-    pub fn one_recurse(&self, s: &str) -> Result<OneRecurseQuery<'a>> {
+    pub fn one_recurse(&self, s: &str) -> Result<OneRecurseQuery> {
         self.one_recurse_with_context(s, self.default_static_context_builder.build())
     }
 
@@ -82,8 +82,8 @@ impl<'a> Queries<'a> {
     pub fn one_recurse_with_context(
         &self,
         s: &str,
-        static_context: impl Into<context::StaticContextRef<'a>>,
-    ) -> Result<OneRecurseQuery<'a>> {
+        static_context: impl Into<context::StaticContextRef>,
+    ) -> Result<OneRecurseQuery> {
         let static_context = static_context.into();
         Ok(OneRecurseQuery {
             program: Rc::new(parse(&static_context, s)?),
@@ -94,7 +94,7 @@ impl<'a> Queries<'a> {
     /// Construct a query that expects an optional single item result.
     ///
     /// This item is converted into a Rust value using supplied `convert` function.
-    pub fn option<V, F>(&self, s: &str, convert: F) -> Result<OptionQuery<'a, V, F>>
+    pub fn option<V, F>(&self, s: &str, convert: F) -> Result<OptionQuery<V, F>>
     where
         F: Convert<V>,
     {
@@ -107,8 +107,8 @@ impl<'a> Queries<'a> {
         &self,
         s: &str,
         convert: F,
-        static_context: impl Into<context::StaticContextRef<'a>>,
-    ) -> Result<OptionQuery<'a, V, F>>
+        static_context: impl Into<context::StaticContextRef>,
+    ) -> Result<OptionQuery<V, F>>
     where
         F: Convert<V>,
     {
@@ -127,7 +127,7 @@ impl<'a> Queries<'a> {
     /// This item is converted into a Rust value not using a convert
     /// function but through a recursive call that's passed in during
     /// execution.
-    pub fn option_recurse(&self, s: &str) -> Result<OptionRecurseQuery<'a>> {
+    pub fn option_recurse(&self, s: &str) -> Result<OptionRecurseQuery> {
         self.option_recurse_with_context(s, self.default_static_context_builder.build())
     }
 
@@ -136,8 +136,8 @@ impl<'a> Queries<'a> {
     pub fn option_recurse_with_context(
         &self,
         s: &str,
-        static_context: impl Into<context::StaticContextRef<'a>>,
-    ) -> Result<OptionRecurseQuery<'a>> {
+        static_context: impl Into<context::StaticContextRef>,
+    ) -> Result<OptionRecurseQuery> {
         let static_context = static_context.into();
         Ok(OptionRecurseQuery {
             program: Rc::new(parse(&static_context, s)?),
@@ -148,7 +148,7 @@ impl<'a> Queries<'a> {
     /// Construct a query that expects many items as a result.
     ///
     /// These items are converted into Rust values using supplied `convert` function.
-    pub fn many<V, F>(&self, s: &str, convert: F) -> Result<ManyQuery<'a, V, F>>
+    pub fn many<V, F>(&self, s: &str, convert: F) -> Result<ManyQuery<V, F>>
     where
         F: Convert<V>,
     {
@@ -161,8 +161,8 @@ impl<'a> Queries<'a> {
         &self,
         s: &str,
         convert: F,
-        static_context: impl Into<context::StaticContextRef<'a>>,
-    ) -> Result<ManyQuery<'a, V, F>>
+        static_context: impl Into<context::StaticContextRef>,
+    ) -> Result<ManyQuery<V, F>>
     where
         F: Convert<V>,
     {
@@ -181,7 +181,7 @@ impl<'a> Queries<'a> {
     /// These items are converted into Rust values not using a convert
     /// function but through a recursive call that's passed in during
     /// execution.
-    pub fn many_recurse(&self, s: &str) -> Result<ManyRecurseQuery<'a>> {
+    pub fn many_recurse(&self, s: &str) -> Result<ManyRecurseQuery> {
         self.many_recurse_with_context(s, self.default_static_context_builder.build())
     }
 
@@ -190,8 +190,8 @@ impl<'a> Queries<'a> {
     pub fn many_recurse_with_context(
         &self,
         s: &str,
-        static_context: impl Into<context::StaticContextRef<'a>>,
-    ) -> Result<ManyRecurseQuery<'a>> {
+        static_context: impl Into<context::StaticContextRef>,
+    ) -> Result<ManyRecurseQuery> {
         let static_context = static_context.into();
         Ok(ManyRecurseQuery {
             program: Rc::new(parse(&static_context, s)?),
@@ -203,7 +203,7 @@ impl<'a> Queries<'a> {
     ///
     /// This is a low-level API that allows you to get the raw sequence
     /// without converting it into Rust values.
-    pub fn sequence(&self, s: &str) -> Result<SequenceQuery<'a>> {
+    pub fn sequence(&self, s: &str) -> Result<SequenceQuery> {
         self.sequence_with_context(s, self.default_static_context_builder.build())
     }
 
@@ -212,8 +212,8 @@ impl<'a> Queries<'a> {
     pub fn sequence_with_context(
         &self,
         s: &str,
-        static_context: impl Into<context::StaticContextRef<'a>>,
-    ) -> Result<SequenceQuery<'a>> {
+        static_context: impl Into<context::StaticContextRef>,
+    ) -> Result<SequenceQuery> {
         let static_context = static_context.into();
         Ok(SequenceQuery {
             program: Rc::new(parse(&static_context, s)?),
