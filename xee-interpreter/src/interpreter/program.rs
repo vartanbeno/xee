@@ -95,6 +95,7 @@ impl Program {
     }
 }
 
+/// Given a function provide information about it.
 pub struct FunctionInfo<'a, 'b> {
     function: &'b function::Function,
     program: &'a Program,
@@ -108,6 +109,7 @@ impl<'a, 'b> FunctionInfo<'a, 'b> {
         FunctionInfo { function, program }
     }
 
+    /// Return the arity of the function.
     pub fn arity(&self) -> usize {
         match self.function {
             function::Function::Inline {
@@ -121,6 +123,9 @@ impl<'a, 'b> FunctionInfo<'a, 'b> {
         }
     }
 
+    /// Return the name of the function.
+    ///
+    /// Note that only static functions have names.
     pub fn name(&self) -> Option<Name> {
         match self.function {
             function::Function::Static {
@@ -133,6 +138,7 @@ impl<'a, 'b> FunctionInfo<'a, 'b> {
         }
     }
 
+    /// Return the signature of the function.
     pub fn signature(&self) -> &'a function::Signature {
         match &self.function {
             function::Function::Static {

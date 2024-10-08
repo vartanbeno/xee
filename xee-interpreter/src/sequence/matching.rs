@@ -308,17 +308,14 @@ impl Item {
         signature: &function::Signature,
     ) -> bool {
         let default_sequence_type = Self::default_sequence_type();
-        let function_return_type = signature
-            .return_type
-            .as_ref()
-            .unwrap_or(&default_sequence_type);
+        let function_return_type = signature.return_type().unwrap_or(&default_sequence_type);
         // return type is covariant
         if !function_return_type.subtype(&function_test.return_type) {
             return false;
         }
 
         for (function_parameter, test_parameter) in signature
-            .parameter_types
+            .parameter_types()
             .iter()
             .zip(&function_test.parameter_types)
         {
@@ -674,12 +671,12 @@ mod tests {
         };
         let right_sequence = Sequence::from(vec![Item::Function(Rc::new(function))]);
 
-        let signature = function::Signature {
-            parameter_types: vec![Some(
+        let signature = function::Signature::new(
+            vec![Some(
                 parse_sequence_type("xs:integer", &namespaces).unwrap(),
             )],
-            return_type: Some(parse_sequence_type("xs:integer", &namespaces).unwrap()),
-        };
+            Some(parse_sequence_type("xs:integer", &namespaces).unwrap()),
+        );
 
         let xot = Xot::new();
 
@@ -701,12 +698,12 @@ mod tests {
         };
         let right_sequence = Sequence::from(vec![Item::Function(Rc::new(function))]);
 
-        let signature = function::Signature {
-            parameter_types: vec![Some(
+        let signature = function::Signature::new(
+            vec![Some(
                 parse_sequence_type("xs:integer", &namespaces).unwrap(),
             )],
-            return_type: Some(parse_sequence_type("xs:integer", &namespaces).unwrap()),
-        };
+            Some(parse_sequence_type("xs:integer", &namespaces).unwrap()),
+        );
 
         let xot = Xot::new();
 
@@ -728,12 +725,12 @@ mod tests {
         };
         let right_sequence = Sequence::from(vec![Item::Function(Rc::new(function))]);
 
-        let signature = function::Signature {
-            parameter_types: vec![Some(
+        let signature = function::Signature::new(
+            vec![Some(
                 parse_sequence_type("xs:integer", &namespaces).unwrap(),
             )],
-            return_type: Some(parse_sequence_type("xs:integer", &namespaces).unwrap()),
-        };
+            Some(parse_sequence_type("xs:integer", &namespaces).unwrap()),
+        );
 
         let xot = Xot::new();
 
@@ -755,13 +752,13 @@ mod tests {
         };
         let wrong_sequence = Sequence::from(vec![Item::Function(Rc::new(function))]);
 
-        let signature = function::Signature {
-            parameter_types: vec![
+        let signature = function::Signature::new(
+            vec![
                 Some(parse_sequence_type("xs:integer", &namespaces).unwrap()),
                 Some(parse_sequence_type("xs:integer", &namespaces).unwrap()),
             ],
-            return_type: Some(parse_sequence_type("xs:integer", &namespaces).unwrap()),
-        };
+            Some(parse_sequence_type("xs:integer", &namespaces).unwrap()),
+        );
 
         let xot = Xot::new();
 

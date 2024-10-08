@@ -43,6 +43,6 @@ impl InlineFunction {
     }
 
     pub(crate) fn arity(&self) -> usize {
-        self.signature.parameter_types.len()
+        self.signature.parameter_types().len()
     }
 }

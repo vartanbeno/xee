@@ -81,6 +81,7 @@ impl<'a> DynamicContext<'a> {
         self.documents.clone()
     }
 
+    /// Access information about a Function.
     pub fn function_info<'b>(&self, function: &'b Function) -> interpreter::FunctionInfo<'a, 'b> {
         self.program.function_info(function)
     }

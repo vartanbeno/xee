@@ -117,14 +117,13 @@ pub struct FunctionDefinition {
 
 impl FunctionDefinition {
     pub fn signature(&self) -> Signature {
-        Signature {
-            parameter_types: self
-                .params
+        Signature::new(
+            self.params
                 .iter()
                 .map(|param| param.type_.clone())
                 .collect(),
-            return_type: self.return_type.clone(),
-        }
+            self.return_type.clone(),
+        )
     }
 }
 

@@ -3,14 +3,25 @@ use xee_xpath_ast::ast;
 
 use super::static_function::FunctionKind;
 
+/// A function signature.
 #[derive(Debug, Clone, PartialEq)]
 pub struct Signature {
-    pub parameter_types: Vec<Option<ast::SequenceType>>,
-    pub return_type: Option<ast::SequenceType>,
+    parameter_types: Vec<Option<ast::SequenceType>>,
+    return_type: Option<ast::SequenceType>,
 }
 
 impl Signature {
-    pub fn map_signature() -> Self {
+    pub fn new(
+        parameter_types: Vec<Option<ast::SequenceType>>,
+        return_type: Option<ast::SequenceType>,
+    ) -> Self {
+        Self {
+            parameter_types,
+            return_type,
+        }
+    }
+
+    pub(crate) fn map_signature() -> Self {
         let key = ast::SequenceType::Item(ast::Item {
             item_type: ast::ItemType::AtomicOrUnionType(Xs::AnyAtomicType),
             occurrence: ast::Occurrence::One,
@@ -26,7 +37,7 @@ impl Signature {
         }
     }
 
-    pub fn array_signature() -> Self {
+    pub(crate) fn array_signature() -> Self {
         let position = ast::SequenceType::Item(ast::Item {
             item_type: ast::ItemType::AtomicOrUnionType(Xs::AnyAtomicType),
             occurrence: ast::Occurrence::One,
@@ -92,7 +103,18 @@ impl Signature {
         }
     }
 
-    pub(crate) fn arity(&self) -> usize {
+    /// The parameter types of the function.
+    pub fn parameter_types(&self) -> &[Option<ast::SequenceType>] {
+        &self.parameter_types
+    }
+
+    /// The return type of the function.
+    pub fn return_type(&self) -> Option<&ast::SequenceType> {
+        self.return_type.as_ref()
+    }
+
+    /// Return the arity of the function signature.
+    pub fn arity(&self) -> usize {
         self.parameter_types.len()
     }
 }

@@ -759,7 +759,7 @@ impl<'a> Interpreter<'a> {
     ) -> error::Result<()> {
         // look up the function in order to access the parameters information
         let function = self.runnable.program().inline_function(function_id);
-        let parameter_types = &function.signature.parameter_types;
+        let parameter_types = &function.signature.parameter_types();
         if arity as usize != parameter_types.len() {
             return Err(error::Error::XPTY0004);
         }
