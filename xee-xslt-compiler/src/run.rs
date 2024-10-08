@@ -1,7 +1,6 @@
 use xee_name::{Namespaces, FN_NAMESPACE};
 use xot::{Node, Xot};
 
-use xee_interpreter::context::DynamicContextBuilder;
 use xee_interpreter::context::StaticContext;
 use xee_interpreter::error;
 use xee_interpreter::interpreter::Program;

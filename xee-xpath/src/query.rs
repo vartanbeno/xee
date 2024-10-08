@@ -215,10 +215,6 @@ impl<V, F> OneQuery<V, F>
 where
     F: Convert<V>,
 {
-    fn program(&self) -> &Program {
-        &self.program
-    }
-
     /// Execute the query against a context
     pub fn execute_with_context(
         &self,
@@ -404,10 +400,6 @@ impl<V, F> ManyQuery<V, F>
 where
     F: Convert<V>,
 {
-    fn program(&self) -> &Program {
-        &self.program
-    }
-
     fn execute_with_context(
         &self,
         session: &mut Session,

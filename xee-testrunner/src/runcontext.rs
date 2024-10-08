@@ -1,7 +1,4 @@
-use xee_xpath_compiler::context::DocumentsRef;
-use xot::Xot;
-
-use xee_xpath::{context, Documents, Session};
+use xee_xpath::Session;
 
 use crate::{
     dependency::KnownDependencies,

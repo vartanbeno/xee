@@ -3,16 +3,14 @@ use std::path::{Path, PathBuf};
 
 use anyhow::Result;
 use clap::{Parser, Subcommand};
-use xot::Xot;
 
-use xee_xpath::{context, Documents};
+use xee_xpath::Documents;
 use xee_xpath_load::PathLoadable;
 
 use crate::catalog::Catalog;
 use crate::dependency::xpath_known_dependencies;
 use crate::environment::{Environment, XPathEnvironmentSpec};
 use crate::filter::{ExcludedNamesFilter, IncludeAllFilter, NameFilter, TestFilter};
-use crate::ns::XPATH_TEST_NS;
 use crate::outcomes::{CatalogOutcomes, Outcomes, TestSetOutcomes};
 use crate::paths::{paths, PathInfo};
 use crate::runcontext::RunContext;

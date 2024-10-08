@@ -1,7 +1,7 @@
 use xot::Xot;
 
 use xee_interpreter::{
-    context::{DynamicContextBuilder, StaticContext, StaticContextBuilder, Variables},
+    context::{StaticContext, StaticContextBuilder, Variables},
     error::SpannedResult,
     sequence::Sequence,
     xml::{Documents, Uri},

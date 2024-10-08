@@ -1,7 +1,7 @@
 use anyhow::Result;
 use std::path::Path;
 
-use xee_xpath::{context, Queries, Query, Session};
+use xee_xpath::{context, Queries, Query};
 use xee_xpath_compiler::parse;
 use xee_xpath_load::{convert_string, ContextLoadable};
 

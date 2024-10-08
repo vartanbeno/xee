@@ -1,5 +1,4 @@
 use std::{
-    cell::RefCell,
     fmt::{self, Display, Formatter},
     path::{Path, PathBuf},
 };
@@ -8,9 +7,8 @@ use anyhow::Result;
 use xot::xmlname::OwnedName as Name;
 
 use xee_xpath::{context, Item, Queries, Query, Session};
-use xee_xpath_compiler::{parse, xml::Documents};
+use xee_xpath_compiler::parse;
 use xee_xpath_load::{convert_string, ContextLoadable};
-use xot::Xot;
 
 use crate::ns::XPATH_TEST_NS;
 

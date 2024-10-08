@@ -1,7 +1,6 @@
 use ahash::HashMapExt;
 use insta::assert_debug_snapshot;
 
-use xee_interpreter::context::{DynamicContextBuilder, StaticContext};
 use xee_interpreter::interpreter::{instruction::decode_instructions, Program};
 use xee_interpreter::occurrence::Occurrence;
 use xee_ir::{ir, FunctionBuilder, FunctionCompiler, ModeIds, Scopes};

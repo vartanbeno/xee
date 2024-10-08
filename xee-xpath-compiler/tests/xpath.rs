@@ -4,7 +4,7 @@ use xot::Xot;
 
 use xee_interpreter::{
     atomic::Atomic,
-    context::{DynamicContextBuilder, StaticContext, Variables},
+    context::{StaticContext, Variables},
     error::SpannedResult,
     sequence::{Item, Sequence},
     xml::{Document, Documents, Uri},
