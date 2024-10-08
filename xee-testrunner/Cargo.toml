@@ -16,7 +16,6 @@ anyhow = { workspace = true }
 thiserror = { workspace = true }
 ahash = { workspace = true }
 xot = { workspace = true }
-xee-xpath-compiler = { path = "../xee-xpath-compiler" }
 xee-xpath-load = { path = "../xee-xpath-load" }
 xee-xpath = { path = "../xee-xpath" }
 xee-xslt-compiler = { path = "../xee-xslt-compiler" }

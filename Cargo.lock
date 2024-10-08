@@ -2898,7 +2898,6 @@ dependencies = [
  "thiserror",
  "xee-name",
  "xee-xpath",
- "xee-xpath-compiler",
  "xee-xpath-load",
  "xee-xslt-compiler",
  "xot",

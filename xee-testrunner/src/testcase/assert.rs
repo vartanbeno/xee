@@ -1,13 +1,13 @@
 use ahash::AHashMap;
 use chrono::Offset;
 use std::fmt;
-use xee_xpath::context::DynamicContext;
+use xee_xpath::context::{Collation, DynamicContext};
+use xee_xpath::iter::Occurrence;
 use xot::xmlname::OwnedName as Name;
 use xot::Xot;
 
 use xee_xpath::query::RecurseQuery;
 use xee_xpath::{context, error, Documents, Item, Queries, Query, Recurse, Sequence, Session};
-use xee_xpath_compiler::{occurrence::Occurrence, string::Collation};
 use xee_xpath_load::{convert_boolean, convert_string, Loadable};
 
 use crate::ns::XPATH_TEST_NS;
