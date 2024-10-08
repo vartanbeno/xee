@@ -8,17 +8,18 @@ use xee_xpath_ast::ast;
 use xee_xpath_ast::XPathParserContext;
 
 use crate::error;
-use crate::function::StaticFunctions;
+use crate::function;
 use crate::string::{Collation, Collations};
 
-static STATIC_FUNCTIONS: LazyLock<StaticFunctions> = LazyLock::new(StaticFunctions::new);
+static STATIC_FUNCTIONS: LazyLock<function::StaticFunctions> =
+    LazyLock::new(function::StaticFunctions::new);
 
 #[derive(Debug)]
 pub struct StaticContext {
-    pub(crate) parser_context: XPathParserContext,
-    pub functions: &'static StaticFunctions,
+    parser_context: XPathParserContext,
+    functions: &'static function::StaticFunctions,
     // TODO: try to make collations static
-    pub(crate) collations: RefCell<Collations>,
+    collations: RefCell<Collations>,
 }
 
 impl Default for StaticContext {
@@ -86,5 +87,22 @@ impl StaticContext {
         s: &str,
     ) -> Result<ast::XPath, xee_xpath_ast::ParserError> {
         self.parser_context.parse_value_template_xpath(s)
+    }
+
+    /// Get a static function by id
+    pub fn function_by_id(
+        &self,
+        static_function_id: function::StaticFunctionId,
+    ) -> &function::StaticFunction {
+        self.functions.get_by_index(static_function_id)
+    }
+
+    /// Get a static function by name and arity
+    pub fn function_id_by_name(
+        &self,
+        name: &xot::xmlname::OwnedName,
+        arity: u8,
+    ) -> Option<function::StaticFunctionId> {
+        self.functions.get_by_name(name, arity)
     }
 }

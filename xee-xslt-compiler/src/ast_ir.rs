@@ -75,8 +75,7 @@ impl<'a> IrConverter<'a> {
     fn static_function_atom(&mut self, name: &str, namespace: &str, arity: u8) -> ir::Atom {
         ir::Atom::Const(ir::Const::StaticFunctionReference(
             self.static_context
-                .functions
-                .get_by_name(
+                .function_id_by_name(
                     &Name::new(name.to_string(), namespace.to_string(), String::new()),
                     arity,
                 )

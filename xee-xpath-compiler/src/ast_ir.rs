@@ -596,8 +596,7 @@ impl<'a> IrConverter<'a> {
         // advice: format!("Either the function name {:?} does not exist, or you are calling it with the wrong number of arguments ({})", ast.name, arity),
         let static_function_id = self
             .static_context
-            .functions
-            .get_by_name(&ast.name.value, arity as u8)
+            .function_id_by_name(&ast.name.value, arity as u8)
             .ok_or(Error::XPST0017.with_ast_span(span))?;
         // TODO we don't know yet how to get the proper span here
         let empty_span = (0..0).into();
@@ -620,8 +619,7 @@ impl<'a> IrConverter<'a> {
         // advice: format!("Either the function name {:?} does not exist, or you are calling it with the wrong number of arguments ({})", ast.name, ast.arity),
         let static_function_id = self
             .static_context
-            .functions
-            .get_by_name(&ast.name.value, ast.arity)
+            .function_id_by_name(&ast.name.value, ast.arity)
             .ok_or(Error::XPST0017.with_ast_span(span))?;
         Ok(self.static_function_ref(static_function_id, span))
     }

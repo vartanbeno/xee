@@ -653,10 +653,7 @@ impl<'a> Interpreter<'a> {
     where
         F: FnMut() -> Option<stack::Value>,
     {
-        let static_function = &context
-            .static_context()
-            .functions
-            .get_by_index(static_function_id);
+        let static_function = &context.static_context().function_by_id(static_function_id);
         // get any context value from the stack if needed
         let closure_vars = if static_function.needs_context() {
             let value = get();

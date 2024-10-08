@@ -36,7 +36,7 @@ fn function_lookup(
     } else {
         return None;
     };
-    let static_function_id = context.static_context().functions.get_by_name(&name, arity);
+    let static_function_id = context.static_context().function_id_by_name(&name, arity);
     static_function_id.map(|static_function_id| {
         interpreter
             .create_static_closure_from_context(static_function_id, arg)

@@ -51,7 +51,7 @@ impl Program {
         &self,
         function_id: function::StaticFunctionId,
     ) -> &function::StaticFunction {
-        self.static_context.functions.get_by_index(function_id)
+        self.static_context.function_by_id(function_id)
     }
 
     pub fn function_info<'a, 'b>(

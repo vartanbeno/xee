@@ -374,8 +374,7 @@ impl<'a> FunctionCompiler<'a> {
         let static_function = self
             .builder
             .static_context()
-            .functions
-            .get_by_index(static_function_id);
+            .function_by_id(static_function_id);
         match static_function.function_rule {
             Some(FunctionRule::ItemFirst) => {
                 let context_names = context_names.ok_or(Error::XPDY0002.with_span(span))?;
