@@ -105,7 +105,7 @@ impl MergeOptions {
                 &sequence_type,
                 runnable.static_context(),
                 interpreter.xot(),
-                &|function| runnable.function_info(function).signature(),
+                &|function| runnable.program().function_info(function).signature(),
             )?;
         // take the first value, which should be a string
         let duplicates = duplicates.items()?.one()?;

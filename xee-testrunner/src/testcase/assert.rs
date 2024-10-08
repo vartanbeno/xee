@@ -462,7 +462,7 @@ impl Assertable for AssertType {
         sequence: &Sequence,
     ) -> TestOutcome {
         let matches = sequence.matches_type(&self.0, session.xot(), &|function| {
-            runnable.signature(function)
+            runnable.function_info(function).signature()
         });
         match matches {
             Ok(matches) => {

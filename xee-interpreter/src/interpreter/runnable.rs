@@ -1,28 +1,26 @@
 use std::rc::Rc;
 
 use ibig::ibig;
-use xee_name::Name;
 use xot::Xot;
 
 use crate::context::DocumentsRef;
 use crate::context::DynamicContext;
 use crate::context::StaticContext;
 use crate::error::SpannedError;
-use crate::function;
+use crate::function::Function;
 use crate::interpreter::interpret::ContextInfo;
 use crate::occurrence::Occurrence;
 use crate::sequence;
 use crate::stack;
 use crate::{error, string};
 
+use super::program::FunctionInfo;
 use super::Interpreter;
 use super::Program;
 
 #[derive(Debug)]
 pub struct Runnable<'a> {
     program: &'a Program,
-    map_signature: function::Signature,
-    array_signature: function::Signature,
     // TODO: this should be private, but is needed right now
     // to implement call_static without lifetime issues.
     // We could possibly obtain context from the interpreter directly,
@@ -34,8 +32,6 @@ impl<'a> Runnable<'a> {
     pub(crate) fn new(program: &'a Program, dynamic_context: &'a DynamicContext) -> Self {
         Self {
             program,
-            map_signature: function::Signature::map_signature(),
-            array_signature: function::Signature::array_signature(),
             dynamic_context,
         }
     }
@@ -141,89 +137,7 @@ impl<'a> Runnable<'a> {
         self.dynamic_context.implicit_timezone()
     }
 
-    pub(crate) fn inline_function(
-        &self,
-        function_id: function::InlineFunctionId,
-    ) -> &'a function::InlineFunction {
-        &self.program.functions[function_id.0]
-    }
-
-    pub(crate) fn static_function(
-        &self,
-        function_id: function::StaticFunctionId,
-    ) -> &'a function::StaticFunction {
-        self.dynamic_context
-            .static_context
-            .functions
-            .get_by_index(function_id)
-    }
-
-    pub(crate) fn function_info<'function>(
-        &'a self,
-        function: &'function function::Function,
-    ) -> FunctionInfo<'a, 'function> {
-        FunctionInfo::new(function, self)
-    }
-
-    pub fn signature(&'a self, function: &function::Function) -> &'a function::Signature {
-        self.function_info(function).signature()
-    }
-}
-
-pub(crate) struct FunctionInfo<'runnable, 'function> {
-    function: &'function function::Function,
-    runnable: &'runnable Runnable<'runnable>,
-}
-
-impl<'runnable, 'function> FunctionInfo<'runnable, 'function> {
-    pub(crate) fn new(
-        function: &'function function::Function,
-        runnable: &'runnable Runnable<'runnable>,
-    ) -> FunctionInfo<'runnable, 'function> {
-        FunctionInfo { function, runnable }
-    }
-
-    pub(crate) fn arity(&self) -> usize {
-        match self.function {
-            function::Function::Inline {
-                inline_function_id, ..
-            } => self.runnable.inline_function(*inline_function_id).arity(),
-            function::Function::Static {
-                static_function_id, ..
-            } => self.runnable.static_function(*static_function_id).arity(),
-            function::Function::Array(_) => 1,
-            function::Function::Map(_) => 1,
-        }
-    }
-
-    pub(crate) fn name(&self) -> Option<Name> {
-        match self.function {
-            function::Function::Static {
-                static_function_id, ..
-            } => {
-                let static_function = self.runnable.static_function(*static_function_id);
-                Some(static_function.name().clone())
-            }
-            _ => None,
-        }
-    }
-
-    pub(crate) fn signature(&self) -> &'runnable function::Signature {
-        match &self.function {
-            function::Function::Static {
-                static_function_id, ..
-            } => {
-                let static_function = self.runnable.static_function(*static_function_id);
-                static_function.signature()
-            }
-            function::Function::Inline {
-                inline_function_id, ..
-            } => {
-                let inline_function = self.runnable.inline_function(*inline_function_id);
-                inline_function.signature()
-            }
-            function::Function::Map(_map) => &self.runnable.map_signature,
-            function::Function::Array(_array) => &self.runnable.array_signature,
-        }
+    pub fn function_info<'b>(&self, function: &'b Function) -> FunctionInfo<'a, 'b> {
+        self.program.function_info(function)
     }
 }

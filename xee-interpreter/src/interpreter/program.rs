@@ -1,6 +1,7 @@
 use crate::context;
 use crate::declaration::Declarations;
 use crate::function;
+use xee_name::Name;
 use xee_xpath_ast::ast::Span;
 
 use super::Runnable;
@@ -11,6 +12,8 @@ pub struct Program {
     pub functions: Vec<function::InlineFunction>,
     pub declarations: Declarations,
     static_context: context::StaticContext,
+    map_signature: function::Signature,
+    array_signature: function::Signature,
 }
 
 impl Program {
@@ -20,6 +23,8 @@ impl Program {
             functions: Vec::new(),
             declarations: Declarations::new(),
             static_context,
+            map_signature: function::Signature::map_signature(),
+            array_signature: function::Signature::array_signature(),
         }
     }
 
@@ -29,6 +34,27 @@ impl Program {
 
     pub fn span(&self) -> Span {
         self.span
+    }
+
+    pub(crate) fn inline_function(
+        &self,
+        function_id: function::InlineFunctionId,
+    ) -> &function::InlineFunction {
+        &self.functions[function_id.0]
+    }
+
+    pub(crate) fn static_function(
+        &self,
+        function_id: function::StaticFunctionId,
+    ) -> &function::StaticFunction {
+        self.static_context.functions.get_by_index(function_id)
+    }
+
+    pub(crate) fn function_info<'a, 'b>(
+        &'a self,
+        function: &'b function::Function,
+    ) -> FunctionInfo<'a, 'b> {
+        FunctionInfo::new(function, self)
     }
 
     /// Obtain a runnable version of this program, with a particular dynamic context.
@@ -62,5 +88,63 @@ impl Program {
 
     pub(crate) fn main_id(&self) -> function::InlineFunctionId {
         function::InlineFunctionId(self.functions.len() - 1)
+    }
+}
+
+pub struct FunctionInfo<'a, 'b> {
+    function: &'b function::Function,
+    program: &'a Program,
+}
+
+impl<'a, 'b> FunctionInfo<'a, 'b> {
+    pub(crate) fn new(
+        function: &'b function::Function,
+        program: &'a Program,
+    ) -> FunctionInfo<'a, 'b> {
+        FunctionInfo { function, program }
+    }
+
+    pub fn arity(&self) -> usize {
+        match self.function {
+            function::Function::Inline {
+                inline_function_id, ..
+            } => self.program.inline_function(*inline_function_id).arity(),
+            function::Function::Static {
+                static_function_id, ..
+            } => self.program.static_function(*static_function_id).arity(),
+            function::Function::Array(_) => 1,
+            function::Function::Map(_) => 1,
+        }
+    }
+
+    pub fn name(&self) -> Option<Name> {
+        match self.function {
+            function::Function::Static {
+                static_function_id, ..
+            } => {
+                let static_function = self.program.static_function(*static_function_id);
+                Some(static_function.name().clone())
+            }
+            _ => None,
+        }
+    }
+
+    pub fn signature(&self) -> &'a function::Signature {
+        match &self.function {
+            function::Function::Static {
+                static_function_id, ..
+            } => {
+                let static_function = self.program.static_function(*static_function_id);
+                static_function.signature()
+            }
+            function::Function::Inline {
+                inline_function_id, ..
+            } => {
+                let inline_function = self.program.inline_function(*inline_function_id);
+                inline_function.signature()
+            }
+            function::Function::Map(_map) => &self.program.map_signature,
+            function::Function::Array(_array) => &self.program.array_signature,
+        }
     }
 }

@@ -145,7 +145,8 @@ impl<'a> Interpreter<'a> {
                     let function_id = self.read_u16();
                     let mut closure_vars = Vec::new();
                     let inline_function_id = function::InlineFunctionId(function_id as usize);
-                    let closure_function = self.runnable.inline_function(inline_function_id);
+                    let closure_function =
+                        self.runnable.program().inline_function(inline_function_id);
                     for _ in 0..closure_function.closure_names.len() {
                         closure_vars.push(self.state.pop().into());
                     }
@@ -674,7 +675,9 @@ impl<'a> Interpreter<'a> {
     }
 
     pub(crate) fn current_inline_function(&self) -> &function::InlineFunction {
-        self.runnable.inline_function(self.state.frame().function())
+        self.runnable
+            .program()
+            .inline_function(self.state.frame().function())
     }
 
     pub(crate) fn function_name(&self, function: &function::Function) -> Option<Name> {
@@ -737,7 +740,7 @@ impl<'a> Interpreter<'a> {
         arity: u8,
         closure_vars: &[sequence::Sequence],
     ) -> error::Result<()> {
-        let static_function = self.runnable.static_function(static_function_id);
+        let static_function = self.runnable.program().static_function(static_function_id);
         if arity as usize != static_function.arity() {
             return Err(error::Error::XPTY0004);
         }
@@ -755,7 +758,7 @@ impl<'a> Interpreter<'a> {
         arity: u8,
     ) -> error::Result<()> {
         // look up the function in order to access the parameters information
-        let function = self.runnable.inline_function(function_id);
+        let function = self.runnable.program().inline_function(function_id);
         let parameter_types = &function.signature.parameter_types;
         if arity as usize != parameter_types.len() {
             return Err(error::Error::XPTY0004);
@@ -1214,7 +1217,7 @@ impl<'a> Interpreter<'a> {
     // instruction in it to determine the span of the code that failed.
     fn current_span(&self) -> SourceSpan {
         let frame = self.state.frame();
-        let function = self.runnable.inline_function(frame.function());
+        let function = self.runnable.program().inline_function(frame.function());
         // we substract 1 to end up in the current instruction - this
         // because the ip is already on the next instruction
         function.spans[frame.ip - 1]
@@ -1222,28 +1225,28 @@ impl<'a> Interpreter<'a> {
 
     fn read_instruction(&mut self) -> EncodedInstruction {
         let frame = self.state.frame_mut();
-        let function = self.runnable.inline_function(frame.function());
+        let function = self.runnable.program().inline_function(frame.function());
         let chunk = &function.chunk;
         read_instruction(chunk, &mut frame.ip)
     }
 
     fn read_u16(&mut self) -> u16 {
         let frame = &mut self.state.frame_mut();
-        let function = self.runnable.inline_function(frame.function());
+        let function = self.runnable.program().inline_function(frame.function());
         let chunk = &function.chunk;
         read_u16(chunk, &mut frame.ip)
     }
 
     fn read_i16(&mut self) -> i16 {
         let frame = &mut self.state.frame_mut();
-        let function = self.runnable.inline_function(frame.function());
+        let function = self.runnable.program().inline_function(frame.function());
         let chunk = &function.chunk;
         read_i16(chunk, &mut frame.ip)
     }
 
     fn read_u8(&mut self) -> u8 {
         let frame = &mut self.state.frame_mut();
-        let function = self.runnable.inline_function(frame.function());
+        let function = self.runnable.program().inline_function(frame.function());
         let chunk = &function.chunk;
         read_u8(chunk, &mut frame.ip)
     }
