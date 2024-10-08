@@ -19,9 +19,14 @@ use crate::Queries;
 /// A query that can be executed against an [`Itemable`]
 ///
 /// It gives back a result of type `V`
-pub trait Query<V>: GetProgram {
+pub trait Query<V> {
+    /// Get the program for the query
+    fn program(&self) -> &Program;
+
     /// Get the static context for the query.
-    fn static_context(&self) -> &StaticContext;
+    fn static_context(&self) -> &StaticContext {
+        self.program().static_context()
+    }
 
     // /// Get the signature for a given function.
     // fn signature(&self, session: &Session, function: &function::Function) -> &function::Signature {
@@ -91,16 +96,17 @@ pub trait Query<V>: GetProgram {
     }
 }
 
-trait GetProgram {
-    fn program(&self) -> &Program;
-}
-
 /// A recursive query that can be executed against an [`Itemable`]
 ///
 /// It gives back a result of type `V`
-pub trait RecurseQuery<C, V>: GetProgram {
+pub trait RecurseQuery<C, V> {
+    /// Get the program for the query
+    fn program(&self) -> &Program;
+
     /// Get the static context for the query.
-    fn static_context(&self) -> &StaticContext;
+    fn static_context(&self) -> &StaticContext {
+        self.program().static_context()
+    }
 
     /// Execute the query against an itemable, with context.
     ///
@@ -205,19 +211,14 @@ where
     pub(crate) phantom: std::marker::PhantomData<V>,
 }
 
-impl<V, F> GetProgram for OneQuery<V, F>
+impl<V, F> OneQuery<V, F>
 where
     F: Convert<V>,
 {
     fn program(&self) -> &Program {
         &self.program
     }
-}
 
-impl<V, F> OneQuery<V, F>
-where
-    F: Convert<V>,
-{
     /// Execute the query against a context
     pub fn execute_with_context(
         &self,
@@ -235,8 +236,8 @@ impl<V, F> Query<V> for OneQuery<V, F>
 where
     F: Convert<V>,
 {
-    fn static_context(&self) -> &StaticContext {
-        self.program.static_context()
+    fn program(&self) -> &Program {
+        &self.program
     }
 
     fn execute_with_context(
@@ -252,12 +253,6 @@ where
 #[derive(Debug, Clone)]
 pub struct OneRecurseQuery {
     pub(crate) program: Rc<Program>,
-}
-
-impl GetProgram for OneRecurseQuery {
-    fn program(&self) -> &Program {
-        &self.program
-    }
 }
 
 impl OneRecurseQuery {
@@ -279,8 +274,8 @@ impl OneRecurseQuery {
 }
 
 impl<V> RecurseQuery<V, V> for OneRecurseQuery {
-    fn static_context(&self) -> &StaticContext {
-        self.program.static_context()
+    fn program(&self) -> &Program {
+        &self.program
     }
 
     fn execute_with_context(
@@ -314,15 +309,6 @@ where
     pub(crate) phantom: std::marker::PhantomData<V>,
 }
 
-impl<V, F> GetProgram for OptionQuery<V, F>
-where
-    F: Convert<V>,
-{
-    fn program(&self) -> &Program {
-        &self.program
-    }
-}
-
 impl<V, F> OptionQuery<V, F>
 where
     F: Convert<V>,
@@ -345,8 +331,8 @@ impl<V, F> Query<Option<V>> for OptionQuery<V, F>
 where
     F: Convert<V>,
 {
-    fn static_context(&self) -> &StaticContext {
-        self.program.static_context()
+    fn program(&self) -> &Program {
+        &self.program
     }
 
     fn execute_with_context(
@@ -362,12 +348,6 @@ where
 #[derive(Debug, Clone)]
 pub struct OptionRecurseQuery {
     pub(crate) program: Rc<Program>,
-}
-
-impl GetProgram for OptionRecurseQuery {
-    fn program(&self) -> &Program {
-        &self.program
-    }
 }
 
 impl OptionRecurseQuery {
@@ -386,8 +366,8 @@ impl OptionRecurseQuery {
 }
 
 impl<V> RecurseQuery<Option<V>, V> for OptionRecurseQuery {
-    fn static_context(&self) -> &StaticContext {
-        self.program().static_context()
+    fn program(&self) -> &Program {
+        &self.program
     }
 
     fn execute_with_context(
@@ -420,19 +400,14 @@ where
     pub(crate) phantom: std::marker::PhantomData<V>,
 }
 
-impl<V, F> GetProgram for ManyQuery<V, F>
+impl<V, F> ManyQuery<V, F>
 where
     F: Convert<V>,
 {
     fn program(&self) -> &Program {
         &self.program
     }
-}
 
-impl<V, F> ManyQuery<V, F>
-where
-    F: Convert<V>,
-{
     fn execute_with_context(
         &self,
         session: &mut Session,
@@ -451,8 +426,8 @@ impl<V, F> Query<Vec<V>> for ManyQuery<V, F>
 where
     F: Convert<V>,
 {
-    fn static_context(&self) -> &StaticContext {
-        self.program.static_context()
+    fn program(&self) -> &Program {
+        &self.program
     }
 
     fn execute_with_context(
@@ -468,12 +443,6 @@ where
 #[derive(Debug, Clone)]
 pub struct ManyRecurseQuery {
     pub(crate) program: Rc<Program>,
-}
-
-impl GetProgram for ManyRecurseQuery {
-    fn program(&self) -> &Program {
-        &self.program
-    }
 }
 
 impl ManyRecurseQuery {
@@ -497,8 +466,8 @@ impl ManyRecurseQuery {
 }
 
 impl<V> RecurseQuery<Vec<V>, V> for ManyRecurseQuery {
-    fn static_context(&self) -> &StaticContext {
-        self.program.static_context()
+    fn program(&self) -> &Program {
+        &self.program
     }
 
     fn execute_with_context(
@@ -525,12 +494,6 @@ pub struct SequenceQuery {
     pub(crate) program: Rc<Program>,
 }
 
-impl GetProgram for SequenceQuery {
-    fn program(&self) -> &Program {
-        &self.program
-    }
-}
-
 impl SequenceQuery {
     /// Execute the query against an itemable with an explict dynamic context.
     pub fn execute_with_context(
@@ -543,8 +506,8 @@ impl SequenceQuery {
 }
 
 impl Query<Sequence> for SequenceQuery {
-    fn static_context(&self) -> &StaticContext {
-        self.program.static_context()
+    fn program(&self) -> &Program {
+        &self.program
     }
 
     fn execute_with_context(
@@ -566,15 +529,6 @@ where
     f: F,
     v: std::marker::PhantomData<V>,
     t: std::marker::PhantomData<T>,
-}
-
-impl<V, T, Q: Query<V> + Sized, F> GetProgram for MapQuery<V, T, Q, F>
-where
-    F: Fn(V, &mut Session, &context::DynamicContext) -> Result<T> + Clone,
-{
-    fn program(&self) -> &Program {
-        self.query.program()
-    }
 }
 
 impl<V, T, Q, F> MapQuery<V, T, Q, F>
@@ -607,8 +561,8 @@ impl<V, T, Q: Query<V> + Sized, F> Query<T> for MapQuery<V, T, Q, F>
 where
     F: Fn(V, &mut Session, &context::DynamicContext) -> Result<T> + Clone,
 {
-    fn static_context(&self) -> &StaticContext {
-        self.query.program().static_context()
+    fn program(&self) -> &Program {
+        self.query.program()
     }
 
     fn execute_with_context(
