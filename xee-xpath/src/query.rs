@@ -4,6 +4,7 @@ use std::rc::Rc;
 
 use xee_interpreter::context::{self, StaticContextRef};
 use xee_interpreter::error::SpannedResult as Result;
+use xee_interpreter::function;
 use xee_interpreter::interpreter::Program;
 use xee_interpreter::occurrence::Occurrence;
 use xee_interpreter::sequence::{Item, Sequence};
@@ -20,9 +21,16 @@ use crate::Queries;
 /// A query that can be executed against an [`Itemable`]
 ///
 /// It gives back a result of type `V`
-pub trait Query<V> {
+pub trait Query<V>: GetProgram {
     /// Get the static context for the query.
     fn static_context(&self) -> StaticContextRef<'_>;
+
+    // /// Get the signature for a given function.
+    // fn signature(&self, session: &Session, function: &function::Function) -> &function::Signature {
+    //     let context = self.dynamic_context_builder(session).build();
+    //     let runnable = self.program().runnable(&context);
+    //     runnable.function_info(function).signature()
+    // }
 
     /// Execute the query against a dynamic context
     ///
@@ -83,6 +91,10 @@ pub trait Query<V> {
         let context = dynamic_context_builder.build();
         self.execute_with_context(session, &context)
     }
+}
+
+trait GetProgram {
+    fn program(&self) -> &Program;
 }
 
 /// A recursive query that can be executed against an [`Itemable`]
@@ -196,6 +208,15 @@ where
     pub(crate) phantom: std::marker::PhantomData<V>,
 }
 
+impl<'a, V, F> GetProgram for OneQuery<'a, V, F>
+where
+    F: Convert<V>,
+{
+    fn program(&self) -> &Program {
+        &self.program
+    }
+}
+
 impl<'a, V, F> OneQuery<'a, V, F>
 where
     F: Convert<V>,
@@ -235,6 +256,12 @@ where
 pub struct OneRecurseQuery<'a> {
     pub(crate) static_context: StaticContextRef<'a>,
     pub(crate) program: Rc<Program>,
+}
+
+impl<'a> GetProgram for OneRecurseQuery<'a> {
+    fn program(&self) -> &Program {
+        &self.program
+    }
 }
 
 impl<'a> OneRecurseQuery<'a> {
@@ -292,6 +319,15 @@ where
     pub(crate) phantom: std::marker::PhantomData<V>,
 }
 
+impl<'a, V, F> GetProgram for OptionQuery<'a, V, F>
+where
+    F: Convert<V>,
+{
+    fn program(&self) -> &Program {
+        &self.program
+    }
+}
+
 impl<'a, V, F> OptionQuery<'a, V, F>
 where
     F: Convert<V>,
@@ -332,6 +368,12 @@ where
 pub struct OptionRecurseQuery<'a> {
     pub(crate) static_context: StaticContextRef<'a>,
     pub(crate) program: Rc<Program>,
+}
+
+impl<'a> GetProgram for OptionRecurseQuery<'a> {
+    fn program(&self) -> &Program {
+        &self.program
+    }
 }
 
 impl<'a> OptionRecurseQuery<'a> {
@@ -385,6 +427,15 @@ where
     pub(crate) phantom: std::marker::PhantomData<V>,
 }
 
+impl<'a, V, F> GetProgram for ManyQuery<'a, V, F>
+where
+    F: Convert<V>,
+{
+    fn program(&self) -> &Program {
+        &self.program
+    }
+}
+
 impl<'a, V, F> ManyQuery<'a, V, F>
 where
     F: Convert<V>,
@@ -425,6 +476,12 @@ where
 pub struct ManyRecurseQuery<'a> {
     pub(crate) static_context: StaticContextRef<'a>,
     pub(crate) program: Rc<Program>,
+}
+
+impl<'a> GetProgram for ManyRecurseQuery<'a> {
+    fn program(&self) -> &Program {
+        &self.program
+    }
 }
 
 impl<'a> ManyRecurseQuery<'a> {
@@ -477,6 +534,12 @@ pub struct SequenceQuery<'a> {
     pub(crate) program: Rc<Program>,
 }
 
+impl<'a> GetProgram for SequenceQuery<'a> {
+    fn program(&self) -> &Program {
+        &self.program
+    }
+}
+
 impl<'a> SequenceQuery<'a> {
     /// Execute the query against an itemable with an explict dynamic context.
     pub fn execute_with_context(
@@ -512,6 +575,15 @@ where
     f: F,
     v: std::marker::PhantomData<V>,
     t: std::marker::PhantomData<T>,
+}
+
+impl<V, T, Q: Query<V> + Sized, F> GetProgram for MapQuery<V, T, Q, F>
+where
+    F: Fn(V, &mut Session, &context::DynamicContext<'_>) -> Result<T> + Clone,
+{
+    fn program(&self) -> &Program {
+        &self.query.program()
+    }
 }
 
 impl<V, T, Q, F> MapQuery<V, T, Q, F>
