@@ -6,6 +6,7 @@ use xot::Xot;
 
 use crate::context::DocumentsRef;
 use crate::context::DynamicContext;
+use crate::context::StaticContext;
 use crate::context::StaticContextRef;
 use crate::context::Variables;
 use crate::error::SpannedError;
@@ -28,7 +29,7 @@ pub struct Runnable<'a> {
     // to implement call_static without lifetime issues.
     // We could possibly obtain context from the interpreter directly,
     // but this leads to lifetime issues right now.
-    pub(crate) dynamic_context: &'a DynamicContext,
+    pub(crate) dynamic_context: &'a DynamicContext<'a>,
 }
 
 impl<'a> Runnable<'a> {
@@ -142,8 +143,8 @@ impl<'a> Runnable<'a> {
         self.dynamic_context.documents.clone()
     }
 
-    pub fn static_context(&self) -> StaticContextRef {
-        self.dynamic_context.static_context.clone()
+    pub fn static_context(&self) -> &StaticContext {
+        self.program.static_context()
     }
 
     pub fn default_collation_uri(&self) -> &str {

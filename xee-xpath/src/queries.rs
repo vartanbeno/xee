@@ -1,6 +1,9 @@
 use std::rc::Rc;
 
-use xee_interpreter::{context, error::SpannedResult as Result};
+use xee_interpreter::{
+    context::{self, StaticContext},
+    error::SpannedResult as Result,
+};
 use xee_xpath_compiler::parse;
 
 use crate::query::{
@@ -50,15 +53,14 @@ impl<'a> Queries<'a> {
         &self,
         s: &str,
         convert: F,
-        static_context: impl Into<context::StaticContextRef>,
+        static_context: StaticContext,
     ) -> Result<OneQuery<V, F>>
     where
         F: Convert<V>,
     {
         let static_context = static_context.into();
         Ok(OneQuery {
-            program: Rc::new(parse(&static_context, s)?),
-            static_context,
+            program: Rc::new(parse(static_context, s)?),
             convert,
             phantom: std::marker::PhantomData,
         })
@@ -82,12 +84,10 @@ impl<'a> Queries<'a> {
     pub fn one_recurse_with_context(
         &self,
         s: &str,
-        static_context: impl Into<context::StaticContextRef>,
+        static_context: context::StaticContext,
     ) -> Result<OneRecurseQuery> {
-        let static_context = static_context.into();
         Ok(OneRecurseQuery {
-            program: Rc::new(parse(&static_context, s)?),
-            static_context,
+            program: Rc::new(parse(static_context, s)?),
         })
     }
 
@@ -107,16 +107,13 @@ impl<'a> Queries<'a> {
         &self,
         s: &str,
         convert: F,
-        static_context: impl Into<context::StaticContextRef>,
+        static_context: context::StaticContext,
     ) -> Result<OptionQuery<V, F>>
     where
         F: Convert<V>,
     {
-        let static_context = static_context.into();
-
         Ok(OptionQuery {
-            program: Rc::new(parse(&static_context, s)?),
-            static_context,
+            program: Rc::new(parse(static_context, s)?),
             convert,
             phantom: std::marker::PhantomData,
         })
@@ -136,12 +133,10 @@ impl<'a> Queries<'a> {
     pub fn option_recurse_with_context(
         &self,
         s: &str,
-        static_context: impl Into<context::StaticContextRef>,
+        static_context: context::StaticContext,
     ) -> Result<OptionRecurseQuery> {
-        let static_context = static_context.into();
         Ok(OptionRecurseQuery {
-            program: Rc::new(parse(&static_context, s)?),
-            static_context,
+            program: Rc::new(parse(static_context, s)?),
         })
     }
 
@@ -161,16 +156,13 @@ impl<'a> Queries<'a> {
         &self,
         s: &str,
         convert: F,
-        static_context: impl Into<context::StaticContextRef>,
+        static_context: context::StaticContext,
     ) -> Result<ManyQuery<V, F>>
     where
         F: Convert<V>,
     {
-        let static_context = static_context.into();
-
         Ok(ManyQuery {
-            program: Rc::new(parse(&static_context, s)?),
-            static_context,
+            program: Rc::new(parse(static_context, s)?),
             convert,
             phantom: std::marker::PhantomData,
         })
@@ -190,12 +182,11 @@ impl<'a> Queries<'a> {
     pub fn many_recurse_with_context(
         &self,
         s: &str,
-        static_context: impl Into<context::StaticContextRef>,
+        static_context: context::StaticContext,
     ) -> Result<ManyRecurseQuery> {
         let static_context = static_context.into();
         Ok(ManyRecurseQuery {
-            program: Rc::new(parse(&static_context, s)?),
-            static_context,
+            program: Rc::new(parse(static_context, s)?),
         })
     }
 
@@ -212,12 +203,11 @@ impl<'a> Queries<'a> {
     pub fn sequence_with_context(
         &self,
         s: &str,
-        static_context: impl Into<context::StaticContextRef>,
+        static_context: context::StaticContext,
     ) -> Result<SequenceQuery> {
         let static_context = static_context.into();
         Ok(SequenceQuery {
-            program: Rc::new(parse(&static_context, s)?),
-            static_context,
+            program: Rc::new(parse(static_context, s)?),
         })
     }
 }

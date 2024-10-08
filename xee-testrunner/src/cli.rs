@@ -96,7 +96,7 @@ pub fn cli() -> Result<()> {
     static_context_builder.default_element_namespace(XPATH_TEST_NS);
     let static_context = static_context_builder.build();
 
-    let dynamic_context_builder = context::DynamicContextBuilder::new(static_context);
+    let dynamic_context_builder = context::DynamicContextBuilder::new(&static_context);
     let dynamic_context = dynamic_context_builder.build();
 
     let run_context = RunContext::new(
@@ -116,15 +116,15 @@ pub fn cli() -> Result<()> {
     }
 }
 
-struct Runner<E: Environment, R: Runnable<E>> {
-    run_context: RunContext,
+struct Runner<'a, E: Environment, R: Runnable<E>> {
+    run_context: RunContext<'a>,
     path_info: PathInfo,
     _e: std::marker::PhantomData<E>,
     _r: std::marker::PhantomData<R>,
 }
 
-impl<E: Environment, R: Runnable<E>> Runner<E, R> {
-    fn new(run_context: RunContext, path_info: PathInfo) -> Self {
+impl<'a, E: Environment, R: Runnable<E>> Runner<'a, E, R> {
+    fn new(run_context: RunContext<'a>, path_info: PathInfo) -> Self {
         Self {
             run_context,
             path_info,

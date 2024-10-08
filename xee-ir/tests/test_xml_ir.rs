@@ -82,17 +82,12 @@ fn test_generate_element() {
     let outer_expr = spanned(ir::Expr::FunctionDefinition(function_definition));
 
     // now that we have the IR, create bytecode
-    let mut program = Program::new((0..0).into());
+    let static_context = xee_interpreter::context::StaticContext::default();
+    let mut program = Program::new(static_context, (0..0).into());
     let function_builder = FunctionBuilder::new(&mut program);
     let mut scopes = Scopes::new();
-    let static_context = xee_interpreter::context::StaticContext::default();
     let empty_mode_ids = ModeIds::new();
-    let mut compiler = FunctionCompiler::new(
-        function_builder,
-        &mut scopes,
-        &static_context,
-        &empty_mode_ids,
-    );
+    let mut compiler = FunctionCompiler::new(function_builder, &mut scopes, &empty_mode_ids);
 
     compiler.compile_expr(&outer_expr).unwrap();
 
@@ -101,7 +96,7 @@ fn test_generate_element() {
     // we now should run the generated code
     let static_context = StaticContext::default();
 
-    let dynamic_context_builder = DynamicContextBuilder::new(static_context);
+    let dynamic_context_builder = DynamicContextBuilder::new(&static_context);
     let context = dynamic_context_builder.build();
 
     let mut xot = xot::Xot::new();

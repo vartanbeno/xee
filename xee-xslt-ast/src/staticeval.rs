@@ -226,8 +226,8 @@ impl StaticEvaluator {
     ) -> Result<Sequence, xee_xpath_compiler::error::SpannedError> {
         let parser_context = content.parser_context();
         let static_context = parser_context.into();
-        let program = compile(&static_context, xpath)?;
-        let mut dynamic_context_builder = DynamicContextBuilder::new(static_context);
+        let program = compile(static_context, xpath)?;
+        let mut dynamic_context_builder = DynamicContextBuilder::new(program.static_context());
         // TODO doing the clone here of the global variables isn't ideal
         dynamic_context_builder.variables(self.static_global_variables.clone());
 

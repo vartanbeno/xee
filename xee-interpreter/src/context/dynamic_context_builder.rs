@@ -12,8 +12,8 @@ use super::{DynamicContext, StaticContext, Variables};
 /// You can supply a context item, documents, variables and the like in order
 /// to construct a dynamic context used to execute an XPath instruction.
 #[derive(Debug, Clone)]
-pub struct DynamicContextBuilder {
-    static_context: StaticContextRef,
+pub struct DynamicContextBuilder<'a> {
+    static_context: &'a StaticContext,
     context_item: Option<sequence::Item>,
     documents: DocumentsRef,
     variables: Variables,
@@ -66,11 +66,11 @@ impl Default for DocumentsRef {
     }
 }
 
-impl DynamicContextBuilder {
+impl<'a> DynamicContextBuilder<'a> {
     /// Construct a new `DynamicContextBuilder` with the given `StaticContext`.
-    pub fn new(static_context: impl Into<StaticContextRef>) -> Self {
+    pub fn new(static_context: &'a StaticContext) -> Self {
         Self {
-            static_context: static_context.into(),
+            static_context,
             context_item: None,
             documents: DocumentsRef::new(),
             variables: Variables::new(),
@@ -122,7 +122,7 @@ impl DynamicContextBuilder {
     /// Build the `DynamicContext`.
     pub fn build(&self) -> DynamicContext {
         DynamicContext::new(
-            self.static_context.clone(),
+            self.static_context,
             self.context_item.clone(),
             self.documents.clone(),
             self.variables.clone(),
@@ -138,7 +138,7 @@ mod tests {
     #[test]
     fn test_dynamic_context_builder() {
         let static_context = StaticContext::default();
-        let builder = DynamicContextBuilder::new(static_context);
+        let builder = DynamicContextBuilder::new(&static_context);
         let dynamic_context = builder.build();
         assert_eq!(dynamic_context.documents().borrow().len(), 0);
     }

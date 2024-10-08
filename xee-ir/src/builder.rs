@@ -3,7 +3,7 @@ use xee_xpath_ast::ast;
 use xee_interpreter::interpreter::instruction::{
     encode_instruction, instruction_size, Instruction,
 };
-use xee_interpreter::{function, interpreter, span, stack, xml};
+use xee_interpreter::{context, function, interpreter, span, stack, xml};
 
 use crate::ir;
 
@@ -45,6 +45,10 @@ impl<'a> FunctionBuilder<'a> {
             sequence_types: Vec::new(),
             closure_names: Vec::new(),
         }
+    }
+
+    pub(crate) fn static_context(&self) -> &context::StaticContext {
+        self.program.static_context()
     }
 
     pub(crate) fn emit(&mut self, instruction: Instruction, span: span::SourceSpan) {

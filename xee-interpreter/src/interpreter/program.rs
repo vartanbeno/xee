@@ -10,15 +10,21 @@ pub struct Program {
     span: Span,
     pub functions: Vec<function::InlineFunction>,
     pub declarations: Declarations,
+    static_context: context::StaticContext,
 }
 
 impl Program {
-    pub fn new(span: Span) -> Self {
+    pub fn new(static_context: context::StaticContext, span: Span) -> Self {
         Program {
             span,
             functions: Vec::new(),
             declarations: Declarations::new(),
+            static_context,
         }
+    }
+
+    pub fn static_context(&self) -> &context::StaticContext {
+        &self.static_context
     }
 
     pub fn span(&self) -> Span {

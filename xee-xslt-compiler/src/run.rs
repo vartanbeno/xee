@@ -13,13 +13,12 @@ pub fn evaluate_program(
     xot: &mut Xot,
     program: &Program,
     root: Node,
-    static_context: StaticContext,
 ) -> error::SpannedResult<sequence::Sequence> {
     let uri = xee_interpreter::xml::Uri::new("http://example.com");
     let mut documents = xee_interpreter::xml::Documents::new();
     let handle = documents.add_root(xot, &uri, root).unwrap();
     let root = documents.get_node_by_handle(handle).unwrap();
-    let mut dynamic_context_builder = DynamicContextBuilder::new(static_context);
+    let mut dynamic_context_builder = DynamicContextBuilder::new(program.static_context());
     dynamic_context_builder.context_node(root);
     dynamic_context_builder.documents(documents);
     let context = dynamic_context_builder.build();
@@ -35,6 +34,6 @@ pub fn evaluate(xot: &mut Xot, xml: &str, xslt: &str) -> error::SpannedResult<se
     );
     let static_context = StaticContext::from_namespaces(namespaces);
     let root = xot.parse(xml).unwrap();
-    let program = parse(&static_context, xslt).unwrap();
-    evaluate_program(xot, &program, root, static_context)
+    let program = parse(static_context, xslt).unwrap();
+    evaluate_program(xot, &program, root)
 }

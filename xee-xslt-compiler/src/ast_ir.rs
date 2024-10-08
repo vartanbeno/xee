@@ -16,15 +16,15 @@ struct IrConverter<'a> {
 
 pub fn compile(
     transform: ast::Transform,
-    static_context: &StaticContext,
+    static_context: StaticContext,
 ) -> error::SpannedResult<interpreter::Program> {
-    let mut ir_converter = IrConverter::new(static_context);
+    let mut ir_converter = IrConverter::new(&static_context);
     let declarations = ir_converter.transform(&transform)?;
     compile_xslt(declarations, static_context)
 }
 
 pub(crate) fn parse(
-    static_context: &StaticContext,
+    static_context: StaticContext,
     xslt: &str,
 ) -> error::SpannedResult<interpreter::Program> {
     let transform = parse_transform(xslt).unwrap(); // TODO get rid of error definitely wrong

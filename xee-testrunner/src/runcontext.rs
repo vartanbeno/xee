@@ -9,17 +9,17 @@ use crate::{
     testcase::Runnable,
 };
 
-pub(crate) struct RunContext {
+pub(crate) struct RunContext<'a> {
     pub(crate) xot: Xot,
-    pub(crate) dynamic_context: context::DynamicContext,
+    pub(crate) dynamic_context: context::DynamicContext<'a>,
     pub(crate) known_dependencies: KnownDependencies,
     pub(crate) verbose: bool,
 }
 
-impl RunContext {
+impl<'a> RunContext<'a> {
     pub(crate) fn new(
         xot: Xot,
-        dynamic_context: context::DynamicContext,
+        dynamic_context: context::DynamicContext<'a>,
         known_dependencies: KnownDependencies,
         verbose: bool,
     ) -> Self {

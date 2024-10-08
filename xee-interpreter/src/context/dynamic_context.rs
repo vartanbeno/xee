@@ -7,7 +7,7 @@ use crate::error::Error;
 use crate::sequence;
 
 use super::dynamic_context_builder::StaticContextRef;
-use super::DocumentsRef;
+use super::{DocumentsRef, StaticContext};
 
 /// A map of variables
 ///
@@ -18,11 +18,11 @@ pub type Variables = AHashMap<ast::Name, sequence::Sequence>;
 
 // a dynamic context is created for each xpath evaluation
 #[derive(Debug)]
-pub struct DynamicContext {
+pub struct DynamicContext<'a> {
     // we keep a reference to the static context. we don't need
     // to mutate it, and we want to be able create a new dynamic context from
     // the same static context quickly.
-    pub static_context: StaticContextRef,
+    pub static_context: &'a StaticContext,
 
     /// An optional context item
     pub context_item: Option<sequence::Item>,
@@ -36,9 +36,9 @@ pub struct DynamicContext {
     current_datetime: chrono::DateTime<chrono::offset::FixedOffset>,
 }
 
-impl DynamicContext {
+impl<'a> DynamicContext<'a> {
     pub(crate) fn new(
-        static_context: StaticContextRef,
+        static_context: &'a StaticContext,
         context_item: Option<sequence::Item>,
         documents: DocumentsRef,
         variables: Variables,

@@ -2,7 +2,7 @@
 
 use std::rc::Rc;
 
-use xee_interpreter::context::{self, StaticContextRef};
+use xee_interpreter::context::{self, StaticContext};
 use xee_interpreter::error::SpannedResult as Result;
 use xee_interpreter::interpreter::Program;
 use xee_interpreter::occurrence::Occurrence;
@@ -21,7 +21,7 @@ use crate::Queries;
 /// It gives back a result of type `V`
 pub trait Query<V>: GetProgram {
     /// Get the static context for the query.
-    fn static_context(&self) -> StaticContextRef;
+    fn static_context(&self) -> &StaticContext;
 
     // /// Get the signature for a given function.
     // fn signature(&self, session: &Session, function: &function::Function) -> &function::Signature {
@@ -45,7 +45,7 @@ pub trait Query<V>: GetProgram {
     /// You can use this if you want to construct your own dynamic context
     /// to use with `execute_with_context`.
     fn dynamic_context_builder(&self, session: &Session) -> context::DynamicContextBuilder {
-        let mut context = context::DynamicContextBuilder::new(self.static_context().clone());
+        let mut context = context::DynamicContextBuilder::new(self.program().static_context());
         context.documents(session.documents.clone());
         context
     }
@@ -98,9 +98,9 @@ trait GetProgram {
 /// A recursive query that can be executed against an [`Itemable`]
 ///
 /// It gives back a result of type `V`
-pub trait RecurseQuery<C, V> {
+pub trait RecurseQuery<C, V>: GetProgram {
     /// Get the static context for the query.
-    fn static_context(&self) -> StaticContextRef;
+    fn static_context(&self) -> &StaticContext;
 
     /// Execute the query against an itemable, with context.
     ///
@@ -119,7 +119,7 @@ pub trait RecurseQuery<C, V> {
     /// You can use this if you want to construct your own dynamic context
     /// to use with `execute_with_context`.
     fn dynamic_context_builder(&self, session: &Session) -> context::DynamicContextBuilder {
-        let mut context = context::DynamicContextBuilder::new(self.static_context().clone());
+        let mut context = context::DynamicContextBuilder::new(self.program().static_context());
         context.documents(session.documents.clone());
         context
     }
@@ -200,7 +200,6 @@ pub struct OneQuery<V, F>
 where
     F: Convert<V>,
 {
-    pub(crate) static_context: StaticContextRef,
     pub(crate) program: Rc<Program>,
     pub(crate) convert: F,
     pub(crate) phantom: std::marker::PhantomData<V>,
@@ -236,8 +235,8 @@ impl<V, F> Query<V> for OneQuery<V, F>
 where
     F: Convert<V>,
 {
-    fn static_context(&self) -> StaticContextRef {
-        self.static_context.clone()
+    fn static_context(&self) -> &StaticContext {
+        self.program.static_context()
     }
 
     fn execute_with_context(
@@ -252,7 +251,6 @@ where
 /// A recursive query that expects a single item as a result.
 #[derive(Debug, Clone)]
 pub struct OneRecurseQuery {
-    pub(crate) static_context: StaticContextRef,
     pub(crate) program: Rc<Program>,
 }
 
@@ -281,8 +279,8 @@ impl OneRecurseQuery {
 }
 
 impl<V> RecurseQuery<V, V> for OneRecurseQuery {
-    fn static_context(&self) -> StaticContextRef {
-        self.static_context.clone()
+    fn static_context(&self) -> &StaticContext {
+        self.program.static_context()
     }
 
     fn execute_with_context(
@@ -311,7 +309,6 @@ pub struct OptionQuery<V, F>
 where
     F: Convert<V>,
 {
-    pub(crate) static_context: StaticContextRef,
     pub(crate) program: Rc<Program>,
     pub(crate) convert: F,
     pub(crate) phantom: std::marker::PhantomData<V>,
@@ -348,8 +345,8 @@ impl<V, F> Query<Option<V>> for OptionQuery<V, F>
 where
     F: Convert<V>,
 {
-    fn static_context(&self) -> StaticContextRef {
-        self.static_context.clone()
+    fn static_context(&self) -> &StaticContext {
+        self.program.static_context()
     }
 
     fn execute_with_context(
@@ -364,7 +361,6 @@ where
 /// A recursive query that expects an optional single item.
 #[derive(Debug, Clone)]
 pub struct OptionRecurseQuery {
-    pub(crate) static_context: StaticContextRef,
     pub(crate) program: Rc<Program>,
 }
 
@@ -390,8 +386,8 @@ impl OptionRecurseQuery {
 }
 
 impl<V> RecurseQuery<Option<V>, V> for OptionRecurseQuery {
-    fn static_context(&self) -> StaticContextRef {
-        self.static_context.clone()
+    fn static_context(&self) -> &StaticContext {
+        self.program().static_context()
     }
 
     fn execute_with_context(
@@ -419,7 +415,6 @@ pub struct ManyQuery<V, F>
 where
     F: Convert<V>,
 {
-    pub(crate) static_context: StaticContextRef,
     pub(crate) program: Rc<Program>,
     pub(crate) convert: F,
     pub(crate) phantom: std::marker::PhantomData<V>,
@@ -456,8 +451,8 @@ impl<V, F> Query<Vec<V>> for ManyQuery<V, F>
 where
     F: Convert<V>,
 {
-    fn static_context(&self) -> StaticContextRef {
-        self.static_context.clone()
+    fn static_context(&self) -> &StaticContext {
+        self.program.static_context()
     }
 
     fn execute_with_context(
@@ -472,7 +467,6 @@ where
 /// A recursive query that expects many items as a result.
 #[derive(Debug, Clone)]
 pub struct ManyRecurseQuery {
-    pub(crate) static_context: StaticContextRef,
     pub(crate) program: Rc<Program>,
 }
 
@@ -503,8 +497,8 @@ impl ManyRecurseQuery {
 }
 
 impl<V> RecurseQuery<Vec<V>, V> for ManyRecurseQuery {
-    fn static_context(&self) -> StaticContextRef {
-        self.static_context.clone()
+    fn static_context(&self) -> &StaticContext {
+        self.program.static_context()
     }
 
     fn execute_with_context(
@@ -528,7 +522,6 @@ impl<V> RecurseQuery<Vec<V>, V> for ManyRecurseQuery {
 /// This is useful if you want to work with the sequence directly.
 #[derive(Debug, Clone)]
 pub struct SequenceQuery {
-    pub(crate) static_context: StaticContextRef,
     pub(crate) program: Rc<Program>,
 }
 
@@ -550,8 +543,8 @@ impl SequenceQuery {
 }
 
 impl Query<Sequence> for SequenceQuery {
-    fn static_context(&self) -> StaticContextRef {
-        self.static_context.clone()
+    fn static_context(&self) -> &StaticContext {
+        self.program.static_context()
     }
 
     fn execute_with_context(
@@ -592,7 +585,7 @@ where
     /// Execute the query against an item.
     pub fn execute(&self, session: &mut Session, item: &Item) -> Result<T> {
         let mut dynamic_context_builder =
-            context::DynamicContextBuilder::new(self.query.static_context().clone());
+            context::DynamicContextBuilder::new(self.query.program().static_context());
         dynamic_context_builder.context_item(item.clone());
         let context = dynamic_context_builder.build();
         self.execute_with_context(session, &context)
@@ -614,8 +607,8 @@ impl<V, T, Q: Query<V> + Sized, F> Query<T> for MapQuery<V, T, Q, F>
 where
     F: Fn(V, &mut Session, &context::DynamicContext) -> Result<T> + Clone,
 {
-    fn static_context(&self) -> StaticContextRef {
-        self.query.static_context().clone()
+    fn static_context(&self) -> &StaticContext {
+        self.query.program().static_context()
     }
 
     fn execute_with_context(

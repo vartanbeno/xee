@@ -133,14 +133,15 @@ impl EnvironmentSpec {
         for param in &self.params {
             let static_context = context::StaticContext::default();
             let select = (param.select.as_ref()).expect("param: missing select not supported");
-            let program = parse(&static_context, select);
+            let program = parse(static_context, select);
             if program.is_err() {
                 println!("param: select xpath parse failed: {}", select);
                 continue;
             }
             let program = program.unwrap();
 
-            let dynamic_context_builder = context::DynamicContextBuilder::new(static_context);
+            let dynamic_context_builder =
+                context::DynamicContextBuilder::new(program.static_context());
             let dynamic_context = dynamic_context_builder.build();
             let runnable = program.runnable(&dynamic_context);
             let result = runnable.many(xot).map_err(|e| e.error)?;

@@ -16,7 +16,6 @@ pub(crate) type Scopes = scope::Scopes<ir::Name>;
 
 pub struct FunctionCompiler<'a> {
     pub(crate) scopes: &'a mut Scopes,
-    pub(crate) static_context: &'a context::StaticContext,
     pub(crate) mode_ids: &'a ModeIds,
     pub(crate) builder: FunctionBuilder<'a>,
 }
@@ -25,13 +24,11 @@ impl<'a> FunctionCompiler<'a> {
     pub fn new(
         builder: FunctionBuilder<'a>,
         scopes: &'a mut Scopes,
-        static_context: &'a context::StaticContext,
         mode_ids: &'a ModeIds,
     ) -> Self {
         Self {
             builder,
             scopes,
-            static_context,
             mode_ids,
         }
     }
@@ -332,7 +329,6 @@ impl<'a> FunctionCompiler<'a> {
         let mut compiler = FunctionCompiler {
             builder: nested_builder,
             scopes: self.scopes,
-            static_context: self.static_context,
             mode_ids: self.mode_ids,
         };
 
@@ -376,7 +372,8 @@ impl<'a> FunctionCompiler<'a> {
         span: SourceSpan,
     ) -> error::SpannedResult<()> {
         let static_function = self
-            .static_context
+            .builder
+            .static_context()
             .functions
             .get_by_index(static_function_id);
         match static_function.function_rule {
