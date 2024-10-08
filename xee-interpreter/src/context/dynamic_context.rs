@@ -20,7 +20,7 @@ pub type Variables = AHashMap<ast::Name, sequence::Sequence>;
 #[derive(Debug)]
 pub struct DynamicContext<'a> {
     // we keep a reference to the program
-    pub program: &'a Program,
+    program: &'a Program,
 
     /// An optional context item
     pub context_item: Option<sequence::Item>,
@@ -51,6 +51,7 @@ impl<'a> DynamicContext<'a> {
         }
     }
 
+    /// Get access to the static context
     pub fn static_context(&self) -> &StaticContext {
         self.program.static_context()
     }

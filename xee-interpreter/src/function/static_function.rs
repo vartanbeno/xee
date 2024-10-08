@@ -221,13 +221,7 @@ impl StaticFunction {
                 FunctionRule::Collation => {
                     let mut new_arguments = arguments.to_vec();
                     // the default collation query
-                    new_arguments.push(
-                        context
-                            .program
-                            .static_context()
-                            .default_collation_uri()
-                            .into(),
-                    );
+                    new_arguments.push(context.static_context().default_collation_uri().into());
                     (self.func)(context, interpreter, &new_arguments)
                 }
             }
