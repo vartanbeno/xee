@@ -56,7 +56,7 @@ impl<'a> DynamicContext<'a> {
         self.program.static_context()
     }
 
-    pub fn arguments(&self) -> Result<Vec<sequence::Sequence>, Error> {
+    pub(crate) fn arguments(&self) -> Result<Vec<sequence::Sequence>, Error> {
         let mut arguments = Vec::new();
         for variable_name in &self.program.static_context().parser_context.variable_names {
             let items = self.variables.get(variable_name).ok_or(Error::XPDY0002)?;
