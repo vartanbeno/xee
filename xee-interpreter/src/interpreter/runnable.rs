@@ -7,7 +7,6 @@ use xot::Xot;
 use crate::context::DocumentsRef;
 use crate::context::DynamicContext;
 use crate::context::StaticContext;
-use crate::context::StaticContextRef;
 use crate::context::Variables;
 use crate::error::SpannedError;
 use crate::function;

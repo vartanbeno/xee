@@ -6,7 +6,6 @@ use xee_xpath_ast::ast;
 use crate::error::Error;
 use crate::sequence;
 
-use super::dynamic_context_builder::StaticContextRef;
 use super::{DocumentsRef, StaticContext};
 
 /// A map of variables

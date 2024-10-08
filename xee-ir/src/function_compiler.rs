@@ -4,7 +4,7 @@ use xee_interpreter::error::Error;
 use xee_interpreter::function::FunctionRule;
 use xee_interpreter::interpreter::instruction::Instruction;
 use xee_interpreter::span::SourceSpan;
-use xee_interpreter::{context, error, function, stack};
+use xee_interpreter::{error, function, stack};
 
 use crate::declaration_compiler::ModeIds;
 use crate::ir;

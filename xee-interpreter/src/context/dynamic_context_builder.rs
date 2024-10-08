@@ -21,23 +21,6 @@ pub struct DynamicContextBuilder<'a> {
 }
 
 #[derive(Debug, Clone)]
-pub struct StaticContextRef(Rc<StaticContext>);
-
-impl From<StaticContext> for StaticContextRef {
-    fn from(static_context: StaticContext) -> Self {
-        Self(Rc::new(static_context))
-    }
-}
-
-impl Deref for StaticContextRef {
-    type Target = StaticContext;
-
-    fn deref(&self) -> &Self::Target {
-        &self.0
-    }
-}
-
-#[derive(Debug, Clone)]
 pub struct DocumentsRef(Rc<RefCell<xml::Documents>>);
 
 impl Deref for DocumentsRef {

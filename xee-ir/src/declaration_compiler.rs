@@ -6,7 +6,7 @@ use xee_xpath_ast::Pattern;
 use crate::function_compiler::Scopes;
 use crate::{ir, FunctionBuilder, FunctionCompiler};
 
-use xee_interpreter::{context, error, function, interpreter};
+use xee_interpreter::{error, function, interpreter};
 use xee_xpath_ast::pattern::transform_pattern;
 
 #[derive(Debug, Clone)]

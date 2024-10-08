@@ -58,7 +58,6 @@ impl<'a> Queries<'a> {
     where
         F: Convert<V>,
     {
-        let static_context = static_context.into();
         Ok(OneQuery {
             program: Rc::new(parse(static_context, s)?),
             convert,
@@ -184,7 +183,6 @@ impl<'a> Queries<'a> {
         s: &str,
         static_context: context::StaticContext,
     ) -> Result<ManyRecurseQuery> {
-        let static_context = static_context.into();
         Ok(ManyRecurseQuery {
             program: Rc::new(parse(static_context, s)?),
         })
@@ -205,7 +203,6 @@ impl<'a> Queries<'a> {
         s: &str,
         static_context: context::StaticContext,
     ) -> Result<SequenceQuery> {
-        let static_context = static_context.into();
         Ok(SequenceQuery {
             program: Rc::new(parse(static_context, s)?),
         })
