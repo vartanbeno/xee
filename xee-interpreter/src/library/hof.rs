@@ -36,7 +36,7 @@ fn function_lookup(
     } else {
         return None;
     };
-    let static_function_id = context.static_context.functions.get_by_name(&name, arity);
+    let static_function_id = context.static_context().functions.get_by_name(&name, arity);
     static_function_id.map(|static_function_id| {
         interpreter
             .create_static_closure_from_context(static_function_id, arg)
@@ -159,7 +159,7 @@ fn sort1(
 ) -> error::Result<sequence::Sequence> {
     input.sorted(
         context,
-        context.static_context.default_collation_uri(),
+        context.static_context().default_collation_uri(),
         interpreter.xot(),
     )
 }
@@ -171,7 +171,7 @@ fn sort2(
     input: &sequence::Sequence,
     collation: Option<&str>,
 ) -> error::Result<sequence::Sequence> {
-    let collation = collation.unwrap_or(context.static_context.default_collation_uri());
+    let collation = collation.unwrap_or(context.static_context().default_collation_uri());
     input.sorted(context, collation, interpreter.xot())
 }
 
@@ -183,7 +183,7 @@ fn sort3(
     collation: Option<&str>,
     key: sequence::Item,
 ) -> error::Result<sequence::Sequence> {
-    let collation = collation.unwrap_or(context.static_context.default_collation_uri());
+    let collation = collation.unwrap_or(context.static_context().default_collation_uri());
     let function = key.to_function()?;
     input.sorted_by_key(context, collation, |item| {
         let value =
@@ -220,7 +220,7 @@ where
     // see also sort_by_sequence in array.rs. The signatures are
     // sufficiently different we don't want to try to unify them.
 
-    let collation = context.static_context.collation(collation)?;
+    let collation = context.static_context().collation(collation)?;
     let items = input.items()?.collect::<Vec<_>>();
     let keys = items.iter().map(get).collect::<error::Result<Vec<_>>>()?;
 

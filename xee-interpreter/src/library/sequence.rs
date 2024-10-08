@@ -172,7 +172,7 @@ fn distinct_values(
     if arg.is_empty() {
         return Ok(Vec::new());
     }
-    let collation = context.static_context.collation(collation)?;
+    let collation = context.static_context().collation(collation)?;
     let default_offset = context.implicit_timezone();
     // we use a HashMap first to remove items to compare. It removes easy
     // duplicates. It can't generate false positives as the default
@@ -213,7 +213,7 @@ fn index_of(
     search: Atomic,
     collation: &str,
 ) -> error::Result<Vec<IBig>> {
-    let collation = context.static_context.collation(collation)?;
+    let collation = context.static_context().collation(collation)?;
     let default_offset = context.implicit_timezone();
     // TODO: annoying that we have to clone both atoms here
     let indices = seq.iter().enumerate().filter_map(|(i, atom)| {
@@ -234,7 +234,7 @@ fn deep_equal(
     parameter2: &sequence::Sequence,
     collation: &str,
 ) -> error::Result<bool> {
-    let collation = context.static_context.collation(collation)?;
+    let collation = context.static_context().collation(collation)?;
     let default_offset = context.implicit_timezone();
     parameter1.deep_equal(parameter2, &collation, default_offset, interpreter.xot())
 }
@@ -331,7 +331,7 @@ where
     F: Fn(Atomic, Atomic, &Collation, chrono::offset::FixedOffset) -> error::Result<bool>,
 {
     if !arg.is_empty() {
-        let collation = context.static_context.collation(collation)?;
+        let collation = context.static_context().collation(collation)?;
         let default_offset = context.implicit_timezone();
         let mut float_seen: bool = false;
         let mut double_seen: bool = false;

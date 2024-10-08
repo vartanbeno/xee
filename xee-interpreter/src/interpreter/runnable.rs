@@ -126,11 +126,13 @@ impl<'a> Runnable<'a> {
     }
 
     pub fn default_collation_uri(&self) -> &str {
-        self.dynamic_context.static_context.default_collation_uri()
+        self.dynamic_context
+            .static_context()
+            .default_collation_uri()
     }
 
     pub fn default_collation(&self) -> error::Result<Rc<string::Collation>> {
-        self.dynamic_context.static_context.default_collation()
+        self.dynamic_context.static_context().default_collation()
     }
 
     pub fn implicit_timezone(&self) -> chrono::FixedOffset {

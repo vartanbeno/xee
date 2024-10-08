@@ -126,7 +126,7 @@ fn xs_qname(
     context: &DynamicContext,
     arg: Option<atomic::Atomic>,
 ) -> error::Result<Option<atomic::Atomic>> {
-    arg.map(|arg| arg.cast_to_qname(context.static_context))
+    arg.map(|arg| arg.cast_to_qname(context.static_context()))
         .transpose()
 }
 

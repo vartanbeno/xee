@@ -15,12 +15,12 @@ where
     O: AtomicCompare,
 {
     let b_atoms = b_atoms.collect::<Vec<_>>();
-    let collation = context.static_context.default_collation()?;
+    let collation = context.static_context().default_collation()?;
     let implicit_timezone = context.implicit_timezone();
     for a in a_atoms {
         let a = a?;
         for b in b_atoms.iter() {
-            let (a, b) = cast(a.clone(), b.clone()?, context.static_context)?;
+            let (a, b) = cast(a.clone(), b.clone()?, context.static_context())?;
             // 2c do value comparison
             if O::atomic_compare(
                 a,

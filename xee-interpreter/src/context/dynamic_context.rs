@@ -3,8 +3,9 @@ use std::fmt::Debug;
 
 use xee_xpath_ast::ast;
 
-use crate::error::Error;
-use crate::sequence;
+use crate::function::Function;
+use crate::{error::Error, interpreter::Program};
+use crate::{interpreter, sequence};
 
 use super::{DocumentsRef, StaticContext};
 
@@ -18,10 +19,8 @@ pub type Variables = AHashMap<ast::Name, sequence::Sequence>;
 // a dynamic context is created for each xpath evaluation
 #[derive(Debug)]
 pub struct DynamicContext<'a> {
-    // we keep a reference to the static context. we don't need
-    // to mutate it, and we want to be able create a new dynamic context from
-    // the same static context quickly.
-    pub static_context: &'a StaticContext,
+    // we keep a reference to the program
+    pub program: &'a Program,
 
     /// An optional context item
     pub context_item: Option<sequence::Item>,
@@ -37,14 +36,14 @@ pub struct DynamicContext<'a> {
 
 impl<'a> DynamicContext<'a> {
     pub(crate) fn new(
-        static_context: &'a StaticContext,
+        program: &'a Program,
         context_item: Option<sequence::Item>,
         documents: DocumentsRef,
         variables: Variables,
         current_datetime: chrono::DateTime<chrono::offset::FixedOffset>,
     ) -> Self {
         Self {
-            static_context,
+            program,
             context_item,
             documents,
             variables,
@@ -52,9 +51,13 @@ impl<'a> DynamicContext<'a> {
         }
     }
 
+    pub fn static_context(&self) -> &StaticContext {
+        self.program.static_context()
+    }
+
     pub fn arguments(&self) -> Result<Vec<sequence::Sequence>, Error> {
         let mut arguments = Vec::new();
-        for variable_name in &self.static_context.parser_context.variable_names {
+        for variable_name in &self.program.static_context().parser_context.variable_names {
             let items = self.variables.get(variable_name).ok_or(Error::XPDY0002)?;
             arguments.push(items.clone());
         }
@@ -69,11 +72,15 @@ impl<'a> DynamicContext<'a> {
         self.current_datetime
     }
 
-    pub(crate) fn implicit_timezone(&self) -> chrono::FixedOffset {
+    pub fn implicit_timezone(&self) -> chrono::FixedOffset {
         self.current_datetime.timezone()
     }
 
     pub fn documents(&self) -> DocumentsRef {
         self.documents.clone()
+    }
+
+    pub fn function_info<'b>(&self, function: &'b Function) -> interpreter::FunctionInfo<'a, 'b> {
+        self.program.function_info(function)
     }
 }

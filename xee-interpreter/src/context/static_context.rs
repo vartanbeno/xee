@@ -58,11 +58,11 @@ impl StaticContext {
         &self.parser_context.variable_names
     }
 
-    pub(crate) fn default_collation(&self) -> error::Result<Rc<Collation>> {
+    pub fn default_collation(&self) -> error::Result<Rc<Collation>> {
         self.collation(self.default_collation_uri())
     }
 
-    pub(crate) fn default_collation_uri(&self) -> &str {
+    pub fn default_collation_uri(&self) -> &str {
         "http://www.w3.org/2005/xpath-functions/collation/codepoint"
     }
 

@@ -6,8 +6,7 @@ use std::{
 use anyhow::Result;
 use xot::xmlname::OwnedName as Name;
 
-use xee_xpath::{context, Item, Queries, Query, Session};
-use xee_xpath_compiler::parse;
+use xee_xpath::{context, Documents, Item, Queries, Query, Session};
 use xee_xpath_load::{convert_string, ContextLoadable};
 
 use crate::ns::XPATH_TEST_NS;
@@ -120,20 +119,23 @@ impl EnvironmentSpec {
                 variables.insert(Name::name(name), Item::from(node).into());
             }
         }
+        let mut documents = Documents::new();
+        let mut session = documents.session();
         for param in &self.params {
-            let static_context = context::StaticContext::default();
             let select = (param.select.as_ref()).expect("param: missing select not supported");
-            let program = parse(static_context, select);
-            if program.is_err() {
-                println!("param: select xpath parse failed: {}", select);
-                continue;
-            }
-            let program = program.unwrap();
+            let queries = Queries::default();
 
-            let dynamic_context_builder = program.dynamic_context_builder();
+            let query = queries.sequence(select);
+            let query = match query {
+                Ok(query) => query,
+                Err(_e) => {
+                    println!("param: select xpath parse failed: {}", select);
+                    continue;
+                }
+            };
+            let dynamic_context_builder = query.dynamic_context_builder(&session);
             let dynamic_context = dynamic_context_builder.build();
-            let runnable = program.runnable(&dynamic_context);
-            let result = runnable.many(session.xot_mut()).map_err(|e| e.error)?;
+            let result = query.execute_with_context(&mut session, &dynamic_context)?;
             variables.insert(param.name.clone(), result);
         }
         Ok(variables)

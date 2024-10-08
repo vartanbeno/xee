@@ -2,7 +2,6 @@ use anyhow::Result;
 use std::path::Path;
 
 use xee_xpath::{context, Queries, Query};
-use xee_xpath_compiler::parse;
 use xee_xpath_load::{convert_string, ContextLoadable};
 
 use crate::{
@@ -101,29 +100,18 @@ impl Runnable<XPathEnvironmentSpec> for XPathTestCase {
         };
 
         // now construct the dynamic context. We want to have one here
-        // explicitly so we can use it later in some of the code
-
+        // explicitly so we can use it later in the assertions
+        let mut builder = query.dynamic_context_builder(&run_context.session);
+        if let Some(context_item) = context_item {
+            builder.context_item(context_item);
+        }
+        builder.variables(variables.clone());
+        let context = builder.build();
         // now execute the query with the right dynamic context
-        let result = query.execute_build_context(&mut run_context.session, |builder| {
-            if let Some(context_item) = context_item {
-                builder.context_item(context_item);
-            }
-            builder.variables(variables.clone());
-        });
+        let result = query.execute_with_context(&mut run_context.session, &context);
 
-        // TODO: Hacking a lot of duplication so we get a runnable for now
-        let static_context = static_context_builder.build();
-        let program = parse(static_context, &self.test).unwrap();
-        let mut dynamic_context_builder = program.dynamic_context_builder();
-        dynamic_context_builder.documents(run_context.session.documents().clone());
-        dynamic_context_builder.variables(variables);
-        let dynamic_context = dynamic_context_builder.build();
-
-        let runnable = program.runnable(&dynamic_context);
-
-        // let result = runnable.many(&mut run_context.xot);
         self.test_case.result.assert_result(
-            &runnable,
+            &context,
             &mut run_context.session,
             &result.map_err(|error| error.error),
         )

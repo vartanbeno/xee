@@ -1,8 +1,8 @@
 use std::{cell::RefCell, ops::Deref, rc::Rc};
 
-use crate::{sequence, xml};
+use crate::{interpreter, sequence, xml};
 
-use super::{DynamicContext, StaticContext, Variables};
+use super::{DynamicContext, Variables};
 
 /// A builder for constructing a [`DynamicContext`].
 ///
@@ -13,7 +13,7 @@ use super::{DynamicContext, StaticContext, Variables};
 /// to construct a dynamic context used to execute an XPath instruction.
 #[derive(Debug, Clone)]
 pub struct DynamicContextBuilder<'a> {
-    static_context: &'a StaticContext,
+    program: &'a interpreter::Program,
     context_item: Option<sequence::Item>,
     documents: DocumentsRef,
     variables: Variables,
@@ -51,9 +51,9 @@ impl Default for DocumentsRef {
 
 impl<'a> DynamicContextBuilder<'a> {
     /// Construct a new `DynamicContextBuilder` with the given `StaticContext`.
-    pub(crate) fn new(static_context: &'a StaticContext) -> Self {
+    pub(crate) fn new(program: &'a interpreter::Program) -> Self {
         Self {
-            static_context,
+            program,
             context_item: None,
             documents: DocumentsRef::new(),
             variables: Variables::new(),
@@ -105,24 +105,11 @@ impl<'a> DynamicContextBuilder<'a> {
     /// Build the `DynamicContext`.
     pub fn build(&self) -> DynamicContext {
         DynamicContext::new(
-            self.static_context,
+            self.program,
             self.context_item.clone(),
             self.documents.clone(),
             self.variables.clone(),
             self.current_datetime,
         )
-    }
-}
-
-#[cfg(test)]
-mod tests {
-    use super::*;
-
-    #[test]
-    fn test_dynamic_context_builder() {
-        let static_context = StaticContext::default();
-        let builder = DynamicContextBuilder::new(&static_context);
-        let dynamic_context = builder.build();
-        assert_eq!(dynamic_context.documents().borrow().len(), 0);
     }
 }

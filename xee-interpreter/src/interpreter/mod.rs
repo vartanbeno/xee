@@ -7,5 +7,5 @@ mod runnable;
 mod state;
 
 pub use interpret::Interpreter;
-pub use program::Program;
+pub use program::{FunctionInfo, Program};
 pub use runnable::Runnable;

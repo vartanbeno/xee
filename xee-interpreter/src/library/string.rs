@@ -70,7 +70,7 @@ fn compare(
     collation: &str,
 ) -> error::Result<Option<IBig>> {
     if let (Some(arg1), Some(arg2)) = (arg1, arg2) {
-        let collation = context.static_context.collation(collation)?;
+        let collation = context.static_context().collation(collation)?;
         Ok(Some(
             match collation.compare(arg1, arg2) {
                 Ordering::Equal => 0,
@@ -108,7 +108,7 @@ fn contains_token(
     if input.is_empty() {
         return Ok(false);
     }
-    let collation = context.static_context.collation(collation)?;
+    let collation = context.static_context().collation(collation)?;
     let token = token.trim();
     for s in input {
         // if any token in s, tokenized, is token, then we return true
@@ -350,7 +350,7 @@ fn contains(
     if arg1.is_empty() {
         return Ok(false);
     }
-    let collation = context.static_context.collation(collation)?;
+    let collation = context.static_context().collation(collation)?;
     match collation.as_ref() {
         Collation::CodePoint => Ok(arg1.contains(arg2)),
         Collation::HtmlAscii => {
@@ -379,7 +379,7 @@ fn starts_with(
     if arg1.is_empty() {
         return Ok(false);
     }
-    let collation = context.static_context.collation(collation)?;
+    let collation = context.static_context().collation(collation)?;
     match collation.as_ref() {
         Collation::CodePoint => Ok(arg1.starts_with(arg2)),
         Collation::HtmlAscii => {
@@ -411,7 +411,7 @@ fn ends_with(
     if arg1.is_empty() {
         return Ok(false);
     }
-    let collation = context.static_context.collation(collation)?;
+    let collation = context.static_context().collation(collation)?;
     match collation.as_ref() {
         Collation::CodePoint => Ok(arg1.ends_with(arg2)),
         Collation::HtmlAscii => {
@@ -438,7 +438,7 @@ fn substring_before(
         return Ok("".to_string());
     }
     // find substring in arg1 that comes before arg2
-    let collation = context.static_context.collation(collation)?;
+    let collation = context.static_context().collation(collation)?;
     match collation.as_ref() {
         Collation::CodePoint => {
             let idx = arg1.find(arg2).unwrap_or(0);
@@ -469,7 +469,7 @@ fn substring_after(
         return Ok(arg1.to_string());
     }
     // find substring in arg1 that comes before arg2
-    let collation = context.static_context.collation(collation)?;
+    let collation = context.static_context().collation(collation)?;
     match collation.as_ref() {
         Collation::CodePoint => {
             if let Some(idx) = arg1.find(arg2) {

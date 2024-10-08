@@ -654,7 +654,8 @@ impl<'a> Interpreter<'a> {
         F: FnMut() -> Option<stack::Value>,
     {
         let static_function = &context
-            .static_context
+            .program
+            .static_context()
             .functions
             .get_by_index(static_function_id);
         // get any context value from the stack if needed

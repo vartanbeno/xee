@@ -211,7 +211,7 @@ fn sort1(
         context,
         interpreter,
         input,
-        context.static_context.default_collation_uri(),
+        context.static_context().default_collation_uri(),
     )
 }
 
@@ -222,7 +222,7 @@ fn sort2(
     input: function::Array,
     collation: Option<&str>,
 ) -> error::Result<function::Array> {
-    let collation = collation.unwrap_or(context.static_context.default_collation_uri());
+    let collation = collation.unwrap_or(context.static_context().default_collation_uri());
     sort_without_key(context, interpreter, input, collation)
 }
 
@@ -234,7 +234,7 @@ fn sort3(
     collation: Option<&str>,
     key: sequence::Item,
 ) -> error::Result<function::Array> {
-    let collation = collation.unwrap_or(context.static_context.default_collation_uri());
+    let collation = collation.unwrap_or(context.static_context().default_collation_uri());
     let function = key.to_function()?;
     sort_by_sequence(context, input, collation, |sequence| {
         let new_sequence =
@@ -270,7 +270,7 @@ where
     // see also sort_by_sequence in hof.rs. The signatures are sufficiently
     // different we don't want to try to unify them.
 
-    let collation = context.static_context.collation(collation)?;
+    let collation = context.static_context().collation(collation)?;
     let sequences = input.iter().collect::<Vec<_>>();
     let keys = sequences
         .iter()

@@ -304,7 +304,7 @@ impl Sequence {
         // see also sort_by_sequence in array.rs. The signatures are
         // sufficiently different we don't want to try to unify them.
 
-        let collation = context.static_context.collation(collation)?;
+        let collation = context.static_context().collation(collation)?;
         let items = self.items()?.collect::<Vec<_>>();
         let keys = self
             .items()?

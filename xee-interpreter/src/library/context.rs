@@ -68,7 +68,7 @@ fn implicit_timezone(context: &DynamicContext) -> chrono::Duration {
 
 #[xpath_fn("fn:default-collation() as xs:string")]
 fn default_collation(context: &DynamicContext) -> String {
-    context.static_context.default_collation_uri().to_string()
+    context.static_context().default_collation_uri().to_string()
 }
 
 pub(crate) fn static_function_descriptions() -> Vec<StaticFunctionDescription> {

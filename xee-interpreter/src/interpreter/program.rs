@@ -33,7 +33,7 @@ impl Program {
     }
 
     pub fn dynamic_context_builder(&self) -> context::DynamicContextBuilder {
-        context::DynamicContextBuilder::new(self.static_context())
+        context::DynamicContextBuilder::new(self)
     }
 
     pub fn span(&self) -> Span {
@@ -54,7 +54,7 @@ impl Program {
         self.static_context.functions.get_by_index(function_id)
     }
 
-    pub(crate) fn function_info<'a, 'b>(
+    pub fn function_info<'a, 'b>(
         &'a self,
         function: &'b function::Function,
     ) -> FunctionInfo<'a, 'b> {
