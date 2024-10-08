@@ -40,7 +40,7 @@ impl<'a> Runnable<'a> {
         let arguments = self.dynamic_context.arguments().unwrap();
         let mut interpreter = Interpreter::new(self, xot);
 
-        let context_info = if let Some(context_item) = &self.dynamic_context.context_item {
+        let context_info = if let Some(context_item) = self.dynamic_context.context_item() {
             ContextInfo {
                 item: stack::Value::One(context_item.clone()),
                 position: ibig!(1).into(),
@@ -118,7 +118,7 @@ impl<'a> Runnable<'a> {
     }
 
     pub fn documents(&self) -> DocumentsRef {
-        self.dynamic_context.documents.clone()
+        self.dynamic_context.documents()
     }
 
     pub fn static_context(&self) -> &StaticContext {

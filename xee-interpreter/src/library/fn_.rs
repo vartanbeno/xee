@@ -19,7 +19,8 @@ fn my_function(a: IBig, b: IBig) -> IBig {
 #[xpath_fn("fn:generate-id($arg as node()?) as xs:string", context_first)]
 fn generate_id(context: &DynamicContext, arg: Option<xot::Node>) -> String {
     if let Some(arg) = arg {
-        let documents = context.documents.borrow();
+        let documents = context.documents();
+        let documents = documents.borrow();
         let annotations = documents.annotations();
         let annotation = annotations.get(arg).unwrap();
         annotation.generate_id()

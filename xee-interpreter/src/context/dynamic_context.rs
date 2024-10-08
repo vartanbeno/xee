@@ -23,12 +23,12 @@ pub struct DynamicContext<'a> {
     program: &'a Program,
 
     /// An optional context item
-    pub context_item: Option<sequence::Item>,
+    context_item: Option<sequence::Item>,
     // we want to mutate documents during evaluation, and this happens in
     // multiple spots. We use RefCell to manage that during runtime so we don't
     // need to make the whole thing immutable.
-    pub documents: DocumentsRef,
-    pub variables: Variables,
+    documents: DocumentsRef,
+    variables: Variables,
     // TODO: we want to be able to control the creation of this outside,
     // as it needs to be the same for all evalutions of XSLT I believe
     current_datetime: chrono::DateTime<chrono::offset::FixedOffset>,
@@ -51,9 +51,24 @@ impl<'a> DynamicContext<'a> {
         }
     }
 
-    /// Get access to the static context
+    /// The static context of the program.
     pub fn static_context(&self) -> &StaticContext {
         self.program.static_context()
+    }
+
+    /// Access the context item, if any.
+    pub fn context_item(&self) -> Option<&sequence::Item> {
+        self.context_item.as_ref()
+    }
+
+    /// The documents in this context.
+    pub fn documents(&self) -> DocumentsRef {
+        self.documents.clone()
+    }
+
+    /// The variables in this context.
+    pub fn variables(&self) -> &Variables {
+        &self.variables
     }
 
     pub(crate) fn arguments(&self) -> Result<Vec<sequence::Sequence>, Error> {
@@ -75,10 +90,6 @@ impl<'a> DynamicContext<'a> {
 
     pub fn implicit_timezone(&self) -> chrono::FixedOffset {
         self.current_datetime.timezone()
-    }
-
-    pub fn documents(&self) -> DocumentsRef {
-        self.documents.clone()
     }
 
     /// Access information about a Function.
