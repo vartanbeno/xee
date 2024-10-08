@@ -5,7 +5,7 @@ use anyhow::Result;
 use clap::{Parser, Subcommand};
 use xot::Xot;
 
-use xee_xpath::context;
+use xee_xpath::{context, Documents};
 use xee_xpath_load::PathLoadable;
 
 use crate::catalog::Catalog;
@@ -90,21 +90,9 @@ pub fn cli() -> Result<()> {
     let path = cli.command.path();
     let path_info = paths(path)?;
 
-    let xot = Xot::new();
-
-    let mut static_context_builder = context::StaticContextBuilder::default();
-    static_context_builder.default_element_namespace(XPATH_TEST_NS);
-    let static_context = static_context_builder.build();
-
-    let dynamic_context_builder = context::DynamicContextBuilder::new(&static_context);
-    let dynamic_context = dynamic_context_builder.build();
-
-    let run_context = RunContext::new(
-        xot,
-        dynamic_context,
-        xpath_known_dependencies(),
-        cli.verbose,
-    );
+    let mut documents = Documents::new();
+    let session = documents.session();
+    let run_context = RunContext::new(session, xpath_known_dependencies(), cli.verbose);
 
     let mut runner = Runner::<XPathEnvironmentSpec, XPathTestCase>::new(run_context, path_info);
 

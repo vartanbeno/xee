@@ -100,17 +100,11 @@ impl Runnable<XPathEnvironmentSpec> for XPathTestCase {
             Err(error) => return TestOutcome::EnvironmentError(error.to_string()),
         };
 
-        // construct a session for the same documents as we already have
-        let mut session = Session::new(
-            run_context.dynamic_context.documents.clone(),
-            &mut run_context.xot,
-        );
-
         // now construct the dynamic context. We want to have one here
         // explicitly so we can use it later in some of the code
 
         // now execute the query with the right dynamic context
-        let result = query.execute_build_context(&mut session, |builder| {
+        let result = query.execute_build_context(&mut run_context.session, |builder| {
             if let Some(context_item) = context_item {
                 builder.context_item(context_item);
             }
@@ -120,9 +114,8 @@ impl Runnable<XPathEnvironmentSpec> for XPathTestCase {
         // TODO: Hacking a lot of duplication so we get a runnable for now
         let static_context = static_context_builder.build();
         let program = parse(static_context, &self.test).unwrap();
-        let mut dynamic_context_builder =
-            context::DynamicContextBuilder::new(program.static_context());
-        dynamic_context_builder.documents(run_context.dynamic_context.documents.clone());
+        let mut dynamic_context_builder = program.dynamic_context_builder();
+        dynamic_context_builder.documents(run_context.session.documents().clone());
         dynamic_context_builder.variables(variables);
         let dynamic_context = dynamic_context_builder.build();
 
@@ -131,7 +124,7 @@ impl Runnable<XPathEnvironmentSpec> for XPathTestCase {
         // let result = runnable.many(&mut run_context.xot);
         self.test_case.result.assert_result(
             &runnable,
-            &mut session,
+            &mut run_context.session,
             &result.map_err(|error| error.error),
         )
     }

@@ -14,14 +14,17 @@ pub struct Session<'a> {
 }
 
 impl<'a> Session<'a> {
-    // TODO: public for now, but should make it private once we have
-    // a good way to construct session from a dynamic context or something.
-    pub fn new(documents: DocumentsRef, xot: &'a mut Xot) -> Self {
+    fn new(documents: DocumentsRef, xot: &'a mut Xot) -> Self {
         Self { documents, xot }
     }
 
     pub(crate) fn from_documents(documents: &'a mut Documents) -> Self {
         Self::new(documents.documents.clone(), &mut documents.xot)
+    }
+
+    /// Get a reference to the documents
+    pub fn documents(&self) -> &DocumentsRef {
+        &self.documents
     }
 
     /// Get a reference to the Xot arena

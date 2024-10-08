@@ -93,10 +93,7 @@ fn test_generate_element() {
 
     assert_debug_snapshot!(decode_instructions(&program.functions[0].chunk));
 
-    // we now should run the generated code
-    let static_context = StaticContext::default();
-
-    let dynamic_context_builder = DynamicContextBuilder::new(&static_context);
+    let dynamic_context_builder = program.dynamic_context_builder();
     let context = dynamic_context_builder.build();
 
     let mut xot = xot::Xot::new();

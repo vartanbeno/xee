@@ -68,7 +68,7 @@ where
 
     let program = parse(static_context, xpath)?;
 
-    let mut dynamic_context_builder = DynamicContextBuilder::new(program.static_context());
+    let mut dynamic_context_builder = program.dynamic_context_builder();
     dynamic_context_builder.context_node(root);
     dynamic_context_builder.documents(documents);
     let context = dynamic_context_builder.build();

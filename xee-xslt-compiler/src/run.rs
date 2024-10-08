@@ -18,7 +18,7 @@ pub fn evaluate_program(
     let mut documents = xee_interpreter::xml::Documents::new();
     let handle = documents.add_root(xot, &uri, root).unwrap();
     let root = documents.get_node_by_handle(handle).unwrap();
-    let mut dynamic_context_builder = DynamicContextBuilder::new(program.static_context());
+    let mut dynamic_context_builder = program.dynamic_context_builder();
     dynamic_context_builder.context_node(root);
     dynamic_context_builder.documents(documents);
     let context = dynamic_context_builder.build();

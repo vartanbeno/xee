@@ -51,7 +51,7 @@ impl Default for DocumentsRef {
 
 impl<'a> DynamicContextBuilder<'a> {
     /// Construct a new `DynamicContextBuilder` with the given `StaticContext`.
-    pub fn new(static_context: &'a StaticContext) -> Self {
+    pub(crate) fn new(static_context: &'a StaticContext) -> Self {
         Self {
             static_context,
             context_item: None,

@@ -50,7 +50,7 @@ pub trait Query<V> {
     /// You can use this if you want to construct your own dynamic context
     /// to use with `execute_with_context`.
     fn dynamic_context_builder(&self, session: &Session) -> context::DynamicContextBuilder {
-        let mut context = context::DynamicContextBuilder::new(self.program().static_context());
+        let mut context = self.program().dynamic_context_builder();
         context.documents(session.documents.clone());
         context
     }
@@ -125,7 +125,7 @@ pub trait RecurseQuery<C, V> {
     /// You can use this if you want to construct your own dynamic context
     /// to use with `execute_with_context`.
     fn dynamic_context_builder(&self, session: &Session) -> context::DynamicContextBuilder {
-        let mut context = context::DynamicContextBuilder::new(self.program().static_context());
+        let mut context = self.program().dynamic_context_builder();
         context.documents(session.documents.clone());
         context
     }
@@ -538,8 +538,7 @@ where
 {
     /// Execute the query against an item.
     pub fn execute(&self, session: &mut Session, item: &Item) -> Result<T> {
-        let mut dynamic_context_builder =
-            context::DynamicContextBuilder::new(self.query.program().static_context());
+        let mut dynamic_context_builder = self.query.program().dynamic_context_builder();
         dynamic_context_builder.context_item(item.clone());
         let context = dynamic_context_builder.build();
         self.execute_with_context(session, &context)

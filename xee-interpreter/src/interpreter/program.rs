@@ -32,6 +32,10 @@ impl Program {
         &self.static_context
     }
 
+    pub fn dynamic_context_builder(&self) -> context::DynamicContextBuilder {
+        context::DynamicContextBuilder::new(self.static_context())
+    }
+
     pub fn span(&self) -> Span {
         self.span
     }

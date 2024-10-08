@@ -7,7 +7,7 @@ use std::{
 use anyhow::Result;
 use xot::xmlname::OwnedName as Name;
 
-use xee_xpath::{context, Item, Queries, Query};
+use xee_xpath::{context, Item, Queries, Query, Session};
 use xee_xpath_compiler::{parse, xml::Documents};
 use xee_xpath_load::{convert_string, ContextLoadable};
 use xot::Xot;
@@ -103,30 +103,22 @@ impl EnvironmentSpec {
         }
     }
 
-    pub(crate) fn context_item(
-        &self,
-        xot: &mut Xot,
-        documents: &RefCell<Documents>,
-    ) -> Result<Option<Item>> {
+    pub(crate) fn context_item(&self, session: &mut Session) -> Result<Option<Item>> {
         for source in &self.sources {
             if let SourceRole::Context = source.role {
-                let node = source.node(xot, &self.base_dir, documents)?;
+                let node = source.node(&self.base_dir, session)?;
                 return Ok(Some(Item::from(node)));
             }
         }
         Ok(None)
     }
 
-    pub(crate) fn variables(
-        &self,
-        xot: &mut Xot,
-        documents: &RefCell<Documents>,
-    ) -> Result<context::Variables> {
+    pub(crate) fn variables(&self, session: &mut Session) -> Result<context::Variables> {
         let mut variables = context::Variables::new();
         for source in &self.sources {
             if let SourceRole::Var(name) = &source.role {
                 let name = &name[1..]; // without $
-                let node = source.node(xot, &self.base_dir, documents)?;
+                let node = source.node(&self.base_dir, session)?;
                 variables.insert(Name::name(name), Item::from(node).into());
             }
         }
@@ -140,11 +132,10 @@ impl EnvironmentSpec {
             }
             let program = program.unwrap();
 
-            let dynamic_context_builder =
-                context::DynamicContextBuilder::new(program.static_context());
+            let dynamic_context_builder = program.dynamic_context_builder();
             let dynamic_context = dynamic_context_builder.build();
             let runnable = program.runnable(&dynamic_context);
-            let result = runnable.many(xot).map_err(|e| e.error)?;
+            let result = runnable.many(session.xot_mut()).map_err(|e| e.error)?;
             variables.insert(param.name.clone(), result);
         }
         Ok(variables)

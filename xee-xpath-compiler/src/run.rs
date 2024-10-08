@@ -43,7 +43,7 @@ pub fn evaluate_root(
 
     let program = parse(static_context, xpath)?;
 
-    let mut dynamic_context_builder = DynamicContextBuilder::new(program.static_context());
+    let mut dynamic_context_builder = program.dynamic_context_builder();
     dynamic_context_builder.context_node(root);
     dynamic_context_builder.documents(documents);
     let context = dynamic_context_builder.build();
@@ -58,7 +58,7 @@ pub fn evaluate_without_focus(s: &str) -> SpannedResult<Sequence> {
 
     let program = parse(static_context, s)?;
 
-    let dynamic_context_buidler = DynamicContextBuilder::new(program.static_context());
+    let dynamic_context_buidler = program.dynamic_context_builder();
     let context = dynamic_context_buidler.build();
     let runnable = program.runnable(&context);
     runnable.many(&mut xot)
@@ -76,7 +76,7 @@ pub fn evaluate_without_focus_with_variables(
 
     let program = parse(static_context, s)?;
 
-    let mut dynamic_context_builder = DynamicContextBuilder::new(program.static_context());
+    let mut dynamic_context_builder = program.dynamic_context_builder();
     dynamic_context_builder.variables(variables);
     let context = dynamic_context_builder.build();
     let runnable = program.runnable(&context);

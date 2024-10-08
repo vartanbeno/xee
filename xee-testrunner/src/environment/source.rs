@@ -4,7 +4,7 @@ use std::fs::File;
 use std::io::{BufReader, Read};
 use std::path::{Path, PathBuf};
 
-use xee_xpath::{Queries, Query, Uri};
+use xee_xpath::{Queries, Query, Session, Uri};
 use xee_xpath_compiler::xml::Documents;
 use xee_xpath_load::{convert_string, Loadable};
 use xot::Xot;
@@ -44,12 +44,7 @@ pub(crate) enum SourceRole {
 }
 
 impl Source {
-    pub(crate) fn node(
-        &self,
-        xot: &mut Xot,
-        base_dir: &Path,
-        documents: &RefCell<Documents>,
-    ) -> Result<xot::Node> {
+    pub(crate) fn node(&self, base_dir: &Path, session: &mut Session) -> Result<xot::Node> {
         match &self.content {
             SourceContent::Path(path) => {
                 let full_path = base_dir.join(path);
@@ -61,7 +56,7 @@ impl Source {
                 // try to get the cached version of the document
                 {
                     // scope borrowed_documents so we drop it afterward
-                    let borrowed_documents = documents.borrow();
+                    let borrowed_documents = session.documents().borrow();
 
                     let root = borrowed_documents.get_node_by_uri(&uri);
                     if let Some(root) = root {
@@ -75,17 +70,34 @@ impl Source {
                 let mut xml = String::new();
                 buf_reader.read_to_string(&mut xml)?;
 
-                let handle = documents.borrow_mut().add_string(xot, &uri, &xml)?;
-                Ok(documents.borrow().get_node_by_handle(handle).unwrap())
+                let documents = session.documents().clone();
+                let handle = documents
+                    .borrow_mut()
+                    .add_string(session.xot_mut(), &uri, &xml)?;
+                Ok(session
+                    .documents()
+                    .borrow()
+                    .get_node_by_handle(handle)
+                    .unwrap())
             }
             SourceContent::String(value) => {
                 // create a new unique uri
-                let uri = Uri::new(&format!("string-source-{}", documents.borrow().len()));
+                let uri = Uri::new(&format!(
+                    "string-source-{}",
+                    session.documents().borrow().len()
+                ));
                 // we don't try to get a cached version of the document, as
                 // that would be different each time. we just add it to documents
                 // and return it
-                let handle = documents.borrow_mut().add_string(xot, &uri, value)?;
-                Ok(documents.borrow().get_node_by_handle(handle).unwrap())
+                let documents = session.documents().clone();
+                let handle = documents
+                    .borrow_mut()
+                    .add_string(session.xot_mut(), &uri, value)?;
+                Ok(session
+                    .documents()
+                    .borrow()
+                    .get_node_by_handle(handle)
+                    .unwrap())
             }
         }
     }
