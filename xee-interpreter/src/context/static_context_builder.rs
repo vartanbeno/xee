@@ -9,6 +9,7 @@ pub struct StaticContextBuilder<'a> {
     namespaces: Vec<(&'a str, &'a str)>,
     default_element_namespace: &'a str,
     default_function_namespace: &'a str,
+    static_base_uri: Option<&'a str>,
 }
 
 impl<'a> StaticContextBuilder<'a> {
@@ -60,6 +61,12 @@ impl<'a> StaticContextBuilder<'a> {
         self
     }
 
+    /// Set the static base URI
+    pub fn static_base_uri(&mut self, static_base_uri: Option<&'a str>) -> &mut Self {
+        self.static_base_uri = static_base_uri;
+        self
+    }
+
     /// Build the static context.
     ///
     /// This will always include the default known namespaces for
@@ -81,7 +88,8 @@ impl<'a> StaticContextBuilder<'a> {
             default_function_namespace.to_string(),
         );
         let variable_names = self.variable_names.clone().into_iter().collect();
-        context::StaticContext::new(namespaces, variable_names)
+        let static_base_uri = self.static_base_uri.map(|s| s.to_string());
+        context::StaticContext::new(namespaces, variable_names, static_base_uri)
     }
 }
 

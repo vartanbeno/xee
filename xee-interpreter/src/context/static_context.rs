@@ -20,11 +20,12 @@ pub struct StaticContext {
     functions: &'static function::StaticFunctions,
     // TODO: try to make collations static
     collations: RefCell<Collations>,
+    static_base_uri: Option<String>,
 }
 
 impl Default for StaticContext {
     fn default() -> Self {
-        Self::new(Namespaces::default(), VariableNames::default())
+        Self::new(Namespaces::default(), VariableNames::default(), None)
     }
 }
 
@@ -34,21 +35,27 @@ impl From<XPathParserContext> for StaticContext {
             parser_context,
             functions: &STATIC_FUNCTIONS,
             collations: RefCell::new(Collations::new()),
+            static_base_uri: None,
         }
     }
 }
 
 impl StaticContext {
-    pub(crate) fn new(namespaces: Namespaces, variable_names: VariableNames) -> Self {
+    pub(crate) fn new(
+        namespaces: Namespaces,
+        variable_names: VariableNames,
+        static_base_uri: Option<String>,
+    ) -> Self {
         Self {
             parser_context: XPathParserContext::new(namespaces, variable_names),
             functions: &STATIC_FUNCTIONS,
             collations: RefCell::new(Collations::new()),
+            static_base_uri,
         }
     }
 
     pub fn from_namespaces(namespaces: Namespaces) -> Self {
-        Self::new(namespaces, VariableNames::default())
+        Self::new(namespaces, VariableNames::default(), None)
     }
 
     pub fn namespaces(&self) -> &Namespaces {
