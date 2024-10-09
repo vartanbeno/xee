@@ -53,6 +53,7 @@ icu_provider_adapters = { workspace = true }
 serde = { workspace = true, features = ["derive"], optional = true }
 url = "2.4.1"
 regexml = { workspace = true }
+percent-encoding = "2.3.1"
 
 [dev-dependencies]
 insta = { version = "1.29.0", features = ["yaml", "glob"] }

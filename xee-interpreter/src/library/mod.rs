@@ -16,6 +16,7 @@ mod numeric;
 mod qname;
 mod sequence;
 mod string;
+mod uri;
 mod xs;
 
 use crate::function::StaticFunctionDescription;
@@ -39,5 +40,6 @@ pub(crate) fn static_function_descriptions() -> Vec<StaticFunctionDescription> {
     descriptions.extend(array::static_function_descriptions());
     descriptions.extend(map::static_function_descriptions());
     descriptions.extend(hidden_xslt::static_function_descriptions());
+    descriptions.extend(uri::static_function_descriptions());
     descriptions
 }
