@@ -8,12 +8,6 @@ functx-fn-base-uri-3
 functx-fn-base-uri-all
 functx-fn-doc-available-1
 functx-fn-namespace-uri-from-QName-all
-functx-fn-resolve-uri-1
-functx-fn-resolve-uri-2
-functx-fn-resolve-uri-3
-functx-fn-resolve-uri-4
-functx-fn-resolve-uri-5
-functx-fn-resolve-uri-all
 functx-fn-round-half-to-even-1
 functx-fn-round-half-to-even-2
 functx-fn-round-half-to-even-3
@@ -1068,10 +1062,7 @@ fn-function-lookup-086
 fn-function-lookup-088
 fn-function-lookup-110
 fn-function-lookup-114
-fn-function-lookup-163
 fn-function-lookup-164
-fn-function-lookup-165
-fn-function-lookup-166
 fn-function-lookup-237
 fn-function-lookup-238
 fn-function-lookup-239
@@ -1834,42 +1825,7 @@ fn-resolve-qname-23
 fn-resolve-qname-24
 fn-resolve-qname-25
 = fn-resolve-uri
-K-ResolveURIFunc-3
-K-ResolveURIFunc-4
-K-ResolveURIFunc-5
-K-ResolveURIFunc-6
-cbcl-fn-resolve-uri-001
-fn-resolve-uri-1
-fn-resolve-uri-10
-fn-resolve-uri-11
-fn-resolve-uri-12
-fn-resolve-uri-13
-fn-resolve-uri-14
-fn-resolve-uri-15
-fn-resolve-uri-16
-fn-resolve-uri-17
-fn-resolve-uri-18
-fn-resolve-uri-19
-fn-resolve-uri-20
-fn-resolve-uri-21
-fn-resolve-uri-22
-fn-resolve-uri-23
-fn-resolve-uri-24
-fn-resolve-uri-25
-fn-resolve-uri-26
-fn-resolve-uri-27
-fn-resolve-uri-29
-fn-resolve-uri-3
 fn-resolve-uri-30
-fn-resolve-uri-31
-fn-resolve-uri-32
-fn-resolve-uri-33
-fn-resolve-uri-4
-fn-resolve-uri-5
-fn-resolve-uri-6
-fn-resolve-uri-7
-fn-resolve-uri-8
-fn-resolve-uri-9
 = fn-reverse
 = fn-root
 = fn-round
@@ -2926,10 +2882,7 @@ function-literal-086
 function-literal-088
 function-literal-110
 function-literal-114
-function-literal-163
 function-literal-164
-function-literal-165
-function-literal-166
 function-literal-237
 function-literal-238
 function-literal-239

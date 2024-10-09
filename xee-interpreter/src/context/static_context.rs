@@ -74,6 +74,10 @@ impl StaticContext {
         "http://www.w3.org/2005/xpath-functions/collation/codepoint"
     }
 
+    pub fn static_base_uri(&self) -> Option<&str> {
+        self.static_base_uri.as_deref()
+    }
+
     pub(crate) fn collation(&self, uri: &str) -> error::Result<Rc<Collation>> {
         // TODO: supply static base URI
         self.collations.borrow_mut().load(None, uri)
