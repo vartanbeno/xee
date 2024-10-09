@@ -7,13 +7,6 @@ functx-fn-base-uri-2
 functx-fn-base-uri-3
 functx-fn-base-uri-all
 functx-fn-doc-available-1
-functx-fn-encode-for-uri-1
-functx-fn-encode-for-uri-2
-functx-fn-encode-for-uri-all
-functx-fn-escape-html-uri-1
-functx-fn-escape-html-uri-2
-functx-fn-escape-html-uri-all
-functx-fn-iri-to-uri-1
 functx-fn-namespace-uri-from-QName-all
 functx-fn-resolve-uri-1
 functx-fn-resolve-uri-2
@@ -56,17 +49,12 @@ fo-test-fn-contains-005
 fo-test-fn-contains-006
 fo-test-fn-contains-007
 fo-test-fn-distinct-values-002
-fo-test-fn-encode-for-uri-001
-fo-test-fn-encode-for-uri-002
-fo-test-fn-encode-for-uri-003
 fo-test-fn-ends-with-004
 fo-test-fn-ends-with-005
 fo-test-fn-ends-with-006
 fo-test-fn-ends-with-007
 fo-test-fn-ends-with-008
 fo-test-fn-error-002
-fo-test-fn-escape-html-uri-001
-fo-test-fn-escape-html-uri-002
 fo-test-fn-filter-002
 fo-test-fn-format-integer-001
 fo-test-fn-format-integer-002
@@ -83,8 +71,6 @@ fo-test-fn-format-number-007
 fo-test-fn-format-number-008
 fo-test-fn-format-number-009
 fo-test-fn-format-number-010
-fo-test-fn-iri-to-uri-001
-fo-test-fn-iri-to-uri-002
 fo-test-fn-json-to-xml-001
 fo-test-fn-json-to-xml-002
 fo-test-fn-json-to-xml-003
@@ -343,32 +329,6 @@ fn-element-with-id-4
 fn-element-with-id-5
 = fn-empty
 = fn-encode-for-uri
-K-EncodeURIfunc-3
-K-EncodeURIfunc-4
-K-EncodeURIfunc-5
-K-EncodeURIfunc-6
-fn-encode-for-uri-1
-fn-encode-for-uri-10
-fn-encode-for-uri-11
-fn-encode-for-uri-12
-fn-encode-for-uri-13
-fn-encode-for-uri-14
-fn-encode-for-uri-15
-fn-encode-for-uri-16
-fn-encode-for-uri-2
-fn-encode-for-uri-3
-fn-encode-for-uri-4
-fn-encode-for-uri-5
-fn-encode-for-uri-6
-fn-encode-for-uri-7
-fn-encode-for-uri-8
-fn-encode-for-uri-9
-fn-encode-for-uri1args-1
-fn-encode-for-uri1args-2
-fn-encode-for-uri1args-3
-fn-encode-for-uri1args-4
-fn-encode-for-uri1args-5
-fn-encode-for-uri1args-6
 = fn-ends-with
 = fn-environment-variable
 environment-variable-001
@@ -437,37 +397,6 @@ fn-error-7
 fn-error-8
 fn-error-9
 = fn-escape-html-uri
-K-EscapeHTMLURIFunc-3
-K-EscapeHTMLURIFunc-4
-K-EscapeHTMLURIFunc-5
-K-EscapeHTMLURIFunc-6
-cbcl-escape-html-uri-001
-fn-escape-html-uri-1
-fn-escape-html-uri-10
-fn-escape-html-uri-11
-fn-escape-html-uri-12
-fn-escape-html-uri-13
-fn-escape-html-uri-14
-fn-escape-html-uri-15
-fn-escape-html-uri-16
-fn-escape-html-uri-17
-fn-escape-html-uri-18
-fn-escape-html-uri-19
-fn-escape-html-uri-2
-fn-escape-html-uri-20
-fn-escape-html-uri-21
-fn-escape-html-uri-3
-fn-escape-html-uri-4
-fn-escape-html-uri-5
-fn-escape-html-uri-6
-fn-escape-html-uri-7
-fn-escape-html-uri-8
-fn-escape-html-uri-9
-fn-escape-html-uri1args-1
-fn-escape-html-uri1args-2
-fn-escape-html-uri1args-3
-fn-escape-html-uri1args-4
-fn-escape-html-uri1args-5
 = fn-exactly-one
 = fn-exists
 = fn-false
@@ -1143,12 +1072,6 @@ fn-function-lookup-163
 fn-function-lookup-164
 fn-function-lookup-165
 fn-function-lookup-166
-fn-function-lookup-167
-fn-function-lookup-168
-fn-function-lookup-169
-fn-function-lookup-170
-fn-function-lookup-171
-fn-function-lookup-172
 fn-function-lookup-237
 fn-function-lookup-238
 fn-function-lookup-239
@@ -1286,7 +1209,6 @@ K2-SeqIDFunc-14
 K2-SeqIDFunc-15
 K2-SeqIDFunc-2
 K2-SeqIDFunc-3
-fn-id-1
 fn-id-2
 fn-id-22
 fn-id-3
@@ -1298,7 +1220,6 @@ fn-id-dtd-6
 K2-SeqIDREFFunc-1
 K2-SeqIDREFFunc-2
 K2-SeqIDREFFunc-3
-fn-idref-1
 fn-idref-2
 fn-idref-22
 fn-idref-3
@@ -1321,47 +1242,7 @@ fn-in-scope-prefixes-26
 fn-innermost-059
 = fn-insert-before
 = fn-iri-to-uri
-K-IRIToURIfunc-3
-K-IRIToURIfunc-4
-K2-IRIToURIfunc-10
-K2-IRIToURIfunc-3
-K2-IRIToURIfunc-4
-K2-IRIToURIfunc-5
 K2-IRIToURIfunc-6
-K2-IRIToURIfunc-7
-K2-IRIToURIfunc-8
-K2-IRIToURIfunc-9
-fn-iri-to-uri-1
-fn-iri-to-uri-10
-fn-iri-to-uri-11
-fn-iri-to-uri-12
-fn-iri-to-uri-13
-fn-iri-to-uri-14
-fn-iri-to-uri-15
-fn-iri-to-uri-16
-fn-iri-to-uri-17
-fn-iri-to-uri-18A
-fn-iri-to-uri-19
-fn-iri-to-uri-2
-fn-iri-to-uri-20
-fn-iri-to-uri-21
-fn-iri-to-uri-22
-fn-iri-to-uri-23
-fn-iri-to-uri-24
-fn-iri-to-uri-25
-fn-iri-to-uri-26
-fn-iri-to-uri-3
-fn-iri-to-uri-4
-fn-iri-to-uri-5
-fn-iri-to-uri-6
-fn-iri-to-uri-7
-fn-iri-to-uri-8
-fn-iri-to-uri-9
-fn-iri-to-uri1args-1
-fn-iri-to-uri1args-2
-fn-iri-to-uri1args-3
-fn-iri-to-uri1args-4
-fn-iri-to-uri1args-5
 = fn-json-doc
 json-doc-001
 json-doc-002
@@ -3049,12 +2930,6 @@ function-literal-163
 function-literal-164
 function-literal-165
 function-literal-166
-function-literal-167
-function-literal-168
-function-literal-169
-function-literal-170
-function-literal-171
-function-literal-172
 function-literal-237
 function-literal-238
 function-literal-239
