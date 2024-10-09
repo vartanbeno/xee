@@ -6,7 +6,6 @@ pub(crate) enum SymbolType {
     NonDelimiting,
     Whitespace,
     CommentStart,
-    CommentEnd,
     Error,
 }
 
@@ -103,8 +102,6 @@ impl<'a> Token<'a> {
         
             Token::Whitespace => SymbolType::Whitespace,
             Token::CommentStart => SymbolType::CommentStart,
-            Token::CommentEnd => SymbolType::CommentEnd,
-
             Token::Error => SymbolType::Error,
         }
     }

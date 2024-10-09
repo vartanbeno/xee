@@ -268,10 +268,8 @@ pub enum Token<'a> {
     #[regex(r"[\u{20}\u{9}\u{d}\u{a}]+", priority = 4)]
     Whitespace,
     // comments
-    #[regex(r"\(:")]
+    #[regex(r"\(:", parse_nested_comment)]
     CommentStart,
-    #[regex(r":\)")]
-    CommentEnd,
     // additional reserved names
     #[token("switch")]
     Switch,
@@ -312,4 +310,53 @@ fn string_literal<'a>(lex: &mut Lexer<'a, Token<'a>>) -> Cow<'a, str> {
 fn braced_uri_literal<'a>(lex: &mut Lexer<'a, Token<'a>>) -> &'a str {
     let slice = lex.slice();
     &slice[2..slice.len() - 1]
+}
+
+fn parse_nested_comment<'a>(lexer: &mut Lexer<'a, Token<'a>>) -> Option<()> {
+    let mut depth = 1;
+    while depth > 0 {
+        // we find the next start and next end
+        // TODO: this isn't as efficient as it could be
+        let next_start = lexer.remainder().find("(:");
+        let next_end = lexer.remainder().find(":)");
+
+        match (next_start, next_end) {
+            (Some(next_start), Some(next_end)) => {
+                if next_start < next_end {
+                    // we found a start token
+                    depth += 1;
+                    lexer.bump(next_start + 2);
+                } else {
+                    // we found an end token
+                    depth -= 1;
+                    lexer.bump(next_end + 2);
+                    // if this means we closed the last comment, we're done
+                    if depth == 0 {
+                        break;
+                    }
+                }
+            }
+            (Some(_next_start), None) => {
+                // we found a start token, but no end token is
+                // ever coming, this is an error
+                lexer.bump(lexer.remainder().len());
+                return None;
+            }
+            (None, Some(next_end)) => {
+                // we found an end token
+                depth -= 1;
+                lexer.bump(next_end + 2);
+                // if this means we closed the last comment, we're done
+                if depth == 0 {
+                    break;
+                }
+            }
+            (None, None) => {
+                // we found neither a start nor an end token
+                lexer.bump(lexer.remainder().len());
+                return None;
+            }
+        }
+    }
+    Some(())
 }

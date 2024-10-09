@@ -57,7 +57,6 @@ impl<'a> Iterator for DeliminationIterator<'a> {
                         SymbolType::Delimiting
                         | SymbolType::Whitespace
                         | SymbolType::CommentStart
-                        | SymbolType::CommentEnd
                         | SymbolType::Error => {
                             // a non-delimiting symbol can be followed by these without error
                             Some((token, span))
@@ -79,45 +78,8 @@ impl<'a> Iterator for DeliminationIterator<'a> {
                 self.next()
             }
             SymbolType::CommentStart => {
-                let mut depth = 1;
-                // we track the span from the start of the first
-                // comment start
-                let start = span.start;
-                let mut end = span.end;
-                // now we find the commend end that matches,
-                // taking into account nested comments
-                // we track the end of the span of what we
-                // found next, so that we can report it in
-                // case of errors
-                while depth > 0 {
-                    match self.base.next() {
-                        Some((Token::CommentStart, span)) => {
-                            end = span.end;
-                            depth += 1
-                        }
-                        Some((Token::CommentEnd, span)) => {
-                            end = span.end;
-                            depth -= 1;
-                            // comments are balanced, so done
-                            if depth == 0 {
-                                break;
-                            }
-                        }
-                        Some((_, span)) => {
-                            end = span.end;
-                        }
-                        // if we reach the end and things are unclosed,
-                        // we bail out with an error
-                        None => {
-                            return Some((Token::Error, start..end));
-                        }
-                    }
-                }
+                // we skip comments
                 self.next()
-            }
-            SymbolType::CommentEnd => {
-                // we should never see a comment end without a start
-                Some((Token::Error, span))
             }
         }
     }

@@ -44,7 +44,8 @@ fn test_comment_nested_broken() {
 #[test]
 fn test_close_comment_by_itself() {
     let mut lex = lexer(":)");
-    assert_eq!(lex.next(), Some((Token::Error, (0..2))));
+    assert_eq!(lex.next(), Some((Token::Colon, (0..1))));
+    assert_eq!(lex.next(), Some((Token::RightParen, (1..2))));
 }
 
 #[test]
@@ -255,9 +256,9 @@ fn comment_after_prefix_after_colon() {
 
 #[test]
 fn comment_in_uri_qualified_name() {
-    let mut lex = lexer("Q{foo}(:hey:})ncname");
+    let mut lex = lexer("Q{foo}(:hey:)ncname");
     assert_eq!(lex.next(), Some((Token::BracedURILiteral("foo"), (0..6))));
-    assert_eq!(lex.next(), Some((Token::Error, 6..20)));
+    assert_eq!(lex.next(), Some((Token::NCName("ncname"), 13..19)));
 }
 
 #[test]
@@ -281,6 +282,18 @@ fn comment_after_wildcard_before_colon() {
     let mut lex = lexer("name(:hey:):*");
     assert_eq!(lex.next(), Some((Token::NCName("name"), 0..4)));
     assert_eq!(lex.next(), Some((Token::ColonAsterisk, 11..13)));
+}
+
+#[test]
+fn comment_with_quote() {
+    let mut lex = lexer("(: there's nothing here :)");
+    assert_eq!(lex.next(), None);
+}
+
+#[test]
+fn multiple_comments() {
+    let mut lex = lexer("(: a :)(: b :)foo");
+    assert_eq!(lex.next(), Some((Token::NCName("foo"), 14..17)));
 }
 
 #[test]

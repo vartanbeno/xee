@@ -834,6 +834,22 @@ mod tests {
     }
 
     #[test]
+    fn test_inline_function_with_empty_body() {
+        assert_ron_snapshot!(parse_xpath_simple(
+            "let $f := function($x) { (: there's nothing here :)} return $f(2)"
+        ))
+    }
+
+    #[test]
+    fn test_comment_before_expression() {
+        assert_ron_snapshot!(parse_xpath_simple("(: comment :)/foo"))
+    }
+
+    #[test]
+    fn test_multiple_comments_before_expression() {
+        assert_ron_snapshot!(parse_xpath_simple(r#"(: a :)(: b :)foo"#))
+    }
+    #[test]
     fn test_xpath_parse_value_template() {
         let namespaces = Namespaces::default();
         let xpath =

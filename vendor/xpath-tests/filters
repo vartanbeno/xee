@@ -2711,20 +2711,6 @@ cbcl-castable-unsignedInt-005
 cbcl-castable-unsignedLong-005
 cbcl-castable-unsignedShort-005
 = prod-Comment
-K-XQueryComment-1
-K-XQueryComment-10
-K-XQueryComment-11
-K-XQueryComment-12
-K-XQueryComment-17
-K-XQueryComment-18
-K-XQueryComment-19
-K-XQueryComment-2
-K-XQueryComment-3
-K-XQueryComment-4
-K-XQueryComment-5
-K-XQueryComment-6
-K-XQueryComment-7
-K-XQueryComment-9
 = prod-CompAttrConstructor
 = prod-CompCommentConstructor
 = prod-CompDocConstructor
@@ -2781,9 +2767,6 @@ FunctionCall-010
 FunctionCall-011
 FunctionCall-012
 FunctionCall-026
-FunctionCall-046
-FunctionCall-047
-FunctionCall-048
 K-FunctionCallExpr-15a
 K-FunctionCallExpr-16a
 K-FunctionCallExpr-17a

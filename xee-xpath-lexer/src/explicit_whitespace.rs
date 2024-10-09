@@ -296,4 +296,13 @@ mod tests {
         );
         assert_eq!(iter.next(), None);
     }
+
+    #[test]
+    fn test_comment_in_uri_qualified_name() {
+        // there is a comment in here, which is in error
+        let mut iter = ExplicitWhitespace::from_str("Q{foo}(:hey:)ncname");
+        assert_eq!(iter.next(), Some((Token::BracedURILiteral("foo"), 0..6)));
+        assert_eq!(iter.next(), Some((Token::CommentStart, 6..13)));
+        assert_eq!(iter.next(), Some((Token::NCName("ncname"), 13..19)));
+    }
 }
