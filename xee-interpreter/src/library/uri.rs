@@ -72,7 +72,7 @@ fn resolve_uri2(relative: Option<&str>, base: &str) -> error::Result<Option<atom
         .map(|resolved| atomic::Atomic::String(atomic::StringType::AnyURI, Rc::from(resolved))))
 }
 
-fn resolve_uri(relative: Option<&str>, base: &str) -> error::Result<Option<String>> {
+pub(crate) fn resolve_uri(relative: Option<&str>, base: &str) -> error::Result<Option<String>> {
     Ok(if let Some(relative) = relative {
         let url = strict_url_parse(relative);
         if let Ok(_url) = url {
