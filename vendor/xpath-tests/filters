@@ -8,12 +8,6 @@ functx-fn-base-uri-3
 functx-fn-base-uri-all
 functx-fn-doc-available-1
 functx-fn-namespace-uri-from-QName-all
-functx-fn-round-half-to-even-1
-functx-fn-round-half-to-even-2
-functx-fn-round-half-to-even-3
-functx-fn-round-half-to-even-4
-functx-fn-round-half-to-even-5
-functx-fn-round-half-to-even-all
 = app-FunctxFunctx
 = app-UseCaseCompoundValues
 = app-UseCaseJSON
@@ -81,12 +75,6 @@ fo-test-fn-parse-json-004
 fo-test-fn-parse-json-005
 fo-test-fn-parse-json-006
 fo-test-fn-parse-json-007
-fo-test-fn-round-half-to-even-001
-fo-test-fn-round-half-to-even-002
-fo-test-fn-round-half-to-even-003
-fo-test-fn-round-half-to-even-004
-fo-test-fn-round-half-to-even-005
-fo-test-fn-round-half-to-even-006
 fo-test-fn-starts-with-004
 fo-test-fn-starts-with-005
 fo-test-fn-starts-with-006
@@ -1043,10 +1031,6 @@ fn-function-lookup-031
 fn-function-lookup-032
 fn-function-lookup-033
 fn-function-lookup-034
-fn-function-lookup-045
-fn-function-lookup-046
-fn-function-lookup-047
-fn-function-lookup-048
 fn-function-lookup-053
 fn-function-lookup-054
 fn-function-lookup-055
@@ -1830,132 +1814,8 @@ fn-resolve-uri-30
 = fn-root
 = fn-round
 = fn-round-half-to-even
-K-RoundEvenFunc-3
-K-RoundEvenFunc-4
-K-RoundEvenFunc-5
-K2-RoundEvenFunc-1
-K2-RoundEvenFunc-10
-K2-RoundEvenFunc-11
-K2-RoundEvenFunc-12
-K2-RoundEvenFunc-13
-K2-RoundEvenFunc-14
-K2-RoundEvenFunc-15
-K2-RoundEvenFunc-16
-K2-RoundEvenFunc-17
-K2-RoundEvenFunc-18
-K2-RoundEvenFunc-19
-K2-RoundEvenFunc-2
-K2-RoundEvenFunc-20
-K2-RoundEvenFunc-21
-K2-RoundEvenFunc-22
-K2-RoundEvenFunc-23
-K2-RoundEvenFunc-24
-K2-RoundEvenFunc-25
-K2-RoundEvenFunc-26
-K2-RoundEvenFunc-27
-K2-RoundEvenFunc-28
-K2-RoundEvenFunc-3
-K2-RoundEvenFunc-4
-K2-RoundEvenFunc-5
-K2-RoundEvenFunc-6
-K2-RoundEvenFunc-7
-K2-RoundEvenFunc-8
-K2-RoundEvenFunc-9
 cbcl-round-half-to-even-001
-cbcl-round-half-to-even-002
-cbcl-round-half-to-even-003
-cbcl-round-half-to-even-004
-cbcl-round-half-to-even-005
-cbcl-round-half-to-even-006
-cbcl-round-half-to-even-007
-cbcl-round-half-to-even-008
-cbcl-round-half-to-even-009
-cbcl-round-half-to-even-010
-cbcl-round-half-to-even-011
 cbcl-round-half-to-even-012
-cbcl-round-half-to-even-013
-cbcl-round-half-to-even-014
-fn-round-half-to-even-1
-fn-round-half-to-even-10
-fn-round-half-to-even-11
-fn-round-half-to-even-12
-fn-round-half-to-even-13
-fn-round-half-to-even-14
-fn-round-half-to-even-15
-fn-round-half-to-even-16
-fn-round-half-to-even-17
-fn-round-half-to-even-18
-fn-round-half-to-even-19
-fn-round-half-to-even-2
-fn-round-half-to-even-20
-fn-round-half-to-even-21
-fn-round-half-to-even-22
-fn-round-half-to-even-23
-fn-round-half-to-even-24
-fn-round-half-to-even-24a
-fn-round-half-to-even-25
-fn-round-half-to-even-26
-fn-round-half-to-even-27
-fn-round-half-to-even-28
-fn-round-half-to-even-29
-fn-round-half-to-even-3
-fn-round-half-to-even-30
-fn-round-half-to-even-31
-fn-round-half-to-even-32
-fn-round-half-to-even-33
-fn-round-half-to-even-34
-fn-round-half-to-even-35
-fn-round-half-to-even-36
-fn-round-half-to-even-37
-fn-round-half-to-even-38
-fn-round-half-to-even-39
-fn-round-half-to-even-4
-fn-round-half-to-even-40
-fn-round-half-to-even-41
-fn-round-half-to-even-5
-fn-round-half-to-even-6
-fn-round-half-to-even-7
-fn-round-half-to-even-8
-fn-round-half-to-even-9
-fn-round-half-to-evendbl1args-1
-fn-round-half-to-evendbl1args-2
-fn-round-half-to-evendbl1args-3
-fn-round-half-to-evendec1args-1
-fn-round-half-to-evendec1args-2
-fn-round-half-to-evendec1args-3
-fn-round-half-to-evenflt1args-1
-fn-round-half-to-evenflt1args-2
-fn-round-half-to-evenflt1args-3
-fn-round-half-to-evenint1args-1
-fn-round-half-to-evenint1args-2
-fn-round-half-to-evenint1args-3
-fn-round-half-to-evenintg1args-1
-fn-round-half-to-evenintg1args-2
-fn-round-half-to-evenintg1args-3
-fn-round-half-to-evenlng1args-1
-fn-round-half-to-evenlng1args-2
-fn-round-half-to-evenlng1args-3
-fn-round-half-to-evennint1args-1
-fn-round-half-to-evennint1args-2
-fn-round-half-to-evennint1args-3
-fn-round-half-to-evennni1args-1
-fn-round-half-to-evennni1args-2
-fn-round-half-to-evennni1args-3
-fn-round-half-to-evennpi1args-1
-fn-round-half-to-evennpi1args-2
-fn-round-half-to-evennpi1args-3
-fn-round-half-to-evenpint1args-1
-fn-round-half-to-evenpint1args-2
-fn-round-half-to-evenpint1args-3
-fn-round-half-to-evensht1args-1
-fn-round-half-to-evensht1args-2
-fn-round-half-to-evensht1args-3
-fn-round-half-to-evenulng1args-1
-fn-round-half-to-evenulng1args-2
-fn-round-half-to-evenulng1args-3
-fn-round-half-to-evenusht1args-1
-fn-round-half-to-evenusht1args-2
-fn-round-half-to-evenusht1args-3
 = fn-seconds-from-dateTime
 = fn-seconds-from-duration
 = fn-seconds-from-time
@@ -2492,13 +2352,10 @@ UCA-params-034
 K-DayTimeDurationDivide-4
 K-DayTimeDurationDivide-6
 = op-divide-dayTimeDuration-by-dayTimeDuration
-op-divide-dayTimeDuration-by-dTD-1
-op-divide-dayTimeDuration-by-dTD-11
 = op-divide-yearMonthDuration
 op-divide-yearMonthDuration-17
 op-divide-yearMonthDuration-8
 = op-divide-yearMonthDuration-by-yearMonthDuration
-op-divide-yearMonthDuration-by-yMD-11
 = op-duration-equal
 K-DurationEQ-15
 K-DurationEQ-16
@@ -2550,23 +2407,6 @@ op-multiply-yearMonthDuration-20
 = op-node-before
 = op-numeric-add
 = op-numeric-divide
-op-numeric-dividedec2args-2
-op-numeric-dividedec2args-4
-op-numeric-divideint2args-2
-op-numeric-divideint2args-3
-op-numeric-divideint2args-4
-op-numeric-divideint2args-5
-op-numeric-divideintg2args-2
-op-numeric-divideintg2args-4
-op-numeric-dividelng2args-2
-op-numeric-dividelng2args-4
-op-numeric-dividenint2args-2
-op-numeric-dividenint2args-4
-op-numeric-dividenpi2args-2
-op-numeric-dividenpi2args-4
-op-numeric-dividepint2args-4
-op-numeric-dividesht2args-2
-op-numeric-dividesht2args-4
 = op-numeric-equal
 K-NumericEqual-45
 = op-numeric-greater-than
@@ -2664,8 +2504,6 @@ unabbreviatedSyntax-5
 = prod-BaseURIDecl
 = prod-BoundarySpaceDecl
 = prod-CastExpr
-CastAs177
-CastAs212
 K-SeqExprCast-1212
 K-SeqExprCast-1414
 K-SeqExprCast-440
@@ -2845,10 +2683,6 @@ function-literal-033
 function-literal-033a
 function-literal-034
 function-literal-034a
-function-literal-045
-function-literal-046
-function-literal-047
-function-literal-048
 function-literal-053
 function-literal-054
 function-literal-055

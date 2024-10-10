@@ -6,6 +6,7 @@ use num_traits::Float;
 use xee_xpath_macros::xpath_fn;
 
 use crate::atomic::round_atomic;
+use crate::atomic::round_half_to_even_atomic;
 use crate::atomic::Atomic;
 use crate::error;
 use crate::function::StaticFunctionDescription;
@@ -68,81 +69,31 @@ fn round1(arg: Option<Atomic>) -> error::Result<Option<Atomic>> {
 #[xpath_fn("fn:round($arg as xs:numeric?, $precision as xs:integer) as xs:numeric?")]
 fn round2(arg: Option<Atomic>, precision: IBig) -> error::Result<Option<Atomic>> {
     if let Some(arg) = arg {
-        let precision: i32 = precision.try_into().map_err(|_| error::Error::XPDY0130)?;
+        let precision: i32 = precision.try_into().map_err(|_| error::Error::FOAR0002)?;
         round_atomic(arg, precision).map(Some)
     } else {
         Ok(None)
     }
 }
-// }
 
-// #[xpath_fn("fn:round-half-to-even($arg as xs:numeric?) as xs:numeric?")]
-// fn round_half_to_even1(arg: Option<Atomic>) -> error::Result<Option<Atomic>> {
-//     if let Some(arg) = arg {
-//         round_atomic_half_to_even(arg, 0).map(Some)
-//     } else {
-//         Ok(None)
-//     }
-// }
+#[xpath_fn("fn:round-half-to-even($arg as xs:numeric?) as xs:numeric?")]
+fn round_half_to_even1(arg: Option<Atomic>) -> error::Result<Option<Atomic>> {
+    if let Some(arg) = arg {
+        round_half_to_even_atomic(arg, 0).map(Some)
+    } else {
+        Ok(None)
+    }
+}
 
-// #[xpath_fn("fn:round-half-to-even($arg as xs:numeric?, $precision as xs:integer) as xs:numeric?")]
-// fn round_half_to_even2(arg: Option<Atomic>, precision: IBig) -> error::Result<Option<Atomic>> {
-//     if let Some(arg) = arg {
-//         let precision: i32 = precision.try_into().map_err(|_| error::Error::XPDY0130)?;
-//         round_atomic_half_to_even(arg, precision).map(Some)
-//     } else {
-//         Ok(None)
-//     }
-// }
-
-// fn round_atomic_half_to_even(arg: Atomic, precision: i32) -> error::Result<Atomic> {
-//     match arg {
-//         Atomic::Integer(_, i) => {
-//             if precision < 0 {
-//                 // TODO
-//                 Ok(round_integer_negative(
-//                     i.as_ref().clone(),
-//                     precision.unsigned_abs(),
-//                 ))
-//             } else {
-//                 Ok(i.into())
-//             }
-//         }
-//         Atomic::Decimal(d) => round_decimal_half_to_even(*d, precision),
-//         // TODO:
-//         Atomic::Float(OrderedFloat(f)) => Ok(round_float(f, precision).into()),
-//         Atomic::Double(OrderedFloat(d)) => Ok(round_double(d, precision).into()),
-//         _ => Err(error::Error::XPTY0004),
-//     }
-// }
-
-// fn round_half_to_even(arg: Decimal, precision: i32) -> Decimal {
-//     let factor = Decimal::new(10i64.pow(precision.unsigned_abs()), 0);
-//     let scaled = arg * factor;
-//     let rounded = scaled.round_dp_with_strategy(0, RoundingStrategy::MidpointAwayFromZero);
-//     let remainder = scaled - rounded;
-
-//     if remainder.abs() == Decimal::from_f64_retain(0.5).unwrap()
-//         && rounded % Decimal::from(2) != Decimal::from(0)
-//     {
-//         return (rounded - Decimal::from(1)) / factor;
-//     }
-
-//     rounded / factor
-// }
-
-// fn round_decimal_half_to_even(arg: Decimal, precision: i32) -> error::Result<Atomic> {
-//     match precision.cmp(&0) {
-//         Ordering::Equal | Ordering::Greater => Ok(round_half_to_even(arg, precision).into()),
-//         Ordering::Less => {
-//             let d: Decimal = 10u32.pow(precision.unsigned_abs()).into();
-//             let arg = arg / d;
-//             let arg = round_half_to_even(arg, 0);
-//             let arg = arg * d;
-//             Ok(arg.into())
-//         }
-//     }
-// }
+#[xpath_fn("fn:round-half-to-even($arg as xs:numeric?, $precision as xs:integer) as xs:numeric?")]
+fn round_half_to_even2(arg: Option<Atomic>, precision: IBig) -> error::Result<Option<Atomic>> {
+    if let Some(arg) = arg {
+        let precision: i32 = precision.try_into().map_err(|_| error::Error::FOAR0002)?;
+        round_half_to_even_atomic(arg, precision).map(Some)
+    } else {
+        Ok(None)
+    }
+}
 
 #[xpath_fn("fn:number($arg as xs:anyAtomicType?) as xs:double", context_first)]
 fn number(arg: Option<Atomic>) -> error::Result<Atomic> {
@@ -163,8 +114,8 @@ pub(crate) fn static_function_descriptions() -> Vec<StaticFunctionDescription> {
         wrap_xpath_fn!(floor),
         wrap_xpath_fn!(round1),
         wrap_xpath_fn!(round2),
-        // wrap_xpath_fn!(round_half_to_even1),
-        // wrap_xpath_fn!(round_half_to_even2),
+        wrap_xpath_fn!(round_half_to_even1),
+        wrap_xpath_fn!(round_half_to_even2),
         wrap_xpath_fn!(number),
     ]
 }

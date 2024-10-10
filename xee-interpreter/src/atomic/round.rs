@@ -1,10 +1,13 @@
 use std::cmp::Ordering;
 
 use ibig::{ops::Abs, IBig};
+use num::Zero;
 use ordered_float::OrderedFloat;
 use rust_decimal::{Decimal, RoundingStrategy};
 
 use crate::{atomic, error};
+
+// Normal round
 
 pub(crate) fn round_atomic(arg: atomic::Atomic, precision: i32) -> error::Result<atomic::Atomic> {
     match arg {
@@ -69,18 +72,18 @@ fn round_decimal(arg: Decimal, precision: i32) -> error::Result<atomic::Atomic> 
     }
 }
 
-pub(crate) fn round_float<F: num_traits::Float>(arg: F, precision: i32) -> error::Result<F> {
+fn round_float<F: num_traits::Float>(arg: F, precision: i32) -> error::Result<F> {
     if arg.is_nan() || arg.is_infinite() || arg.is_zero() {
         return Ok(arg);
     }
 
     match precision.cmp(&0) {
-        Ordering::Equal => Ok(round_float_ties_to_postive_infinity(arg)),
+        Ordering::Equal => Ok(round_float_ties_to_positive_infinity(arg)),
         Ordering::Greater => {
             let d = 10i32.pow(precision.unsigned_abs());
             let d = F::from(d);
             if let Some(d) = d {
-                Ok(round_float_ties_to_postive_infinity(arg * d) / d)
+                Ok(round_float_ties_to_positive_infinity(arg * d) / d)
             } else {
                 Err(error::Error::FOAR0001)
             }
@@ -89,7 +92,7 @@ pub(crate) fn round_float<F: num_traits::Float>(arg: F, precision: i32) -> error
             let d = 10i32.pow(precision.unsigned_abs());
             let d = F::from(d);
             if let Some(d) = d {
-                Ok(round_float_ties_to_postive_infinity(arg / d) * d)
+                Ok(round_float_ties_to_positive_infinity(arg / d) * d)
             } else {
                 Err(error::Error::FOAR0001)
             }
@@ -97,7 +100,7 @@ pub(crate) fn round_float<F: num_traits::Float>(arg: F, precision: i32) -> error
     }
 }
 
-fn round_float_ties_to_postive_infinity<F: num_traits::Float>(x: F) -> F {
+fn round_float_ties_to_positive_infinity<F: num_traits::Float>(x: F) -> F {
     let y = x.floor();
     if x == y {
         x
@@ -107,71 +110,105 @@ fn round_float_ties_to_postive_infinity<F: num_traits::Float>(x: F) -> F {
     }
 }
 
-// /// round a float to a given precision
-// pub(crate) fn round_float(arg: f32, precision: i32) -> f32 {
-//     if arg.is_nan() || arg.is_infinite() || arg.is_zero() {
-//         return arg;
-//     }
+// Round half to even
 
-//     match precision.cmp(&0) {
-//         Ordering::Equal => round_f32_ties_to_positive_infinity(arg),
-//         Ordering::Greater => {
-//             let d = 10u32.pow(precision.unsigned_abs()) as f32;
-//             round_f32_ties_to_positive_infinity(arg * d) / d
-//         }
-//         Ordering::Less => {
-//             let d = 10u32.pow(precision.unsigned_abs()) as f32;
-//             round_f32_ties_to_positive_infinity(arg / d) * d
-//         }
-//     }
-// }
+pub(crate) fn round_half_to_even_atomic(
+    arg: atomic::Atomic,
+    precision: i32,
+) -> error::Result<atomic::Atomic> {
+    match arg {
+        atomic::Atomic::Integer(_, i) => round_half_to_even_integer(i, precision),
+        atomic::Atomic::Decimal(d) => Ok(round_half_to_even_decimal(*d, precision).into()),
+        // even though the spec claims we should cast to an infinite
+        // precision decimal, we don't have such a thing, so we
+        // make do with doing the operation directly on f32 and f64
+        atomic::Atomic::Float(OrderedFloat(f)) => {
+            if f.is_nan() || f.is_infinite() || f.is_zero() {
+                return Ok(f.into());
+            }
+            // turn f into a Decimal
+            // we have to retain the excess bits here, as that's what the spec
+            // says
+            let f = Decimal::from_f32_retain(f);
+            if let Some(f) = f {
+                let f = round_half_to_even_decimal(f, precision);
+                // turn f back into a float
+                let f: f32 = f.try_into().map_err(|_| error::Error::FOAR0001)?;
+                Ok(f.into())
+            } else {
+                Err(error::Error::FOCA0001)
+            }
+        }
+        atomic::Atomic::Double(OrderedFloat(d)) => {
+            if d.is_nan() || d.is_infinite() || d.is_zero() {
+                return Ok(d.into());
+            }
+            // turn d into a Decimal
+            // we have to retain the excess bits here, as that's what the spec
+            // says
+            let d = Decimal::from_f64_retain(d);
+            if let Some(d) = d {
+                let d = round_half_to_even_decimal(d, precision);
+                // turn d back into a double
+                let d: f64 = d.try_into().map_err(|_| error::Error::FOAR0001)?;
+                Ok(d.into())
+            } else {
+                Err(error::Error::FOCA0001)
+            }
+        }
+        _ => Err(error::Error::XPTY0004),
+    }
+}
 
-// fn round_f32_ties_to_positive_infinity(x: f32) -> f32 {
-//     let y = x.floor();
-//     if x == y {
-//         x
-//     } else {
-//         let z = (2.0 * x - y).floor();
-//         z.copysign(x)
-//     }
-// }
+fn round_half_to_even_integer(
+    i: std::rc::Rc<IBig>,
+    precision: i32,
+) -> Result<atomic::Atomic, error::Error> {
+    if precision < 0 {
+        Ok(round_half_to_even_integer_negative(
+            i.as_ref().clone(),
+            precision.unsigned_abs(),
+        ))
+    } else {
+        Ok(i.into())
+    }
+}
 
-// pub(crate) fn round_double(arg: f64, precision: i32) -> f64 {
-//     if arg.is_nan() || arg.is_infinite() || arg.is_zero() {
-//         return arg;
-//     }
-//     match precision.cmp(&0) {
-//         Ordering::Equal => round_f64_ties_to_positive_infinity(arg),
-//         Ordering::Greater => {
-//             let d = 10u32.pow(precision.unsigned_abs()) as f64;
-//             round_f64_ties_to_positive_infinity(arg * d) / d
-//         }
-//         Ordering::Less => {
-//             let d = 10u32.pow(precision.unsigned_abs()) as f64;
-//             round_f64_ties_to_positive_infinity(arg / d) * d
-//         }
-//     }
-// }
+fn round_half_to_even_integer_negative(arg: IBig, precision: u32) -> atomic::Atomic {
+    let d = 10u32.pow(precision);
+    let mut divided = arg.clone() / d;
+    let remainder = arg.clone() % d;
+    let halfway = d / 2;
 
-// fn round_f64_ties_to_positive_infinity(x: f64) -> f64 {
-//     let y = x.floor();
-//     if x == y {
-//         x
-//     } else {
-//         let z = (2.0 * x - y).floor();
-//         z.copysign(x)
-//     }
-// }
+    let remainder_abs = remainder.abs();
+    if remainder_abs > halfway.into()
+        || (remainder_abs == halfway.into() && divided.clone() % 2 != 0)
+    {
+        if arg < 0.into() {
+            divided -= 1;
+        } else {
+            divided += 1;
+        }
+    }
 
-#[cfg(test)]
-mod tests {
-    // use super::*;
+    (divided * d).into()
+}
 
-    // #[test]
-    // fn test_double_divide_huge() {
-    //     let a: f64 = 12006.;
-    //     let b: f64 = -1.7976e308;
-    //     let result = round_double(a / b, 0);
-    //     assert_eq!(result, 0.);
-    // }
+// Round half to even (bankers' rounding) for decimal
+// we also support negative precision
+// in case of half-way, we go to the lowest even number
+fn round_half_to_even_decimal(x: Decimal, precision: i32) -> Decimal {
+    match precision.cmp(&0) {
+        Ordering::Equal | Ordering::Greater => {
+            x.round_dp_with_strategy(precision as u32, RoundingStrategy::MidpointNearestEven)
+        }
+        Ordering::Less => {
+            // round-half-to-even(12450.00, -2) = 12400
+            // round-half-to-even(12350.00, -2) = 12400
+            let d = Decimal::new(10i64.pow(precision.unsigned_abs()), 0);
+            let x = x / d;
+            let x = x.round_dp_with_strategy(0, RoundingStrategy::MidpointNearestEven);
+            x * d
+        }
+    }
 }

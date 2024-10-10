@@ -47,5 +47,5 @@ pub(crate) use op_mod::op_mod;
 pub(crate) use op_multiply::op_multiply;
 pub(crate) use op_ne::OpNe;
 pub(crate) use op_subtract::op_subtract;
-pub(crate) use round::round_atomic;
+pub(crate) use round::{round_atomic, round_half_to_even_atomic};
 pub use types::{BinaryType, IntegerType, StringType};
