@@ -1266,6 +1266,16 @@ dependencies = [
 ]
 
 [[package]]
+name = "iri-string"
+version = "0.7.6"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "44bd7eced44cfe2cebc674adb2a7124a754a4b5269288d22e9f39f8fada3562d"
+dependencies = [
+ "memchr",
+ "serde",
+]
+
+[[package]]
 name = "is_terminal_polyfill"
 version = "1.70.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -2822,6 +2832,7 @@ dependencies = [
  "icu",
  "icu_provider_adapters",
  "insta",
+ "iri-string",
  "lexical",
  "next-gen",
  "num",

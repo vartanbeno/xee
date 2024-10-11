@@ -2,6 +2,9 @@ use std::cell::RefCell;
 use std::rc::Rc;
 
 use url::Url;
+
+use iri_string::types::{IriAbsoluteStr, IriReferenceStr};
+
 use xee_xpath_macros::xpath_fn;
 
 use crate::{atomic, function::StaticFunctionDescription, wrap_xpath_fn};
@@ -73,32 +76,30 @@ fn resolve_uri2(relative: Option<&str>, base: &str) -> error::Result<Option<atom
 }
 
 pub(crate) fn resolve_uri(relative: Option<&str>, base: &str) -> error::Result<Option<String>> {
-    Ok(if let Some(relative) = relative {
-        let url = strict_url_parse(relative);
-        if let Ok(_url) = url {
-            // it's an absolute URL, so is returned unchanged
-            Some(relative.to_string())
-        } else {
-            // fn-resolve-uri-3 doesn't allow relative URIs starting with a colon
-            if relative.starts_with(':') {
-                return Err(error::Error::FORG0002);
+    if let Some(relative) = relative {
+        let iri_reference: &IriReferenceStr =
+            relative.try_into().map_err(|_e| error::Error::FORG0002)?;
+        // a shortcut here: if iri_reference is an absolute IRI, we can
+        // just return it.
+        let relative_iri = match iri_reference.to_iri() {
+            Ok(iri) => {
+                return Ok(Some(iri.to_string()));
             }
-            // this URL is not absolute, so is assumed to be relative
-            // now it needs to be combined with the base
-            let base = strict_url_parse(base)?;
-            // fn-resolve-url-26 doesn't allow fragments in the base URI
-            if base.fragment().is_some() {
-                return Err(error::Error::FORG0002);
+            Err(iri) => {
+                // iri is relative, so continue with that
+                iri
             }
-            let joined = base.join(relative).map_err(|_e| error::Error::FORG0002)?;
-            // check whether the joined URL is valid
-            let _ = strict_url_parse(joined.as_str())?;
-            let s: String = joined.into();
-            Some(s)
-        }
+        };
+
+        // note that this means base isn't validated if it's not needed
+        let base: &IriAbsoluteStr = base.try_into().map_err(|_| error::Error::FORG0002)?;
+        // now resolve the iri against base
+        let resolved_iri = relative_iri.resolve_against(base);
+
+        Ok(Some(resolved_iri.to_string()))
     } else {
-        None
-    })
+        Ok(None)
+    }
 }
 
 // a strict URL parse that fails on any syntax violations
