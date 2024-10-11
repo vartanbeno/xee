@@ -1,5 +1,6 @@
 use std::path::Path;
 
+use iri_string::types::IriAbsoluteStr;
 use xee_xpath::{context, Item, Queries, Query};
 use xee_xpath_load::{convert_string, ContextLoadable, Loadable};
 
@@ -73,6 +74,7 @@ impl<E: Environment> TestCase<E> {
         run_context: &mut RunContext,
         catalog: &Catalog<E, R>,
         test_set: &TestSet<E, R>,
+        base_uri: Option<&IriAbsoluteStr>,
     ) -> anyhow::Result<()> {
         let environments = self
             .environments(catalog, test_set)
@@ -80,7 +82,7 @@ impl<E: Environment> TestCase<E> {
         for environment in environments {
             environment
                 .environment_spec()
-                .load_sources(&mut run_context.session)?;
+                .load_sources(&mut run_context.session, base_uri)?;
         }
         Ok(())
     }
@@ -90,6 +92,7 @@ impl<E: Environment> TestCase<E> {
         run_context: &mut RunContext,
         catalog: &Catalog<E, R>,
         test_set: &TestSet<E, R>,
+        base_uri: Option<&IriAbsoluteStr>,
     ) -> anyhow::Result<Option<Item>> {
         let environments = self
             .environments(catalog, test_set)
@@ -97,7 +100,7 @@ impl<E: Environment> TestCase<E> {
         for environment in environments {
             let item = environment
                 .environment_spec()
-                .context_item(&mut run_context.session)?;
+                .context_item(&mut run_context.session, base_uri)?;
             if let Some(item) = item {
                 return Ok(Some(item));
             }
@@ -110,6 +113,7 @@ impl<E: Environment> TestCase<E> {
         run_context: &mut RunContext,
         catalog: &Catalog<E, R>,
         test_set: &TestSet<E, R>,
+        base_uri: Option<&IriAbsoluteStr>,
     ) -> anyhow::Result<context::Variables> {
         let environments = self
             .environments(catalog, test_set)
@@ -119,7 +123,7 @@ impl<E: Environment> TestCase<E> {
             variables.extend(
                 environment
                     .environment_spec()
-                    .variables(&mut run_context.session)?,
+                    .variables(&mut run_context.session, base_uri)?,
             );
         }
         Ok(variables)

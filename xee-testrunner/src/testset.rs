@@ -5,6 +5,7 @@ use std::{
 
 use anyhow::Result;
 
+use iri_string::types::IriAbsoluteString;
 use xee_xpath::{context, Queries, Query};
 use xee_xpath_load::{convert_string, ContextLoadable};
 
@@ -33,6 +34,12 @@ pub(crate) struct TestSet<E: Environment, R: Runnable<E>> {
 impl<E: Environment, R: Runnable<E>> TestSet<E, R> {
     pub(crate) fn file_path(&self, catalog: &Catalog<E, R>) -> &Path {
         self.full_path.strip_prefix(catalog.base_dir()).unwrap()
+    }
+
+    pub(crate) fn file_uri(&self) -> IriAbsoluteString {
+        format!("file://{}", self.full_path.to_string_lossy())
+            .try_into()
+            .unwrap()
     }
 
     pub(crate) fn run(

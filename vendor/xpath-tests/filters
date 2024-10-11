@@ -227,15 +227,11 @@ fn-distinct-values-mixed-args-011
 = fn-doc
 K2-SeqDocFunc-3
 fn-doc-15
-fn-doc-24
 fn-doc-25
 fn-doc-26
 fn-doc-27
 fn-doc-28
 fn-doc-29
-fn-doc-32
-fn-doc-34
-fn-doc-36
 fn-doc-37
 = fn-doc-available
 K2-SeqDocAvailableFunc-1
@@ -1019,7 +1015,6 @@ fn-function-lookup-086
 fn-function-lookup-088
 fn-function-lookup-110
 fn-function-lookup-114
-fn-function-lookup-164
 fn-function-lookup-237
 fn-function-lookup-238
 fn-function-lookup-239
@@ -2665,7 +2660,6 @@ function-literal-086
 function-literal-088
 function-literal-110
 function-literal-114
-function-literal-164
 function-literal-237
 function-literal-238
 function-literal-239

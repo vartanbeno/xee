@@ -1,5 +1,5 @@
 use anyhow::Result;
-use iri_string::types::IriAbsoluteStr;
+use iri_string::types::IriAbsoluteString;
 use std::path::Path;
 
 use xee_xpath::{context, Queries, Query};
@@ -61,17 +61,25 @@ impl Runnable<XPathEnvironmentSpec> for XPathTestCase {
             Err(error) => return TestOutcome::EnvironmentError(error.to_string()),
         };
 
-        if let Some(static_base_uri) = static_base_uri {
+        let static_base_uri = if let Some(static_base_uri) = static_base_uri {
             if static_base_uri != "#UNDEFINED" {
-                let iri: &IriAbsoluteStr = static_base_uri.try_into().unwrap();
-                static_context_builder.static_base_uri(Some(iri));
+                let iri: IriAbsoluteString = static_base_uri.try_into().unwrap();
+                Some(iri)
             } else {
-                static_context_builder.static_base_uri(None);
+                None
             }
-        }
+        } else {
+            // in the absence of an explicit base URI, we use the test file's URI
+            // path of thist file
+            Some(test_set.file_uri())
+        };
+
+        static_context_builder.static_base_uri(static_base_uri.clone());
 
         // we construct the variables immediately, as we need the variable names
-        let variables = self.test_case.variables(run_context, catalog, test_set);
+        let variables =
+            self.test_case
+                .variables(run_context, catalog, test_set, static_base_uri.as_deref());
         let variables = match variables {
             Ok(variables) => variables,
             Err(error) => return TestOutcome::EnvironmentError(error.to_string()),
@@ -110,14 +118,18 @@ impl Runnable<XPathEnvironmentSpec> for XPathTestCase {
 
         // load all the sources
         // this makes the sources available on the appropriate URLs
-        let r = self.test_case.load_sources(run_context, catalog, test_set);
+        let r =
+            self.test_case
+                .load_sources(run_context, catalog, test_set, static_base_uri.as_deref());
         match r {
             Ok(_) => (),
             Err(error) => return TestOutcome::EnvironmentError(error.to_string()),
         }
 
         // the context item is loaded
-        let context_item = self.test_case.context_item(run_context, catalog, test_set);
+        let context_item =
+            self.test_case
+                .context_item(run_context, catalog, test_set, static_base_uri.as_deref());
         let context_item = match context_item {
             Ok(context_item) => context_item,
             Err(error) => return TestOutcome::EnvironmentError(error.to_string()),

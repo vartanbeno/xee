@@ -1,4 +1,5 @@
 use anyhow::Result;
+use iri_string::types::{IriAbsoluteStr, IriReferenceStr};
 use std::fs::File;
 use std::io::{BufReader, Read};
 use std::path::{Path, PathBuf};
@@ -46,12 +47,23 @@ impl Source {
         base_dir: &Path,
         session: &mut Session,
         uri: &Option<String>,
+        base_uri: Option<&IriAbsoluteStr>,
     ) -> Result<xot::Node> {
         match &self.content {
             SourceContent::Path(path) => {
+                // this path resolution code is decidedly ugly
+                // TODO: would be nice if we could get rid of options somewhere
+                // down the line earlier and resolve earlier.
                 let full_path = base_dir.join(path);
                 let uri = if let Some(uri) = uri {
-                    Uri::new(uri)
+                    let uri = if let Some(base_uri) = base_uri {
+                        let uri: &str = uri.as_ref();
+                        let uri: &IriReferenceStr = uri.try_into()?;
+                        uri.resolve_against(base_uri).to_string()
+                    } else {
+                        uri.to_string()
+                    };
+                    Uri::new(&uri)
                 } else {
                     // construct a Uri
                     // TODO: this is not really a proper URI but

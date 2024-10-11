@@ -16,6 +16,7 @@ pub(crate) fn paths(path: &Path) -> Result<PathInfo> {
     for ancestor in path.ancestors() {
         let catalog = ancestor.join("catalog.xml");
         if catalog.exists() {
+            let catalog = std::fs::canonicalize(catalog).unwrap();
             let relative = path.strip_prefix(ancestor).unwrap();
             // filter file sits next to catalog.xml
             let filter_path = ancestor.join("filters");

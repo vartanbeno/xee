@@ -4,6 +4,7 @@ use std::{
 };
 
 use anyhow::Result;
+use iri_string::types::IriAbsoluteStr;
 use xot::xmlname::OwnedName as Name;
 
 use xee_xpath::{context, Documents, Item, Queries, Query, Session};
@@ -101,31 +102,43 @@ impl EnvironmentSpec {
             ..Default::default()
         }
     }
-    pub(crate) fn load_sources(&self, session: &mut Session) -> Result<()> {
+    pub(crate) fn load_sources(
+        &self,
+        session: &mut Session,
+        base_uri: Option<&IriAbsoluteStr>,
+    ) -> Result<()> {
         // load all the sources. since loading a node has a cache,
         // the later context_item load won't clash
         for source in &self.sources {
-            let _ = source.node(&self.base_dir, session, &source.uri)?;
+            let _ = source.node(&self.base_dir, session, &source.uri, base_uri)?;
         }
         Ok(())
     }
 
-    pub(crate) fn context_item(&self, session: &mut Session) -> Result<Option<Item>> {
+    pub(crate) fn context_item(
+        &self,
+        session: &mut Session,
+        base_uri: Option<&IriAbsoluteStr>,
+    ) -> Result<Option<Item>> {
         for source in &self.sources {
             if let SourceRole::Context = source.role {
-                let node = source.node(&self.base_dir, session, &source.uri)?;
+                let node = source.node(&self.base_dir, session, &source.uri, base_uri)?;
                 return Ok(Some(Item::from(node)));
             }
         }
         Ok(None)
     }
 
-    pub(crate) fn variables(&self, session: &mut Session) -> Result<context::Variables> {
+    pub(crate) fn variables(
+        &self,
+        session: &mut Session,
+        base_uri: Option<&IriAbsoluteStr>,
+    ) -> Result<context::Variables> {
         let mut variables = context::Variables::new();
         for source in &self.sources {
             if let SourceRole::Var(name) = &source.role {
                 let name = &name[1..]; // without $
-                let node = source.node(&self.base_dir, session, &source.uri)?;
+                let node = source.node(&self.base_dir, session, &source.uri, base_uri)?;
                 variables.insert(Name::name(name), Item::from(node).into());
             }
         }

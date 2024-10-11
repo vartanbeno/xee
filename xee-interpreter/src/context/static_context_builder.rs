@@ -1,4 +1,4 @@
-use iri_string::types::IriAbsoluteStr;
+use iri_string::types::IriAbsoluteString;
 use xee_name::Namespaces;
 use xot::xmlname::OwnedName;
 
@@ -10,7 +10,7 @@ pub struct StaticContextBuilder<'a> {
     namespaces: Vec<(&'a str, &'a str)>,
     default_element_namespace: &'a str,
     default_function_namespace: &'a str,
-    static_base_uri: Option<&'a IriAbsoluteStr>,
+    static_base_uri: Option<IriAbsoluteString>,
 }
 
 impl<'a> StaticContextBuilder<'a> {
@@ -63,7 +63,7 @@ impl<'a> StaticContextBuilder<'a> {
     }
 
     /// Set the static base URI
-    pub fn static_base_uri(&mut self, static_base_uri: Option<&'a IriAbsoluteStr>) -> &mut Self {
+    pub fn static_base_uri(&mut self, static_base_uri: Option<IriAbsoluteString>) -> &mut Self {
         self.static_base_uri = static_base_uri;
         self
     }
@@ -89,8 +89,7 @@ impl<'a> StaticContextBuilder<'a> {
             default_function_namespace.to_string(),
         );
         let variable_names = self.variable_names.clone().into_iter().collect();
-        let static_base_uri = self.static_base_uri.map(|uri| uri.into());
-        context::StaticContext::new(namespaces, variable_names, static_base_uri)
+        context::StaticContext::new(namespaces, variable_names, self.static_base_uri.clone())
     }
 }
 
