@@ -3,6 +3,8 @@ use std::fmt::Debug;
 use std::rc::Rc;
 use std::sync::LazyLock;
 
+use iri_string::types::IriAbsoluteStr;
+use iri_string::types::IriAbsoluteString;
 use xee_name::{Namespaces, VariableNames};
 use xee_xpath_ast::ast;
 use xee_xpath_ast::XPathParserContext;
@@ -20,7 +22,7 @@ pub struct StaticContext {
     functions: &'static function::StaticFunctions,
     // TODO: try to make collations static
     collations: RefCell<Collations>,
-    static_base_uri: Option<String>,
+    static_base_uri: Option<IriAbsoluteString>,
 }
 
 impl Default for StaticContext {
@@ -44,7 +46,7 @@ impl StaticContext {
     pub(crate) fn new(
         namespaces: Namespaces,
         variable_names: VariableNames,
-        static_base_uri: Option<String>,
+        static_base_uri: Option<IriAbsoluteString>,
     ) -> Self {
         Self {
             parser_context: XPathParserContext::new(namespaces, variable_names),
@@ -74,7 +76,7 @@ impl StaticContext {
         "http://www.w3.org/2005/xpath-functions/collation/codepoint"
     }
 
-    pub fn static_base_uri(&self) -> Option<&str> {
+    pub fn static_base_uri(&self) -> Option<&IriAbsoluteStr> {
         self.static_base_uri.as_deref()
     }
 

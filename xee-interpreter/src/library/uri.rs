@@ -1,7 +1,4 @@
-use std::cell::RefCell;
 use std::rc::Rc;
-
-use url::Url;
 
 use iri_string::types::{IriAbsoluteStr, IriReferenceStr};
 
@@ -62,7 +59,7 @@ fn resolve_uri1(
 ) -> error::Result<Option<atomic::Atomic>> {
     let base = context.static_context().static_base_uri();
     if let Some(base) = base {
-        Ok(resolve_uri(relative, base)?
+        Ok(resolve_uri(relative, base.as_str())?
             .map(|resolved| atomic::Atomic::String(atomic::StringType::AnyURI, Rc::from(resolved))))
     } else {
         Err(error::Error::FONS0005)
@@ -99,23 +96,6 @@ pub(crate) fn resolve_uri(relative: Option<&str>, base: &str) -> error::Result<O
         Ok(Some(resolved_iri.to_string()))
     } else {
         Ok(None)
-    }
-}
-
-// a strict URL parse that fails on any syntax violations
-pub(crate) fn strict_url_parse(url: &str) -> error::Result<Url> {
-    let violations = RefCell::new(Vec::new());
-    let c = |v| {
-        let mut violations = violations.borrow_mut();
-        violations.push(v)
-    };
-    let options = Url::options().syntax_violation_callback(Some(&c));
-
-    let url = options.parse(url).map_err(|_e| error::Error::FORG0002)?;
-    if !violations.borrow().is_empty() {
-        Err(error::Error::FORG0002)
-    } else {
-        Ok(url)
     }
 }
 
