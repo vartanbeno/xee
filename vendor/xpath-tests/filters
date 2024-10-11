@@ -226,44 +226,18 @@ fn-distinct-values-2
 fn-distinct-values-mixed-args-009
 fn-distinct-values-mixed-args-011
 = fn-doc
-K2-SeqDocFunc-1
-K2-SeqDocFunc-10
-K2-SeqDocFunc-11
-K2-SeqDocFunc-14
 K2-SeqDocFunc-3
-K2-SeqDocFunc-4
-K2-SeqDocFunc-5
-K2-SeqDocFunc-6
-K2-SeqDocFunc-7
-K2-SeqDocFunc-8
-K2-SeqDocFunc-9
-fn-doc-1
 fn-doc-15
-fn-doc-16
-fn-doc-17
-fn-doc-18
-fn-doc-19
-fn-doc-20
-fn-doc-21
-fn-doc-22
 fn-doc-24
 fn-doc-25
 fn-doc-26
 fn-doc-27
 fn-doc-28
 fn-doc-29
-fn-doc-3
-fn-doc-30
-fn-doc-31
 fn-doc-32
 fn-doc-34
-fn-doc-35
 fn-doc-36
 fn-doc-37
-fn-doc-4
-fn-doc-5
-fn-doc-6
-fn-doc-7
 = fn-doc-available
 K2-SeqDocAvailableFunc-1
 K2-SeqDocAvailableFunc-1a
@@ -1083,8 +1057,6 @@ fn-function-lookup-357
 fn-function-lookup-358
 fn-function-lookup-359
 fn-function-lookup-360
-fn-function-lookup-365
-fn-function-lookup-366
 fn-function-lookup-367
 fn-function-lookup-368
 fn-function-lookup-369
@@ -1117,8 +1089,6 @@ fn-function-lookup-399
 fn-function-lookup-400
 fn-function-lookup-402
 fn-function-lookup-404
-fn-function-lookup-415
-fn-function-lookup-416
 fn-function-lookup-523
 fn-function-lookup-524
 fn-function-lookup-525
@@ -1809,7 +1779,6 @@ fn-resolve-qname-23
 fn-resolve-qname-24
 fn-resolve-qname-25
 = fn-resolve-uri
-fn-resolve-uri-30
 = fn-reverse
 = fn-root
 = fn-round
@@ -1945,7 +1914,6 @@ fn-sort-23
 fn-sort-spec-6
 = fn-starts-with
 = fn-static-base-uri
-K-StaticBaseURIFunc-3
 fn-static-base-15
 = fn-string
 fn-string-31
@@ -2736,8 +2704,6 @@ function-literal-357
 function-literal-358
 function-literal-359
 function-literal-360
-function-literal-365
-function-literal-366
 function-literal-367
 function-literal-368
 function-literal-369
@@ -2768,8 +2734,6 @@ function-literal-397
 function-literal-398
 function-literal-399
 function-literal-400
-function-literal-415
-function-literal-416
 function-literal-523
 function-literal-524
 function-literal-525
