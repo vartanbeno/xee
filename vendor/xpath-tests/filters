@@ -13,7 +13,6 @@ functx-fn-namespace-uri-from-QName-all
 = app-UseCaseJSON
 UseCaseJSON-001
 UseCaseJSON-007
-UseCaseJSON-008
 UseCaseJSON-014
 = app-UseCaseNLP
 UseCaseNLP-003
@@ -1914,7 +1913,6 @@ fn-sort-23
 fn-sort-spec-6
 = fn-starts-with
 = fn-static-base-uri
-fn-static-base-15
 = fn-string
 fn-string-31
 = fn-string-join

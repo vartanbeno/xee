@@ -51,6 +51,23 @@ impl<E: Environment> TestCase<E> {
         )
     }
 
+    pub(crate) fn static_base_uri<'a, R: Runnable<E>>(
+        &'a self,
+        catalog: &'a Catalog<E, R>,
+        test_set: &'a TestSet<E, R>,
+    ) -> anyhow::Result<Option<&'a str>> {
+        let environments = self
+            .environments(catalog, test_set)
+            .collect::<std::result::Result<Vec<_>, crate::error::Error>>()?;
+        for environment in environments {
+            let static_base_uri = &environment.environment_spec().static_base_uri;
+            if let Some(static_base_uri) = static_base_uri {
+                return Ok(Some(static_base_uri));
+            }
+        }
+        Ok(None)
+    }
+
     pub(crate) fn load_sources<R: Runnable<E>>(
         &self,
         run_context: &mut RunContext,

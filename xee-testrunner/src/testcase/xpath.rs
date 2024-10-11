@@ -1,4 +1,5 @@
 use anyhow::Result;
+use iri_string::types::IriAbsoluteStr;
 use std::path::Path;
 
 use xee_xpath::{context, Queries, Query};
@@ -53,6 +54,21 @@ impl Runnable<XPathEnvironmentSpec> for XPathTestCase {
     ) -> TestOutcome {
         // first construct static context
         let mut static_context_builder = context::StaticContextBuilder::default();
+
+        let static_base_uri = self.test_case.static_base_uri(catalog, test_set);
+        let static_base_uri = match static_base_uri {
+            Ok(static_base_uri) => static_base_uri,
+            Err(error) => return TestOutcome::EnvironmentError(error.to_string()),
+        };
+
+        if let Some(static_base_uri) = static_base_uri {
+            if static_base_uri != "#UNDEFINED" {
+                let iri: &IriAbsoluteStr = static_base_uri.try_into().unwrap();
+                static_context_builder.static_base_uri(Some(iri));
+            } else {
+                static_context_builder.static_base_uri(None);
+            }
+        }
 
         // we construct the variables immediately, as we need the variable names
         let variables = self.test_case.variables(run_context, catalog, test_set);

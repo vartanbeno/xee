@@ -63,6 +63,8 @@ pub(crate) struct EnvironmentSpec {
 
     pub(crate) sources: Vec<Source>,
     pub(crate) params: Vec<Param>,
+    pub(crate) static_base_uri: Option<String>,
+
     // TODO
     pub(crate) collations: Vec<Collation>,
     // TODO: needs to wait until the interpreter has a resource abstraction
@@ -192,16 +194,19 @@ impl ContextLoadable<Path> for EnvironmentSpec {
         // the environment base_dir is the same as the catalog/test set path,
         // but without the file name
         let path = path.parent().unwrap();
+        let static_base_uri_query =
+            queries.option("static-base-uri/@uri/string()", convert_string)?;
         let environment_query = queries.one(".", move |session, item| {
             let sources = sources_query.execute(session, item)?;
             // we need to flatten sources
             let sources = sources.into_iter().flatten().collect::<Vec<Source>>();
             let params = params_query.execute(session, item)?;
-
+            let static_base_uri = static_base_uri_query.execute(session, item)?;
             let environment_spec = EnvironmentSpec {
                 base_dir: path.to_path_buf(),
                 sources,
                 params,
+                static_base_uri,
                 ..Default::default()
             };
 

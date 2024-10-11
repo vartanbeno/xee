@@ -20,12 +20,18 @@ fn doc(context: &DynamicContext, uri: Option<&str>) -> error::Result<Option<xot:
                 }
             }
         };
-        let uri = Uri::new(&iri.as_str());
+        let uri = Uri::new(iri.as_str());
         // first check whether a document is there at all, if so, return it
         let documents = context.documents();
         let documents = documents.borrow();
         let document = documents.get_by_uri(&uri);
-        Ok(document.map(|document| document.root()))
+
+        if let Some(document) = document {
+            Ok(Some(document.root()))
+        } else {
+            // The document doesn't exist, so return an error
+            Err(error::Error::FODC0002)
+        }
     } else {
         Ok(None)
     }

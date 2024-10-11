@@ -2906,6 +2906,7 @@ dependencies = [
  "ibig",
  "indexmap 1.9.3",
  "insta",
+ "iri-string",
  "tempfile",
  "thiserror",
  "xee-name",
