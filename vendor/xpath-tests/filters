@@ -234,21 +234,7 @@ fn-doc-28
 fn-doc-29
 fn-doc-37
 = fn-doc-available
-K2-SeqDocAvailableFunc-1
-K2-SeqDocAvailableFunc-1a
-cbcl-doc-available-001
-cbcl-doc-available-002a
-cbcl-doc-available-003
-cbcl-doc-available-004
-cbcl-doc-available-005
-cbcl-doc-available-006
-fn-doc-available-2
-fn-doc-available-3
-fn-doc-available-4
 fn-doc-available-5
-fn-doc-available-6
-fn-doc-available-7
-fn-doc-available-8
 = fn-document-uri
 K-DocumentURIFunc-2a
 K-DocumentURIFunc-3
@@ -1051,8 +1037,6 @@ fn-function-lookup-357
 fn-function-lookup-358
 fn-function-lookup-359
 fn-function-lookup-360
-fn-function-lookup-367
-fn-function-lookup-368
 fn-function-lookup-369
 fn-function-lookup-371
 fn-function-lookup-373
@@ -2583,7 +2567,6 @@ GenCompEq-2
 = prod-GeneralComp.ne
 = prod-GroupByClause
 = prod-IfExpr
-CondExpr022
 = prod-InlineFunctionExpr
 = prod-InstanceofExpr
 K-SeqExprInstanceOf-52
@@ -2696,8 +2679,6 @@ function-literal-357
 function-literal-358
 function-literal-359
 function-literal-360
-function-literal-367
-function-literal-368
 function-literal-369
 function-literal-371
 function-literal-373
