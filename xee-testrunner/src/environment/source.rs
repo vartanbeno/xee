@@ -41,15 +41,23 @@ pub(crate) enum SourceRole {
 }
 
 impl Source {
-    pub(crate) fn node(&self, base_dir: &Path, session: &mut Session) -> Result<xot::Node> {
+    pub(crate) fn node(
+        &self,
+        base_dir: &Path,
+        session: &mut Session,
+        uri: &Option<String>,
+    ) -> Result<xot::Node> {
         match &self.content {
             SourceContent::Path(path) => {
                 let full_path = base_dir.join(path);
-                // construct a Uri
-                // TODO: this is not really a proper URI but
-                // what matters is that it's unique here
-                let uri = Uri::new(&full_path.to_string_lossy());
-
+                let uri = if let Some(uri) = uri {
+                    Uri::new(uri)
+                } else {
+                    // construct a Uri
+                    // TODO: this is not really a proper URI but
+                    // what matters is that it's unique here
+                    Uri::new(&full_path.to_string_lossy())
+                };
                 // try to get the cached version of the document
                 {
                     // scope borrowed_documents so we drop it afterward
@@ -78,14 +86,19 @@ impl Source {
                     .unwrap())
             }
             SourceContent::String(value) => {
-                // create a new unique uri
-                let uri = Uri::new(&format!(
-                    "string-source-{}",
-                    session.documents().borrow().len()
-                ));
+                let uri = if let Some(uri) = uri {
+                    Uri::new(uri)
+                } else {
+                    // create a new unique uri
+                    Uri::new(&format!(
+                        "string-source-{}",
+                        session.documents().borrow().len()
+                    ))
+                };
                 // we don't try to get a cached version of the document, as
                 // that would be different each time. we just add it to documents
                 // and return it
+                // TODO: is this right?
                 let documents = session.documents().clone();
                 let handle = documents
                     .borrow_mut()
@@ -126,8 +139,7 @@ impl Source {
                         metadata: metadata.clone(),
                         role: SourceRole::Context,
                         content: content.clone(),
-                        // TODO
-                        uri: None,
+                        uri,
                         validation: None,
                     })
                 } else {
@@ -135,20 +147,18 @@ impl Source {
                         metadata: metadata.clone(),
                         role: SourceRole::Var(role),
                         content: content.clone(),
-                        // TODO
-                        uri: None,
+
+                        uri,
                         validation: None,
                     });
                 }
-            };
-
-            if let Some(uri) = uri {
+            } else if let Some(uri) = uri {
                 sources.push(Source {
                     metadata,
-                    role: SourceRole::Doc(uri),
+                    role: SourceRole::Doc(uri.clone()),
                     content,
+                    uri: Some(uri),
                     // TODO
-                    uri: None,
                     validation: None,
                 });
             }

@@ -92,6 +92,14 @@ impl Runnable<XPathEnvironmentSpec> for XPathTestCase {
             }
         };
 
+        // load all the sources
+        // this makes the sources available on the appropriate URLs
+        let r = self.test_case.load_sources(run_context, catalog, test_set);
+        match r {
+            Ok(_) => (),
+            Err(error) => return TestOutcome::EnvironmentError(error.to_string()),
+        }
+
         // the context item is loaded
         let context_item = self.test_case.context_item(run_context, catalog, test_set);
         let context_item = match context_item {

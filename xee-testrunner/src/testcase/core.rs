@@ -51,6 +51,23 @@ impl<E: Environment> TestCase<E> {
         )
     }
 
+    pub(crate) fn load_sources<R: Runnable<E>>(
+        &self,
+        run_context: &mut RunContext,
+        catalog: &Catalog<E, R>,
+        test_set: &TestSet<E, R>,
+    ) -> anyhow::Result<()> {
+        let environments = self
+            .environments(catalog, test_set)
+            .collect::<std::result::Result<Vec<_>, crate::error::Error>>()?;
+        for environment in environments {
+            environment
+                .environment_spec()
+                .load_sources(&mut run_context.session)?;
+        }
+        Ok(())
+    }
+
     pub(crate) fn context_item<R: Runnable<E>>(
         &self,
         run_context: &mut RunContext,

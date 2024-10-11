@@ -102,7 +102,7 @@ pub(crate) fn resolve_uri(relative: Option<&str>, base: &str) -> error::Result<O
 }
 
 // a strict URL parse that fails on any syntax violations
-fn strict_url_parse(url: &str) -> error::Result<Url> {
+pub(crate) fn strict_url_parse(url: &str) -> error::Result<Url> {
     let violations = RefCell::new(Vec::new());
     let c = |v| {
         let mut violations = violations.borrow_mut();

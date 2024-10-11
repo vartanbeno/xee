@@ -99,11 +99,19 @@ impl EnvironmentSpec {
             ..Default::default()
         }
     }
+    pub(crate) fn load_sources(&self, session: &mut Session) -> Result<()> {
+        // load all the sources. since loading a node has a cache,
+        // the later context_item load won't clash
+        for source in &self.sources {
+            let _ = source.node(&self.base_dir, session, &source.uri)?;
+        }
+        Ok(())
+    }
 
     pub(crate) fn context_item(&self, session: &mut Session) -> Result<Option<Item>> {
         for source in &self.sources {
             if let SourceRole::Context = source.role {
-                let node = source.node(&self.base_dir, session)?;
+                let node = source.node(&self.base_dir, session, &source.uri)?;
                 return Ok(Some(Item::from(node)));
             }
         }
@@ -115,7 +123,7 @@ impl EnvironmentSpec {
         for source in &self.sources {
             if let SourceRole::Var(name) = &source.role {
                 let name = &name[1..]; // without $
-                let node = source.node(&self.base_dir, session)?;
+                let node = source.node(&self.base_dir, session, &source.uri)?;
                 variables.insert(Name::name(name), Item::from(node).into());
             }
         }

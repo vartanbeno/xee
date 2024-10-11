@@ -5,6 +5,8 @@ use crate::{
     wrap_xpath_fn, xml::Uri,
 };
 
+use super::uri::strict_url_parse;
+
 #[xpath_fn("fn:doc($uri as xs:string?) as document-node()?")]
 fn doc(context: &DynamicContext, uri: Option<&str>) -> error::Result<Option<xot::Node>> {
     Ok(if let Some(uri) = uri {
@@ -12,8 +14,11 @@ fn doc(context: &DynamicContext, uri: Option<&str>) -> error::Result<Option<xot:
             // we can unwrap here, as we know we passed in a Some
             resolve_uri(Some(uri), base)?.unwrap()
         } else {
+            // TODO: should recognize this is a relative URI and
+            // if so, this is a FODC002 error as no static base uri is set
             uri.to_string()
         };
+        let _ = strict_url_parse(&uri).map_err(|_| error::Error::FODC0002)?;
         let uri = Uri::new(&uri);
 
         // first check whether a document is there at all, if so, return it
