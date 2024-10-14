@@ -12,6 +12,7 @@ members = [
   "xee-xpath-macros",
   "xee-xpath-compiler",
   "xee-xpath-load",
+  "xee-php",
   "xee-xslt-ast",
   "xee-testrunner",
   "xee-xslt-compiler",

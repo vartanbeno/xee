@@ -1,0 +1,25 @@
+[package]
+name = "xee-php"
+version = "0.1.0"
+edition = "2021"
+authors = ["Martijn Faassen <faassen@startifact.com>"]
+keywords = ["xml", "xpath", "php"]
+license = "Apache-2.0"
+description = "XPath 3.1 library API for PHP"
+repository = "http://github.com/Paligo/xee"
+readme = "README.md"
+documentation = "https://docs.rs/xee-xpath"
+homepage = "https://github.com/Paligo/xee"
+
+[lib]
+crate-type = ["cdylib"]
+
+[dependencies]
+xot = { workspace = true }
+xee-xpath = { path = "../xee-xpath" }
+ext-php-rs = "*"
+[dev-dependencies]
+insta = { version = "1.29.0", features = ["yaml", "glob"] }
+
+[profile.release]
+strip = "debuginfo"
