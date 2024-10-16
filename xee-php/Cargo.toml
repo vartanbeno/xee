@@ -17,7 +17,9 @@ crate-type = ["cdylib"]
 [dependencies]
 xot = { workspace = true }
 xee-xpath = { path = "../xee-xpath" }
-ext-php-rs = "*"
+ext-php-rs = { git = "https://github.com/davidcole1340/ext-php-rs.git" }
+ibig.workspace = true
+
 [dev-dependencies]
 insta = { version = "1.29.0", features = ["yaml", "glob"] }
 

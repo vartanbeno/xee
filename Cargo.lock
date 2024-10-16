@@ -762,8 +762,7 @@ dependencies = [
 [[package]]
 name = "ext-php-rs"
 version = "0.12.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "68b924b4ea1e12ad02165be07146ec3b751a65b5323b50eb113bf3b413260c85"
+source = "git+https://github.com/davidcole1340/ext-php-rs.git#ab5289f0de017b10dbf42158aea9e302bb621906"
 dependencies = [
  "anyhow",
  "bindgen",
@@ -782,8 +781,7 @@ dependencies = [
 [[package]]
 name = "ext-php-rs-derive"
 version = "0.10.1"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "6c10abd08571f7d63177a21de9a291a28c21b0d65df8ffb3e9cb1fc4b0722d69"
+source = "git+https://github.com/davidcole1340/ext-php-rs.git#ab5289f0de017b10dbf42158aea9e302bb621906"
 dependencies = [
  "anyhow",
  "darling",
@@ -3600,6 +3598,7 @@ name = "xee-php"
 version = "0.1.0"
 dependencies = [
  "ext-php-rs",
+ "ibig",
  "insta",
  "xee-xpath",
  "xot",

@@ -54,6 +54,7 @@ impl Value {
             Value::Absent => Err(error::Error::XPDY0002),
         }
     }
+
     pub(crate) fn items(&self) -> error::Result<ValueIter> {
         if matches!(self, Value::Absent) {
             return Err(error::Error::XPDY0002);

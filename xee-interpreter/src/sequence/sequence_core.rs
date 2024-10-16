@@ -47,6 +47,13 @@ impl Sequence {
         self.stack_value.is_empty_sequence()
     }
 
+    /// Get an item in the sequence
+    pub fn get(&self, index: usize) -> error::Result<Item> {
+        // TODO: we should have a .get which returns are reference instead of
+        // relying on clone here
+        self.stack_value.clone().index(index)
+    }
+
     /// Get the length of the sequence
     pub fn len(&self) -> usize {
         match &self.stack_value {
@@ -329,6 +336,12 @@ impl Sequence {
             .map(|(_, item)| item)
             .collect::<Vec<_>>();
         Ok(items.into())
+    }
+}
+
+impl Default for Sequence {
+    fn default() -> Self {
+        Self::empty()
     }
 }
 
