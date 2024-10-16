@@ -11,12 +11,12 @@ use ext_php_rs::{
 
 use xee_xpath::Query as XPathQuery;
 
+use crate::atomic::atomic_to_zval;
+
 #[php_class(name = "Xee\\Documents")]
 pub struct Documents {
     documents: Arc<RefCell<xee_xpath::Documents>>,
 }
-impl Item {}
-
 #[php_class(name = "Xee\\DocumentHandle")]
 pub struct DocumentHandle {
     handle: xee_xpath::DocumentHandle,
@@ -125,11 +125,14 @@ impl Sequence {
         }
     }
 
-    pub fn offset_get(&self, offset: &'_ Zval) -> PhpResult<ZBox<ZendClassObject<Item>>> {
+    pub fn offset_get(&self, offset: &'_ Zval) -> PhpResult<Zval> {
         if let Some(offset) = offset.extract::<usize>() {
-            Ok(ZendClassObject::new(Item {
-                item: self.sequence.get(offset).map_err(|e| e.to_string())?,
-            }))
+            let item = self.sequence.get(offset).map_err(|e| e.to_string())?;
+            match item {
+                xee_xpath::Item::Atomic(atomic) => Ok(atomic_to_zval(&atomic, false)?),
+                xee_xpath::Item::Node(_) => todo!(),
+                xee_xpath::Item::Function(_) => todo!(),
+            }
         } else {
             Err("Invalid offset".into())
         }
@@ -142,16 +145,6 @@ impl Sequence {
     pub fn offset_unset(&mut self, _offset: &'_ Zval) -> PhpResult {
         Err("Setting values for Sequence is not supported".into())
     }
-}
-
-#[php_class(name = "Xee\\Item")]
-pub struct Item {
-    item: xee_xpath::Item,
-}
-
-#[php_impl]
-impl Item {
-    // nothing
 }
 
 #[php_module]

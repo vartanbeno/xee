@@ -1,25 +1,25 @@
 // transform atomic nodes into PHP values
-use ext_php_rs::{convert::IntoZval, types::ZendLong, types::Zval};
+use ext_php_rs::{convert::IntoZval, error::Result, types::ZendLong, types::Zval};
 
 use xee_xpath::Atomic;
 
-fn atomic_to_php(atomic: &Atomic, persistent: bool) -> Zval {
+pub(crate) fn atomic_to_zval(atomic: &Atomic, persistent: bool) -> Result<Zval> {
     match atomic {
-        Atomic::Untyped(s) => s.as_ref().into_zval(persistent).unwrap(),
-        Atomic::String(_, s) => s.as_ref().into_zval(persistent).unwrap(),
-        Atomic::Float(f) => f.into_zval(persistent).unwrap(),
-        Atomic::Double(d) => d.into_zval(persistent).unwrap(),
+        Atomic::Untyped(s) => s.as_ref().into_zval(persistent),
+        Atomic::String(_, s) => s.as_ref().into_zval(persistent),
+        Atomic::Float(f) => f.into_zval(persistent),
+        Atomic::Double(d) => d.into_zval(persistent),
         // represent decimal as a PHP string
-        Atomic::Decimal(d) => d.to_string().into_zval(persistent).unwrap(),
+        Atomic::Decimal(d) => d.to_string().into_zval(persistent),
         Atomic::Integer(_, i) => {
             // try to turn it into a ZendLong first
             let l: Result<ZendLong, _> = i.as_ref().try_into();
             match l {
-                Ok(l) => l.into_zval(persistent).unwrap(),
+                Ok(l) => l.into_zval(persistent),
                 // the ibig is too big
                 Err(_) => {
                     // we can't fit it in an integer, so make it a float
-                    i.to_f64().into_zval(persistent).unwrap()
+                    i.to_f64().into_zval(persistent)
                 }
             }
         }
@@ -63,7 +63,7 @@ fn atomic_to_php(atomic: &Atomic, persistent: bool) -> Zval {
         Atomic::GMonth(m) => {
             todo!()
         }
-        Atomic::Boolean(b) => b.into_zval(persistent).unwrap(),
+        Atomic::Boolean(b) => b.into_zval(persistent),
         Atomic::Binary(_, b) => {
             // TODO: ext_php_rs doesn't have a way to turn a u8 slice into a
             // PHP string, so we need to implement that

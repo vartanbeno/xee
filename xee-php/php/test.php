@@ -1,7 +1,7 @@
 <?php
 
 $queries = new Xee\Queries();
-$q = $queries->sequence("/root/a/string()");
+$q = $queries->sequence("/root/a/number()");
 
 
 $documents = new Xee\Documents();
@@ -13,6 +13,6 @@ $session = $documents->session();
 
 $seq = $q->execute($session, $doc);
 
-
-var_dump(count($seq));
+$item = $seq[1];
+var_dump($item);
 // var_dump($seq[0]);
