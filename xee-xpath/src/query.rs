@@ -1,4 +1,4 @@
-//! Queries you can execute against a session.
+//! Queries you can execute against a document.
 
 use std::rc::Rc;
 
@@ -8,7 +8,7 @@ use xee_interpreter::interpreter::Program;
 use xee_interpreter::occurrence::Occurrence;
 use xee_interpreter::sequence::{Item, Sequence};
 
-use crate::{Itemable, Session};
+use crate::{Documents, Itemable};
 
 // import only for documentation purposes
 #[cfg(doc)]
@@ -28,41 +28,34 @@ pub trait Query<V> {
         self.program().static_context()
     }
 
-    // /// Get the signature for a given function.
-    // fn signature(&self, session: &Session, function: &function::Function) -> &function::Signature {
-    //     let context = self.dynamic_context_builder(session).build();
-    //     let runnable = self.program().runnable(&context);
-    //     runnable.function_info(function).signature()
-    // }
-
     /// Execute the query against a dynamic context
     ///
     /// You can construct one using a [`DynamicContextBuilder`]
     fn execute_with_context(
         &self,
-        session: &mut Session,
+        documents: &mut Documents,
         context: &context::DynamicContext,
     ) -> Result<V>;
 
     /// Get a dynamic context builder for the query, configured with the
-    /// query's static context and the session's documents.
+    /// query's static context and the document's documents.
     ///
     /// You can use this if you want to construct your own dynamic context
     /// to use with `execute_with_context`.
-    fn dynamic_context_builder(&self, session: &Session) -> context::DynamicContextBuilder {
+    fn dynamic_context_builder(&self, documents: &Documents) -> context::DynamicContextBuilder {
         let mut context = self.program().dynamic_context_builder();
-        context.documents(session.documents.clone());
+        context.documents(documents.documents().clone());
         context
     }
 
     /// Map the the result of the query to a different type.
     ///
     /// You need to provide a function that takes the result of the query,
-    /// the session, and the item, and returns a new result.
+    /// the document, and the item, and returns a new result.
     fn map<T, F>(self, f: F) -> MapQuery<V, T, Self, F>
     where
         Self: Sized,
-        F: Fn(V, &mut Session, &context::DynamicContext) -> Result<T> + Clone,
+        F: Fn(V, &mut Documents, &context::DynamicContext) -> Result<T> + Clone,
     {
         MapQuery {
             query: self,
@@ -73,9 +66,9 @@ pub trait Query<V> {
     }
 
     /// Excute the query against an itemable
-    fn execute(&self, session: &mut Session, item: impl Itemable) -> Result<V> {
-        let context_item = item.to_item(session)?;
-        self.execute_build_context(session, move |builder| {
+    fn execute(&self, documents: &mut Documents, item: impl Itemable) -> Result<V> {
+        let context_item = item.to_item(documents)?;
+        self.execute_build_context(documents, move |builder| {
             builder.context_item(context_item);
         })
     }
@@ -86,13 +79,13 @@ pub trait Query<V> {
     /// settings (such as variables), and then execute a query against it.
     fn execute_build_context(
         &self,
-        session: &mut Session,
+        documents: &mut Documents,
         build: impl FnOnce(&mut context::DynamicContextBuilder),
     ) -> Result<V> {
-        let mut dynamic_context_builder = self.dynamic_context_builder(session);
+        let mut dynamic_context_builder = self.dynamic_context_builder(documents);
         build(&mut dynamic_context_builder);
         let context = dynamic_context_builder.build();
-        self.execute_with_context(session, &context)
+        self.execute_with_context(documents, &context)
     }
 }
 
@@ -114,19 +107,19 @@ pub trait RecurseQuery<C, V> {
     /// allows you to use a convert function recursively.
     fn execute_with_context(
         &self,
-        session: &mut Session,
+        document: &mut Documents,
         context: &context::DynamicContext,
         recurse: &Recurse<V>,
     ) -> Result<C>;
 
     /// Get a dynamic context builder for the query, configured with the
-    /// query's static context and the session's documents.
+    /// query's static context and the document's documents.
     ///
     /// You can use this if you want to construct your own dynamic context
     /// to use with `execute_with_context`.
-    fn dynamic_context_builder(&self, session: &Session) -> context::DynamicContextBuilder {
+    fn dynamic_context_builder(&self, document: &Documents) -> context::DynamicContextBuilder {
         let mut context = self.program().dynamic_context_builder();
-        context.documents(session.documents.clone());
+        context.documents(document.documents.clone());
         context
     }
 
@@ -134,8 +127,8 @@ pub trait RecurseQuery<C, V> {
     ///
     /// To do the conversion pass in a [`Recurse`] object. This
     /// allows you to use a convert function recursively.
-    fn execute(&self, session: &mut Session, item: &Item, recurse: &Recurse<V>) -> Result<C> {
-        self.execute_build_context(session, recurse, |builder| {
+    fn execute(&self, document: &mut Documents, item: &Item, recurse: &Recurse<V>) -> Result<C> {
+        self.execute_build_context(document, recurse, |builder| {
             builder.context_item(item.clone());
         })
     }
@@ -146,14 +139,14 @@ pub trait RecurseQuery<C, V> {
     /// settings (such as variables), and then execute a query against it.
     fn execute_build_context(
         &self,
-        session: &mut Session,
+        document: &mut Documents,
         recurse: &Recurse<V>,
         build: impl FnOnce(&mut context::DynamicContextBuilder),
     ) -> Result<C> {
-        let mut dynamic_context_builder = self.dynamic_context_builder(session);
+        let mut dynamic_context_builder = self.dynamic_context_builder(document);
         build(&mut dynamic_context_builder);
         let context = dynamic_context_builder.build();
-        self.execute_with_context(session, &context, recurse)
+        self.execute_with_context(document, &context, recurse)
     }
 }
 
@@ -161,9 +154,9 @@ pub trait RecurseQuery<C, V> {
 /// an item that results from an XPath query into something useful
 /// in Rust.
 ///
-/// Given a [`Session`] and an [`Item`], convert the item to a value of type `V`
-pub trait Convert<V>: Fn(&mut Session, &Item) -> Result<V> {}
-impl<V, T> Convert<V> for T where T: Fn(&mut Session, &Item) -> Result<V> {}
+/// Given a [`Documents`] and an [`Item`], convert the item to a value of type `V`
+pub trait Convert<V>: Fn(&mut Documents, &Item) -> Result<V> {}
+impl<V, T> Convert<V> for T where T: Fn(&mut Documents, &Item) -> Result<V> {}
 
 // Recursion was very hard to get right. The trick is to use an intermediate
 // struct.
@@ -172,7 +165,7 @@ impl<V, T> Convert<V> for T where T: Fn(&mut Session, &Item) -> Result<V> {}
 // The dyn and reference are unavoidable, as closures are not allowed
 // to refer to themselves:
 // https://github.com/rust-lang/rust/issues/46062
-type RecurseFn<'s, V> = &'s dyn Fn(&mut Session, &Item, &Recurse<'s, V>) -> Result<V>;
+type RecurseFn<'s, V> = &'s dyn Fn(&mut Documents, &Item, &Recurse<'s, V>) -> Result<V>;
 
 /// An object that can be used to use a conversion function recursively.
 pub struct Recurse<'s, V> {
@@ -186,8 +179,8 @@ impl<'s, V> Recurse<'s, V> {
     }
 
     /// Execute the conversion function against an item.
-    pub fn execute(&self, session: &mut Session, item: &Item) -> Result<V> {
-        (self.f)(session, item, self)
+    pub fn execute(&self, document: &mut Documents, item: &Item) -> Result<V> {
+        (self.f)(document, item, self)
     }
 }
 
@@ -218,13 +211,13 @@ where
     /// Execute the query against a context
     pub fn execute_with_context(
         &self,
-        session: &mut Session,
+        document: &mut Documents,
         context: &context::DynamicContext,
     ) -> Result<V> {
-        let sequence = self.program.runnable(context).many(session.xot_mut())?;
+        let sequence = self.program.runnable(context).many(document.xot_mut())?;
         let mut items = sequence.items()?;
         let item = items.one()?;
-        (self.convert)(session, &item)
+        (self.convert)(document, &item)
     }
 }
 
@@ -238,10 +231,10 @@ where
 
     fn execute_with_context(
         &self,
-        session: &mut Session,
+        document: &mut Documents,
         context: &context::DynamicContext,
     ) -> Result<V> {
-        OneQuery::execute_with_context(self, session, context)
+        OneQuery::execute_with_context(self, document, context)
     }
 }
 
@@ -258,14 +251,14 @@ impl OneRecurseQuery {
     /// allows you to use a convert function recursively.
     pub fn execute_with_context<V>(
         &self,
-        session: &mut Session,
+        document: &mut Documents,
         context: &context::DynamicContext,
         recurse: &Recurse<V>,
     ) -> Result<V> {
-        let sequence = self.program.runnable(context).many(session.xot_mut())?;
+        let sequence = self.program.runnable(context).many(document.xot_mut())?;
         let mut items = sequence.items()?;
         let item = items.one()?;
-        recurse.execute(session, &item)
+        recurse.execute(document, &item)
     }
 }
 
@@ -276,11 +269,11 @@ impl<V> RecurseQuery<V, V> for OneRecurseQuery {
 
     fn execute_with_context(
         &self,
-        session: &mut Session,
+        document: &mut Documents,
         context: &context::DynamicContext,
         recurse: &Recurse<V>,
     ) -> Result<V> {
-        OneRecurseQuery::execute_with_context(self, session, context, recurse)
+        OneRecurseQuery::execute_with_context(self, document, context, recurse)
     }
 }
 
@@ -313,13 +306,13 @@ where
     /// dynamic context.
     pub fn execute_with_context(
         &self,
-        session: &mut Session,
+        document: &mut Documents,
         context: &context::DynamicContext,
     ) -> Result<Option<V>> {
-        let sequence = self.program.runnable(context).many(session.xot_mut())?;
+        let sequence = self.program.runnable(context).many(document.xot_mut())?;
         let mut items = sequence.items()?;
         let item = items.option()?;
-        item.map(|item| (self.convert)(session, &item)).transpose()
+        item.map(|item| (self.convert)(document, &item)).transpose()
     }
 }
 
@@ -333,10 +326,10 @@ where
 
     fn execute_with_context(
         &self,
-        session: &mut Session,
+        document: &mut Documents,
         context: &context::DynamicContext,
     ) -> Result<Option<V>> {
-        Self::execute_with_context(self, session, context)
+        Self::execute_with_context(self, document, context)
     }
 }
 
@@ -350,14 +343,15 @@ impl OptionRecurseQuery {
     /// Execute the recursive query against an explicit dynamic context.
     pub fn execute_with_context<V>(
         &self,
-        session: &mut Session,
+        document: &mut Documents,
         context: &context::DynamicContext,
         recurse: &Recurse<V>,
     ) -> Result<Option<V>> {
-        let sequence = self.program.runnable(context).many(session.xot_mut())?;
+        let sequence = self.program.runnable(context).many(document.xot_mut())?;
         let mut items = sequence.items()?;
         let item = items.option()?;
-        item.map(|item| recurse.execute(session, &item)).transpose()
+        item.map(|item| recurse.execute(document, &item))
+            .transpose()
     }
 }
 
@@ -368,11 +362,11 @@ impl<V> RecurseQuery<Option<V>, V> for OptionRecurseQuery {
 
     fn execute_with_context(
         &self,
-        session: &mut Session,
+        document: &mut Documents,
         context: &context::DynamicContext,
         recurse: &Recurse<V>,
     ) -> Result<Option<V>> {
-        OptionRecurseQuery::execute_with_context(self, session, context, recurse)
+        OptionRecurseQuery::execute_with_context(self, document, context, recurse)
     }
 }
 
@@ -402,13 +396,13 @@ where
 {
     fn execute_with_context(
         &self,
-        session: &mut Session,
+        document: &mut Documents,
         context: &context::DynamicContext,
     ) -> Result<Vec<V>> {
-        let sequence = self.program.runnable(context).many(session.xot_mut())?;
+        let sequence = self.program.runnable(context).many(document.xot_mut())?;
         let items = sequence
             .items()?
-            .map(|item| (self.convert)(session, &item))
+            .map(|item| (self.convert)(document, &item))
             .collect::<Result<Vec<V>>>()?;
         Ok(items)
     }
@@ -424,10 +418,10 @@ where
 
     fn execute_with_context(
         &self,
-        session: &mut Session,
+        document: &mut Documents,
         context: &context::DynamicContext,
     ) -> Result<Vec<V>> {
-        Self::execute_with_context(self, session, context)
+        Self::execute_with_context(self, document, context)
     }
 }
 
@@ -444,14 +438,14 @@ impl ManyRecurseQuery {
     /// allows you to use a convert function recursively.
     pub fn execute_with_context<V>(
         &self,
-        session: &mut Session,
+        document: &mut Documents,
         context: &context::DynamicContext,
         recurse: &Recurse<V>,
     ) -> Result<Vec<V>> {
-        let sequence = self.program.runnable(context).many(session.xot_mut())?;
+        let sequence = self.program.runnable(context).many(document.xot_mut())?;
         let items = sequence
             .items()?
-            .map(|item| recurse.execute(session, &item))
+            .map(|item| recurse.execute(document, &item))
             .collect::<Result<Vec<V>>>()?;
         Ok(items)
     }
@@ -464,11 +458,11 @@ impl<V> RecurseQuery<Vec<V>, V> for ManyRecurseQuery {
 
     fn execute_with_context(
         &self,
-        session: &mut Session,
+        document: &mut Documents,
         context: &context::DynamicContext,
         recurse: &Recurse<V>,
     ) -> Result<Vec<V>> {
-        ManyRecurseQuery::execute_with_context(self, session, context, recurse)
+        ManyRecurseQuery::execute_with_context(self, document, context, recurse)
     }
 }
 
@@ -490,10 +484,10 @@ impl SequenceQuery {
     /// Execute the query against an itemable with an explict dynamic context.
     pub fn execute_with_context(
         &self,
-        session: &mut Session,
+        document: &mut Documents,
         context: &context::DynamicContext,
     ) -> Result<Sequence> {
-        self.program.runnable(context).many(session.xot_mut())
+        self.program.runnable(context).many(document.xot_mut())
     }
 }
 
@@ -504,10 +498,10 @@ impl Query<Sequence> for SequenceQuery {
 
     fn execute_with_context(
         &self,
-        session: &mut Session,
+        document: &mut Documents,
         context: &context::DynamicContext,
     ) -> Result<Sequence> {
-        Self::execute_with_context(self, session, context)
+        Self::execute_with_context(self, document, context)
     }
 }
 
@@ -515,7 +509,7 @@ impl Query<Sequence> for SequenceQuery {
 #[derive(Debug, Clone)]
 pub struct MapQuery<V, T, Q: Query<V> + Sized, F>
 where
-    F: Fn(V, &mut Session, &context::DynamicContext) -> Result<T> + Clone,
+    F: Fn(V, &mut Documents, &context::DynamicContext) -> Result<T> + Clone,
 {
     query: Q,
     f: F,
@@ -526,31 +520,31 @@ where
 impl<V, T, Q, F> MapQuery<V, T, Q, F>
 where
     Q: Query<V> + Sized,
-    F: Fn(V, &mut Session, &context::DynamicContext) -> Result<T> + Clone,
+    F: Fn(V, &mut Documents, &context::DynamicContext) -> Result<T> + Clone,
 {
     /// Execute the query against an item.
-    pub fn execute(&self, session: &mut Session, item: &Item) -> Result<T> {
+    pub fn execute(&self, document: &mut Documents, item: &Item) -> Result<T> {
         let mut dynamic_context_builder = self.query.program().dynamic_context_builder();
         dynamic_context_builder.context_item(item.clone());
         let context = dynamic_context_builder.build();
-        self.execute_with_context(session, &context)
+        self.execute_with_context(document, &context)
     }
 
     /// Execute the query against a dynamic context.
     pub fn execute_with_context(
         &self,
-        session: &mut Session,
+        document: &mut Documents,
         context: &context::DynamicContext,
     ) -> Result<T> {
-        let v = self.query.execute_with_context(session, context)?;
+        let v = self.query.execute_with_context(document, context)?;
         // TODO: this isn't right. need to rewrite in terms of dynamic context too?
-        (self.f)(v, session, context)
+        (self.f)(v, document, context)
     }
 }
 
 impl<V, T, Q: Query<V> + Sized, F> Query<T> for MapQuery<V, T, Q, F>
 where
-    F: Fn(V, &mut Session, &context::DynamicContext) -> Result<T> + Clone,
+    F: Fn(V, &mut Documents, &context::DynamicContext) -> Result<T> + Clone,
 {
     fn program(&self) -> &Program {
         self.query.program()
@@ -558,10 +552,10 @@ where
 
     fn execute_with_context(
         &self,
-        session: &mut Session,
+        document: &mut Documents,
         context: &context::DynamicContext,
     ) -> Result<T> {
-        let v = self.query.execute_with_context(session, context)?;
-        (self.f)(v, session, context)
+        let v = self.query.execute_with_context(document, context)?;
+        (self.f)(v, document, context)
     }
 }

@@ -7,7 +7,7 @@ use anyhow::Result;
 use iri_string::types::IriAbsoluteStr;
 use xot::xmlname::OwnedName as Name;
 
-use xee_xpath::{context, Documents, Item, Queries, Query, Session};
+use xee_xpath::{context, Documents, Item, Queries, Query};
 use xee_xpath_load::{convert_string, ContextLoadable};
 
 use crate::ns::XPATH_TEST_NS;
@@ -104,25 +104,25 @@ impl EnvironmentSpec {
     }
     pub(crate) fn load_sources(
         &self,
-        session: &mut Session,
+        documents: &mut Documents,
         base_uri: Option<&IriAbsoluteStr>,
     ) -> Result<()> {
         // load all the sources. since loading a node has a cache,
         // the later context_item load won't clash
         for source in &self.sources {
-            let _ = source.node(&self.base_dir, session, &source.uri, base_uri)?;
+            let _ = source.node(&self.base_dir, documents, &source.uri, base_uri)?;
         }
         Ok(())
     }
 
     pub(crate) fn context_item(
         &self,
-        session: &mut Session,
+        documents: &mut Documents,
         base_uri: Option<&IriAbsoluteStr>,
     ) -> Result<Option<Item>> {
         for source in &self.sources {
             if let SourceRole::Context = source.role {
-                let node = source.node(&self.base_dir, session, &source.uri, base_uri)?;
+                let node = source.node(&self.base_dir, documents, &source.uri, base_uri)?;
                 return Ok(Some(Item::from(node)));
             }
         }
@@ -131,19 +131,18 @@ impl EnvironmentSpec {
 
     pub(crate) fn variables(
         &self,
-        session: &mut Session,
+        documents: &mut Documents,
         base_uri: Option<&IriAbsoluteStr>,
     ) -> Result<context::Variables> {
         let mut variables = context::Variables::new();
         for source in &self.sources {
             if let SourceRole::Var(name) = &source.role {
                 let name = &name[1..]; // without $
-                let node = source.node(&self.base_dir, session, &source.uri, base_uri)?;
+                let node = source.node(&self.base_dir, documents, &source.uri, base_uri)?;
                 variables.insert(Name::name(name), Item::from(node).into());
             }
         }
         let mut documents = Documents::new();
-        let mut session = documents.session();
         for param in &self.params {
             let select = (param.select.as_ref()).expect("param: missing select not supported");
             let queries = Queries::default();
@@ -156,9 +155,9 @@ impl EnvironmentSpec {
                     continue;
                 }
             };
-            let dynamic_context_builder = query.dynamic_context_builder(&session);
+            let dynamic_context_builder = query.dynamic_context_builder(&documents);
             let dynamic_context = dynamic_context_builder.build();
-            let result = query.execute_with_context(&mut session, &dynamic_context)?;
+            let result = query.execute_with_context(&mut documents, &dynamic_context)?;
             variables.insert(param.name.clone(), result);
         }
         Ok(variables)
@@ -181,12 +180,12 @@ impl ContextLoadable<Path> for EnvironmentSpec {
         let source_query = queries.option("@source/string()", convert_string)?;
         let declared_query = queries.option("@declared/string()", convert_string)?;
 
-        let params_query = queries.many("param", move |session, item| {
-            let name = name_query.execute(session, item)?;
-            let select = select_query.execute(session, item)?;
-            let as_ = as_query.execute(session, item)?;
-            let source = source_query.execute(session, item)?;
-            let declared = declared_query.execute(session, item)?;
+        let params_query = queries.many("param", move |documents, item| {
+            let name = name_query.execute(documents, item)?;
+            let select = select_query.execute(documents, item)?;
+            let as_ = as_query.execute(documents, item)?;
+            let source = source_query.execute(documents, item)?;
+            let declared = declared_query.execute(documents, item)?;
 
             let declared = declared.map(|declared| declared == "true").unwrap_or(false);
 
@@ -209,12 +208,12 @@ impl ContextLoadable<Path> for EnvironmentSpec {
         let path = path.parent().unwrap();
         let static_base_uri_query =
             queries.option("static-base-uri/@uri/string()", convert_string)?;
-        let environment_query = queries.one(".", move |session, item| {
-            let sources = sources_query.execute(session, item)?;
+        let environment_query = queries.one(".", move |documents, item| {
+            let sources = sources_query.execute(documents, item)?;
             // we need to flatten sources
             let sources = sources.into_iter().flatten().collect::<Vec<Source>>();
-            let params = params_query.execute(session, item)?;
-            let static_base_uri = static_base_uri_query.execute(session, item)?;
+            let params = params_query.execute(documents, item)?;
+            let static_base_uri = static_base_uri_query.execute(documents, item)?;
             let environment_spec = EnvironmentSpec {
                 base_dir: path.to_path_buf(),
                 sources,

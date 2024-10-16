@@ -229,9 +229,7 @@ mod tests {
             Ok(item.try_into_value::<String>()?)
         })?;
 
-        let mut session = documents.session();
-
-        let r = q.execute(&mut session, doc)?;
+        let r = q.execute(&mut documents, doc)?;
         assert_eq!(r, "foo");
         Ok(())
     }

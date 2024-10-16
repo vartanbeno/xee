@@ -137,18 +137,18 @@ impl Runnable<XPathEnvironmentSpec> for XPathTestCase {
 
         // now construct the dynamic context. We want to have one here
         // explicitly so we can use it later in the assertions
-        let mut builder = query.dynamic_context_builder(&run_context.session);
+        let mut builder = query.dynamic_context_builder(run_context.documents);
         if let Some(context_item) = context_item {
             builder.context_item(context_item);
         }
         builder.variables(variables.clone());
         let context = builder.build();
         // now execute the query with the right dynamic context
-        let result = query.execute_with_context(&mut run_context.session, &context);
+        let result = query.execute_with_context(run_context.documents, &context);
 
         self.test_case.result.assert_result(
             &context,
-            &mut run_context.session,
+            run_context.documents,
             &result.map_err(|error| error.error),
         )
     }

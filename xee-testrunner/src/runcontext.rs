@@ -1,4 +1,4 @@
-use xee_xpath::Session;
+use xee_xpath::Documents;
 
 use crate::{
     dependency::KnownDependencies,
@@ -8,19 +8,19 @@ use crate::{
 };
 
 pub(crate) struct RunContext<'a> {
-    pub(crate) session: Session<'a>,
+    pub(crate) documents: &'a mut Documents,
     pub(crate) known_dependencies: KnownDependencies,
     pub(crate) verbose: bool,
 }
 
 impl<'a> RunContext<'a> {
     pub(crate) fn new(
-        session: Session<'a>,
+        documents: &'a mut Documents,
         known_dependencies: KnownDependencies,
         verbose: bool,
     ) -> Self {
         Self {
-            session,
+            documents,
             known_dependencies,
             verbose,
         }

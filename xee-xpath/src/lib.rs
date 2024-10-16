@@ -28,13 +28,10 @@
 //!   Ok(item.try_into_value::<String>()?)
 //! })?;
 //!
-//! // now create a session for the documents and execute the query
-//! let mut session = documents.session();
-//!
-//! // when we execute the query, we need to pass the session, and the item
-//! // against which we want to query. We can also pass in a document handle,
+//! // when we execute the query, we need to pass a mutable reference to the documents,
+//! // and the item against which we want to query. We can also pass in a document handle,
 //! // as we do here
-//! let r = q.execute(&mut session, doc)?;
+//! let r = q.execute(&mut documents, doc)?;
 //! assert_eq!(r, "foo");
 //!
 //! # Ok::<(), xee_xpath::error::Error>(())
@@ -48,13 +45,11 @@ mod itemable;
 pub mod iter;
 mod queries;
 pub mod query;
-mod session;
 
 pub use documents::Documents;
 pub use itemable::Itemable;
 pub use queries::Queries;
 pub use query::{Query, Recurse};
-pub use session::Session;
 pub use xee_interpreter::atomic::Atomic;
 pub use xee_interpreter::sequence::{Item, Sequence};
 pub use xee_interpreter::xml::{DocumentHandle, Uri};

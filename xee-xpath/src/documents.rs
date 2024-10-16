@@ -4,8 +4,6 @@ use xee_interpreter::{
 };
 use xot::Xot;
 
-use crate::Session;
-
 /// A collection of XML documents as can be used by XPath and XSLT.
 ///
 /// This collection can be prepared before any XPath or XSLT processing begins.
@@ -38,11 +36,19 @@ impl Documents {
             .add_string(&mut self.xot, uri, xml)
     }
 
-    /// Construct a [`Session`] from a collection of documents
-    ///
-    /// You need a session to be able to execute queries against documents.
-    pub fn session(&mut self) -> Session {
-        Session::from_documents(self)
+    /// Get a reference to the documents
+    pub fn documents(&self) -> &DocumentsRef {
+        &self.documents
+    }
+
+    /// Get a reference to the Xot arena
+    pub fn xot(&self) -> &Xot {
+        &self.xot
+    }
+
+    /// Get a mutable reference to the Xot arena
+    pub fn xot_mut(&mut self) -> &mut Xot {
+        &mut self.xot
     }
 }
 

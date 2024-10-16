@@ -82,7 +82,7 @@ impl<E: Environment> TestCase<E> {
         for environment in environments {
             environment
                 .environment_spec()
-                .load_sources(&mut run_context.session, base_uri)?;
+                .load_sources(run_context.documents, base_uri)?;
         }
         Ok(())
     }
@@ -100,7 +100,7 @@ impl<E: Environment> TestCase<E> {
         for environment in environments {
             let item = environment
                 .environment_spec()
-                .context_item(&mut run_context.session, base_uri)?;
+                .context_item(run_context.documents, base_uri)?;
             if let Some(item) = item {
                 return Ok(Some(item));
             }
@@ -123,7 +123,7 @@ impl<E: Environment> TestCase<E> {
             variables.extend(
                 environment
                     .environment_spec()
-                    .variables(&mut run_context.session, base_uri)?,
+                    .variables(run_context.documents, base_uri)?,
             );
         }
         Ok(variables)

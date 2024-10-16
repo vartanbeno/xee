@@ -8,14 +8,14 @@ use std::{
 use xee_xpath_compiler::sequence::Item;
 
 use xee_xpath::{context::StaticContextBuilder, error::Result as XPathResult, Uri};
-use xee_xpath::{DocumentHandle, Documents, Queries, Query, Session};
+use xee_xpath::{DocumentHandle, Documents, Queries, Query};
 
-pub fn convert_string(_: &mut Session, item: &Item) -> XPathResult<String> {
+pub fn convert_string(_: &mut Documents, item: &Item) -> XPathResult<String> {
     Ok(item.to_atomic()?.try_into()?)
 }
 
-pub fn convert_boolean(session: &mut Session, item: &Item) -> XPathResult<bool> {
-    Ok(convert_string(session, item)? == "true")
+pub fn convert_boolean(documents: &mut Documents, item: &Item) -> XPathResult<bool> {
+    Ok(convert_string(documents, item)? == "true")
 }
 
 pub trait ContextLoadable<C: ?Sized>: Sized {
@@ -41,9 +41,7 @@ pub trait ContextLoadable<C: ?Sized>: Sized {
 
         let query = Self::load_with_context(&queries, context)?;
 
-        let mut session = documents.session();
-
-        Ok(query.execute(&mut session, document_id)?)
+        Ok(query.execute(&mut documents, document_id)?)
     }
 }
 

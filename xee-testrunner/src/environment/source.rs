@@ -4,7 +4,7 @@ use std::fs::File;
 use std::io::{BufReader, Read};
 use std::path::{Path, PathBuf};
 
-use xee_xpath::{Queries, Query, Session, Uri};
+use xee_xpath::{Documents, Queries, Query, Uri};
 use xee_xpath_load::{convert_string, Loadable};
 
 use crate::metadata::Metadata;
@@ -45,7 +45,7 @@ impl Source {
     pub(crate) fn node(
         &self,
         base_dir: &Path,
-        session: &mut Session,
+        documents: &mut Documents,
         uri: &Option<String>,
         base_uri: Option<&IriAbsoluteStr>,
     ) -> Result<xot::Node> {
@@ -73,7 +73,7 @@ impl Source {
                 // try to get the cached version of the document
                 {
                     // scope borrowed_documents so we drop it afterward
-                    let borrowed_documents = session.documents().borrow();
+                    let borrowed_documents = documents.documents().borrow();
 
                     let root = borrowed_documents.get_node_by_uri(&uri);
                     if let Some(root) = root {
@@ -87,11 +87,12 @@ impl Source {
                 let mut xml = String::new();
                 buf_reader.read_to_string(&mut xml)?;
 
-                let documents = session.documents().clone();
-                let handle = documents
-                    .borrow_mut()
-                    .add_string(session.xot_mut(), &uri, &xml)?;
-                Ok(session
+                let documents_ref = documents.documents().clone();
+                let handle =
+                    documents_ref
+                        .borrow_mut()
+                        .add_string(documents.xot_mut(), &uri, &xml)?;
+                Ok(documents
                     .documents()
                     .borrow()
                     .get_node_by_handle(handle)
@@ -104,18 +105,19 @@ impl Source {
                     // create a new unique uri
                     Uri::new(&format!(
                         "string-source-{}",
-                        session.documents().borrow().len()
+                        documents.documents().borrow().len()
                     ))
                 };
                 // we don't try to get a cached version of the document, as
                 // that would be different each time. we just add it to documents
                 // and return it
                 // TODO: is this right?
-                let documents = session.documents().clone();
-                let handle = documents
-                    .borrow_mut()
-                    .add_string(session.xot_mut(), &uri, value)?;
-                Ok(session
+                let documents_ref = documents.documents().clone();
+                let handle =
+                    documents_ref
+                        .borrow_mut()
+                        .add_string(documents.xot_mut(), &uri, value)?;
+                Ok(documents
                     .documents()
                     .borrow()
                     .get_node_by_handle(handle)

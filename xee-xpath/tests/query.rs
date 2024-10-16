@@ -1,8 +1,6 @@
 use ibig::{ibig, IBig};
 use xee_interpreter::sequence::Sequence;
-use xee_xpath::{
-    error, query::RecurseQuery, Documents, Item, Queries, Query, Recurse, Session, Uri,
-};
+use xee_xpath::{error, query::RecurseQuery, Documents, Item, Queries, Query, Recurse, Uri};
 
 #[test]
 fn test_duplicate_document_uri() -> error::Result<()> {
@@ -36,8 +34,7 @@ fn test_simple_query() -> error::Result<()> {
         Ok(item.try_into_value::<String>()?)
     })?;
 
-    let mut session = documents.session();
-    let r = q.execute(&mut session, doc)?;
+    let r = q.execute(&mut documents, doc)?;
     assert_eq!(r, "foo");
     Ok(())
 }
@@ -52,8 +49,7 @@ fn test_sequence_query() -> error::Result<()> {
     let queries = Queries::default();
     let q = queries.sequence("/root/string()")?;
 
-    let mut session = documents.session();
-    let r = q.execute(&mut session, doc)?;
+    let r = q.execute(&mut documents, doc)?;
     let sequence: Sequence = "foo".into();
     assert_eq!(r, sequence);
     Ok(())
@@ -80,10 +76,9 @@ fn test_option_query() -> error::Result<()> {
         Ok(item.try_into_value::<String>()?)
     })?;
 
-    let mut session = documents.session();
-    let r = q.execute(&mut session, doc_with_value)?;
+    let r = q.execute(&mut documents, doc_with_value)?;
     assert_eq!(r, Some("Foo".to_string()));
-    let r = q.execute(&mut session, doc_without_value)?;
+    let r = q.execute(&mut documents, doc_without_value)?;
     assert_eq!(r, None);
     Ok(())
 }
@@ -103,8 +98,7 @@ fn test_nested_query() -> error::Result<()> {
     let f_query = queries.one("./number()", |_, item| Ok(item.try_into_value::<f64>()?))?;
     let q = queries.many("/root/a", |context, item| f_query.execute(context, item))?;
 
-    let mut session = documents.session();
-    let r = q.execute(&mut session, doc)?;
+    let r = q.execute(&mut documents, doc)?;
     assert_eq!(r, vec![1.0, 2.0]);
     Ok(())
 }
@@ -129,22 +123,22 @@ fn test_option_query_recurse() -> error::Result<()> {
     })?;
 
     // a result is either a "value" or an "any-of" element
-    let result_query = queries.one("/doc/result", |session, item| {
-        let f = |session: &mut Session, item: &Item, recurse: &Recurse<_>| {
+    let result_query = queries.one("/doc/result", |documents, item| {
+        let f = |documents: &mut Documents, item: &Item, recurse: &Recurse<_>| {
             // we either call the any of query, which recursively
             // calls this function
-            if let Some(any_of) = any_of_recurse.execute(session, item, recurse)? {
+            if let Some(any_of) = any_of_recurse.execute(documents, item, recurse)? {
                 return Ok(Expr::AnyOf(Box::new(any_of)));
             }
             // or use the value query
-            if let Some(value) = value_query.execute(session, item)? {
+            if let Some(value) = value_query.execute(documents, item)? {
                 return Ok(Expr::Value(value));
             }
             Ok(Expr::Empty)
         };
         // we want to recursively call this function
         let recurse = Recurse::new(&f);
-        recurse.execute(session, item)
+        recurse.execute(documents, item)
     })?;
 
     let mut documents = Documents::new();
@@ -161,11 +155,10 @@ fn test_option_query_recurse() -> error::Result<()> {
         )
         .unwrap();
 
-    let mut session = documents.session();
-    let r = result_query.execute(&mut session, doc1)?;
+    let r = result_query.execute(&mut documents, doc1)?;
     assert_eq!(r, Expr::AnyOf(Box::new(Expr::Value("A".to_string()))));
 
-    let r = result_query.execute(&mut session, doc2)?;
+    let r = result_query.execute(&mut documents, doc2)?;
     assert_eq!(r, Expr::Value("A".to_string()));
     Ok(())
 }
@@ -190,23 +183,23 @@ fn test_many_query_recurse() -> error::Result<()> {
     })?;
 
     // a result is either a "value" or an "any-of" element
-    let result_query = queries.one("/doc/result", |session, item| {
-        let f = |session: &mut Session, item: &Item, recurse: &Recurse<_>| {
+    let result_query = queries.one("/doc/result", |documents, item| {
+        let f = |documents: &mut Documents, item: &Item, recurse: &Recurse<_>| {
             // we either call the any of query, which recursively
             // calls this function
-            let elements = any_of_recurse.execute(session, item, recurse)?;
+            let elements = any_of_recurse.execute(documents, item, recurse)?;
             if !elements.is_empty() {
                 return Ok(Expr::AnyOf(elements));
             }
             // or use the value query
-            if let Some(value) = value_query.execute(session, item)? {
+            if let Some(value) = value_query.execute(documents, item)? {
                 return Ok(Expr::Value(value));
             }
             Ok(Expr::Empty)
         };
         // we want to recursively call this function
         let recurse = Recurse::new(&f);
-        recurse.execute(session, item)
+        recurse.execute(documents, item)
     })?;
 
     let mut documents = Documents::new();
@@ -223,8 +216,7 @@ fn test_many_query_recurse() -> error::Result<()> {
         )
         .unwrap();
 
-    let mut session = documents.session();
-    let r = result_query.execute(&mut session, doc1)?;
+    let r = result_query.execute(&mut documents, doc1)?;
     assert_eq!(
         r,
         Expr::AnyOf(vec![
@@ -233,7 +225,7 @@ fn test_many_query_recurse() -> error::Result<()> {
         ])
     );
 
-    let r = result_query.execute(&mut session, doc2)?;
+    let r = result_query.execute(&mut documents, doc2)?;
     assert_eq!(r, Expr::Value("A".to_string()));
     Ok(())
 }
@@ -250,8 +242,7 @@ fn test_map_query() -> error::Result<()> {
 
     let mut documents = Documents::new();
 
-    let mut session = documents.session();
-    let r = q.execute(&mut session, &1i64.into())?;
+    let r = q.execute(&mut documents, &1i64.into())?;
     assert_eq!(r, ibig!(4));
     Ok(())
 }
@@ -268,8 +259,7 @@ fn test_map_query_clone() -> error::Result<()> {
     let q = q.clone();
     let mut documents = Documents::new();
 
-    let mut session = documents.session();
-    let r = q.execute(&mut session, &1i64.into())?;
+    let r = q.execute(&mut documents, &1i64.into())?;
     assert_eq!(r, ibig!(4));
     Ok(())
 }

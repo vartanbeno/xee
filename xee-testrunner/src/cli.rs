@@ -89,8 +89,7 @@ pub fn cli() -> Result<()> {
     let path_info = paths(path)?;
 
     let mut documents = Documents::new();
-    let session = documents.session();
-    let run_context = RunContext::new(session, xpath_known_dependencies(), cli.verbose);
+    let run_context = RunContext::new(&mut documents, xpath_known_dependencies(), cli.verbose);
 
     let mut runner = Runner::<XPathEnvironmentSpec, XPathTestCase>::new(run_context, path_info);
 
