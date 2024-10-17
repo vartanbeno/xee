@@ -74,10 +74,20 @@ impl Queries {
     /// A sequence query returns an XPath sequence.
     ///
     /// The query must be a valid XPath 3.1 expression.
-    pub fn sequence(&mut self, query: &str) -> PhpResult<ZBox<ZendClassObject<SequenceQuery>>> {
+    pub fn sequence(&self, query: &str) -> PhpResult<ZBox<ZendClassObject<SequenceQuery>>> {
         Ok(ZendClassObject::new(SequenceQuery {
             query: self.queries.sequence(query).map_err(|e| e.to_string())?,
         }))
+    }
+
+    /// A one query returns a single value.
+    pub fn one(&self, query: &str) -> PhpResult<ZBox<ZendClassObject<OneQuery>>> {
+        // we have to coerce identity to the right type first
+        let i: IdentityConvert = identity;
+        let q = self.queries.one(query, i).map_err(|e| e.to_string())?;
+        let query = PhpOneQuery(q);
+
+        Ok(ZendClassObject::new(OneQuery { query }))
     }
 }
 
@@ -102,17 +112,6 @@ impl SequenceQuery {
                 .map_err(|e| e.to_string())?,
         }))
     }
-}
-
-/// A sequence of items returned by an XPath query.
-///
-/// This can be treated as an array and you can iterate over it.
-#[php_class(name = "Xee\\Sequence")]
-#[implements(ce::arrayaccess())]
-#[implements(ce::countable())]
-#[implements(ce::aggregate())]
-pub struct Sequence {
-    sequence: xee_xpath::Sequence,
 }
 
 /// An iterator over a sequence
@@ -155,6 +154,17 @@ impl SequenceIterator {
     }
 }
 
+/// A sequence of items returned by an XPath query.
+///
+/// This can be treated as an array and you can iterate over it.
+#[php_class(name = "Xee\\Sequence")]
+#[implements(ce::arrayaccess())]
+#[implements(ce::countable())]
+#[implements(ce::aggregate())]
+pub struct Sequence {
+    sequence: xee_xpath::Sequence,
+}
+
 #[php_impl]
 impl Sequence {
     pub fn count(&self) -> usize {
@@ -195,10 +205,56 @@ impl Sequence {
 
 fn sequence_offset_get(sequence: &xee_xpath::Sequence, offset: usize) -> PhpResult<Zval> {
     let item = sequence.get(offset).map_err(|e| e.to_string())?;
+    item_to_zval(item)
+}
+
+fn item_to_zval(item: xee_xpath::Item) -> PhpResult<Zval> {
     match item {
         xee_xpath::Item::Atomic(atomic) => Ok(atomic_to_zval(&atomic, false)?),
         xee_xpath::Item::Node(_) => todo!(),
         xee_xpath::Item::Function(_) => todo!(),
+    }
+}
+
+// in the PHP bindings we cannot use the `convert` function to convert to a Zval directly,
+// as is not compatible with the error type we need to return (xee_xpath::error::Error).
+// We therefore make the conversion a no op instead.
+type IdentityConvert =
+    fn(&mut xee_xpath::Documents, &xee_xpath::Item) -> xee_xpath::error::Result<xee_xpath::Item>;
+
+fn identity(
+    _documents: &mut xee_xpath::Documents,
+    item: &xee_xpath::Item,
+) -> xee_xpath::error::Result<xee_xpath::Item> {
+    // it's unfortunate we have to do a clone here, but item has been designed for it
+    Ok(item.clone())
+}
+
+// we construct a special query which has its type parameters filled in,
+// as we cannot expose generics to PHP
+struct PhpOneQuery(xee_xpath::query::OneQuery<xee_xpath::Item, IdentityConvert>);
+
+/// A compiled XPath query that returns a single value.
+#[php_class(name = "Xee\\OneQuery")]
+pub struct OneQuery {
+    query: PhpOneQuery,
+}
+
+#[php_impl]
+impl OneQuery {
+    /// Execute the query against a session and a document handle.
+    pub fn execute(
+        &self,
+        documents: &mut ZendClassObject<Documents>,
+        doc: &ZendClassObject<DocumentHandle>,
+    ) -> PhpResult<Zval> {
+        let item = self
+            .query
+            .0
+            .execute(&mut documents.documents, doc.handle)
+            .map_err(|e| e.to_string())?;
+        // we can only do the conversion to a PHP value in the end
+        item_to_zval(item)
     }
 }
 
