@@ -104,7 +104,7 @@
 - [ ] parse-json
 - [ ] parse-xml
 - [ ] parse-xml-fragment
-- [ ] path
+- [x] path
 - [x] position
 - [x] prefix-from-QName
 - [x] QName
@@ -116,14 +116,14 @@
 - [x] reverse
 - [x] root
 - [x] round
-- [ ] round-half-to-even
+- [x] round-half-to-even
 - [x] seconds-from-dateTime
 - [x] seconds-from-duration
 - [x] seconds-from-time
 - [ ] serialize
 - [x] sort (hof)
 - [x] starts-with
-- [ ] static-base-uri
+- [x] static-base-uri
 - [x] string
 - [x] string-join
 - [x] string-length

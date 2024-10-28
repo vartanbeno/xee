@@ -46,7 +46,10 @@ Needs a notion of default language in the static (?) context.
 - fn:id
 - fn:idref
 
-Needs a notion of an id on a node.
+Needs a notion of an id on a node. This can be simply xml:id (once Xot
+processes it as an id).
+
+For idref, it needs a notion of an idref type on a node.
 
 ## error
 
@@ -99,12 +102,6 @@ Some questions about use of base URL
 - fn:unparsed-text-lines
 
 Needs a notion of text resources on dynamic context.
-
-## path expression generation
-
-- fn:path
-
-needs implementation work.
 
 ## random numbers
 
