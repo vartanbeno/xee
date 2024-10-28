@@ -1021,10 +1021,6 @@ fn-function-lookup-275
 fn-function-lookup-276
 fn-function-lookup-277
 fn-function-lookup-278
-fn-function-lookup-283
-fn-function-lookup-284
-fn-function-lookup-285
-fn-function-lookup-286
 fn-function-lookup-349
 fn-function-lookup-350
 fn-function-lookup-351
@@ -1693,18 +1689,6 @@ parse-xml-fragment-023
 parse-xml-fragment-024
 parse-xml-fragment-025
 = fn-path
-path001
-path002
-path003
-path004
-path005
-path006
-path007
-path008
-path009
-path010
-path015
-path020
 = fn-position
 = fn-prefix-from-QName
 fn-prefix-from-qname-8
@@ -2663,10 +2647,6 @@ function-literal-275
 function-literal-276
 function-literal-277
 function-literal-278
-function-literal-283
-function-literal-284
-function-literal-285
-function-literal-286
 function-literal-349
 function-literal-350
 function-literal-351

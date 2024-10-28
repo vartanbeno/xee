@@ -108,6 +108,113 @@ fn outermost(interpreter: &Interpreter, nodes: &[xot::Node]) -> Vec<xot::Node> {
     outermost
 }
 
+#[xpath_fn("fn:path($arg as node()?) as xs:string?", context_first)]
+fn path(interpreter: &Interpreter, arg: Option<xot::Node>) -> Option<String> {
+    if let Some(node) = arg {
+        if interpreter.xot().is_document(node) {
+            Some("/".to_string())
+        } else {
+            Some(path_helper(node, interpreter.xot()))
+        }
+    } else {
+        None
+    }
+}
+
+fn path_helper(node: xot::Node, xot: &xot::Xot) -> String {
+    match xot.value(node) {
+        xot::Value::Document => "".to_string(),
+        xot::Value::Element(e) => {
+            let name = e.name();
+            let (local, ns) = xot.name_ns_str(name);
+            let position = position_by_type(node, xot, |child, xot| {
+                if let Some(element) = xot.element(child) {
+                    element.name() == name
+                } else {
+                    false
+                }
+            });
+            let path = parent_path(node, xot);
+            format!("{}/Q{{{}}}{}[{}]", path, ns, local, position)
+        }
+        xot::Value::Text(_) => {
+            let position = position_by_type(node, xot, |child, xot| xot.is_text(child));
+            format!("{}/text()[{}]", parent_path(node, xot), position)
+        }
+        xot::Value::Comment(_) => {
+            let position = position_by_type(node, xot, |child, xot| xot.is_comment(child));
+            format!("{}/comment()[{}]", parent_path(node, xot), position)
+        }
+        xot::Value::ProcessingInstruction(p) => {
+            let target = p.target();
+            let position = position_by_type(node, xot, |child, xot| {
+                if let Some(processing_instruction) = xot.processing_instruction(child) {
+                    processing_instruction.target() == target
+                } else {
+                    false
+                }
+            });
+            let (local, _) = xot.name_ns_str(target);
+
+            format!(
+                "{}/processing-instruction({})[{}]",
+                parent_path(node, xot),
+                local,
+                position
+            )
+        }
+        xot::Value::Attribute(attribute) => {
+            let name = attribute.name();
+            let (local, ns) = xot.name_ns_str(name);
+            let s = if ns.is_empty() {
+                local.to_string()
+            } else {
+                format!("Q{{{}}}{}", ns, local)
+            };
+            format!("{}/@{}", parent_path(node, xot), s)
+        }
+        xot::Value::Namespace(n) => {
+            let prefix = n.prefix();
+            let s = if xot.empty_prefix() != prefix {
+                xot.prefix_str(prefix)
+            } else {
+                "*[Q{http://www.w3.org/2005/xpath-functions}local-name()=\"\"]"
+            };
+            format!("{}/namespace::{}", parent_path(node, xot), s)
+        }
+    }
+}
+
+fn parent_path(node: xot::Node, xot: &xot::Xot) -> String {
+    if let Some(parent) = xot.parent(node) {
+        path_helper(parent, xot)
+    } else {
+        "Q{http://www.w3.org/2005/xpath-functions}root()".to_string()
+    }
+}
+
+fn position_by_type(
+    node: xot::Node,
+    xot: &xot::Xot,
+    is_type: impl Fn(xot::Node, &xot::Xot) -> bool,
+) -> usize {
+    let mut position = 1;
+    let parent = xot.parent(node);
+    if let Some(parent) = parent {
+        for child in xot.children(parent) {
+            if child == node {
+                return position;
+            }
+            if is_type(child, xot) {
+                position += 1;
+            }
+        }
+        unreachable!()
+    } else {
+        1
+    }
+}
+
 pub(crate) fn static_function_descriptions() -> Vec<StaticFunctionDescription> {
     vec![
         wrap_xpath_fn!(name),
@@ -117,5 +224,6 @@ pub(crate) fn static_function_descriptions() -> Vec<StaticFunctionDescription> {
         wrap_xpath_fn!(has_children),
         wrap_xpath_fn!(innermost),
         wrap_xpath_fn!(outermost),
+        wrap_xpath_fn!(path),
     ]
 }
