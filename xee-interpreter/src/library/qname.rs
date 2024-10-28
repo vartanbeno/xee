@@ -151,6 +151,14 @@ fn namespace_uri_for_prefix(
     }
 }
 
+#[xpath_fn("fn:in-scope-prefixes($element as element()) as xs:string*")]
+fn in_scope_prefixes(interpreter: &Interpreter, node: xot::Node) -> Vec<atomic::Atomic> {
+    let xot = interpreter.xot();
+    xot.namespaces_in_scope(node)
+        .map(|(prefix, _)| xot.prefix_str(prefix).to_string().into())
+        .collect::<Vec<_>>()
+}
+
 pub(crate) fn static_function_descriptions() -> Vec<StaticFunctionDescription> {
     vec![
         wrap_xpath_fn!(resolve_qname),
@@ -159,5 +167,6 @@ pub(crate) fn static_function_descriptions() -> Vec<StaticFunctionDescription> {
         wrap_xpath_fn!(local_name_from_qname),
         wrap_xpath_fn!(namespace_uri_from_qname),
         wrap_xpath_fn!(namespace_uri_for_prefix),
+        wrap_xpath_fn!(in_scope_prefixes),
     ]
 }

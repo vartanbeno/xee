@@ -953,8 +953,6 @@ fn-function-lookup-247
 fn-function-lookup-248
 fn-function-lookup-250
 fn-function-lookup-260
-fn-function-lookup-261
-fn-function-lookup-262
 fn-function-lookup-275
 fn-function-lookup-276
 fn-function-lookup-277
@@ -1087,13 +1085,7 @@ fn-idref-dtd-6
 fn-implicit-timezone-11
 fn-implicit-timezone-12
 = fn-in-scope-prefixes
-fn-in-scope-prefixes-2
-fn-in-scope-prefixes-21
-fn-in-scope-prefixes-22
-fn-in-scope-prefixes-23
-fn-in-scope-prefixes-24
 fn-in-scope-prefixes-25
-fn-in-scope-prefixes-26
 = fn-index-of
 = fn-innermost
 fn-innermost-059
@@ -2572,8 +2564,6 @@ function-literal-247
 function-literal-248
 function-literal-250
 function-literal-260
-function-literal-261
-function-literal-262
 function-literal-275
 function-literal-276
 function-literal-277
