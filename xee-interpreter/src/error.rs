@@ -2,6 +2,7 @@ use ibig::error::OutOfBoundsError;
 use strum::EnumMessage;
 use strum_macros::{Display, EnumMessage};
 use xee_xpath_ast::ParserError;
+use xot::xmlname::NameStrInfo;
 
 use crate::span::SourceSpan;
 
@@ -560,6 +561,25 @@ pub enum Error {
     /// The result sequence to be added as content cannot contain a function
     /// item.
     XTDE0450,
+
+    /// An application generated error
+    Application(Box<ApplicationError>),
+}
+
+#[derive(Debug, Clone, PartialEq)]
+#[cfg_attr(feature = "serde", derive(serde::Serialize))]
+pub struct ApplicationError {
+    qname: xot::xmlname::OwnedName,
+    description: String,
+    // FIXME: error object is not supported right now
+    // it would require storing an arbitrary sequence in here,
+    // but that's not really supported by this simple error.
+}
+
+impl ApplicationError {
+    pub fn new(qname: xot::xmlname::OwnedName, description: String) -> Self {
+        Self { qname, description }
+    }
 }
 
 impl Error {
@@ -574,7 +594,23 @@ impl Error {
     }
 
     pub fn code(&self) -> String {
-        self.to_string()
+        match self {
+            Error::Application(application_error) => {
+                application_error.qname.local_name().to_string()
+            }
+            _ => self.to_string(),
+        }
+    }
+
+    pub fn code_qname(&self) -> xot::xmlname::OwnedName {
+        match self {
+            Error::Application(application_error) => application_error.qname.clone(),
+            _ => xot::xmlname::OwnedName::new(
+                self.code(),
+                "http://www.w3.org/2005/xqt-errors".to_string(),
+                "".to_string(),
+            ),
+        }
     }
 
     pub fn message(&self) -> &str {

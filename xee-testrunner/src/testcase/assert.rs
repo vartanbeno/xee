@@ -3,7 +3,7 @@ use chrono::Offset;
 use std::fmt;
 use xee_xpath::context::{Collation, DynamicContext};
 use xee_xpath::iter::Occurrence;
-use xot::xmlname::OwnedName as Name;
+use xot::xmlname::{NameStrInfo, OwnedName as Name};
 use xot::Xot;
 
 use xee_xpath::query::RecurseQuery;
@@ -615,13 +615,18 @@ impl AssertError {
     }
 
     pub(crate) fn assert_error(&self, error: &error::ErrorValue) -> TestOutcome {
+        if self.0 == "*" {
+            return TestOutcome::Passed;
+        }
         // all errors are officially a pass, but we check whether the error
         // code matches too
-        let code = error.to_string();
-        if code == self.0 {
+        let code = error.code_qname();
+        // FIXME: there is no checking for the correct namespace here, should
+        // there be?
+        if code.local_name() == self.0 {
             TestOutcome::Passed
         } else {
-            TestOutcome::UnexpectedError(UnexpectedError(code.to_string()))
+            TestOutcome::UnexpectedError(UnexpectedError(code.local_name().to_string()))
         }
     }
 }

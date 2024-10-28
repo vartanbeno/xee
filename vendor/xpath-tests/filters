@@ -41,7 +41,6 @@ fo-test-fn-ends-with-005
 fo-test-fn-ends-with-006
 fo-test-fn-ends-with-007
 fo-test-fn-ends-with-008
-fo-test-fn-error-002
 fo-test-fn-filter-002
 fo-test-fn-format-integer-001
 fo-test-fn-format-integer-002
@@ -278,61 +277,6 @@ environment-variable-010
 environment-variable-011
 environment-variable-012
 = fn-error
-K-ErrorFunc-2
-K-ErrorFunc-4a
-K-ErrorFunc-5
-K-ErrorFunc-6
-K-ErrorFunc-7
-K-ErrorFunc-9
-K2-ErrorFunc-3
-fn-error-10
-fn-error-11
-fn-error-12
-fn-error-13
-fn-error-14
-fn-error-15
-fn-error-16
-fn-error-17
-fn-error-18
-fn-error-19
-fn-error-2
-fn-error-20
-fn-error-22
-fn-error-23
-fn-error-25
-fn-error-26
-fn-error-27
-fn-error-28
-fn-error-29
-fn-error-3
-fn-error-30
-fn-error-31
-fn-error-32
-fn-error-33
-fn-error-34
-fn-error-35
-fn-error-36
-fn-error-37
-fn-error-38
-fn-error-39
-fn-error-4
-fn-error-40
-fn-error-41
-fn-error-42
-fn-error-43
-fn-error-44
-fn-error-45
-fn-error-46
-fn-error-47
-fn-error-48
-fn-error-49
-fn-error-5
-fn-error-50
-fn-error-51
-fn-error-6
-fn-error-7
-fn-error-8
-fn-error-9
 = fn-escape-html-uri
 = fn-exactly-one
 = fn-exists
@@ -978,12 +922,6 @@ fn-function-lookup-021
 fn-function-lookup-022
 fn-function-lookup-023
 fn-function-lookup-024
-fn-function-lookup-027
-fn-function-lookup-028
-fn-function-lookup-029
-fn-function-lookup-030
-fn-function-lookup-031
-fn-function-lookup-032
 fn-function-lookup-033
 fn-function-lookup-034
 fn-function-lookup-053
@@ -2233,7 +2171,6 @@ map-put-003-hof
 = misc-AppendixA4
 = misc-CombinedErrorCodes
 = misc-ErrorsAndOptimization
-errors-and-optimization-1
 = misc-HigherOrderFunctions
 function-item-1
 hof-025
@@ -2601,12 +2538,6 @@ function-literal-021
 function-literal-022
 function-literal-023
 function-literal-024
-function-literal-027
-function-literal-028
-function-literal-029
-function-literal-030
-function-literal-031
-function-literal-032
 function-literal-033
 function-literal-033a
 function-literal-034
