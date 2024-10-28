@@ -2,7 +2,7 @@
 - [x] adjust-dateTime-to-timezone
 - [x] adjust-date-to-timezone
 - [x] adjust-time-to-timezone
-- [ ] analyze-string (regex, generates nodes)
+- [x] analyze-string (regex, generates nodes)
 - [x] apply (hof, array)
 - [ ] available-environment-variables
 - [x] avg
@@ -30,16 +30,16 @@
 - [x] default-collation
 - [ ] default-language
 - [x] distinct-values
-- [ ] doc
-- [ ] doc-available
+- [x] doc
+- [x] doc-available
 - [ ] document-uri
 - [ ] element-with-id
 - [x] empty
-- [ ] encode-for-uri
+- [x] encode-for-uri
 - [x] ends-with
 - [ ] environment-variable
 - [ ] error (not yet all versions)
-- [ ] escape-html-uri
+- [x] escape-html-uri
 - [x] exactly-one
 - [x] exists
 - [x] false
@@ -70,7 +70,7 @@
 - [x] innermost
 - [ ] in-scope-prefixes
 - [x] insert-before
-- [ ] iri-to-uri
+- [x] iri-to-uri
 - [ ] json-doc
 - [ ] json-to-xml (generates XML nodes)
 - [ ] lang
@@ -112,7 +112,7 @@
 - [x] remove
 - [x] replace
 - [x] resolve-QName
-- [ ] resolve-uri
+- [x] resolve-uri
 - [x] reverse
 - [x] root
 - [x] round
