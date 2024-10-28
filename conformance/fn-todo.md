@@ -51,11 +51,6 @@ processes it as an id).
 
 For idref, it needs a notion of an idref type on a node.
 
-## error
-
-- fn:error
-
-Needs a way to trigger user errors
 
 ## date formatting
 
