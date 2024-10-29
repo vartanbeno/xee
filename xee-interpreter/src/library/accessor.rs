@@ -2,11 +2,13 @@
 use xee_xpath_ast::ast;
 use xee_xpath_macros::xpath_fn;
 
+use crate::atomic;
 use crate::error;
 use crate::function::StaticFunctionDescription;
 use crate::interpreter::Interpreter;
 use crate::sequence;
 use crate::wrap_xpath_fn;
+use crate::xml::BaseUriResolver;
 
 #[xpath_fn("fn:node-name($arg as node()?) as xs:QName?", context_first)]
 fn node_name(
@@ -38,10 +40,25 @@ fn data(interpreter: &Interpreter, arg: &sequence::Sequence) -> error::Result<Ve
     Ok(data)
 }
 
+#[xpath_fn("fn:base-uri($arg as node()?) as xs:anyURI?", context_first)]
+fn base_uri(
+    interpreter: &mut Interpreter,
+    arg: Option<xot::Node>,
+) -> error::Result<Option<atomic::Atomic>> {
+    Ok(if let Some(node) = arg {
+        let resolver = BaseUriResolver::new(None, interpreter.state.xot_mut());
+        let base_iri = resolver.base_uri(node)?;
+        base_iri.map(|i| i.into())
+    } else {
+        None
+    })
+}
+
 pub(crate) fn static_function_descriptions() -> Vec<StaticFunctionDescription> {
     vec![
         wrap_xpath_fn!(node_name),
         wrap_xpath_fn!(string),
         wrap_xpath_fn!(data),
+        wrap_xpath_fn!(base_uri),
     ]
 }

@@ -2,10 +2,6 @@
 = app-Demos
 = app-Duplicates
 = app-FunctxFn
-functx-fn-base-uri-1
-functx-fn-base-uri-2
-functx-fn-base-uri-3
-functx-fn-base-uri-all
 functx-fn-doc-available-1
 functx-fn-namespace-uri-from-QName-all
 = app-FunctxFunctx
@@ -127,9 +123,6 @@ fn-available-environment-variables-011
 = fn-avg
 cbcl-avg-001
 = fn-base-uri
-K-BaseURIFunc-2
-fn-base-uri-2
-fn-base-uri-3
 = fn-boolean
 = fn-ceiling
 = fn-codepoint-equal
@@ -914,10 +907,6 @@ fn-function-lookup-005
 fn-function-lookup-006
 fn-function-lookup-007
 fn-function-lookup-008
-fn-function-lookup-017
-fn-function-lookup-018
-fn-function-lookup-019
-fn-function-lookup-020
 fn-function-lookup-021
 fn-function-lookup-022
 fn-function-lookup-023
@@ -2522,9 +2511,6 @@ function-literal-005
 function-literal-006
 function-literal-007
 function-literal-008
-function-literal-017
-function-literal-018
-function-literal-019
 function-literal-020
 function-literal-021
 function-literal-022

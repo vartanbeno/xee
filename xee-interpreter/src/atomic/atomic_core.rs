@@ -1,5 +1,6 @@
 use chrono::Offset;
 use ibig::IBig;
+use iri_string::types::IriString;
 use ordered_float::OrderedFloat;
 use rust_decimal::prelude::*;
 use std::cmp::Ordering;
@@ -452,6 +453,14 @@ impl TryFrom<Atomic> for Decimal {
             Atomic::Decimal(d) => Ok(*d.as_ref()),
             _ => Err(error::Error::XPTY0004),
         }
+    }
+}
+
+// URL
+
+impl From<IriString> for Atomic {
+    fn from(u: IriString) -> Self {
+        Atomic::String(StringType::AnyURI, Rc::from(u.to_string()))
     }
 }
 
