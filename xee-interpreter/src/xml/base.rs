@@ -23,6 +23,10 @@ impl<'a> BaseUriResolver<'a> {
     // URIs cannot be resolved one way or another. Here I handle such errors,
     // but it's not clear what to do with the error message - the fn:base-uri
     // operation defines no such errors.
+    // FIXME: the XML base spec has a whole thing about the URLs not being
+    // proper URIs but LEIRIs https://www.w3.org/TR/leiri/ which are supposed
+    // to handle character data differently. I haven't done any work to verify
+    // that behavior.
     pub(crate) fn base_uri(&self, node: xot::Node) -> Result<Option<IriString>, error::Error> {
         Ok(match self.xot.value(node) {
             xot::Value::Document => self.document_base_uri.clone(),
