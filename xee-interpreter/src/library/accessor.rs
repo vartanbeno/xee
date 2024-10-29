@@ -46,6 +46,8 @@ fn base_uri(
     arg: Option<xot::Node>,
 ) -> error::Result<Option<atomic::Atomic>> {
     Ok(if let Some(node) = arg {
+        // TODO: the base URI resolver should receive the document's base
+        // URI as the first argument if available.
         let resolver = BaseUriResolver::new(None, interpreter.state.xot_mut());
         let base_iri = resolver.base_uri(node)?;
         base_iri.map(|i| i.into())
