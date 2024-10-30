@@ -2133,7 +2133,6 @@ map-put-003-hof
 = misc-CombinedErrorCodes
 = misc-ErrorsAndOptimization
 = misc-HigherOrderFunctions
-function-item-1
 hof-025
 inline-function-12a
 inline-function-15

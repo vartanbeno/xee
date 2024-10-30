@@ -8,10 +8,25 @@ I think this test failure has something to do with the lack of schema support.
 
 ## fn:distinct-values
 
-### fn-distinct-values-mixed-args-009
+### fn-distinct-values-mixed-args-005
 
-XPTY004
+I'm not sure whether this test failure is correct. We do get a 0 and a 1,
+just that the zero is a float. Needs more analysis to figure out whether
+the test isn't accurate or whether the implementation has problems.
 
-### fn-distinct-values-mixed-args-011
+## fn:doc
 
-XPTY004
+### fn-doc-37
+
+Could be due to missing implementation of `id` function and any of not giving
+good feedback.
+
+### K2-SeqDocFunc-3
+
+This fails with a XPTY0004. Why? Is it because untypedAtomic is not allowed as an argument?
+
+## fn:function-arity
+
+### fn-function-arity-017
+
+Ridiculously long arity for concat fails with wrong error. (XPTY0130 instead of FOAR0002)

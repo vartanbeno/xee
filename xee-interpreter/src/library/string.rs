@@ -19,9 +19,8 @@ use crate::interpreter::Interpreter;
 use crate::string::Collation;
 use crate::{atomic, error, interpreter, occurrence::Occurrence, sequence, wrap_xpath_fn};
 
-// we don't accept concat() invocations with an arity
-// of greater than this
-const MAX_CONCAT_ARITY: usize = 32;
+// we don't accept concat() invocations with an arity greater than this
+const MAX_CONCAT_ARITY: usize = 99;
 
 #[xpath_fn("fn:codepoints-to-string($arg as xs:integer*) as xs:string")]
 fn codepoints_to_string(arg: &[IBig]) -> error::Result<String> {
