@@ -68,3 +68,13 @@ Probably a missing trace implementation?
 ### fn-sort-spec-6
 
 No parse-xml implementation.
+
+## fn:substring
+
+### fn-substring-22
+
+This gives back a runtime error, why? It appears like substring isn't even
+being called, so what gives?
+
+
+

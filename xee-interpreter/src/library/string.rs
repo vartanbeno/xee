@@ -176,14 +176,18 @@ fn substring2(source_string: Option<&str>, start: f64) -> String {
 #[xpath_fn("fn:substring($sourceString as xs:string?, $start as xs:double, $length as xs:double) as xs:string")]
 fn substring3(source_string: Option<&str>, start: f64, length: f64) -> String {
     let length = length.round();
-    if length < 0.0 {
+    if length < 0.0 || length.is_nan() {
         return "".to_string();
     }
     substring_with_length(source_string, start, length as usize)
 }
 
 fn substring_with_length(source_string: Option<&str>, start: f64, length: usize) -> String {
+    if start.is_nan() {
+        return "".to_string();
+    }
     let start = start.round();
+
     let start = start as i64 - 1;
     // substract any negative start from the length
     let (start, length) = if start < 0 {

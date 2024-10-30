@@ -73,7 +73,6 @@ fo-test-fn-starts-with-005
 fo-test-fn-starts-with-006
 fo-test-fn-starts-with-007
 fo-test-fn-starts-with-008
-fo-test-fn-substring-007
 fo-test-fn-substring-after-004
 fo-test-fn-substring-after-005
 fo-test-fn-substring-after-006
@@ -1791,7 +1790,6 @@ cbcl-subsequence-012
 cbcl-subsequence-013
 cbcl-subsequence-014
 = fn-substring
-K-SubstringFunc-10
 fn-substring-22
 = fn-substring-after
 = fn-substring-before
