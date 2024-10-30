@@ -322,50 +322,50 @@ impl AssertPermutation {
 impl Assertable for AssertPermutation {
     fn assert_value(
         &self,
-        context: &DynamicContext<'_>,
+        _context: &DynamicContext<'_>,
         documents: &mut Documents,
         sequence: &Sequence,
     ) -> TestOutcome {
-        // sequence should consist of atoms. sort these so we only have to
-        // compare to one permutation.;
-        let collation = context.static_context().default_collation().unwrap();
-        let default_offset = context.implicit_timezone();
+        // we won't use the sequence sorting mechanisms defined in XPath
+        // here, as in them we can't compare bools with integers for instance,
+        // and that gives rise to a test failure because we cannot sort
 
-        let sequence = sequence.sorted(context, collation.clone(), documents.xot());
+        // we use a frequency comparison algorithm, by counting how
+        // many times we see a particular atom in a hashmap, and checking
+        // whether the result sequence has the same counts.
 
-        if let Err(err) = sequence {
-            return TestOutcome::RuntimeError(err);
+        let mut frequency = AHashMap::new();
+        for atom in sequence.atomized(documents.xot()) {
+            let atom = match atom {
+                Ok(atom) => atom,
+                Err(err) => return TestOutcome::RuntimeError(err),
+            };
+            let count = frequency.entry(atom).or_insert(0);
+            *count += 1;
         }
-        let sequence = sequence.unwrap();
 
         let result_sequence = run_xpath(&self.0);
+        let result_sequence = match result_sequence {
+            Ok(result_sequence) => result_sequence,
+            Err(error) => return TestOutcome::UnsupportedExpression(error.value()),
+        };
 
-        match result_sequence {
-            Ok(result_sequence) => {
-                // sort result sequence too.
-                let result_sequence =
-                    result_sequence.sorted(context, collation.clone(), documents.xot());
-
-                match result_sequence {
-                    Ok(value) => {
-                        if let Ok(true) = sequence.deep_equal(
-                            &value,
-                            collation.as_ref(),
-                            default_offset,
-                            documents.xot(),
-                        ) {
-                            TestOutcome::Passed
-                        } else {
-                            TestOutcome::Failed(Failure::Permutation(
-                                self.clone(),
-                                sequence.clone(),
-                            ))
-                        }
-                    }
-                    Err(error) => TestOutcome::RuntimeError(error),
-                }
+        for atom in result_sequence.atomized(documents.xot()) {
+            let atom = match atom {
+                Ok(atom) => atom,
+                Err(err) => return TestOutcome::RuntimeError(err),
+            };
+            let count = frequency.entry(atom.clone()).or_insert(0);
+            *count -= 1;
+            if *count == 0 {
+                frequency.remove(&atom);
             }
-            Err(error) => TestOutcome::UnsupportedExpression(error.value()),
+        }
+
+        if frequency.is_empty() {
+            TestOutcome::Passed
+        } else {
+            TestOutcome::Failed(Failure::Permutation(self.clone(), sequence.clone()))
         }
     }
 }

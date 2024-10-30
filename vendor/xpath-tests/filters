@@ -31,7 +31,6 @@ fo-test-fn-contains-004
 fo-test-fn-contains-005
 fo-test-fn-contains-006
 fo-test-fn-contains-007
-fo-test-fn-distinct-values-002
 fo-test-fn-ends-with-004
 fo-test-fn-ends-with-005
 fo-test-fn-ends-with-006
@@ -213,9 +212,7 @@ default-language-004
 default-language-005
 default-language-006
 = fn-distinct-values
-fn-distinct-values-2
-fn-distinct-values-mixed-args-009
-fn-distinct-values-mixed-args-011
+fn-distinct-values-mixed-args-005
 = fn-doc
 K2-SeqDocFunc-3
 fn-doc-15
@@ -1851,24 +1848,9 @@ fn-transform-902
 = fn-translate
 = fn-true
 = fn-unordered
-fn-unordered-mix-args-001
-fn-unordered-mix-args-007
-fn-unordered-mix-args-008
-fn-unordered-mix-args-009
-fn-unordered-mix-args-010
-fn-unordered-mix-args-011
+fn-unordered-mix-args-005
 fn-unordered-mix-args-012
-fn-unordered-mix-args-013
 fn-unordered-mix-args-014
-fn-unordered-mix-args-015
-fn-unordered-mix-args-016
-fn-unordered-mix-args-017
-fn-unordered-mix-args-018
-fn-unordered-mix-args-019
-fn-unordered-mix-args-020
-fn-unordered-mix-args-021
-fn-unordered-mix-args-022
-fn-unordered-mix-args-023
 = fn-unparsed-text
 fn-unparsed-text-003
 fn-unparsed-text-004
