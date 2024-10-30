@@ -15,7 +15,7 @@
 - [ ] collection
 - [x] compare
 - [x] concat
-- [x] contains
+- [x] contains (UCA collation units aren't supported, https://github.com/unicode-org/icu4x/discussions/3981)
 - [x] contains-token
 - [x] count
 - [x] current-date
