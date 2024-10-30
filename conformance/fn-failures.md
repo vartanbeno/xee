@@ -25,3 +25,28 @@ good feedback.
 
 This fails with a XPTY0004. Why? Is it because untypedAtomic is not allowed as an argument?
 
+## fn:lower-case
+
+### fn-lower-case-19
+
+There's a difference between the value 1011 (greek yot) that we get and a 895
+(greek and coptic) that it expects. Everything else is correct. I expect this
+is due to unicode table differences, but who knows.
+
+Here's some debugging code that can be installed in assert permutation in
+the test runner to help debug this:
+
+```
+    for (a, b) in sequence
+        .items()
+        .unwrap()
+        .zip(expected_sequence.items().unwrap())
+    {
+        if a != b {
+            println!("WHOAH a: {:?} b: {:?}", a, b);
+        } else {
+            println!("a: {:?} b: {:?}", a, b);
+        }
+    }
+```
+
