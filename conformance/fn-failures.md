@@ -50,4 +50,21 @@ the test runner to help debug this:
     }
 ```
 
+## fn:sort
 
+### fn-sort-17
+
+We get back $b, $a, $b, $a
+
+In the assertions, it expects entry 1 and 2 to be $a (with 1), and entry
+3 and 4 to be $b (with 2), so $a, $a, $b, $b.
+
+### fn-sort-23
+
+This tests doesn't return true OR false, so it must be returning something else.
+
+Probably a missing trace implementation?
+
+### fn-sort-spec-6
+
+No parse-xml implementation.
