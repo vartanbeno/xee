@@ -1,5 +1,7 @@
 // https://www.w3.org/TR/xpath-functions-31/#higher-order-functions
 
+use std::rc::Rc;
+
 use ibig::IBig;
 
 use xee_name::Name;
@@ -13,6 +15,7 @@ use crate::function::StaticFunctionDescription;
 use crate::interpreter::Interpreter;
 use crate::occurrence::Occurrence;
 use crate::sequence;
+use crate::string::Collation;
 use crate::wrap_xpath_fn;
 
 // we use the special marker context_last_optional here. The last node
@@ -159,7 +162,7 @@ fn sort1(
 ) -> error::Result<sequence::Sequence> {
     input.sorted(
         context,
-        context.static_context().default_collation_uri(),
+        context.static_context().default_collation()?,
         interpreter.xot(),
     )
 }
@@ -171,7 +174,7 @@ fn sort2(
     input: &sequence::Sequence,
     collation: Option<&str>,
 ) -> error::Result<sequence::Sequence> {
-    let collation = collation.unwrap_or(context.static_context().default_collation_uri());
+    let collation = context.static_context().resolve_collation_str(collation)?;
     input.sorted(context, collation, interpreter.xot())
 }
 
@@ -183,7 +186,7 @@ fn sort3(
     collation: Option<&str>,
     key: sequence::Item,
 ) -> error::Result<sequence::Sequence> {
-    let collation = collation.unwrap_or(context.static_context().default_collation_uri());
+    let collation = context.static_context().resolve_collation_str(collation)?;
     let function = key.to_function()?;
     input.sorted_by_key(context, collation, |item| {
         let value =
@@ -196,7 +199,7 @@ fn sort_without_key(
     context: &context::DynamicContext,
     interpreter: &Interpreter,
     input: &sequence::Sequence,
-    collation: &str,
+    collation: Rc<Collation>,
 ) -> error::Result<sequence::Sequence> {
     sort_by_sequence(context, input, collation, |item| {
         // the equivalent of fn:data()
@@ -211,7 +214,7 @@ fn sort_without_key(
 fn sort_by_sequence<F>(
     context: &context::DynamicContext,
     input: &sequence::Sequence,
-    collation: &str,
+    collation: Rc<Collation>,
     get: F,
 ) -> error::Result<sequence::Sequence>
 where
@@ -220,7 +223,6 @@ where
     // see also sort_by_sequence in array.rs. The signatures are
     // sufficiently different we don't want to try to unify them.
 
-    let collation = context.static_context().collation(collation)?;
     let items = input.items()?.collect::<Vec<_>>();
     let keys = items.iter().map(get).collect::<error::Result<Vec<_>>>()?;
 

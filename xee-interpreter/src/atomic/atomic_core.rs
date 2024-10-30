@@ -1,6 +1,6 @@
 use chrono::Offset;
 use ibig::IBig;
-use iri_string::types::IriString;
+use iri_string::types::{IriReferenceStr, IriReferenceString, IriString};
 use ordered_float::OrderedFloat;
 use rust_decimal::prelude::*;
 use std::cmp::Ordering;
@@ -461,6 +461,31 @@ impl TryFrom<Atomic> for Decimal {
 impl From<IriString> for Atomic {
     fn from(u: IriString) -> Self {
         Atomic::String(StringType::AnyURI, Rc::from(u.to_string()))
+    }
+}
+
+impl From<IriReferenceString> for Atomic {
+    fn from(u: IriReferenceString) -> Self {
+        Atomic::String(StringType::AnyURI, Rc::from(u.to_string()))
+    }
+}
+
+impl From<&IriReferenceStr> for Atomic {
+    fn from(u: &IriReferenceStr) -> Self {
+        Atomic::String(StringType::AnyURI, Rc::from(u.to_string()))
+    }
+}
+
+impl TryFrom<Atomic> for IriReferenceString {
+    type Error = error::Error;
+
+    fn try_from(a: Atomic) -> Result<Self, error::Error> {
+        match a {
+            Atomic::String(_, s) => {
+                Ok(s.as_ref().try_into().map_err(|_| error::Error::FORG0002)?)
+            }
+            _ => Err(error::Error::XPTY0004),
+        }
     }
 }
 

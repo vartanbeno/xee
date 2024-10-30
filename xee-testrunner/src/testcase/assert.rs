@@ -327,12 +327,11 @@ impl Assertable for AssertPermutation {
         sequence: &Sequence,
     ) -> TestOutcome {
         // sequence should consist of atoms. sort these so we only have to
-        // compare to one permutation.
-        let collation_str = context.static_context().default_collation_uri();
+        // compare to one permutation.;
         let collation = context.static_context().default_collation().unwrap();
         let default_offset = context.implicit_timezone();
 
-        let sequence = sequence.sorted(context, collation_str, documents.xot());
+        let sequence = sequence.sorted(context, collation.clone(), documents.xot());
 
         if let Err(err) = sequence {
             return TestOutcome::RuntimeError(err);
@@ -345,7 +344,7 @@ impl Assertable for AssertPermutation {
             Ok(result_sequence) => {
                 // sort result sequence too.
                 let result_sequence =
-                    result_sequence.sorted(context, collation_str, documents.xot());
+                    result_sequence.sorted(context, collation.clone(), documents.xot());
 
                 match result_sequence {
                     Ok(value) => {

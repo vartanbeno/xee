@@ -5,6 +5,7 @@ use std::sync::LazyLock;
 
 use iri_string::types::IriAbsoluteStr;
 use iri_string::types::IriAbsoluteString;
+use iri_string::types::IriReferenceStr;
 use xee_name::{Namespaces, VariableNames};
 use xee_xpath_ast::ast;
 use xee_xpath_ast::XPathParserContext;
@@ -72,17 +73,34 @@ impl StaticContext {
         self.collation(self.default_collation_uri())
     }
 
-    pub fn default_collation_uri(&self) -> &str {
+    pub fn default_collation_uri(&self) -> &IriReferenceStr {
         "http://www.w3.org/2005/xpath-functions/collation/codepoint"
+            .try_into()
+            .unwrap()
+    }
+
+    pub(crate) fn resolve_collation_str(
+        &self,
+        collation: Option<&str>,
+    ) -> error::Result<Rc<Collation>> {
+        let collation: Option<&IriReferenceStr> = if let Some(collation) = collation {
+            collation.try_into().ok()
+        } else {
+            None
+        };
+        let collation: Option<&IriReferenceStr> = collation.map(|c| c.into());
+
+        self.collation(collation.unwrap_or(self.default_collation_uri()))
     }
 
     pub fn static_base_uri(&self) -> Option<&IriAbsoluteStr> {
         self.static_base_uri.as_deref()
     }
 
-    pub(crate) fn collation(&self, uri: &str) -> error::Result<Rc<Collation>> {
-        // TODO: supply static base URI
-        self.collations.borrow_mut().load(None, uri)
+    pub(crate) fn collation(&self, uri: &IriReferenceStr) -> error::Result<Rc<Collation>> {
+        self.collations
+            .borrow_mut()
+            .load(self.static_base_uri(), uri)
     }
 
     /// Given an XPath string, parse into an XPath AST

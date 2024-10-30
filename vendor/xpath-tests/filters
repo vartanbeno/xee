@@ -1811,9 +1811,7 @@ cbcl-subsequence-014
 K-SubstringFunc-10
 fn-substring-22
 = fn-substring-after
-fn-substring-after-23
 = fn-substring-before
-fn-substring-before-23
 = fn-sum
 = fn-tail
 = fn-timezone-from-date

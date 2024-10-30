@@ -1,4 +1,3 @@
-use std::borrow::Cow;
 use std::cmp::Ordering;
 use std::collections::hash_map::Entry;
 use std::rc::Rc;
@@ -9,7 +8,8 @@ use icu::{
     collator::{self, AlternateHandling, CaseFirst, Collator, MaxVariable, Strength},
     locid::Locale,
 };
-use url::Url;
+
+use iri_string::types::{IriAbsoluteStr, IriReferenceStr, IriStr, IriString};
 
 use crate::error;
 
@@ -58,65 +58,109 @@ impl From<CollatorQuery> for collator::CollatorOptions {
 }
 
 impl CollatorQuery {
-    fn from_url(mut url: Url) -> error::Result<Self> {
-        // the spec doesn't use normal query parameters but
-        // semi-colon separated parameters, probably because semicolons are
-        // already used in XML. Modify the query string so we replace any
-        // ; with a & so we can normally parse. This should be safe as no semi-colons
-        // are expected as part of the query parameters
-        let new_query = url.query().map(|s| s.replace(';', "&"));
-        url.set_query(new_query.as_deref());
+    fn from_url(url: &IriStr) -> error::Result<Self> {
+        let query = url.query_str().unwrap_or("");
 
-        // this should let the last query parameter win in case of duplicates
-        let query = url.query_pairs().collect::<HashMap<_, _>>();
-        Self::from_query_hashmap(query)
+        let mut fallback = None;
+        let mut lang = None;
+        let mut strength = None;
+        let mut max_variable = None;
+        let mut alternate = None;
+        let mut backwards = None;
+        let mut normalization = None;
+        let mut case_level = None;
+        let mut case_first = None;
+        let mut numeric = None;
+        let mut has_unrecognized_key = false;
+
+        // last one wins
+        for (key, value) in Self::parse_collation_query(query) {
+            match key {
+                "fallback" => {
+                    fallback = Some(yes_no_query_parameter(value));
+                }
+                "lang" => {
+                    lang = Some(value.to_string());
+                }
+                "strength" => {
+                    strength = Some(strength_query_parameter(value));
+                }
+                "maxVariable" => {
+                    max_variable = Some(max_variable_query_parameter(value));
+                }
+                "alternate" => {
+                    alternate = Some(alternate_query_parameter(value));
+                }
+                "backwards" => {
+                    backwards = Some(yes_no_query_parameter(value));
+                }
+                "normalization" => {
+                    normalization = Some(yes_no_query_parameter(value));
+                }
+                "caseLevel" => {
+                    case_level = Some(yes_no_query_parameter(value));
+                }
+                "caseFirst" => {
+                    case_first = Some(case_first_query_parameter(value));
+                }
+                "numeric" => {
+                    numeric = Some(yes_no_query_parameter(value));
+                }
+                _ => {
+                    has_unrecognized_key = true;
+                }
+            }
+        }
+        let fallback = fallback.unwrap_or(Ok(true)).unwrap_or(true);
+
+        // if depends on fallback whether we accept unrecognized values
+        fn unwrap_or_fail<T>(
+            v: Option<Result<T, Unrecognized>>,
+            default: T,
+            fallback: bool,
+        ) -> error::Result<T> {
+            if let Some(v) = v {
+                if let Ok(v) = v {
+                    Ok(v)
+                } else if fallback {
+                    Ok(default)
+                } else {
+                    Err(error::Error::FOCH0002)
+                }
+            } else {
+                Ok(default)
+            }
+        }
+
+        // if fallback is no we don't recognize any unrecognized keys
+        if !fallback && has_unrecognized_key {
+            return Err(error::Error::FOCH0002);
+        }
+
+        Ok(CollatorQuery {
+            fallback,
+            lang: lang.map(|s| s.to_string()),
+            strength: unwrap_or_fail(strength, Strength::Tertiary, fallback)?,
+            max_variable: unwrap_or_fail(max_variable, MaxVariable::Punctuation, fallback)?,
+            alternate: unwrap_or_fail(alternate, AlternateHandling::NonIgnorable, fallback)?,
+            backwards: unwrap_or_fail(backwards, false, fallback)?,
+            normalization: unwrap_or_fail(normalization, false, fallback)?,
+            case_level: unwrap_or_fail(case_level, false, fallback)?,
+            case_first: unwrap_or_fail(case_first, CaseFirst::Off, fallback)?,
+            numeric: unwrap_or_fail(numeric, false, fallback)?,
+        })
     }
 
-    fn from_query_hashmap(mut query: HashMap<Cow<str>, Cow<str>>) -> error::Result<Self> {
-        let fallback = yes_no_query_parameter(query.remove("fallback"), true).unwrap_or(true);
-        let lang = query.remove("lang");
-        // version: ignore
-        let strength = strength_query_parameter(query.remove("strength"));
-        let max_variable = max_variable_query_parameter(query.remove("maxVariable"));
-        let alternate = alternate_query_parameter(query.remove("alternate"));
-        let backwards = yes_no_query_parameter(query.remove("backwards"), false);
-        let normalization = yes_no_query_parameter(query.remove("normalization"), false);
-        let case_level = yes_no_query_parameter(query.remove("caseLevel"), false);
-        let case_first = case_first_query_parameter(query.remove("caseFirst"));
-        let numeric = yes_no_query_parameter(query.remove("numeric"), false);
-        // reorder: ignore
-
-        if fallback {
-            Ok(CollatorQuery {
-                fallback,
-                lang: lang.map(|s| s.to_string()),
-                strength: strength.unwrap_or(Strength::Tertiary),
-                max_variable: max_variable.unwrap_or(MaxVariable::Punctuation),
-                alternate: alternate.unwrap_or(AlternateHandling::NonIgnorable),
-                backwards: backwards.unwrap_or(false),
-                normalization: normalization.unwrap_or(false),
-                case_level: case_level.unwrap_or(false),
-                case_first: case_first.unwrap_or(CaseFirst::Off),
-                numeric: numeric.unwrap_or(false),
-            })
-        } else {
-            // if any parameters are left, fail with an error
-            if !query.is_empty() {
-                return Err(error::Error::FOCH0002);
-            }
-            Ok(CollatorQuery {
-                fallback,
-                lang: lang.map(|s| s.to_string()),
-                strength: strength.ok_or(error::Error::FOCH0002)?,
-                max_variable: max_variable.ok_or(error::Error::FOCH0002)?,
-                alternate: alternate.ok_or(error::Error::FOCH0002)?,
-                backwards: backwards.ok_or(error::Error::FOCH0002)?,
-                normalization: normalization.ok_or(error::Error::FOCH0002)?,
-                case_level: case_level.ok_or(error::Error::FOCH0002)?,
-                case_first: case_first.ok_or(error::Error::FOCH0002)?,
-                numeric: numeric.ok_or(error::Error::FOCH0002)?,
-            })
-        }
+    fn parse_collation_query(s: &str) -> impl Iterator<Item = (&str, &str)> {
+        // the spec doesn't use normal query parameters separated by & but
+        // semi-colon separated parameters, probably because & is
+        // already used in XML.
+        s.split(';').filter_map(|part| {
+            let mut parts = part.split('=');
+            let key = parts.next()?;
+            let value = parts.next()?;
+            Some((key, value))
+        })
     }
 }
 
@@ -131,20 +175,22 @@ pub enum Collation {
 }
 
 impl Collation {
-    fn new(base_uri: Option<&Url>, uri: &str) -> error::Result<Self> {
-        let url = if let Some(base_uri) = base_uri {
-            base_uri.join(uri).map_err(|_| error::Error::FOCH0002)?
+    fn new(base_uri: Option<&IriAbsoluteStr>, uri: &IriReferenceStr) -> error::Result<Self> {
+        let uri = if let Some(base_uri) = base_uri {
+            let uri: IriString = uri.resolve_against(base_uri).into();
+            uri
         } else {
-            Url::parse(uri).map_err(|_| error::Error::FOCH0002)?
+            let uri: IriString = uri.to_iri().map_err(|_| error::Error::FOCH0002)?.to_owned();
+            uri
         };
-        if url.scheme() != "http" || url.host_str() != Some("www.w3.org") {
+        if uri.scheme_str() != "http" || uri.authority_str() != Some("www.w3.org") {
             return Err(error::Error::FOCH0002);
         }
-        let path = url.path();
+        let path = uri.path_str();
         Ok(match path {
             "/2005/xpath-functions/collation/codepoint" => Collation::CodePoint,
             "/2013/collation/UCA" => {
-                let collator_query = CollatorQuery::from_url(url)?;
+                let collator_query = CollatorQuery::from_url(&uri)?;
                 Collation::Uca(Box::new(Self::uca_collator(collator_query)?))
             }
             "/2005/xpath-functions/collation/html-ascii-case-insensitive" => Collation::HtmlAscii,
@@ -202,8 +248,8 @@ impl Collations {
 
     pub(crate) fn load(
         &mut self,
-        base_uri: Option<&Url>,
-        uri: &str,
+        base_uri: Option<&IriAbsoluteStr>,
+        uri: &IriReferenceStr,
     ) -> error::Result<Rc<Collation>> {
         // try to find cached collator. we cache by uri
         match self.collations.entry(uri.to_string()) {
@@ -216,110 +262,102 @@ impl Collations {
     }
 }
 
-fn yes_no_query_parameter(value: Option<Cow<str>>, default: bool) -> Option<bool> {
+struct Unrecognized;
+
+fn yes_no_query_parameter(value: &str) -> Result<bool, Unrecognized> {
     match value {
-        Some(value) => match value.as_ref() {
-            "yes" => Some(true),
-            "no" => Some(false),
-            _ => None,
-        },
-        None => Some(default),
+        "yes" => Ok(true),
+        "no" => Ok(false),
+        _ => Err(Unrecognized),
     }
 }
 
-fn strength_query_parameter(value: Option<Cow<str>>) -> Option<Strength> {
+fn strength_query_parameter(value: &str) -> Result<Strength, Unrecognized> {
     match value {
-        Some(value) => match value.as_ref() {
-            "primary" | "1" => Some(Strength::Primary),
-            "secondary" | "2" => Some(Strength::Secondary),
-            "tertiary" | "3" => Some(Strength::Tertiary),
-            "quaternary" | "4" => Some(Strength::Quaternary),
-            "identical" | "5" => Some(Strength::Identical),
-            _ => None,
-        },
-        None => Some(Strength::Tertiary),
+        "primary" | "1" => Ok(Strength::Primary),
+        "secondary" | "2" => Ok(Strength::Secondary),
+        "tertiary" | "3" => Ok(Strength::Tertiary),
+        "quaternary" | "4" => Ok(Strength::Quaternary),
+        "identical" | "5" => Ok(Strength::Identical),
+        _ => Err(Unrecognized),
     }
 }
 
-fn max_variable_query_parameter(value: Option<Cow<str>>) -> Option<MaxVariable> {
+fn max_variable_query_parameter(value: &str) -> Result<MaxVariable, Unrecognized> {
     match value {
-        Some(value) => match value.as_ref() {
-            "space" => Some(MaxVariable::Space),
-            "punct" => Some(MaxVariable::Punctuation),
-            "symbol" => Some(MaxVariable::Symbol),
-            "currency" => Some(MaxVariable::Currency),
-            _ => None,
-        },
-        None => Some(MaxVariable::Punctuation),
+        "space" => Ok(MaxVariable::Space),
+        "punct" => Ok(MaxVariable::Punctuation),
+        "symbol" => Ok(MaxVariable::Symbol),
+        "currency" => Ok(MaxVariable::Currency),
+        _ => Err(Unrecognized),
     }
 }
 
-fn alternate_query_parameter(value: Option<Cow<str>>) -> Option<AlternateHandling> {
+fn alternate_query_parameter(value: &str) -> Result<AlternateHandling, Unrecognized> {
     match value {
-        Some(value) => match value.as_ref() {
-            "non-ignorable" => Some(AlternateHandling::NonIgnorable),
-            "shifted" => Some(AlternateHandling::Shifted),
-            // blanked not supported by icu4x
-            _ => None,
-        },
-        None => Some(AlternateHandling::NonIgnorable),
+        "non-ignorable" => Ok(AlternateHandling::NonIgnorable),
+        "shifted" => Ok(AlternateHandling::Shifted),
+        // blanked not supported by icu4x
+        _ => Err(Unrecognized),
     }
 }
 
-fn case_first_query_parameter(value: Option<Cow<str>>) -> Option<CaseFirst> {
+fn case_first_query_parameter(value: &str) -> Result<CaseFirst, Unrecognized> {
     match value {
-        Some(value) => match value.as_ref() {
-            "upper" => Some(CaseFirst::UpperFirst),
-            "lower" => Some(CaseFirst::LowerFirst),
-            _ => None,
-        },
-        None => Some(CaseFirst::Off),
+        "upper" => Ok(CaseFirst::UpperFirst),
+        "lower" => Ok(CaseFirst::LowerFirst),
+        _ => Err(Unrecognized),
     }
 }
 
 #[cfg(test)]
 mod tests {
+
     use super::*;
 
     // these tests verify the behavior to the url crate
 
     #[test]
     fn test_base_url() {
-        let base = Url::parse("http://www.w3.org/").unwrap();
-        let path = "/2005/xpath-functions/collation/codepoint";
-        let url = base.join(path).unwrap();
+        let base: &IriAbsoluteStr = "http://www.w3.org/".try_into().unwrap();
+        let path: &IriReferenceStr = "/2005/xpath-functions/collation/codepoint"
+            .try_into()
+            .unwrap();
+        let url = path.resolve_against(base);
         assert_eq!(
-            url.as_str(),
+            url.to_string(),
             "http://www.w3.org/2005/xpath-functions/collation/codepoint"
         );
     }
 
     #[test]
     fn test_base_url_with_full_url() {
-        let base = Url::parse("http://www.another.org/").unwrap();
-        let path = "http://www.w3.org/2005/xpath-functions/collation/codepoint";
-        let url = base.join(path).unwrap();
+        let base: &IriAbsoluteStr = "http://www.another.org/".try_into().unwrap();
+        let path: &IriReferenceStr = "http://www.w3.org/2005/xpath-functions/collation/codepoint"
+            .try_into()
+            .unwrap();
+        let url = path.resolve_against(base);
         assert_eq!(
-            url.as_str(),
+            url.to_string(),
             "http://www.w3.org/2005/xpath-functions/collation/codepoint"
         );
     }
 
     #[test]
     fn test_base_url_with_just_qs() {
-        let base = Url::parse("http://www.w3.org/2013/collation/UCA").unwrap();
-        let path = "?lang=foo";
-        let url = base.join(path).unwrap();
+        let base: &IriAbsoluteStr = "http://www.w3.org/2013/collation/UCA".try_into().unwrap();
+        let path: &IriReferenceStr = "?lang=foo".try_into().unwrap();
+        let url = path.resolve_against(base);
         assert_eq!(
-            url.as_str(),
+            url.to_string(),
             "http://www.w3.org/2013/collation/UCA?lang=foo"
         );
     }
 
     #[test]
     fn test_deserialize_query_string() {
-        let url = "http://www.w3.org/2013/collation/UCA?fallback=yes;lang=en;strength=primary;max_variable=punctuation;alternate=non-ignorable;backwards=no;normalization=no;caseLevel=no;caseFirst=upper;numeric=no";
-        let query = CollatorQuery::from_url(Url::parse(url).unwrap()).unwrap();
+        let url : &IriStr = "http://www.w3.org/2013/collation/UCA?fallback=yes;lang=en;strength=primary;max_variable=punctuation;alternate=non-ignorable;backwards=no;normalization=no;caseLevel=no;caseFirst=upper;numeric=no".try_into().unwrap();
+        let query = CollatorQuery::from_url(url).unwrap();
         assert_eq!(
             query,
             CollatorQuery {
@@ -339,8 +377,10 @@ mod tests {
 
     #[test]
     fn test_deserialize_query_string_default() {
-        let url = "http://www.w3.org/2013/collation/UCA?lang=en";
-        let query = CollatorQuery::from_url(Url::parse(url).unwrap()).unwrap();
+        let url: &IriStr = "http://www.w3.org/2013/collation/UCA?lang=en"
+            .try_into()
+            .unwrap();
+        let query = CollatorQuery::from_url(url).unwrap();
         assert_eq!(
             query,
             CollatorQuery {
@@ -360,20 +400,29 @@ mod tests {
 
     #[test]
     fn test_deserialize_query_no_fallback_reject_wrong_value() {
-        let url = "http://www.w3.org/2013/collation/UCA?lang=en;fallback=no;strength=nonsense";
-        assert!(CollatorQuery::from_url(Url::parse(url).unwrap()).is_err());
+        let url: &IriStr =
+            "http://www.w3.org/2013/collation/UCA?lang=en;fallback=no;strength=nonsense"
+                .try_into()
+                .unwrap();
+        assert!(CollatorQuery::from_url(url).is_err());
     }
 
     #[test]
     fn test_deserialize_query_no_fallback_reject_extra_param() {
-        let url = "http://www.w3.org/2013/collation/UCA?lang=en;fallback=no;extra=nonsense";
-        assert!(CollatorQuery::from_url(Url::parse(url).unwrap()).is_err());
+        let url: &IriStr =
+            "http://www.w3.org/2013/collation/UCA?lang=en;fallback=no;extra=nonsense"
+                .try_into()
+                .unwrap();
+        assert!(CollatorQuery::from_url(url).is_err());
     }
 
     #[test]
     fn test_deserialize_query_yes_fallback_default_for_wrong_value() {
-        let url = "http://www.w3.org/2013/collation/UCA?lang=en;fallback=yes;strength=nonsense";
-        let query = CollatorQuery::from_url(Url::parse(url).unwrap()).unwrap();
+        let url: &IriStr =
+            "http://www.w3.org/2013/collation/UCA?lang=en;fallback=yes;strength=nonsense"
+                .try_into()
+                .unwrap();
+        let query = CollatorQuery::from_url(url).unwrap();
         assert_eq!(
             query,
             CollatorQuery {
@@ -393,8 +442,11 @@ mod tests {
 
     #[test]
     fn test_deserialize_query_yes_fallback_ignore_extra_parameter() {
-        let url = "http://www.w3.org/2013/collation/UCA?lang=en&fallback=yes;extra=nonsense";
-        let query = CollatorQuery::from_url(Url::parse(url).unwrap()).unwrap();
+        let url: IriString =
+            "http://www.w3.org/2013/collation/UCA?lang=en;fallback=yes;extra=nonsense"
+                .try_into()
+                .unwrap();
+        let query = CollatorQuery::from_url(&url).unwrap();
         assert_eq!(
             query,
             CollatorQuery {
@@ -415,24 +467,24 @@ mod tests {
     #[test]
     fn test_load_uca_collation() {
         let mut collations = Collations::new();
-        let collation = collations.load(
-            None,
-            "http://www.w3.org/2013/collation/UCA?lang=se;fallback=no",
-        );
+        let url: &IriReferenceStr = "http://www.w3.org/2013/collation/UCA?lang=se;fallback=no"
+            .try_into()
+            .unwrap();
+        let collation = collations.load(None, url);
         assert!(collation.is_ok());
     }
 
     #[test]
     fn test_load_uca_collation_fallback() {
         let mut collations = Collations::new();
-        let collation = collations.load(
-            None,
-            "http://www.w3.org/2013/collation/UCA?lang=en-US;fallback=yes",
-        );
+        let url: &IriReferenceStr = "http://www.w3.org/2013/collation/UCA?lang=en-US;fallback=yes"
+            .try_into()
+            .unwrap();
+        let collation = collations.load(None, url);
         assert!(collation.is_ok());
     }
 
-    // This fallback test is broken since we switched to static instead
+    // FIXME: This fallback test is broken since we switched to static instead
     // of blob data. I'm not sure it matters; the conformance tests
     // still work
 
@@ -449,20 +501,21 @@ mod tests {
     #[test]
     fn test_load_codepoint_collation() {
         let mut collations = Collations::new();
-        let collation = collations.load(
-            None,
-            "http://www.w3.org/2005/xpath-functions/collation/codepoint",
-        );
+        let url: &IriReferenceStr = "http://www.w3.org/2005/xpath-functions/collation/codepoint"
+            .try_into()
+            .unwrap();
+        let collation = collations.load(None, url);
         assert!(collation.is_ok());
     }
 
     #[test]
     fn test_load_html_ascii_collation() {
         let mut collations = Collations::new();
-        let collation = collations.load(
-            None,
-            "http://www.w3.org/2005/xpath-functions/collation/html-ascii-case-insensitive",
-        );
+        let url: &IriReferenceStr =
+            "http://www.w3.org/2005/xpath-functions/collation/html-ascii-case-insensitive"
+                .try_into()
+                .unwrap();
+        let collation = collations.load(None, url);
         assert!(collation.is_ok());
     }
 }

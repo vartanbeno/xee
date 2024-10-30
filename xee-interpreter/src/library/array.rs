@@ -1,5 +1,7 @@
 // https://www.w3.org/TR/xpath-functions-31/#array-functions
 
+use std::rc::Rc;
+
 use ibig::IBig;
 
 use xee_xpath_macros::xpath_fn;
@@ -12,6 +14,7 @@ use crate::function::StaticFunctionDescription;
 use crate::interpreter::Interpreter;
 use crate::occurrence::Occurrence;
 use crate::sequence;
+use crate::string::Collation;
 use crate::wrap_xpath_fn;
 
 #[xpath_fn("array:get($array as array(*), $position as xs:integer) as item()*")]
@@ -207,12 +210,8 @@ fn sort1(
     interpreter: &Interpreter,
     input: function::Array,
 ) -> error::Result<function::Array> {
-    sort_without_key(
-        context,
-        interpreter,
-        input,
-        context.static_context().default_collation_uri(),
-    )
+    let collation = context.static_context().default_collation()?;
+    sort_without_key(context, interpreter, input, collation)
 }
 
 #[xpath_fn("array:sort($array as array(*), $collation as xs:string?) as array(*)")]
@@ -222,7 +221,8 @@ fn sort2(
     input: function::Array,
     collation: Option<&str>,
 ) -> error::Result<function::Array> {
-    let collation = collation.unwrap_or(context.static_context().default_collation_uri());
+    let collation = context.static_context().resolve_collation_str(collation)?;
+
     sort_without_key(context, interpreter, input, collation)
 }
 
@@ -234,7 +234,7 @@ fn sort3(
     collation: Option<&str>,
     key: sequence::Item,
 ) -> error::Result<function::Array> {
-    let collation = collation.unwrap_or(context.static_context().default_collation_uri());
+    let collation = context.static_context().resolve_collation_str(collation)?;
     let function = key.to_function()?;
     sort_by_sequence(context, input, collation, |sequence| {
         let new_sequence =
@@ -247,7 +247,7 @@ fn sort_without_key(
     context: &context::DynamicContext,
     interpreter: &Interpreter,
     input: function::Array,
-    collation: &str,
+    collation: Rc<Collation>,
 ) -> error::Result<function::Array> {
     sort_by_sequence(context, input, collation, |sequence| {
         // the sequivalent of fn:data()
@@ -261,7 +261,7 @@ fn sort_without_key(
 fn sort_by_sequence<F>(
     context: &context::DynamicContext,
     input: function::Array,
-    collation: &str,
+    collation: Rc<Collation>,
     mut get: F,
 ) -> error::Result<function::Array>
 where
@@ -269,8 +269,6 @@ where
 {
     // see also sort_by_sequence in hof.rs. The signatures are sufficiently
     // different we don't want to try to unify them.
-
-    let collation = context.static_context().collation(collation)?;
     let sequences = input.iter().collect::<Vec<_>>();
     let keys = sequences
         .iter()

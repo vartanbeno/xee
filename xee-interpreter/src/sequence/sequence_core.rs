@@ -1,4 +1,5 @@
 use std::cmp::Ordering;
+use std::rc::Rc;
 
 // This contains a sequence abstraction that is useful
 // in interfacing with external APIs. It's a layer over the
@@ -288,7 +289,7 @@ impl Sequence {
     pub fn sorted(
         &self,
         context: &context::DynamicContext,
-        collation: &str,
+        collation: Rc<Collation>,
         xot: &Xot,
     ) -> error::Result<Self> {
         self.sorted_by_key(context, collation, |item| {
@@ -302,7 +303,7 @@ impl Sequence {
     pub fn sorted_by_key<F>(
         &self,
         context: &context::DynamicContext,
-        collation: &str,
+        collation: Rc<Collation>,
         mut get: F,
     ) -> error::Result<Self>
     where
@@ -311,7 +312,6 @@ impl Sequence {
         // see also sort_by_sequence in array.rs. The signatures are
         // sufficiently different we don't want to try to unify them.
 
-        let collation = context.static_context().collation(collation)?;
         let items = self.items()?.collect::<Vec<_>>();
         let keys = self
             .items()?

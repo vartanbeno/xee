@@ -1,6 +1,7 @@
 use std::rc::Rc;
 
 use ibig::ibig;
+use iri_string::types::IriReferenceStr;
 use xot::Xot;
 
 use crate::context::DocumentsRef;
@@ -125,7 +126,7 @@ impl<'a> Runnable<'a> {
         self.program.static_context()
     }
 
-    pub fn default_collation_uri(&self) -> &str {
+    pub fn default_collation_uri(&self) -> &IriReferenceStr {
         self.dynamic_context
             .static_context()
             .default_collation_uri()
