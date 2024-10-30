@@ -1,5 +1,3 @@
-use crossterm::style::Stylize;
-
 use xee_xpath::error::ErrorValue;
 
 use super::assert::Failure;
@@ -25,31 +23,3 @@ impl TestOutcome {
     }
 }
 
-impl std::fmt::Display for TestOutcome {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        match self {
-            TestOutcome::Passed => write!(f, "{}", "PASS".green()),
-            TestOutcome::UnexpectedError(error) => match error {
-                UnexpectedError(s) => write!(f, "{} code: {}", "WRONG ERROR".yellow(), s),
-            },
-            TestOutcome::Failed(failure) => {
-                write!(f, "{} {}", "FAIL".red(), failure)
-            }
-            TestOutcome::RuntimeError(error) => {
-                write!(f, "{} {} {:?}", "RUNTIME ERROR".red(), error, error)
-            }
-            TestOutcome::CompilationError(error) => {
-                write!(f, "{} {} {:?}", "COMPILATION ERROR".red(), error, error)
-            }
-            TestOutcome::UnsupportedExpression(error) => {
-                write!(f, "{} {}", "UNSUPPORTED EXPRESSION ERROR".red(), error)
-            }
-            TestOutcome::Unsupported => {
-                write!(f, "{}", "UNSUPPORTED".red())
-            }
-            TestOutcome::EnvironmentError(error) => {
-                write!(f, "{} {}", "CONTEXT ITEM ERROR".red(), error)
-            }
-        }
-    }
-}

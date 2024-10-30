@@ -924,7 +924,7 @@ impl fmt::Display for Failure {
                             writeln!(f, "  {}", failure)?;
                         }
                         _ => {
-                            writeln!(f, "  Unexpected test outcome {}", outcome)?;
+                            writeln!(f, "  Unexpected test outcome {:?}", outcome)?;
                         }
                     }
                 }

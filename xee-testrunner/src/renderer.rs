@@ -1,4 +1,4 @@
-use std::io::Stdout;
+use std::io::{IsTerminal, Stdout, Write};
 
 use crossterm::{
     execute,
@@ -8,7 +8,7 @@ use crossterm::{
 use crate::{
     catalog::Catalog,
     environment::Environment,
-    testcase::{Runnable, TestCase, TestOutcome},
+    testcase::{Runnable, TestCase, TestOutcome, UnexpectedError},
     testset::TestSet,
 };
 
@@ -70,11 +70,79 @@ impl<E: Environment, R: Runnable<E>> Renderer<E, R> for VerboseRenderer {
 
     fn render_test_outcome(
         &self,
-        _stdout: &mut Stdout,
+        stdout: &mut Stdout,
         test_result: &TestOutcome,
     ) -> crossterm::Result<()> {
-        println!("{}", test_result);
-        Ok(())
+        match test_result {
+            TestOutcome::Passed => {
+                writeln!(
+                    stdout,
+                    "{}",
+                    with_color(stdout, "PASS", crossterm::style::Color::Green)
+                )
+            }
+            TestOutcome::UnexpectedError(error) => match error {
+                UnexpectedError(s) => writeln!(
+                    stdout,
+                    "{} code: {}",
+                    with_color(stdout, "WRONG ERROR", crossterm::style::Color::Yellow),
+                    s
+                ),
+            },
+            TestOutcome::Failed(failure) => {
+                writeln!(
+                    stdout,
+                    "{} {}",
+                    with_color(stdout, "FAIL", crossterm::style::Color::Red),
+                    failure
+                )
+            }
+            TestOutcome::RuntimeError(error) => {
+                writeln!(
+                    stdout,
+                    "{} {} {:?}",
+                    with_color(stdout, "RUNTIME ERROR", crossterm::style::Color::Red),
+                    error,
+                    error
+                )
+            }
+            TestOutcome::CompilationError(error) => {
+                writeln!(
+                    stdout,
+                    "{} {} {:?}",
+                    with_color(stdout, "COMPILATION ERROR", crossterm::style::Color::Red),
+                    error,
+                    error
+                )
+            }
+            TestOutcome::UnsupportedExpression(error) => {
+                writeln!(
+                    stdout,
+                    "{} {}",
+                    with_color(
+                        stdout,
+                        "UNSUPPORTED EXPRESSION ERROR",
+                        crossterm::style::Color::Red
+                    ),
+                    error
+                )
+            }
+            TestOutcome::Unsupported => {
+                writeln!(
+                    stdout,
+                    "{}",
+                    with_color(stdout, "UNSUPPORTED", crossterm::style::Color::Red)
+                )
+            }
+            TestOutcome::EnvironmentError(error) => {
+                writeln!(
+                    stdout,
+                    "{} {}",
+                    with_color(stdout, "CONTEXT ITEM ERROR", crossterm::style::Color::Red),
+                    error
+                )
+            }
+        }
     }
 
     fn render_test_set_summary(
@@ -120,32 +188,27 @@ impl<E: Environment, R: Runnable<E>> Renderer<E, R> for CharacterRenderer {
         outcome: &TestOutcome,
     ) -> crossterm::Result<()> {
         match outcome {
-            TestOutcome::Passed => {
-                execute!(stdout, style::PrintStyledContent(".".green()))?;
-            }
+            TestOutcome::Passed => render_error_code(stdout, ".", crossterm::style::Color::Green),
             TestOutcome::UnexpectedError(_) => {
-                execute!(stdout, style::PrintStyledContent("F".red()))?;
+                render_error_code(stdout, "F", crossterm::style::Color::Red)
             }
-            TestOutcome::Failed(_) => {
-                execute!(stdout, style::PrintStyledContent("F".red()))?;
-            }
+            TestOutcome::Failed(_) => render_error_code(stdout, "F", crossterm::style::Color::Red),
             TestOutcome::RuntimeError(_) => {
-                execute!(stdout, style::PrintStyledContent("E".red()))?;
+                render_error_code(stdout, "E", crossterm::style::Color::Red)
             }
             TestOutcome::CompilationError(_) => {
-                execute!(stdout, style::PrintStyledContent("E".red()))?;
+                render_error_code(stdout, "E", crossterm::style::Color::Red)
             }
             TestOutcome::UnsupportedExpression(_) => {
-                execute!(stdout, style::PrintStyledContent("E".red()))?;
+                render_error_code(stdout, "E", crossterm::style::Color::Red)
             }
             TestOutcome::Unsupported => {
-                execute!(stdout, style::PrintStyledContent("E".red()))?;
+                render_error_code(stdout, "E", crossterm::style::Color::Red)
             }
             TestOutcome::EnvironmentError(_) => {
-                execute!(stdout, style::PrintStyledContent("E".red()))?;
+                render_error_code(stdout, "E", crossterm::style::Color::Red)
             }
         }
-        Ok(())
     }
 
     fn render_test_set_summary(
@@ -155,5 +218,30 @@ impl<E: Environment, R: Runnable<E>> Renderer<E, R> for CharacterRenderer {
     ) -> crossterm::Result<()> {
         println!();
         Ok(())
+    }
+}
+
+fn render_error_code(
+    stdout: &mut Stdout,
+    error_code: &str,
+    color: crossterm::style::Color,
+) -> crossterm::Result<()> {
+    if stdout.is_terminal() {
+        execute!(stdout, style::PrintStyledContent(error_code.with(color)))?;
+    } else {
+        stdout.write_all(error_code.as_bytes())?;
+    }
+    Ok(())
+}
+
+fn with_color<'a>(
+    stdout: &Stdout,
+    text: &'a str,
+    color: crossterm::style::Color,
+) -> crossterm::style::StyledContent<&'a str> {
+    if stdout.is_terminal() {
+        text.with(color)
+    } else {
+        text.stylize()
     }
 }
