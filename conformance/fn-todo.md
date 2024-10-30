@@ -9,10 +9,6 @@ sources.
 
 ## URIs
 
-- fn:base-uri
-
-needs a notion of base URIs on nodes
-
 - fn:document-uri
 
 needs some way to look up the document URI for a node.
