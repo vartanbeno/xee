@@ -337,6 +337,7 @@ impl PartialEq for Value {
     }
 }
 
+#[derive(Debug)]
 pub(crate) enum ValueIter {
     Empty,
     OneIter(std::iter::Once<sequence::Item>),

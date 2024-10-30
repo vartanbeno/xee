@@ -554,6 +554,7 @@ where
     }
 }
 
+#[derive(Debug)]
 pub struct ItemAtomicIter {
     value_iter: stack::ValueIter,
 }
