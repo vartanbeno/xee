@@ -27,6 +27,8 @@ fn resolve_qname(
         // of generics we're not ready for at this point.
         let namespaces = element_namespaces(node, interpreter.xot());
         let name = parse_name(qname, &namespaces)?.value;
+        // parse_name doesn't put in the default namespace if necessary, so we do it here
+        let name = name.with_default_namespace(namespaces.default_element_namespace());
         Ok(Some(name.into()))
     } else {
         Ok(None)
@@ -34,18 +36,24 @@ fn resolve_qname(
 }
 
 fn element_namespaces(node: xot::Node, xot: &Xot) -> Namespaces {
-    let pairs = xot
-        .inherited_prefixes(node)
-        .iter()
-        .map(|(prefix_id, namespace_id)| {
-            (
-                xot.prefix_str(*prefix_id).to_string(),
-                xot.namespace_str(*namespace_id).to_string(),
-            )
-        })
-        .collect::<HashMap<_, _>>();
+    let mut m = HashMap::default();
 
-    Namespaces::new(pairs, "".to_string(), "".to_string())
+    let mut default_element_namespace = "";
+
+    for (prefix_id, namespace_id) in xot.namespaces_in_scope(node) {
+        let prefix = xot.prefix_str(prefix_id).to_string();
+        if m.contains_key(&prefix) {
+            continue;
+        }
+        if xot.empty_prefix() == prefix_id {
+            default_element_namespace = xot.namespace_str(namespace_id);
+            // we don't continue as we want the empty prefix to be in the map
+        }
+        let namespace = xot.namespace_str(namespace_id).to_string();
+        m.insert(prefix, namespace);
+    }
+
+    Namespaces::new(m, default_element_namespace.to_string(), "".to_string())
 }
 
 #[xpath_fn("fn:QName($paramURI as xs:string?, $paramQName as xs:string) as xs:QName")]
@@ -117,7 +125,7 @@ fn local_name_from_qname(arg: Option<Name>) -> error::Result<Option<atomic::Atom
 fn namespace_uri_from_qname(arg: Option<Name>) -> error::Result<Option<atomic::Atomic>> {
     if let Some(arg) = arg {
         let namespace = arg.namespace();
-        if !arg.namespace().is_empty() {
+        if !namespace.is_empty() {
             Ok(Some(atomic::Atomic::String(
                 atomic::StringType::AnyURI,
                 Rc::from(namespace.to_string()),

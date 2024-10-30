@@ -936,8 +936,6 @@ fn-function-lookup-245
 fn-function-lookup-246
 fn-function-lookup-247
 fn-function-lookup-248
-fn-function-lookup-250
-fn-function-lookup-260
 fn-function-lookup-275
 fn-function-lookup-276
 fn-function-lookup-277
@@ -1644,9 +1642,6 @@ fn-random-number-generator-9
 = fn-remove
 = fn-replace
 = fn-resolve-QName
-fn-resolve-qname-23
-fn-resolve-qname-24
-fn-resolve-qname-25
 = fn-resolve-uri
 = fn-reverse
 = fn-root
@@ -2518,8 +2513,6 @@ function-literal-245
 function-literal-246
 function-literal-247
 function-literal-248
-function-literal-250
-function-literal-260
 function-literal-275
 function-literal-276
 function-literal-277
