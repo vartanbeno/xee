@@ -6,7 +6,9 @@ pub(crate) struct DocumentOrder(usize, usize);
 
 impl DocumentOrder {
     pub(crate) fn generate_id(&self) -> String {
-        format!("id_{}_{}", self.0, self.1)
+        // must be alphanumeric and start with alphabetic character, so we
+        // cannot use _ or - as separators
+        format!("id{}s{}", self.0, self.1)
     }
 }
 

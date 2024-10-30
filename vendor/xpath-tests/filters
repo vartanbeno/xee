@@ -1026,13 +1026,6 @@ fn-function-lookup-812
 fn-function-name-017
 fn-function-name-026
 = fn-generate-id
-generate-id-001
-generate-id-002
-generate-id-003
-generate-id-004
-generate-id-005
-generate-id-006
-generate-id-019
 = fn-has-children
 = fn-head
 = fn-hours-from-dateTime
