@@ -898,7 +898,6 @@ millisecs-904
 millisecs-905
 = fn-function-arity
 fn-function-arity-016
-fn-function-arity-017
 = fn-function-lookup
 fn-function-lookup-005
 fn-function-lookup-006
@@ -1025,7 +1024,6 @@ fn-function-lookup-766b
 fn-function-lookup-812
 = fn-function-name
 fn-function-name-017
-fn-function-name-018
 fn-function-name-026
 = fn-generate-id
 generate-id-001

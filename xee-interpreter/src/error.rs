@@ -661,7 +661,9 @@ impl From<xee_xpath_ast::ParserError> for SpannedError {
         let span = e.span();
         let error = match e {
             ParserError::ExpectedFound { .. } => Error::XPST0003,
-            ParserError::ArityOverflow { .. } => Error::XPDY0130,
+            // this is what fn-function-arity-017 expects, even though
+            // implementation limit exceeded (XPST00130) seems reasonable to me.
+            ParserError::ArityOverflow { .. } => Error::FOAR0002,
             ParserError::Reserved { .. } => Error::XPST0003,
             ParserError::UnknownPrefix { .. } => Error::XPST0081,
             ParserError::UnknownType { .. } => Error::XPST0051,

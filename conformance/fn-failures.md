@@ -25,8 +25,3 @@ good feedback.
 
 This fails with a XPTY0004. Why? Is it because untypedAtomic is not allowed as an argument?
 
-## fn:function-arity
-
-### fn-function-arity-017
-
-Ridiculously long arity for concat fails with wrong error. (XPTY0130 instead of FOAR0002)
