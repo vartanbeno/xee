@@ -14,6 +14,7 @@ mod map;
 mod math;
 mod node;
 mod numeric;
+mod parse;
 mod qname;
 mod sequence;
 mod string;
@@ -43,5 +44,6 @@ pub(crate) fn static_function_descriptions() -> Vec<StaticFunctionDescription> {
     descriptions.extend(hidden_xslt::static_function_descriptions());
     descriptions.extend(uri::static_function_descriptions());
     descriptions.extend(external::static_function_descriptions());
+    descriptions.extend(parse::static_function_descriptions());
     descriptions
 }

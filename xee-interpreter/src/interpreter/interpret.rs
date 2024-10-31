@@ -1071,6 +1071,10 @@ impl<'a> Interpreter<'a> {
         self.state.xot()
     }
 
+    pub(crate) fn xot_mut(&mut self) -> &mut Xot {
+        self.state.xot_mut()
+    }
+
     fn xml_append(&mut self, parent_node: xot::Node, value: stack::Value) -> error::Result<()> {
         let mut string_values = Vec::new();
         for item in value.items()? {
