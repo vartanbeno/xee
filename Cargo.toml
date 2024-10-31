@@ -41,6 +41,7 @@ blanket = "0.2.0"
 thiserror = "1.0.40"
 regexml = { git = "ssh://git@github.com/Paligo/regexml.git" }
 regex = "1.9.3"
+iri-string = "0.7.6"
 
 [profile.test.package.xot]
 opt-level = 3

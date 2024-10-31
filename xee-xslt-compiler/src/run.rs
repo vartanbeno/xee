@@ -13,9 +13,9 @@ pub fn evaluate_program(
     program: &Program,
     root: Node,
 ) -> error::SpannedResult<sequence::Sequence> {
-    let uri = xee_interpreter::xml::Uri::new("http://example.com");
+    let uri = "http://example.com".try_into().unwrap();
     let mut documents = xee_interpreter::xml::Documents::new();
-    let handle = documents.add_root(xot, &uri, root).unwrap();
+    let handle = documents.add_root(xot, uri, root).unwrap();
     let root = documents.get_node_by_handle(handle).unwrap();
     let mut dynamic_context_builder = program.dynamic_context_builder();
     dynamic_context_builder.context_node(root);

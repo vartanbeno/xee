@@ -1,4 +1,5 @@
 use insta::assert_debug_snapshot;
+use iri_string::types::IriStr;
 use xee_xpath_ast::{ast, Namespaces};
 use xot::Xot;
 
@@ -7,7 +8,7 @@ use xee_interpreter::{
     context::{StaticContext, Variables},
     error::SpannedResult,
     sequence::{Item, Sequence},
-    xml::{Document, Documents, Uri},
+    xml::{Document, Documents},
 };
 use xee_xpath_compiler::{
     evaluate, evaluate_without_focus, evaluate_without_focus_with_variables, parse,
@@ -52,9 +53,9 @@ where
     S: Fn(&Xot, &Document) -> Vec<xot::Node>,
 {
     let mut xot = Xot::new();
-    let uri = Uri::new("http://example.com");
+    let uri: &IriStr = "http://example.com".try_into().unwrap();
     let mut documents = Documents::new();
-    let handle = documents.add_string(&mut xot, &uri, xml).unwrap();
+    let handle = documents.add_string(&mut xot, uri, xml).unwrap();
     let document = documents.get_by_handle(handle).unwrap();
     let root = document.root();
     let nodes = get_nodes(&xot, document);

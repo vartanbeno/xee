@@ -20,6 +20,7 @@ xee-xpath = { path = "../xee-xpath" }
 ibig = { workspace = true }
 rust_decimal = { workspace = true }
 anyhow = { workspace = true }
+iri-string = { workspace = true }
 
 [dev-dependencies]
 insta = { version = "1.29.0", features = ["yaml", "glob"] }

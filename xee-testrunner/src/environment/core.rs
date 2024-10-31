@@ -263,7 +263,7 @@ mod tests {
                             created: None,
                             modified: vec![],
                         },
-                        uri: None,
+                        uri: "a.xml".try_into().unwrap(),
                         validation: None,
                     },
                     Source {
@@ -274,7 +274,7 @@ mod tests {
                             created: None,
                             modified: vec![],
                         },
-                        uri: None,
+                        uri: "b.xml".try_into().unwrap(),
                         validation: None,
                     },
                 ],
@@ -326,7 +326,7 @@ mod tests {
                         created: None,
                         modified: vec![],
                     },
-                    uri: None,
+                    uri: "Foo".try_into().unwrap(),
                     validation: None,
                 },],
                 ..Default::default()

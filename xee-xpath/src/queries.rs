@@ -212,7 +212,7 @@ impl<'a> Queries<'a> {
 #[cfg(test)]
 mod tests {
 
-    use xee_interpreter::xml::Uri;
+    use iri_string::types::IriStr;
 
     use crate::{query::Query, Documents};
 
@@ -221,8 +221,8 @@ mod tests {
     #[test]
     fn test_one_query() -> Result<()> {
         let mut documents = Documents::new();
-        let uri = Uri::new("http://example.com");
-        let doc = documents.add_string(&uri, "<root>foo</root>").unwrap();
+        let uri: &IriStr = "http://example.com".try_into().unwrap();
+        let doc = documents.add_string(uri, "<root>foo</root>").unwrap();
 
         let queries = Queries::default();
         let q = queries.one("/root/string()", |_, item| {

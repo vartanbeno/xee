@@ -1,6 +1,7 @@
+use iri_string::types::IriStr;
 use xee_interpreter::{
     context::DocumentsRef,
-    xml::{DocumentHandle, DocumentsError, Uri},
+    xml::{DocumentHandle, DocumentsError},
 };
 use xot::Xot;
 
@@ -30,7 +31,11 @@ impl Documents {
     ///
     /// Something may go wrong during processing of the XML document; this is
     /// a [`xot::Error`].
-    pub fn add_string(&mut self, uri: &Uri, xml: &str) -> Result<DocumentHandle, DocumentsError> {
+    pub fn add_string(
+        &mut self,
+        uri: &IriStr,
+        xml: &str,
+    ) -> Result<DocumentHandle, DocumentsError> {
         self.documents
             .borrow_mut()
             .add_string(&mut self.xot, uri, xml)

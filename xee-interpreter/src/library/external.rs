@@ -1,9 +1,7 @@
 use iri_string::types::{IriReferenceStr, IriString};
 use xee_xpath_macros::xpath_fn;
 
-use crate::{
-    context::DynamicContext, error, function::StaticFunctionDescription, wrap_xpath_fn, xml::Uri,
-};
+use crate::{context::DynamicContext, error, function::StaticFunctionDescription, wrap_xpath_fn};
 
 #[xpath_fn("fn:doc($uri as xs:string?) as document-node()?")]
 fn doc(context: &DynamicContext, uri: Option<&str>) -> error::Result<Option<xot::Node>> {
@@ -25,7 +23,7 @@ fn doc_available(context: &DynamicContext, uri: Option<&str>) -> bool {
 
 fn document_node(context: &DynamicContext, uri: &str) -> error::Result<Option<xot::Node>> {
     let iri_reference: &IriReferenceStr = uri.try_into().map_err(|_| error::Error::FODC0005)?;
-    let iri: IriString = match iri_reference.to_iri() {
+    let uri: IriString = match iri_reference.to_iri() {
         Ok(iri) => iri.into(),
         Err(relative_iri) => {
             let base = context.static_context().static_base_uri();
@@ -36,7 +34,6 @@ fn document_node(context: &DynamicContext, uri: &str) -> error::Result<Option<xo
             }
         }
     };
-    let uri = Uri::new(iri.as_str());
     // first check whether a document is there at all, if so, return it
     let documents = context.documents();
     let documents = documents.borrow();

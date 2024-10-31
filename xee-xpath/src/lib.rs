@@ -12,12 +12,12 @@
 //! this to execute queries.
 //!
 //! ```rust
-//! use xee_xpath::{Documents, Queries, Query, Uri};
+//! use xee_xpath::{Documents, Queries, Query};
 //!
 //! // create a new documents object
 //! let mut documents = Documents::new();
 //! // load a document from a string
-//! let doc = documents.add_string(&Uri::new("http://example.com"), "<root>foo</root>").unwrap();
+//! let doc = documents.add_string("http://example.com".try_into().unwrap(), "<root>foo</root>").unwrap();
 //!
 //! // create a new queries object
 //! let mut queries = Queries::default();
@@ -36,6 +36,29 @@
 //!
 //! # Ok::<(), xee_xpath::error::Error>(())
 //! ```
+//!
+//! Note that to represent URLs, we use the
+//! [`iri-string`](https://docs.rs/iri-string/latest/iri_string/) crate.
+//! To make an `IriString` from a string, you can use the `try_into` method:
+//!
+//! ```rust
+//! use iri_string::types::IriString;
+//!
+//! let uri: IriString = "http://example.com".try_into().unwrap();
+//! # Ok::<(), xee_xpath::error::Error>(())
+//! ```
+//!
+//! To make an `IriStr` reference, just use `&` on an `IriString`; this is
+//! like the relationship between `String` and `&str`. You can also use the
+//! `try_into` method on a `&str` directly:
+//!
+//! ```rust
+//! use iri_string::types::IriStr;
+//!
+//! let uri: &IriStr = "http://example.com".try_into().unwrap();
+//! # Ok::<(), xee_xpath::error::Error>(())
+//! ```
+
 pub mod atomic;
 pub mod context;
 mod documents;
@@ -52,4 +75,4 @@ pub use queries::Queries;
 pub use query::{Query, Recurse};
 pub use xee_interpreter::atomic::Atomic;
 pub use xee_interpreter::sequence::{Item, Sequence};
-pub use xee_interpreter::xml::{DocumentHandle, Uri};
+pub use xee_interpreter::xml::DocumentHandle;

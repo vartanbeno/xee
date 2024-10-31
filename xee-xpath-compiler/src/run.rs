@@ -1,10 +1,11 @@
+use iri_string::types::IriString;
 use xot::Xot;
 
 use xee_interpreter::{
     context::{StaticContext, StaticContextBuilder, Variables},
     error::SpannedResult,
     sequence::Sequence,
-    xml::{Documents, Uri},
+    xml::Documents,
 };
 use xee_xpath_ast::{Namespaces, FN_NAMESPACE};
 
@@ -35,7 +36,7 @@ pub fn evaluate_root(
     );
     let static_context = StaticContext::from_namespaces(namespaces);
     // TODO: isn't the right URI
-    let uri = Uri::new("http://example.com");
+    let uri: IriString = "http://example.com".try_into().unwrap();
     let mut documents = Documents::new();
     // TODO: The unwrap here is bad, but DocumentsError isn't integrated int
     // the general error system yet

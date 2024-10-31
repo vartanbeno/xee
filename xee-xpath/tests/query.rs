@@ -1,24 +1,27 @@
 use ibig::{ibig, IBig};
 use xee_interpreter::sequence::Sequence;
-use xee_xpath::{error, query::RecurseQuery, Documents, Item, Queries, Query, Recurse, Uri};
+use xee_xpath::{error, query::RecurseQuery, Documents, Item, Queries, Query, Recurse};
 
 #[test]
 fn test_duplicate_document_uri() -> error::Result<()> {
     let mut documents = Documents::new();
     let _doc1 = documents
         .add_string(
-            &Uri::new("doc1"),
+            "http://example.com/doc1".try_into().unwrap(),
             r#"<doc><result><any-of><value>A</value></any-of></result></doc>"#,
         )
         .unwrap();
     // try to load doc with the same URI
     let doc2_err = documents
         .add_string(
-            &Uri::new("doc1"),
+            "http://example.com/doc1".try_into().unwrap(),
             r#"<doc><result><value>A</value></result></doc>"#,
         )
         .unwrap_err();
-    assert_eq!(doc2_err.to_string(), "Duplicate URI: doc1");
+    assert_eq!(
+        doc2_err.to_string(),
+        "Duplicate URI: http://example.com/doc1"
+    );
     Ok(())
 }
 
@@ -26,7 +29,7 @@ fn test_duplicate_document_uri() -> error::Result<()> {
 fn test_simple_query() -> error::Result<()> {
     let mut documents = Documents::new();
     let doc = documents
-        .add_string(&Uri::new("http://example.com"), "<root>foo</root>")
+        .add_string("http://example.com".try_into().unwrap(), "<root>foo</root>")
         .unwrap();
 
     let queries = Queries::default();
@@ -43,7 +46,7 @@ fn test_simple_query() -> error::Result<()> {
 fn test_sequence_query() -> error::Result<()> {
     let mut documents = Documents::new();
     let doc = documents
-        .add_string(&Uri::new("http://example.com"), "<root>foo</root>")
+        .add_string("http://example.com".try_into().unwrap(), "<root>foo</root>")
         .unwrap();
 
     let queries = Queries::default();
@@ -60,13 +63,13 @@ fn test_option_query() -> error::Result<()> {
     let mut documents = Documents::new();
     let doc_with_value = documents
         .add_string(
-            &Uri::new("http://example.com/with_value"),
+            "http://example.com/with_value".try_into().unwrap(),
             "<root><value>Foo</value></root>",
         )
         .unwrap();
     let doc_without_value = documents
         .add_string(
-            &Uri::new("http://example.com/without_value"),
+            "http://example.com/without_value".try_into().unwrap(),
             "<root></root>",
         )
         .unwrap();
@@ -88,7 +91,7 @@ fn test_nested_query() -> error::Result<()> {
     let mut documents = Documents::new();
     let doc = documents
         .add_string(
-            &Uri::new("http://example.com"),
+            "http://example.com".try_into().unwrap(),
             "<root><a>1</a><a>2</a></root>",
         )
         .unwrap();
@@ -144,13 +147,13 @@ fn test_option_query_recurse() -> error::Result<()> {
     let mut documents = Documents::new();
     let doc1 = documents
         .add_string(
-            &Uri::new("doc1"),
+            "http://example.com/doc1".try_into().unwrap(),
             r#"<doc><result><any-of><value>A</value></any-of></result></doc>"#,
         )
         .unwrap();
     let doc2 = documents
         .add_string(
-            &Uri::new("doc2"),
+            "http://example.com/doc2".try_into().unwrap(),
             r#"<doc><result><value>A</value></result></doc>"#,
         )
         .unwrap();
@@ -205,13 +208,13 @@ fn test_many_query_recurse() -> error::Result<()> {
     let mut documents = Documents::new();
     let doc1 = documents
         .add_string(
-            &Uri::new("doc1"),
+            "http://example.com/doc1".try_into().unwrap(),
             r#"<doc><result><any-of><value>A</value></any-of><any-of><value>B</value></any-of></result></doc>"#,
         )
         .unwrap();
     let doc2 = documents
         .add_string(
-            &Uri::new("doc2"),
+            "http://example.com/doc2".try_into().unwrap(),
             r#"<doc><result><value>A</value></result></doc>"#,
         )
         .unwrap();

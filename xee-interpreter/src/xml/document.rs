@@ -1,6 +1,7 @@
 use std::sync::atomic;
 
 use ahash::{HashMap, HashMapExt};
+use iri_string::types::{IriStr, IriString};
 use xot::Xot;
 
 use super::Annotations;
@@ -37,23 +38,9 @@ impl From<xot::Error> for DocumentsError {
     }
 }
 
-/// A URI for a document.
-#[derive(Debug, Clone, Eq, PartialEq, Hash)]
-pub struct Uri(pub(crate) String);
-
-impl Uri {
-    pub fn new(s: &str) -> Self {
-        Self(s.to_string())
-    }
-
-    pub fn as_str(&self) -> &str {
-        &self.0
-    }
-}
-
 #[derive(Debug, Clone)]
 pub struct Document {
-    pub(crate) uri: Uri,
+    pub(crate) uri: IriString,
     root: xot::Node,
 }
 
@@ -75,12 +62,15 @@ impl Document {
 /// Alternatively this collection can be added to incrementally during
 /// processing using the `fn:doc` function for instance. Once a document under
 /// a URL is present, it cannot be changed anymore.
+///
+/// The `fn:parse-xml` and `fn:parse-xml-fragment` functions can be used to
+/// create new documents from strings without URLs.
 #[derive(Debug, Clone)]
 pub struct Documents {
     id: usize,
     annotations: Annotations,
     documents: Vec<Document>,
-    by_uri: HashMap<Uri, DocumentHandle>,
+    by_uri: HashMap<IriString, DocumentHandle>,
 }
 
 /// A handle to a document.
@@ -118,7 +108,7 @@ impl Documents {
     pub fn add_string(
         &mut self,
         xot: &mut Xot,
-        uri: &Uri,
+        uri: &IriStr,
         xml: &str,
     ) -> Result<DocumentHandle, DocumentsError> {
         let root = xot.parse(xml)?;
@@ -129,7 +119,7 @@ impl Documents {
     pub fn add_root(
         &mut self,
         xot: &Xot,
-        uri: &Uri,
+        uri: &IriStr,
         root: xot::Node,
     ) -> Result<DocumentHandle, DocumentsError> {
         if self.by_uri.contains_key(uri) {
@@ -143,10 +133,10 @@ impl Documents {
             id,
         };
         self.documents.push(Document {
-            uri: uri.clone(),
+            uri: uri.to_owned(),
             root,
         });
-        self.by_uri.insert(uri.clone(), handle);
+        self.by_uri.insert(uri.to_owned(), handle);
         self.annotations.add(xot, root);
 
         Ok(handle)
@@ -167,13 +157,13 @@ impl Documents {
     }
 
     /// Obtain a document by URI
-    pub fn get_by_uri(&self, uri: &Uri) -> Option<&Document> {
+    pub fn get_by_uri(&self, uri: &IriStr) -> Option<&Document> {
         let handle = self.by_uri.get(uri)?;
         self.get_by_handle(*handle)
     }
 
     /// Obtain document node by URI
-    pub fn get_node_by_uri(&self, uri: &Uri) -> Option<xot::Node> {
+    pub fn get_node_by_uri(&self, uri: &IriStr) -> Option<xot::Node> {
         Some(self.get_by_uri(uri)?.root)
     }
 

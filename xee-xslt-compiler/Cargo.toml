@@ -16,6 +16,7 @@ serde = ["xee-xslt-ast/serde", "xee-interpreter/serde"]
 
 [dependencies]
 ahash = { workspace = true }
+iri-string = { workspace = true }
 ordered-float = { workspace = true }
 rust_decimal = { workspace = true }
 rust_decimal_macros = { workspace = true }

@@ -28,6 +28,7 @@ xee-xpath-ast = { path = "../xee-xpath-ast" }
 ahash = { workspace = true }
 arrayvec = "0.7.2"
 chumsky = { workspace = true }
+iri-string = { workspace = true }
 next-gen = "0.1.1"
 strum = { workspace = true }
 strum_macros = { workspace = true }
@@ -53,7 +54,6 @@ icu_provider_adapters = { workspace = true }
 serde = { workspace = true, features = ["derive"], optional = true }
 regexml = { workspace = true }
 percent-encoding = "2.3.1"
-iri-string = "0.7.6"
 
 [dev-dependencies]
 insta = { version = "1.29.0", features = ["yaml", "glob"] }

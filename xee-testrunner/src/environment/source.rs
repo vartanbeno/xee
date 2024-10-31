@@ -1,10 +1,10 @@
 use anyhow::Result;
-use iri_string::types::{IriAbsoluteStr, IriReferenceStr};
+use iri_string::types::{IriAbsoluteStr, IriReferenceStr, IriReferenceString, IriString};
 use std::fs::File;
 use std::io::{BufReader, Read};
 use std::path::{Path, PathBuf};
 
-use xee_xpath::{Documents, Queries, Query, Uri};
+use xee_xpath::{Documents, Queries, Query};
 use xee_xpath_load::{convert_string, Loadable};
 
 use crate::metadata::Metadata;
@@ -16,7 +16,7 @@ pub(crate) struct Source {
     // we may need to define this differently
     pub(crate) role: SourceRole,
     pub(crate) content: SourceContent,
-    pub(crate) uri: Option<String>,
+    pub(crate) uri: IriReferenceString,
     pub(crate) validation: Option<Validation>,
 }
 
@@ -38,7 +38,7 @@ pub(crate) enum Validation {
 pub(crate) enum SourceRole {
     Context,
     Var(String),
-    Doc(String), // URI
+    Doc(IriReferenceString), // URI
 }
 
 impl Source {
@@ -46,30 +46,21 @@ impl Source {
         &self,
         base_dir: &Path,
         documents: &mut Documents,
-        uri: &Option<String>,
+        uri: &IriReferenceStr,
         base_uri: Option<&IriAbsoluteStr>,
     ) -> Result<xot::Node> {
+        let uri: IriString = if let Some(base_uri) = base_uri {
+            uri.resolve_against(base_uri).into()
+        } else {
+            panic!("Cannot resolve relative URL")
+        };
+
         match &self.content {
             SourceContent::Path(path) => {
                 // this path resolution code is decidedly ugly
                 // TODO: would be nice if we could get rid of options somewhere
                 // down the line earlier and resolve earlier.
                 let full_path = base_dir.join(path);
-                let uri = if let Some(uri) = uri {
-                    let uri = if let Some(base_uri) = base_uri {
-                        let uri: &str = uri.as_ref();
-                        let uri: &IriReferenceStr = uri.try_into()?;
-                        uri.resolve_against(base_uri).to_string()
-                    } else {
-                        uri.to_string()
-                    };
-                    Uri::new(&uri)
-                } else {
-                    // construct a Uri
-                    // TODO: this is not really a proper URI but
-                    // what matters is that it's unique here
-                    Uri::new(&full_path.to_string_lossy())
-                };
                 // try to get the cached version of the document
                 {
                     // scope borrowed_documents so we drop it afterward
@@ -99,15 +90,6 @@ impl Source {
                     .unwrap())
             }
             SourceContent::String(value) => {
-                let uri = if let Some(uri) = uri {
-                    Uri::new(uri)
-                } else {
-                    // create a new unique uri
-                    Uri::new(&format!(
-                        "string-source-{}",
-                        documents.documents().borrow().len()
-                    ))
-                };
                 // we don't try to get a cached version of the document, as
                 // that would be different each time. we just add it to documents
                 // and return it
@@ -143,6 +125,22 @@ impl Source {
             };
             let role = role_query.execute(session, item)?;
             let uri = uri_query.execute(session, item)?;
+
+            let uri: IriReferenceString = if let Some(uri) = uri {
+                uri.try_into().unwrap()
+            } else {
+                match &content {
+                    // if there is no uri attribute, use the file attribute as the url
+                    SourceContent::Path(path) => {
+                        let uri = path.to_string_lossy().to_string();
+                        uri.try_into().unwrap()
+                    }
+                    SourceContent::String(_) => {
+                        panic!("Cannot have a source without a URI or file attribute")
+                    }
+                }
+            };
+
             let metadata = metadata_query.execute(session, item)?;
             // we can return multiple sources if both role and uri are set
             // we flatten it later
@@ -161,17 +159,16 @@ impl Source {
                         metadata: metadata.clone(),
                         role: SourceRole::Var(role),
                         content: content.clone(),
-
                         uri,
                         validation: None,
                     });
                 }
-            } else if let Some(uri) = uri {
+            } else {
                 sources.push(Source {
                     metadata,
                     role: SourceRole::Doc(uri.clone()),
                     content,
-                    uri: Some(uri),
+                    uri,
                     // TODO
                     validation: None,
                 });
