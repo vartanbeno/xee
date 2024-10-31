@@ -306,7 +306,7 @@ mod tests {
         let xml = format!(
             r#"
             <environment xmlns="{}">
-                <source role="."><content>Foo</content></source>
+                <source role="." uri="example"><content>Foo</content></source>
             </environment>"#,
             XPATH_TEST_NS
         );
@@ -326,7 +326,7 @@ mod tests {
                         created: None,
                         modified: vec![],
                     },
-                    uri: "Foo".try_into().unwrap(),
+                    uri: "example".try_into().unwrap(),
                     validation: None,
                 },],
                 ..Default::default()
