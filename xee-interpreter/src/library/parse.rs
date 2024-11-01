@@ -50,6 +50,8 @@ fn parse_xml_fragment(
     }
 }
 
+// #[xpath_fn("fn:serialize($arg as item()*) as xs:string")]
+
 pub(crate) fn static_function_descriptions() -> Vec<StaticFunctionDescription> {
     vec![
         wrap_xpath_fn!(parse_xml),

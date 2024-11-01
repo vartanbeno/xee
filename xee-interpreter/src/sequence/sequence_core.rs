@@ -337,6 +337,23 @@ impl Sequence {
             .collect::<Vec<_>>();
         Ok(items.into())
     }
+
+    /// Flatten all arrays in this sequence
+    pub fn flatten(&self) -> error::Result<sequence::Sequence> {
+        let mut result = vec![];
+        for item in self.items()? {
+            if let Ok(array) = item.to_array() {
+                for sequence in array.iter() {
+                    for item in sequence.flatten()?.items()? {
+                        result.push(item.clone());
+                    }
+                }
+            } else {
+                result.push(item.clone());
+            }
+        }
+        Ok(result.into())
+    }
 }
 
 impl Default for Sequence {

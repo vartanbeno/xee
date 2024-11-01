@@ -300,23 +300,7 @@ where
 
 #[xpath_fn("array:flatten($input as item()*) as item()*")]
 fn flatten(input: &sequence::Sequence) -> error::Result<sequence::Sequence> {
-    flatten_helper(input)
-}
-
-fn flatten_helper(input: &sequence::Sequence) -> error::Result<sequence::Sequence> {
-    let mut result = vec![];
-    for item in input.items()? {
-        if let Ok(array) = item.to_array() {
-            for sequence in array.iter() {
-                for item in flatten_helper(sequence)?.items()? {
-                    result.push(item.clone());
-                }
-            }
-        } else {
-            result.push(item.clone());
-        }
-    }
-    Ok(result.into())
+    input.flatten()
 }
 
 fn convert_position(position: IBig) -> error::Result<usize> {

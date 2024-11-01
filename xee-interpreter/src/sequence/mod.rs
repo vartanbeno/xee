@@ -5,6 +5,7 @@
 /// stack module.
 mod item;
 mod matching;
+mod normalization;
 mod sequence_core;
 mod sequence_type;
 
