@@ -1,6 +1,4 @@
 use insta::assert_debug_snapshot;
-use iri_string::types::IriStr;
-use xee_xpath_ast::{ast, Namespaces};
 use xot::Xot;
 
 use xee_interpreter::{
@@ -10,6 +8,7 @@ use xee_interpreter::{
     sequence::{Item, Sequence},
     xml::{Document, Documents},
 };
+use xee_xpath_ast::{ast, Namespaces};
 use xee_xpath_compiler::{
     evaluate, evaluate_without_focus, evaluate_without_focus_with_variables, parse,
 };

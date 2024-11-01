@@ -117,6 +117,16 @@ impl Documents {
         self.add_root(xot, uri, root)
     }
 
+    /// Add a string as an XML fragment.
+    pub fn add_fragment_string(
+        &mut self,
+        xot: &mut Xot,
+        xml: &str,
+    ) -> Result<DocumentHandle, DocumentsError> {
+        let root = xot.parse_fragment(xml)?;
+        self.add_root(xot, None, root)
+    }
+
     /// Add a root node of an XML document. Designate it with a URI.
     pub fn add_root(
         &mut self,

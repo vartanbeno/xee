@@ -971,8 +971,6 @@ fn-function-lookup-389
 fn-function-lookup-390
 fn-function-lookup-391
 fn-function-lookup-392
-fn-function-lookup-395
-fn-function-lookup-396
 fn-function-lookup-397
 fn-function-lookup-398
 fn-function-lookup-399
@@ -1558,28 +1556,11 @@ parse-xml-010
 parse-xml-011
 = fn-parse-xml-fragment
 parse-xml-fragment-001
-parse-xml-fragment-004
-parse-xml-fragment-005
-parse-xml-fragment-006
-parse-xml-fragment-007
-parse-xml-fragment-008
-parse-xml-fragment-009
 parse-xml-fragment-010
-parse-xml-fragment-011
-parse-xml-fragment-012
 parse-xml-fragment-013
 parse-xml-fragment-014
 parse-xml-fragment-015
-parse-xml-fragment-016
-parse-xml-fragment-017
-parse-xml-fragment-018
-parse-xml-fragment-019
-parse-xml-fragment-020
 parse-xml-fragment-021
-parse-xml-fragment-022
-parse-xml-fragment-023
-parse-xml-fragment-024
-parse-xml-fragment-025
 = fn-path
 = fn-position
 = fn-prefix-from-QName
@@ -2534,8 +2515,6 @@ function-literal-389
 function-literal-390
 function-literal-391
 function-literal-392
-function-literal-395
-function-literal-396
 function-literal-397
 function-literal-398
 function-literal-399

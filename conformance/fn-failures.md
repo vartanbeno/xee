@@ -57,7 +57,8 @@ the test runner to help debug this:
 We get back $b, $a, $b, $a
 
 In the assertions, it expects entry 1 and 2 to be $a (with 1), and entry
-3 and 4 to be $b (with 2), so $a, $a, $b, $b.
+3 and 4 to be $b (with 2), so $a, $a, $b, $b. Seems to be a problem with NaN
+in array sorting.
 
 ### fn-sort-23
 
@@ -76,5 +77,23 @@ No parse-xml implementation.
 This gives back a runtime error, why? It appears like substring isn't even
 being called, so what gives?
 
+## fn:parse-xml-fragment
 
+### parse-xml-fragment-010
 
+The problem is with the processing-instruction rule:
+
+```
+parse-xml-fragment("<a/><!--comment--><?PI?><b/>")/node()[3][self::processing-instruction(PI)]
+```
+
+is not matching, and it should.
+
+## parse-xml-fragment-021
+
+This appears to be a type error because we're passing the result of
+parse-xml-fragment, a docuemnt node, into string-to-codepoints. This should
+presumably do a cast to the string value, but this isn't happening.
+
+Why it doesn't happen is unclear; perhaps the function conversion rules behave
+differently from the macro-based built-in functions than with inline functions?
