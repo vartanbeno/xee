@@ -35,12 +35,11 @@ pub fn evaluate_root(
         FN_NAMESPACE.to_string(),
     );
     let static_context = StaticContext::from_namespaces(namespaces);
-    // TODO: isn't the right URI
-    let uri: IriString = "http://example.com".try_into().unwrap();
+
     let mut documents = Documents::new();
     // TODO: The unwrap here is bad, but DocumentsError isn't integrated int
     // the general error system yet
-    documents.add_root(xot, &uri, root).unwrap();
+    documents.add_root(xot, None, root).unwrap();
 
     let program = parse(static_context, xpath)?;
 

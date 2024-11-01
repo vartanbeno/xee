@@ -40,7 +40,7 @@ impl From<xot::Error> for DocumentsError {
 
 #[derive(Debug, Clone)]
 pub struct Document {
-    pub(crate) uri: IriString,
+    pub(crate) uri: Option<IriString>,
     root: xot::Node,
 }
 
@@ -71,6 +71,7 @@ pub struct Documents {
     annotations: Annotations,
     documents: Vec<Document>,
     by_uri: HashMap<IriString, DocumentHandle>,
+    uri_by_document_node: HashMap<xot::Node, IriString>,
 }
 
 /// A handle to a document.
@@ -91,6 +92,7 @@ impl Documents {
             annotations: Annotations::new(),
             documents: Vec::new(),
             by_uri: HashMap::new(),
+            uri_by_document_node: HashMap::new(),
         }
     }
 
@@ -104,11 +106,11 @@ impl Documents {
         self.by_uri.clear();
     }
 
-    /// Add a string as an XML document. Designate it with a URI.
+    /// Add a string as an XML document. It can be designated with a URI.
     pub fn add_string(
         &mut self,
         xot: &mut Xot,
-        uri: &IriStr,
+        uri: Option<&IriStr>,
         xml: &str,
     ) -> Result<DocumentHandle, DocumentsError> {
         let root = xot.parse(xml)?;
@@ -119,12 +121,14 @@ impl Documents {
     pub fn add_root(
         &mut self,
         xot: &Xot,
-        uri: &IriStr,
+        uri: Option<&IriStr>,
         root: xot::Node,
     ) -> Result<DocumentHandle, DocumentsError> {
-        if self.by_uri.contains_key(uri) {
-            // duplicate URI is an error
-            return Err(DocumentsError::DuplicateUri(uri.as_str().to_string()));
+        if let Some(uri) = uri {
+            if self.by_uri.contains_key(uri) {
+                // duplicate URI is an error
+                return Err(DocumentsError::DuplicateUri(uri.as_str().to_string()));
+            }
         }
 
         let id = self.documents.len();
@@ -133,10 +137,13 @@ impl Documents {
             id,
         };
         self.documents.push(Document {
-            uri: uri.to_owned(),
+            uri: uri.map(|uri| uri.to_owned()),
             root,
         });
-        self.by_uri.insert(uri.to_owned(), handle);
+        if let Some(uri) = uri {
+            self.by_uri.insert(uri.to_owned(), handle);
+            self.uri_by_document_node.insert(root, uri.to_owned());
+        }
         self.annotations.add(xot, root);
 
         Ok(handle)
@@ -157,6 +164,8 @@ impl Documents {
     }
 
     /// Obtain a document by URI
+    ///
+    /// It's only possible to obtain a document by URI if it was added with a URI.
     pub fn get_by_uri(&self, uri: &IriStr) -> Option<&Document> {
         let handle = self.by_uri.get(uri)?;
         self.get_by_handle(*handle)
@@ -165,6 +174,13 @@ impl Documents {
     /// Obtain document node by URI
     pub fn get_node_by_uri(&self, uri: &IriStr) -> Option<xot::Node> {
         Some(self.get_by_uri(uri)?.root)
+    }
+
+    /// Obtain document URI by document node.
+    ///
+    /// This only returns a URI if the document was added with a URI.
+    pub fn get_uri_by_document_node(&self, node: xot::Node) -> Option<IriString> {
+        self.uri_by_document_node.get(&node).cloned()
     }
 
     /// How many documents are stored.

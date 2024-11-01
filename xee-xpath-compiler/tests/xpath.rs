@@ -53,9 +53,8 @@ where
     S: Fn(&Xot, &Document) -> Vec<xot::Node>,
 {
     let mut xot = Xot::new();
-    let uri: &IriStr = "http://example.com".try_into().unwrap();
     let mut documents = Documents::new();
-    let handle = documents.add_string(&mut xot, uri, xml).unwrap();
+    let handle = documents.add_string(&mut xot, None, xml).unwrap();
     let document = documents.get_by_handle(handle).unwrap();
     let root = document.root();
     let nodes = get_nodes(&xot, document);

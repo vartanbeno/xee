@@ -82,7 +82,7 @@ impl Source {
                 let handle =
                     documents_ref
                         .borrow_mut()
-                        .add_string(documents.xot_mut(), &uri, &xml)?;
+                        .add_string(documents.xot_mut(), Some(&uri), &xml)?;
                 Ok(documents
                     .documents()
                     .borrow()
@@ -95,10 +95,11 @@ impl Source {
                 // and return it
                 // TODO: is this right?
                 let documents_ref = documents.documents().clone();
-                let handle =
-                    documents_ref
-                        .borrow_mut()
-                        .add_string(documents.xot_mut(), &uri, value)?;
+                let handle = documents_ref.borrow_mut().add_string(
+                    documents.xot_mut(),
+                    Some(&uri),
+                    value,
+                )?;
                 Ok(documents
                     .documents()
                     .borrow()

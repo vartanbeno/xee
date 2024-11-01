@@ -38,7 +38,17 @@ impl Documents {
     ) -> Result<DocumentHandle, DocumentsError> {
         self.documents
             .borrow_mut()
-            .add_string(&mut self.xot, uri, xml)
+            .add_string(&mut self.xot, Some(uri), xml)
+    }
+
+    /// Load a string as an XML document without designating it with a URI.
+    ///
+    /// Something may go wrong during processing of the XML document; this is
+    /// a [`xot::Error`].
+    pub fn add_string_without_uri(&mut self, xml: &str) -> Result<DocumentHandle, DocumentsError> {
+        self.documents
+            .borrow_mut()
+            .add_string(&mut self.xot, None, xml)
     }
 
     /// Get a reference to the documents
