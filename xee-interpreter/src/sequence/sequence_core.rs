@@ -16,6 +16,8 @@ use crate::sequence::Item;
 use crate::stack;
 use crate::string::Collation;
 
+use super::normalization::normalize;
+
 /// A XPath sequence of items.
 ///
 /// <https://www.w3.org/TR/xpath-datamodel-31/#sequences>
@@ -353,6 +355,12 @@ impl Sequence {
             }
         }
         Ok(result.into())
+    }
+
+    /// Normalize this sequence into a document node, according to
+    /// <https://www.w3.org/TR/xslt-xquery-serialization-31/#serdm>
+    pub fn normalize(&self, item_separator: &str, xot: &mut Xot) -> error::Result<xot::Node> {
+        normalize(self.clone(), item_separator, xot)
     }
 }
 

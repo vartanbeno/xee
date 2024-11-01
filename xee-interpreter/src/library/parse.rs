@@ -2,7 +2,7 @@
 
 use xee_xpath_macros::xpath_fn;
 
-use crate::{context, error, interpreter::Interpreter, wrap_xpath_fn};
+use crate::{context, error, interpreter::Interpreter, sequence, wrap_xpath_fn};
 
 use super::StaticFunctionDescription;
 
@@ -50,11 +50,28 @@ fn parse_xml_fragment(
     }
 }
 
-// #[xpath_fn("fn:serialize($arg as item()*) as xs:string")]
+#[xpath_fn("fn:serialize($arg as item()*) as xs:string")]
+fn serialize1(interpreter: &mut Interpreter, arg: &sequence::Sequence) -> error::Result<String> {
+    let node = arg.normalize(" ", interpreter.xot_mut())?;
+    Ok(interpreter.xot().to_string(node)?)
+}
+
+#[xpath_fn("fn:serialize($arg as item()*, $params as item()?) as xs:string")]
+fn serialize2(
+    interpreter: &mut Interpreter,
+    arg: &sequence::Sequence,
+    _params: Option<sequence::Item>,
+) -> error::Result<String> {
+    // TODO: nothing is done with the parameters yet
+    let node = arg.normalize(" ", interpreter.xot_mut())?;
+    Ok(interpreter.xot().to_string(node)?)
+}
 
 pub(crate) fn static_function_descriptions() -> Vec<StaticFunctionDescription> {
     vec![
         wrap_xpath_fn!(parse_xml),
         wrap_xpath_fn!(parse_xml_fragment),
+        wrap_xpath_fn!(serialize1),
+        wrap_xpath_fn!(serialize2),
     ]
 }

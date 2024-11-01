@@ -562,6 +562,12 @@ pub enum Error {
     /// item.
     XTDE0450,
 
+    /// Function cannot be normalized for serialization.
+    ///
+    /// It is an error if an item in S6 in sequence normalization is an
+    /// attribute node or a namespace node.
+    SENR0001,
+
     /// An application generated error
     Application(Box<ApplicationError>),
 }
