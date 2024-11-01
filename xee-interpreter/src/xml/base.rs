@@ -1,16 +1,16 @@
-use iri_string::types::{IriAbsoluteString, IriReferenceStr, IriString};
+use iri_string::types::{IriAbsoluteString, IriReferenceStr, IriStr, IriString};
 use xot;
 
 use crate::error;
 
 pub(crate) struct BaseUriResolver<'a> {
-    document_base_uri: Option<IriString>,
+    document_base_uri: Option<&'a IriStr>,
     xml_base_name: xot::NameId,
     xot: &'a xot::Xot,
 }
 
 impl<'a> BaseUriResolver<'a> {
-    pub(crate) fn new(document_base_uri: Option<IriString>, xot: &'a mut xot::Xot) -> Self {
+    pub(crate) fn new(document_base_uri: Option<&'a IriStr>, xot: &'a mut xot::Xot) -> Self {
         let xml_base_name = xot.add_name_ns("base", xot.xml_namespace());
         Self {
             document_base_uri,
@@ -29,7 +29,7 @@ impl<'a> BaseUriResolver<'a> {
     // that behavior.
     pub(crate) fn base_uri(&self, node: xot::Node) -> Result<Option<IriString>, error::Error> {
         Ok(match self.xot.value(node) {
-            xot::Value::Document => self.document_base_uri.clone(),
+            xot::Value::Document => self.document_base_uri.map(|u| u.to_owned()),
             xot::Value::Element(_) => {
                 let base = self.xot.attributes(node).get(self.xml_base_name);
 
@@ -223,10 +223,10 @@ mod tests {
     fn test_base_uri_document_with_base() {
         let mut xot = Xot::new();
         let doc = xot.parse(r#"<foo/>"#).unwrap();
-        let base: IriString = "http://example.com/bar".try_into().unwrap();
-        let resolver = BaseUriResolver::new(Some(base.clone()), &mut xot);
+        let base: &IriStr = "http://example.com/bar".try_into().unwrap();
+        let resolver = BaseUriResolver::new(Some(base), &mut xot);
         let base_uri = resolver.base_uri(doc).unwrap();
-        assert_eq!(base_uri, Some(base));
+        assert_eq!(base_uri, Some(base.to_owned()));
     }
 
     #[test]
@@ -234,10 +234,10 @@ mod tests {
         let mut xot = Xot::new();
         let doc = xot.parse(r#"<foo/>"#).unwrap();
         let foo = xot.document_element(doc).unwrap();
-        let base: IriString = "http://example.com/bar".try_into().unwrap();
-        let resolver = BaseUriResolver::new(Some(base.clone()), &mut xot);
+        let base: &IriStr = "http://example.com/bar".try_into().unwrap();
+        let resolver = BaseUriResolver::new(Some(base), &mut xot);
         let base_uri = resolver.base_uri(foo).unwrap();
-        assert_eq!(base_uri, Some(base));
+        assert_eq!(base_uri, Some(base.to_owned()));
     }
 
     #[test]
@@ -259,10 +259,10 @@ mod tests {
         let doc = xot.parse(r#"<foo bar="baz"/>"#).unwrap();
         let foo = xot.document_element(doc).unwrap();
         let bar = xot.attributes(foo).get_node(bar_name).unwrap();
-        let base: IriString = "http://example.com/bar".try_into().unwrap();
-        let resolver = BaseUriResolver::new(Some(base.clone()), &mut xot);
+        let base: &IriStr = "http://example.com/bar".try_into().unwrap();
+        let resolver = BaseUriResolver::new(Some(base), &mut xot);
         let base_uri = resolver.base_uri(bar).unwrap();
-        assert_eq!(base_uri, Some(base));
+        assert_eq!(base_uri, Some(base.to_owned()));
     }
 
     #[test]
@@ -274,7 +274,7 @@ mod tests {
             .unwrap();
         let foo = xot.document_element(doc).unwrap();
         let ns_node = xot.namespaces(foo).get_node(ns_prefix).unwrap();
-        let base: IriString = "http://example.com/bar".try_into().unwrap();
+        let base: &IriStr = "http://example.com/bar".try_into().unwrap();
         let resolver = BaseUriResolver::new(Some(base), &mut xot);
         // even if supplied with a base namespace nodes never have one
         let base_uri = resolver.base_uri(ns_node).unwrap();

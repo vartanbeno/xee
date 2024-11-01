@@ -3,6 +3,7 @@ use xee_xpath_ast::ast;
 use xee_xpath_macros::xpath_fn;
 
 use crate::atomic;
+use crate::context;
 use crate::error;
 use crate::function::StaticFunctionDescription;
 use crate::interpreter::Interpreter;
@@ -42,13 +43,31 @@ fn data(interpreter: &Interpreter, arg: &sequence::Sequence) -> error::Result<Ve
 
 #[xpath_fn("fn:base-uri($arg as node()?) as xs:anyURI?", context_first)]
 fn base_uri(
+    context: &context::DynamicContext,
     interpreter: &mut Interpreter,
     arg: Option<xot::Node>,
 ) -> error::Result<Option<atomic::Atomic>> {
     Ok(if let Some(node) = arg {
-        // TODO: the base URI resolver should receive the document's base
-        // URI as the first argument if available.
-        let resolver = BaseUriResolver::new(None, interpreter.state.xot_mut());
+        // root node of the document
+        let root = interpreter.xot().root(node);
+
+        let base_uri = if matches!(interpreter.xot().value(root), xot::Value::Document) {
+            // the base uri of the document is the one we can find registered, if available
+            let documents = context.documents();
+            let documents = documents.borrow();
+            documents.get_uri_by_document_node(root)
+        } else {
+            None
+        };
+
+        // if we don't have a registered URI, use the static base uri
+        let base_uri = base_uri.or_else(|| {
+            context
+                .static_context()
+                .static_base_uri()
+                .map(|u| u.to_owned().into())
+        });
+        let resolver = BaseUriResolver::new(base_uri.as_deref(), interpreter.state.xot_mut());
         let base_iri = resolver.base_uri(node)?;
         base_iri.map(|i| i.into())
     } else {

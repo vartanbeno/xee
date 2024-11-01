@@ -971,8 +971,6 @@ fn-function-lookup-389
 fn-function-lookup-390
 fn-function-lookup-391
 fn-function-lookup-392
-fn-function-lookup-393
-fn-function-lookup-394
 fn-function-lookup-395
 fn-function-lookup-396
 fn-function-lookup-397
@@ -1062,7 +1060,6 @@ fn-implicit-timezone-12
 fn-in-scope-prefixes-25
 = fn-index-of
 = fn-innermost
-fn-innermost-059
 = fn-insert-before
 = fn-iri-to-uri
 K2-IRIToURIfunc-6
@@ -1554,20 +1551,11 @@ fn-parse-json-954
 fn-parse-json-955
 = fn-parse-xml
 parse-xml-001
-parse-xml-004
-parse-xml-005
 parse-xml-006
-parse-xml-007
 parse-xml-008
 parse-xml-009
 parse-xml-010
 parse-xml-011
-parse-xml-012
-parse-xml-013
-parse-xml-014
-parse-xml-015
-parse-xml-016
-parse-xml-017
 = fn-parse-xml-fragment
 parse-xml-fragment-001
 parse-xml-fragment-004
@@ -2474,7 +2462,6 @@ function-literal-005
 function-literal-006
 function-literal-007
 function-literal-008
-function-literal-020
 function-literal-021
 function-literal-022
 function-literal-023
@@ -2547,8 +2534,6 @@ function-literal-389
 function-literal-390
 function-literal-391
 function-literal-392
-function-literal-393
-function-literal-394
 function-literal-395
 function-literal-396
 function-literal-397

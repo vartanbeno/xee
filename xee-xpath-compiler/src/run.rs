@@ -1,4 +1,3 @@
-use iri_string::types::IriString;
 use xot::Xot;
 
 use xee_interpreter::{
