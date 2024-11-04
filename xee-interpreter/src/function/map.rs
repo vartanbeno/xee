@@ -1,9 +1,11 @@
 use std::rc::Rc;
 
 use ahash::{HashMap, HashMapExt};
+use xee_schema_type::Xs;
+use xee_xpath_ast::ast;
 use xot::Xot;
 
-use crate::{atomic, error, sequence, string};
+use crate::{atomic, context, error, sequence, string};
 
 /// An XPath Map (a collection of key-value pairs).
 #[derive(Debug, Clone, PartialEq)]
@@ -31,6 +33,33 @@ impl Map {
     pub(crate) fn get(&self, key: &atomic::Atomic) -> Option<sequence::Sequence> {
         let map_key = atomic::MapKey::new(key.clone()).ok()?;
         self.0.get(&map_key).map(|(_, v)| v.clone())
+    }
+
+    // this is to support the option parameter conventions
+    pub(crate) fn get_as_type(
+        &self,
+        key: &atomic::Atomic,
+        occurrence: ast::Occurrence,
+        atomic_type: Xs,
+        static_context: &context::StaticContext,
+        xot: &Xot,
+    ) -> error::Result<Option<sequence::Sequence>> {
+        let value = self.get(key);
+        let value = match value {
+            Some(value) => value,
+            None => return Ok(None),
+        };
+        let sequence_type = ast::SequenceType::Item(ast::Item {
+            occurrence,
+            item_type: ast::ItemType::AtomicOrUnionType(atomic_type),
+        });
+        Ok(Some(value.sequence_type_matching_function_conversion(
+            &sequence_type,
+            static_context,
+            xot,
+            // typed function tests can't be invoked
+            &|_function| unreachable!(),
+        )?))
     }
 
     pub(crate) fn len(&self) -> usize {

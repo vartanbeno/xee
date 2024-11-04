@@ -8,6 +8,7 @@ mod matching;
 mod normalization;
 mod sequence_core;
 mod sequence_type;
+mod serialization;
 
 pub use crate::stack::AtomizedIter;
 pub(crate) use item::AtomizedItemIter;
