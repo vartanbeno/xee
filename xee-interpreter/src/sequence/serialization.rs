@@ -86,6 +86,53 @@ macro_rules! option_parameter_conversion_option {
     }};
 }
 
+macro_rules! option_parameter_conversion_string_or_qname {
+    ($map:ident, $xpath_name:literal, $default:expr, $static_context:ident, $xot:ident) => {{
+        let string_value = option_parameter_conversion_option!(
+            $map,
+            $xpath_name,
+            Xs::String,
+            String,
+            $static_context,
+            $xot
+        );
+        if let Some(string_value) = string_value {
+            QNameOrString::String(string_value)
+        } else {
+            let qname_value = option_parameter_conversion_option!(
+                $map,
+                $xpath_name,
+                Xs::QName,
+                OwnedName,
+                $static_context,
+                $xot
+            );
+            if let Some(qname_value) = qname_value {
+                QNameOrString::QName(qname_value)
+            } else {
+                $default
+            }
+        }
+    }};
+}
+
+macro_rules! option_parameter_conversion_many {
+    ($map:ident, $xpath_name:literal, $atomic:expr, $ty:ty, $static_context:ident, $xot:ident) => {{
+        let name: atomic::Atomic = $xpath_name.to_string().into();
+        let value =
+            $map.get_as_type(&name, ast::Occurrence::Many, $atomic, $static_context, $xot)?;
+        let values = if let Some(value) = value {
+            value
+                .items()?
+                .map(|item| item.to_atomic()?.try_into())
+                .collect::<Result<Vec<$ty>, _>>()?
+        } else {
+            Vec::new()
+        };
+        values
+    }};
+}
+
 impl SerializationParameters {
     fn from_map(
         map: Map,
@@ -111,7 +158,14 @@ impl SerializationParameters {
             xot
         );
 
-        // cdata-section-elements
+        let cdata_section_elements = option_parameter_conversion_many!(
+            map,
+            "cdata-section-elements",
+            Xs::QName,
+            OwnedName,
+            static_context,
+            xot
+        );
 
         let doctype_public = option_parameter_conversion_option!(
             map,
@@ -191,7 +245,13 @@ impl SerializationParameters {
             xot
         );
 
-        // json-node-output-method
+        let json_node_output_method = option_parameter_conversion_string_or_qname!(
+            map,
+            "json-node-output-method",
+            QNameOrString::String("xml".to_string()),
+            static_context,
+            xot
+        );
 
         let media_type = option_parameter_conversion_option!(
             map,
@@ -202,7 +262,13 @@ impl SerializationParameters {
             xot
         );
 
-        // method
+        let method = option_parameter_conversion_string_or_qname!(
+            map,
+            "method",
+            QNameOrString::String("xml".to_string()),
+            static_context,
+            xot
+        );
 
         let normalization_form = option_parameter_conversion_option!(
             map,
@@ -232,7 +298,14 @@ impl SerializationParameters {
             xot
         );
 
-        // suppress-indentation
+        let suppress_indentation = option_parameter_conversion_many!(
+            map,
+            "suppress-indentation",
+            Xs::QName,
+            OwnedName,
+            static_context,
+            xot
+        );
 
         let undeclare_prefixes = option_parameter_conversion_option_with_default!(
             map,
@@ -259,7 +332,7 @@ impl SerializationParameters {
         Ok(Self {
             allow_duplicate_names,
             byte_order_mark,
-            cdata_section_elements: Vec::new(),
+            cdata_section_elements,
             doctype_public,
             doctype_system,
             encoding,
@@ -268,13 +341,13 @@ impl SerializationParameters {
             include_content_type,
             indent,
             item_separator,
-            json_node_output_method: QNameOrString::String("xml".to_string()),
+            json_node_output_method,
             media_type,
-            method: QNameOrString::String("xml".to_string()),
+            method,
             normalization_form,
             omit_xml_declaration,
             standalone,
-            suppress_indentation: Vec::new(),
+            suppress_indentation,
             undeclare_prefixes,
             use_character_maps: HashMap::default(),
             version,
