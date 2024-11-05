@@ -568,6 +568,9 @@ pub enum Error {
     /// attribute node or a namespace node.
     SENR0001,
 
+    /// Parameter value is invalid for the defined domain.
+    SEPM0016,
+
     /// An application generated error
     Application(Box<ApplicationError>),
 }

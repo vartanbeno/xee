@@ -1617,6 +1617,7 @@ cbcl-round-half-to-even-012
 = fn-seconds-from-duration
 = fn-seconds-from-time
 = fn-serialize
+serialize-adaptive-001
 serialize-adaptive-002
 serialize-adaptive-003
 serialize-adaptive-004
@@ -1635,6 +1636,9 @@ serialize-json-010
 serialize-json-011
 serialize-json-101
 serialize-json-102
+serialize-json-103
+serialize-json-104
+serialize-json-105
 serialize-json-106
 serialize-json-107
 serialize-json-108
@@ -1690,7 +1694,6 @@ serialize-xml-032b
 serialize-xml-033b
 serialize-xml-034b
 serialize-xml-105
-serialize-xml-120b
 serialize-xml-123
 serialize-xml-132
 serialize-xml-134b

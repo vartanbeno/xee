@@ -3,7 +3,7 @@
 
 use xee_schema_type::Xs;
 use xee_xpath_ast::ast;
-use xot::xmlname::OwnedName;
+use xot::xmlname::{NameStrInfo, OwnedName};
 use xot::Xot;
 
 use crate::{atomic, context, error, function::Map, occurrence::Occurrence};
@@ -12,6 +12,23 @@ use crate::{atomic, context, error, function::Map, occurrence::Occurrence};
 pub enum QNameOrString {
     QName(OwnedName),
     String(String),
+}
+
+impl QNameOrString {
+    // a convenience accessor so we can get access to the localname and/or
+    // plain string, helps matching method later
+    pub(crate) fn local_name(&self) -> Option<&str> {
+        match self {
+            QNameOrString::QName(name) => {
+                if name.namespace().is_empty() {
+                    Some(name.local_name())
+                } else {
+                    None
+                }
+            }
+            QNameOrString::String(string) => Some(string),
+        }
+    }
 }
 
 pub(crate) struct OptionParameterConverter<'a> {

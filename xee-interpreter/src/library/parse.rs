@@ -101,16 +101,42 @@ fn serialize_helper(
 ) -> error::Result<String> {
     let node = arg.normalize(&parameters.item_separator, xot)?;
 
-    let suppress = parameters
-        .suppress_indentation
+    if let Some(local_name) = parameters.method.local_name() {
+        match local_name {
+            "xml" => serialize_xml(node, parameters, xot),
+            "html" => serialize_html(node, parameters, xot),
+            _ => Err(error::Error::SEPM0016),
+        }
+    } else {
+        Err(error::Error::SEPM0016)
+    }
+}
+
+fn xot_indentation(
+    parameters: &SerializationParameters,
+    xot: &mut Xot,
+) -> Option<xot::output::Indentation> {
+    if !parameters.indent {
+        return None;
+    }
+    let suppress = xot_names(&parameters.suppress_indentation, xot);
+    Some(xot::output::Indentation { suppress })
+}
+
+fn xot_names(names: &[xot::xmlname::OwnedName], xot: &mut Xot) -> Vec<xot::NameId> {
+    names
         .iter()
         .map(|owned_name| owned_name.to_ref(xot).name_id())
-        .collect::<Vec<_>>();
-    let cdata_section_elements = parameters
-        .cdata_section_elements
-        .iter()
-        .map(|owned_name| owned_name.to_ref(xot).name_id())
-        .collect::<Vec<_>>();
+        .collect()
+}
+
+fn serialize_xml(
+    node: xot::Node,
+    parameters: SerializationParameters,
+    xot: &mut Xot,
+) -> Result<String, error::Error> {
+    let indentation = xot_indentation(&parameters, xot);
+    let cdata_section_elements = xot_names(&parameters.cdata_section_elements, xot);
     let declaration = if !parameters.omit_xml_declaration {
         Some(xot::output::xml::Declaration {
             encoding: Some(parameters.encoding.to_string()),
@@ -130,13 +156,29 @@ fn serialize_helper(
         (None, None) => None,
     };
     let output_parameters = xot::output::xml::Parameters {
-        indentation: Some(xot::output::Indentation { suppress }),
+        indentation,
         cdata_section_elements,
         declaration,
         doctype,
         ..Default::default()
     };
     Ok(xot.serialize_xml_string(output_parameters, node)?)
+}
+
+fn serialize_html(
+    node: xot::Node,
+    parameters: SerializationParameters,
+    xot: &mut Xot,
+) -> Result<String, error::Error> {
+    // TODO: no check yet for html version rejecting versions that aren't 5
+    let cdata_section_elements = xot_names(&parameters.cdata_section_elements, xot);
+    let indentation = xot_indentation(&parameters, xot);
+    let html5 = xot.html5();
+    let output_parameters = xot::output::html5::Parameters {
+        indentation,
+        cdata_section_elements,
+    };
+    Ok(html5.serialize_string(output_parameters, node)?)
 }
 
 pub(crate) fn static_function_descriptions() -> Vec<StaticFunctionDescription> {
