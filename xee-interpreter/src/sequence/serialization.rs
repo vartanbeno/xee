@@ -9,31 +9,31 @@ use crate::{context, error, function::Map};
 use super::opc::{OptionParameterConverter, QNameOrString};
 
 pub(crate) struct SerializationParameters {
-    allow_duplicate_names: bool,
-    byte_order_mark: bool,
-    cdata_section_elements: Vec<OwnedName>,
-    doctype_public: Option<String>,
-    doctype_system: Option<String>,
-    encoding: String,
-    escape_uri_attributes: bool,
-    html_version: Decimal,
-    include_content_type: bool,
-    indent: bool,
-    item_separator: String,
-    json_node_output_method: QNameOrString,
-    media_type: Option<String>,
-    method: QNameOrString,
-    normalization_form: Option<String>,
-    omit_xml_declaration: bool,
-    standalone: Option<bool>,
-    suppress_indentation: Vec<OwnedName>,
-    undeclare_prefixes: bool,
-    use_character_maps: HashMap<char, String>,
-    version: String,
+    pub(crate) allow_duplicate_names: bool,
+    pub(crate) byte_order_mark: bool,
+    pub(crate) cdata_section_elements: Vec<OwnedName>,
+    pub(crate) doctype_public: Option<String>,
+    pub(crate) doctype_system: Option<String>,
+    pub(crate) encoding: String,
+    pub(crate) escape_uri_attributes: bool,
+    pub(crate) html_version: Decimal,
+    pub(crate) include_content_type: bool,
+    pub(crate) indent: bool,
+    pub(crate) item_separator: String,
+    pub(crate) json_node_output_method: QNameOrString,
+    pub(crate) media_type: Option<String>,
+    pub(crate) method: QNameOrString,
+    pub(crate) normalization_form: Option<String>,
+    pub(crate) omit_xml_declaration: bool,
+    pub(crate) standalone: Option<bool>,
+    pub(crate) suppress_indentation: Vec<OwnedName>,
+    pub(crate) undeclare_prefixes: bool,
+    pub(crate) use_character_maps: HashMap<char, String>,
+    pub(crate) version: String,
 }
 
 impl SerializationParameters {
-    fn from_map(
+    pub(crate) fn from_map(
         map: Map,
         static_context: &context::StaticContext,
         xot: &Xot,
@@ -89,7 +89,7 @@ impl SerializationParameters {
 
         let undeclare_prefixes = c.option_with_default("undeclare-prefixes", Xs::Boolean, false)?;
 
-        // use-character-maps
+        // TODO: use-character-maps
 
         let version = c.option_with_default("version", Xs::String, "1.0".to_string())?;
 
