@@ -3,16 +3,10 @@ use rust_decimal::Decimal;
 use xot::{xmlname::OwnedName, Xot};
 
 use xee_schema_type::Xs;
-use xee_xpath_ast::ast;
 
-use crate::occurrence::Occurrence;
-use crate::{atomic, context, error, function::Map};
+use crate::{context, error, function::Map};
 
-#[derive(Debug, PartialEq, Eq)]
-enum QNameOrString {
-    QName(OwnedName),
-    String(String),
-}
+use super::opc::{OptionParameterConverter, QNameOrString};
 
 pub(crate) struct SerializationParameters {
     allow_duplicate_names: bool,
@@ -36,95 +30,6 @@ pub(crate) struct SerializationParameters {
     undeclare_prefixes: bool,
     use_character_maps: HashMap<char, String>,
     version: String,
-}
-
-struct OptionParameterConverter<'a> {
-    map: &'a Map,
-    static_context: &'a context::StaticContext,
-    xot: &'a Xot,
-}
-
-impl<'a> OptionParameterConverter<'a> {
-    fn new(map: &'a Map, static_context: &'a context::StaticContext, xot: &'a Xot) -> Self {
-        Self {
-            map,
-            static_context,
-            xot,
-        }
-    }
-
-    fn option<V>(&self, name: &str, atomic_type: Xs) -> error::Result<Option<V>>
-    where
-        V: std::convert::TryFrom<atomic::Atomic, Error = error::Error>,
-    {
-        let name: atomic::Atomic = name.to_string().into();
-        let value = self.map.get_as_type(
-            &name,
-            ast::Occurrence::Option,
-            atomic_type,
-            self.static_context,
-            self.xot,
-        )?;
-        let value = if let Some(value) = value {
-            value.items()?.option()?
-        } else {
-            return Ok(None);
-        };
-        let value: Option<V> = if let Some(value) = value {
-            Some(value.to_atomic()?.try_into()?)
-        } else {
-            None
-        };
-        Ok(value)
-    }
-
-    fn option_with_default<V>(&self, name: &str, atomic_type: Xs, default: V) -> error::Result<V>
-    where
-        V: std::convert::TryFrom<atomic::Atomic, Error = error::Error>,
-    {
-        Ok(if let Some(value) = self.option(name, atomic_type)? {
-            value
-        } else {
-            default
-        })
-    }
-
-    fn many<V>(&self, name: &str, atomic_type: Xs) -> error::Result<Vec<V>>
-    where
-        V: std::convert::TryFrom<atomic::Atomic, Error = error::Error>,
-    {
-        let name: atomic::Atomic = name.to_string().into();
-        let value = self.map.get_as_type(
-            &name,
-            ast::Occurrence::Many,
-            atomic_type,
-            self.static_context,
-            self.xot,
-        )?;
-        let values = if let Some(value) = value {
-            value
-                .items()?
-                .map(|item| item.to_atomic()?.try_into())
-                .collect::<Result<Vec<V>, _>>()?
-        } else {
-            Vec::new()
-        };
-        Ok(values)
-    }
-
-    fn qname_or_string(&self, name: &str, default: QNameOrString) -> error::Result<QNameOrString> {
-        let qname_value = self.option(name, Xs::QName);
-        let string_value = self.option(name, Xs::String);
-        match (qname_value, string_value) {
-            (Err(_), Ok(Some(string_value))) => Ok(QNameOrString::String(string_value)),
-            (Ok(Some(qname_value)), Err(_)) => Ok(QNameOrString::QName(qname_value)),
-            (Ok(None), Ok(None)) => Ok(default),
-            (Err(e), Err(_)) => Err(e),
-            (Err(e), Ok(None)) => Err(e),
-            (Ok(None), Err(e)) => Err(e),
-            _ => unreachable!(),
-        }
-    }
 }
 
 impl SerializationParameters {
@@ -216,7 +121,7 @@ impl SerializationParameters {
 
 #[cfg(test)]
 mod tests {
-    use crate::sequence;
+    use crate::{atomic, sequence};
 
     use super::*;
 
