@@ -1,12 +1,14 @@
 use ahash::HashMap;
 use rust_decimal::Decimal;
+use xot::{xmlname::OwnedName, Xot};
+
 use xee_schema_type::Xs;
 use xee_xpath_ast::ast;
-use xot::{xmlname::OwnedName, Xot};
 
 use crate::occurrence::Occurrence;
 use crate::{atomic, context, error, function::Map};
 
+#[derive(Debug, PartialEq, Eq)]
 enum QNameOrString {
     QName(OwnedName),
     String(String),
@@ -36,101 +38,93 @@ pub(crate) struct SerializationParameters {
     version: String,
 }
 
-// this would be prettier with some fancy derive macro, but we don't
-// have that many functions that need this and this is easier to make.
-macro_rules! option_parameter_conversion_option_with_default {
-    ($map:ident, $xpath_name:literal, $atomic:expr, $ty:ty, $default:expr, $static_context:ident, $xot:ident) => {{
-        let name: atomic::Atomic = $xpath_name.to_string().into();
-        let value = $map.get_as_type(
-            &name,
-            ast::Occurrence::Option,
-            $atomic,
-            $static_context,
-            $xot,
-        )?;
-        let value = if let Some(value) = value {
-            value.items()?.option()?
-        } else {
-            None
-        };
-        let value: $ty = if let Some(value) = value {
-            value.to_atomic()?.try_into()?
-        } else {
-            $default
-        };
-        value
-    }};
+struct OptionParameterConverter<'a> {
+    map: &'a Map,
+    static_context: &'a context::StaticContext,
+    xot: &'a Xot,
 }
 
-macro_rules! option_parameter_conversion_option {
-    ($map:ident, $xpath_name:literal, $atomic:expr, $ty:ty, $static_context:ident, $xot:ident) => {{
-        let name: atomic::Atomic = $xpath_name.to_string().into();
-        let value = $map.get_as_type(
+impl<'a> OptionParameterConverter<'a> {
+    fn new(map: &'a Map, static_context: &'a context::StaticContext, xot: &'a Xot) -> Self {
+        Self {
+            map,
+            static_context,
+            xot,
+        }
+    }
+
+    fn option<V>(&self, name: &str, atomic_type: Xs) -> error::Result<Option<V>>
+    where
+        V: std::convert::TryFrom<atomic::Atomic, Error = error::Error>,
+    {
+        let name: atomic::Atomic = name.to_string().into();
+        let value = self.map.get_as_type(
             &name,
             ast::Occurrence::Option,
-            $atomic,
-            $static_context,
-            $xot,
+            atomic_type,
+            self.static_context,
+            self.xot,
         )?;
         let value = if let Some(value) = value {
             value.items()?.option()?
         } else {
-            None
+            return Ok(None);
         };
-        let value: Option<$ty> = if let Some(value) = value {
+        let value: Option<V> = if let Some(value) = value {
             Some(value.to_atomic()?.try_into()?)
         } else {
             None
         };
-        value
-    }};
-}
+        Ok(value)
+    }
 
-macro_rules! option_parameter_conversion_string_or_qname {
-    ($map:ident, $xpath_name:literal, $default:expr, $static_context:ident, $xot:ident) => {{
-        let string_value = option_parameter_conversion_option!(
-            $map,
-            $xpath_name,
-            Xs::String,
-            String,
-            $static_context,
-            $xot
-        );
-        if let Some(string_value) = string_value {
-            QNameOrString::String(string_value)
+    fn option_with_default<V>(&self, name: &str, atomic_type: Xs, default: V) -> error::Result<V>
+    where
+        V: std::convert::TryFrom<atomic::Atomic, Error = error::Error>,
+    {
+        Ok(if let Some(value) = self.option(name, atomic_type)? {
+            value
         } else {
-            let qname_value = option_parameter_conversion_option!(
-                $map,
-                $xpath_name,
-                Xs::QName,
-                OwnedName,
-                $static_context,
-                $xot
-            );
-            if let Some(qname_value) = qname_value {
-                QNameOrString::QName(qname_value)
-            } else {
-                $default
-            }
-        }
-    }};
-}
+            default
+        })
+    }
 
-macro_rules! option_parameter_conversion_many {
-    ($map:ident, $xpath_name:literal, $atomic:expr, $ty:ty, $static_context:ident, $xot:ident) => {{
-        let name: atomic::Atomic = $xpath_name.to_string().into();
-        let value =
-            $map.get_as_type(&name, ast::Occurrence::Many, $atomic, $static_context, $xot)?;
+    fn many<V>(&self, name: &str, atomic_type: Xs) -> error::Result<Vec<V>>
+    where
+        V: std::convert::TryFrom<atomic::Atomic, Error = error::Error>,
+    {
+        let name: atomic::Atomic = name.to_string().into();
+        let value = self.map.get_as_type(
+            &name,
+            ast::Occurrence::Many,
+            atomic_type,
+            self.static_context,
+            self.xot,
+        )?;
         let values = if let Some(value) = value {
             value
                 .items()?
                 .map(|item| item.to_atomic()?.try_into())
-                .collect::<Result<Vec<$ty>, _>>()?
+                .collect::<Result<Vec<V>, _>>()?
         } else {
             Vec::new()
         };
-        values
-    }};
+        Ok(values)
+    }
+
+    fn qname_or_string(&self, name: &str, default: QNameOrString) -> error::Result<QNameOrString> {
+        let qname_value = self.option(name, Xs::QName);
+        let string_value = self.option(name, Xs::String);
+        match (qname_value, string_value) {
+            (Err(_), Ok(Some(string_value))) => Ok(QNameOrString::String(string_value)),
+            (Ok(Some(qname_value)), Err(_)) => Ok(QNameOrString::QName(qname_value)),
+            (Ok(None), Ok(None)) => Ok(default),
+            (Err(e), Err(_)) => Err(e),
+            (Err(e), Ok(None)) => Err(e),
+            (Ok(None), Err(e)) => Err(e),
+            _ => unreachable!(),
+        }
+    }
 }
 
 impl SerializationParameters {
@@ -139,195 +133,60 @@ impl SerializationParameters {
         static_context: &context::StaticContext,
         xot: &Xot,
     ) -> error::Result<Self> {
-        let allow_duplicate_names = option_parameter_conversion_option_with_default!(
-            map,
-            "allow-duplicate-names",
-            Xs::Boolean,
-            bool,
-            false,
-            static_context,
-            xot
-        );
-        let byte_order_mark = option_parameter_conversion_option_with_default!(
-            map,
-            "byte-order-mark",
-            Xs::Boolean,
-            bool,
-            false,
-            static_context,
-            xot
-        );
+        let c = OptionParameterConverter::new(&map, static_context, xot);
+        let allow_duplicate_names =
+            c.option_with_default("allow-duplicate-names", Xs::Boolean, false)?;
 
-        let cdata_section_elements = option_parameter_conversion_many!(
-            map,
-            "cdata-section-elements",
-            Xs::QName,
-            OwnedName,
-            static_context,
-            xot
-        );
+        let byte_order_mark = c.option_with_default("byte-order-mark", Xs::Boolean, false)?;
 
-        let doctype_public = option_parameter_conversion_option!(
-            map,
-            "doctype-public",
-            Xs::String,
-            String,
-            static_context,
-            xot
-        );
+        let cdata_section_elements = c.many("cdata-section-elements", Xs::QName)?;
 
-        let doctype_system = option_parameter_conversion_option!(
-            map,
-            "doctype-system",
-            Xs::String,
-            String,
-            static_context,
-            xot
-        );
+        let doctype_public = c.option("doctype-public", Xs::String)?;
 
-        let encoding = option_parameter_conversion_option_with_default!(
-            map,
-            "encoding",
-            Xs::String,
-            String,
-            "utf-8".to_string(),
-            static_context,
-            xot
-        );
+        let doctype_system = c.option("doctype-system", Xs::String)?;
 
-        let escape_uri_attributes = option_parameter_conversion_option_with_default!(
-            map,
-            "escape-uri-attributes",
-            Xs::Boolean,
-            bool,
-            true,
-            static_context,
-            xot
-        );
+        let encoding = c.option_with_default("encoding", Xs::String, "utf-8".to_string())?;
 
-        let html_version = option_parameter_conversion_option_with_default!(
-            map,
+        let escape_uri_attributes =
+            c.option_with_default("escape-uri-attributes", Xs::Boolean, true)?;
+
+        let html_version = c.option_with_default(
             "html-version",
             Xs::Decimal,
-            Decimal,
             Decimal::from_str_exact("5.0").unwrap(),
-            static_context,
-            xot
-        );
+        )?;
 
-        let include_content_type = option_parameter_conversion_option_with_default!(
-            map,
-            "include-content-type",
-            Xs::Boolean,
-            bool,
-            true,
-            static_context,
-            xot
-        );
+        let include_content_type =
+            c.option_with_default("include-content-type", Xs::Boolean, true)?;
 
-        let indent = option_parameter_conversion_option_with_default!(
-            map,
-            "indent",
-            Xs::Boolean,
-            bool,
-            false,
-            static_context,
-            xot
-        );
+        let indent = c.option_with_default("indent", Xs::Boolean, false)?;
 
-        let item_separator = option_parameter_conversion_option_with_default!(
-            map,
-            "item-separator",
-            Xs::String,
-            String,
-            " ".to_string(),
-            static_context,
-            xot
-        );
+        let item_separator =
+            c.option_with_default("item-separator", Xs::String, " ".to_string())?;
 
-        let json_node_output_method = option_parameter_conversion_string_or_qname!(
-            map,
+        let json_node_output_method = c.qname_or_string(
             "json-node-output-method",
             QNameOrString::String("xml".to_string()),
-            static_context,
-            xot
-        );
+        )?;
 
-        let media_type = option_parameter_conversion_option!(
-            map,
-            "media-type",
-            Xs::String,
-            String,
-            static_context,
-            xot
-        );
+        let media_type = c.option("media-type", Xs::String)?;
 
-        let method = option_parameter_conversion_string_or_qname!(
-            map,
-            "method",
-            QNameOrString::String("xml".to_string()),
-            static_context,
-            xot
-        );
+        let method = c.qname_or_string("method", QNameOrString::String("xml".to_string()))?;
 
-        let normalization_form = option_parameter_conversion_option!(
-            map,
-            "normalization-form",
-            Xs::String,
-            String,
-            static_context,
-            xot
-        );
+        let normalization_form = c.option("normalization-form", Xs::String)?;
 
-        let omit_xml_declaration = option_parameter_conversion_option_with_default!(
-            map,
-            "omit-xml-declaration",
-            Xs::Boolean,
-            bool,
-            true,
-            static_context,
-            xot
-        );
+        let omit_xml_declaration =
+            c.option_with_default("omit-xml-declaration", Xs::Boolean, true)?;
 
-        let standalone = option_parameter_conversion_option!(
-            map,
-            "standalone",
-            Xs::Boolean,
-            bool,
-            static_context,
-            xot
-        );
+        let standalone = c.option("standalone", Xs::Boolean)?;
 
-        let suppress_indentation = option_parameter_conversion_many!(
-            map,
-            "suppress-indentation",
-            Xs::QName,
-            OwnedName,
-            static_context,
-            xot
-        );
+        let suppress_indentation = c.many("suppress-indentation", Xs::QName)?;
 
-        let undeclare_prefixes = option_parameter_conversion_option_with_default!(
-            map,
-            "undeclare-prefixes",
-            Xs::Boolean,
-            bool,
-            false,
-            static_context,
-            xot
-        );
+        let undeclare_prefixes = c.option_with_default("undeclare-prefixes", Xs::Boolean, false)?;
 
         // use-character-maps
 
-        let version = option_parameter_conversion_option_with_default!(
-            map,
-            "version",
-            Xs::String,
-            String,
-            "1.0".to_string(),
-            static_context,
-            xot
-        );
+        let version = c.option_with_default("version", Xs::String, "1.0".to_string())?;
 
         Ok(Self {
             allow_duplicate_names,
@@ -388,7 +247,7 @@ mod tests {
     }
 
     #[test]
-    fn test_allow_duplicate_names_default() {
+    fn test_allow_duplicate_names_default_empty_sequence() {
         let map = Map::new(vec![(
             "allow-duplicate-names".to_string().into(),
             sequence::Sequence::default(),
@@ -401,16 +260,94 @@ mod tests {
     }
 
     #[test]
-    fn test_allow_duplicate_names_empty_sequence() {
-        let empty_vec: Vec<atomic::Atomic> = Vec::new();
+    fn test_allow_duplicate_names_missing() {
+        let map = Map::new(vec![]).unwrap();
+        let static_context = context::StaticContext::default();
+        let xot = Xot::new();
+        let params = SerializationParameters::from_map(map, &static_context, &xot).unwrap();
+        assert!(!params.allow_duplicate_names);
+    }
+
+    #[test]
+    fn test_cdata_section_elements() {
+        let html = OwnedName::new("html".to_string(), "".to_string(), "".to_string());
+        let script = OwnedName::new("script".to_string(), "".to_string(), "".to_string());
         let map = Map::new(vec![(
-            "allow-duplicate-names".to_string().into(),
-            sequence::Sequence::from(empty_vec),
+            "cdata-section-elements".to_string().into(),
+            sequence::Sequence::from(vec![
+                atomic::Atomic::QName(html.clone().into()),
+                atomic::Atomic::QName(script.clone().into()),
+            ]),
         )])
         .unwrap();
         let static_context = context::StaticContext::default();
         let xot = Xot::new();
         let params = SerializationParameters::from_map(map, &static_context, &xot).unwrap();
-        assert!(!params.allow_duplicate_names);
+        assert_eq!(params.cdata_section_elements.len(), 2);
+        assert_eq!(params.cdata_section_elements[0], html);
+        assert_eq!(params.cdata_section_elements[1], script);
+    }
+
+    #[test]
+    fn test_qname_or_string_string() {
+        let json: atomic::Atomic = "json".to_string().into();
+        let map = Map::new(vec![(
+            "json-node-output-method".to_string().into(),
+            sequence::Sequence::from(vec![json]),
+        )])
+        .unwrap();
+        let static_context = context::StaticContext::default();
+        let xot = Xot::new();
+        let params = SerializationParameters::from_map(map, &static_context, &xot).unwrap();
+        assert_eq!(
+            params.json_node_output_method,
+            QNameOrString::String("json".to_string())
+        );
+    }
+
+    #[test]
+    fn test_qname_or_string_qname() {
+        let owned_name = OwnedName::new("json".to_string(), "".to_string(), "".to_string());
+        let json: atomic::Atomic = owned_name.clone().into();
+        let map = Map::new(vec![(
+            "json-node-output-method".to_string().into(),
+            sequence::Sequence::from(vec![json]),
+        )])
+        .unwrap();
+        let static_context = context::StaticContext::default();
+        let xot = Xot::new();
+        let params = SerializationParameters::from_map(map, &static_context, &xot).unwrap();
+        assert_eq!(
+            params.json_node_output_method,
+            QNameOrString::QName(owned_name)
+        );
+    }
+
+    #[test]
+    fn test_qname_or_string_default_empty_sequence() {
+        let map = Map::new(vec![(
+            "json-node-output-method".to_string().into(),
+            sequence::Sequence::default(),
+        )])
+        .unwrap();
+        let static_context = context::StaticContext::default();
+        let xot = Xot::new();
+        let params = SerializationParameters::from_map(map, &static_context, &xot).unwrap();
+        assert_eq!(
+            params.json_node_output_method,
+            QNameOrString::String("xml".to_string())
+        );
+    }
+
+    #[test]
+    fn test_qname_or_string_default_missing() {
+        let map = Map::new(vec![]).unwrap();
+        let static_context = context::StaticContext::default();
+        let xot = Xot::new();
+        let params = SerializationParameters::from_map(map, &static_context, &xot).unwrap();
+        assert_eq!(
+            params.json_node_output_method,
+            QNameOrString::String("xml".to_string())
+        );
     }
 }
