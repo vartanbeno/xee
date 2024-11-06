@@ -47,7 +47,6 @@ processes it as an id).
 
 For idref, it needs a notion of an idref type on a node.
 
-
 ## date formatting
 
 - fn:format-date
@@ -75,14 +74,12 @@ Needs enormously complex i18n aware implementation.
 
 - fn:json-doc
 - fn:json-to-xml
-- fn:parse-json
+- fn:parse-json (done, but without options support yet)
 - fn:xml-to-json
 
 ## XML parsing and serializing
 
-- fn:parse-xml
-- fn:parse-xml-fragment
-- fn:serialize
+- fn:serialize (lots of it done, but text output, and lots of details concerning options and errors to be done)
 
 Some questions about use of base URL
 
