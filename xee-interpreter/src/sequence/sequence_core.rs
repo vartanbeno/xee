@@ -366,7 +366,7 @@ impl Sequence {
     }
 
     /// Serialize this sequence according to serialization parameters
-    pub fn serialize(
+    pub(crate) fn serialize(
         &self,
         params: SerializationParameters,
         xot: &mut Xot,

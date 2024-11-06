@@ -127,12 +127,10 @@ pub(crate) fn serialize_sequence(
     parameters: SerializationParameters,
     xot: &mut Xot,
 ) -> error::Result<String> {
-    let node = arg.normalize(&parameters.item_separator, xot)?;
-
     if let Some(local_name) = parameters.method.local_name() {
         match local_name {
-            "xml" => serialize_xml(node, parameters, xot),
-            "html" => serialize_html(node, parameters, xot),
+            "xml" => serialize_xml(arg, parameters, xot),
+            "html" => serialize_html(arg, parameters, xot),
             _ => Err(error::Error::SEPM0016),
         }
     } else {
@@ -140,29 +138,12 @@ pub(crate) fn serialize_sequence(
     }
 }
 
-fn xot_indentation(
-    parameters: &SerializationParameters,
-    xot: &mut Xot,
-) -> Option<xot::output::Indentation> {
-    if !parameters.indent {
-        return None;
-    }
-    let suppress = xot_names(&parameters.suppress_indentation, xot);
-    Some(xot::output::Indentation { suppress })
-}
-
-fn xot_names(names: &[xot::xmlname::OwnedName], xot: &mut Xot) -> Vec<xot::NameId> {
-    names
-        .iter()
-        .map(|owned_name| owned_name.to_ref(xot).name_id())
-        .collect()
-}
-
 fn serialize_xml(
-    node: xot::Node,
+    arg: &Sequence,
     parameters: SerializationParameters,
     xot: &mut Xot,
 ) -> Result<String, error::Error> {
+    let node = arg.normalize(&parameters.item_separator, xot)?;
     let indentation = xot_indentation(&parameters, xot);
     let cdata_section_elements = xot_names(&parameters.cdata_section_elements, xot);
     let declaration = if !parameters.omit_xml_declaration {
@@ -194,10 +175,11 @@ fn serialize_xml(
 }
 
 fn serialize_html(
-    node: xot::Node,
+    arg: &Sequence,
     parameters: SerializationParameters,
     xot: &mut Xot,
 ) -> Result<String, error::Error> {
+    let node = arg.normalize(&parameters.item_separator, xot)?;
     // TODO: no check yet for html version rejecting versions that aren't 5
     let cdata_section_elements = xot_names(&parameters.cdata_section_elements, xot);
     let indentation = xot_indentation(&parameters, xot);
@@ -207,6 +189,24 @@ fn serialize_html(
         cdata_section_elements,
     };
     Ok(html5.serialize_string(output_parameters, node)?)
+}
+
+fn xot_indentation(
+    parameters: &SerializationParameters,
+    xot: &mut Xot,
+) -> Option<xot::output::Indentation> {
+    if !parameters.indent {
+        return None;
+    }
+    let suppress = xot_names(&parameters.suppress_indentation, xot);
+    Some(xot::output::Indentation { suppress })
+}
+
+fn xot_names(names: &[xot::xmlname::OwnedName], xot: &mut Xot) -> Vec<xot::NameId> {
+    names
+        .iter()
+        .map(|owned_name| owned_name.to_ref(xot).name_id())
+        .collect()
 }
 
 #[cfg(test)]
