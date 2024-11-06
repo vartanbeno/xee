@@ -8,7 +8,7 @@ use xot::Xot;
 
 use crate::{atomic, context, error, function::Map, occurrence::Occurrence};
 
-#[derive(Debug, PartialEq, Eq)]
+#[derive(Debug, Clone, PartialEq, Eq)]
 pub enum QNameOrString {
     QName(OwnedName),
     String(String),

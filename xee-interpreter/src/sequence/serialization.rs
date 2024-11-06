@@ -4,11 +4,15 @@ use xot::{xmlname::OwnedName, Xot};
 
 use xee_schema_type::Xs;
 
-use crate::{context, error, function::Map};
+use crate::{
+    atomic, context, error,
+    function::{self, Map},
+    stack,
+};
 
 use super::{
     opc::{OptionParameterConverter, QNameOrString},
-    Sequence,
+    Item, Sequence,
 };
 
 pub(crate) struct SerializationParameters {
@@ -120,6 +124,36 @@ impl SerializationParameters {
             version,
         })
     }
+
+    pub(crate) fn xml_in_json_serialization(method: &QNameOrString) -> Self {
+        Self {
+            // use the method given
+            method: method.clone(),
+            // the only thing set according to the specification
+            omit_xml_declaration: true,
+            // keep this around just in case, though I don't think we
+            // can end up in json output from XML output
+            json_node_output_method: method.clone(),
+            allow_duplicate_names: false,
+            byte_order_mark: false,
+            cdata_section_elements: Vec::new(),
+            doctype_public: None,
+            doctype_system: None,
+            encoding: "utf-8".to_string(),
+            escape_uri_attributes: false,
+            html_version: Decimal::from_str_exact("5.0").unwrap(),
+            include_content_type: false,
+            indent: false,
+            item_separator: " ".to_string(),
+            media_type: None,
+            normalization_form: None,
+            standalone: None,
+            suppress_indentation: Vec::new(),
+            undeclare_prefixes: false,
+            use_character_maps: HashMap::default(),
+            version: "1.0".to_string(),
+        }
+    }
 }
 
 pub(crate) fn serialize_sequence(
@@ -131,6 +165,7 @@ pub(crate) fn serialize_sequence(
         match local_name {
             "xml" => serialize_xml(arg, parameters, xot),
             "html" => serialize_html(arg, parameters, xot),
+            "json" => serialize_json(arg, parameters, xot),
             _ => Err(error::Error::SEPM0016),
         }
     } else {
@@ -189,6 +224,151 @@ fn serialize_html(
         cdata_section_elements,
     };
     Ok(html5.serialize_string(output_parameters, node)?)
+}
+
+fn serialize_json(
+    arg: &Sequence,
+    parameters: SerializationParameters,
+    xot: &mut Xot,
+) -> Result<String, error::Error> {
+    let r = serialize_json_sequence(arg, &parameters, xot)?;
+    Ok(r.dump())
+}
+
+fn serialize_json_sequence(
+    arg: &Sequence,
+    parameters: &SerializationParameters,
+    xot: &mut Xot,
+) -> Result<json::JsonValue, error::Error> {
+    let stack_value: stack::Value = arg.clone().into();
+
+    match stack_value {
+        stack::Value::One(item) => serialize_json_item(item, parameters, xot),
+        stack::Value::Empty => Ok(json::JsonValue::Null),
+        stack::Value::Absent => Err(error::Error::XPDY0002),
+
+        stack::Value::Many(_) => Err(error::Error::SERE0023),
+    }
+}
+
+fn serialize_json_item(
+    item: Item,
+    parameters: &SerializationParameters,
+    xot: &mut Xot,
+) -> Result<json::JsonValue, error::Error> {
+    match item {
+        Item::Atomic(atomic) => serialize_json_atomic(atomic, parameters),
+        Item::Node(node) => serialize_json_node(node, parameters, xot),
+        Item::Function(function) => serialize_json_function(function.as_ref(), parameters, xot),
+    }
+}
+
+fn serialize_json_atomic(
+    atomic: atomic::Atomic,
+    parameters: &SerializationParameters,
+) -> Result<json::JsonValue, error::Error> {
+    match atomic {
+        atomic::Atomic::Float(float) => {
+            let f = float.into_inner();
+            if f.is_infinite() || f.is_nan() {
+                return Err(error::Error::SERE0020);
+            }
+            Ok(json::JsonValue::Number(f.into()))
+        }
+        atomic::Atomic::Double(double) => {
+            let d = double.into_inner();
+            if d.is_infinite() || d.is_nan() {
+                return Err(error::Error::SERE0020);
+            }
+            Ok(json::JsonValue::Number(d.into()))
+        }
+        atomic::Atomic::Decimal(decimal) => {
+            let d: f64 = (*decimal.as_ref())
+                .try_into()
+                .map_err(|_| error::Error::SERE0020)?;
+            Ok(json::JsonValue::Number(d.into()))
+        }
+        atomic::Atomic::Integer(_t, integer) => {
+            let i: f64 = integer.to_f64();
+            Ok(json::JsonValue::Number(i.into()))
+        }
+        atomic::Atomic::Boolean(b) => Ok(json::JsonValue::Boolean(b)),
+        _ => {
+            let s = atomic.string_value()?;
+            Ok(serialize_json_string(s, parameters))
+        }
+    }
+}
+
+fn serialize_json_string(s: String, _parameters: &SerializationParameters) -> json::JsonValue {
+    // TODO: normalization-form
+
+    // NOTE: tests serialize-json-127 and serialize-json-128 fail because
+    // the forward slash (solidus) character is not escaped. This is because
+    // the json crate does not do so. This is consistent with the JSON RFC
+    // https://softwareengineering.stackexchange.com/questions/444480/json-rfc8259-escape-forward-slash-or-not
+    // but not consistent with the serialization spec which wrongfully manadates
+    // it anyway.
+    // https://www.w3.org/TR/xslt-xquery-serialization-31/#json-output
+    json::JsonValue::String(s)
+}
+
+fn serialize_json_node(
+    node: xot::Node,
+    parameters: &SerializationParameters,
+    xot: &mut Xot,
+) -> Result<json::JsonValue, error::Error> {
+    match parameters.json_node_output_method.local_name() {
+        Some("xml") | Some("html") => {
+            let xml_parameters = SerializationParameters::xml_in_json_serialization(
+                &parameters.json_node_output_method,
+            );
+            let sequence: Sequence = vec![node].into();
+            let s = serialize_sequence(&sequence, xml_parameters, xot)?;
+            Ok(serialize_json_string(s, parameters))
+        }
+        _ => todo!(),
+    }
+}
+
+fn serialize_json_function(
+    function: &function::Function,
+    parameters: &SerializationParameters,
+    xot: &mut Xot,
+) -> Result<json::JsonValue, error::Error> {
+    match function {
+        function::Function::Array(array) => serialize_json_array(array, parameters, xot),
+        function::Function::Map(map) => serialize_json_map(map, parameters, xot),
+        _ => Err(error::Error::SERE0021),
+    }
+}
+
+fn serialize_json_array(
+    array: &function::Array,
+    parameters: &SerializationParameters,
+    xot: &mut Xot,
+) -> Result<json::JsonValue, error::Error> {
+    let mut result = Vec::with_capacity(array.len());
+    for entry in array.iter() {
+        let serialized = serialize_json_sequence(entry, parameters, xot)?;
+        result.push(serialized);
+    }
+    Ok(json::JsonValue::Array(result))
+}
+
+fn serialize_json_map(
+    map: &function::Map,
+    parameters: &SerializationParameters,
+    xot: &mut Xot,
+) -> Result<json::JsonValue, error::Error> {
+    let mut result = json::object::Object::new();
+    for key in map.keys() {
+        let key_s = key.string_value()?;
+        let value = map.get(&key).unwrap();
+        let value = serialize_json_sequence(&value, parameters, xot)?;
+        result.insert(&key_s, value);
+    }
+    Ok(json::JsonValue::Object(result))
 }
 
 fn xot_indentation(

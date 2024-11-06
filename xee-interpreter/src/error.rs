@@ -564,12 +564,150 @@ pub enum Error {
 
     /// Function cannot be normalized for serialization.
     ///
-    /// It is an error if an item in S6 in sequence normalization is an
+    /// It is an error if an item in S in sequence normalization is an
     /// attribute node or a namespace node.
     SENR0001,
 
+    /// Entity serialization error
+    ///
+    /// The serializer is unable to satisfy the rules for either a well-formed
+    /// XML document entity or a well-formed XML external general parsed
+    /// entity, or both, except for content modified by the character expansion
+    /// phase of serialization.
+    SERE0003,
+
+    /// Standalone or doctype-system parameter disallowed for XML fragment.
+    ///
+    /// It's not allowed to specify the doctype-system parameter, or to specify
+    /// the standalone parameter with a value other than omit, if the instance
+    /// of the data model contains text nodes or multiple element nodes as
+    /// children of the root node.
+    SEPM0004,
+
+    /// Invalid character in NCName according to namespaces version.
+    ///
+    /// It is an error if the serialized result would contain an NCNameNames
+    /// that contains a character that is not permitted by the version of
+    /// Namespaces in XML specified by the version parameter.
+    SERE0005,
+
+    /// Invalid character according to XML version
+    ///
+    /// It is an error if the serialized result would contain a character that
+    /// is not permitted by the version of XML specified by the version
+    /// parameter.
+    SERE0006,
+
+    /// Invalid encoding
+    ///
+    /// It is an error if an output encoding other than UTF-8 or UTF-16 is
+    /// requested and the serializer does not support that encoding.
+    SESU0007,
+
+    /// Illegal character for encoding
+    ///
+    /// It is an error if a character that cannot be represented in the
+    /// encoding that the serializer is using for output appears in a context
+    /// where character references are not allowed (for example if the
+    /// character occurs in the name of an element).
+    SERE0008,
+
+    /// standalone even though XML declaration is omitted
+    ///
+    /// It is an error if the omit-xml-declaration parameter has the value yes,
+    /// true or 1, and the standalone attribute has a value other than omit; or
+    /// the version parameter has a value other than 1.0 and the doctype-system
+    /// parameter is specified.
+    SEPM0009,
+
+    /// undeclare prefixesa not allowed in XML version 1.0
+    ///
+    /// It is an error if the output method is xml or xhtml, the value of the
+    /// undeclare-prefixes parameter is one of, yes, true or 1, and the value
+    /// of the version parameter is 1.0.
+
+    /// Unsupported normalization form
+    ///
+    /// It is an error if the value of the normalization-form parameter
+    /// specifies a normalization form that is not supported by the serializer.
+    SESU0011,
+
+    /// Combining character at start of fully-normalized result
+    ///
+    /// It is an error if the value of the normalization-form parameter is
+    /// fully-normalized and any relevant construct of the result begins with a
+    /// combining character.
+    SERE0012,
+
+    /// Unsupported version
+    ///
+    /// It is an error if the serializer does not support the version of XML or
+    /// HTML specified by the version parameter.
+    SESU0013,
+
+    /// Illegal characters in HTML output.
+    ///
+    /// It is an error to use the HTML output method if characters which are
+    /// permitted in XML but not in HTML appear in the instance of the data
+    /// model.
+    SERE0014,
+
+    /// Illegal characters in processing instruction for HTML output.
+    ///
+    /// It is an error to use the HTML output method when > appears within a
+    /// processing instruction in the data model instance being serialized.
+    SERE0015,
+
     /// Parameter value is invalid for the defined domain.
     SEPM0016,
+
+    /// Error evaluating serialization parameter expression.
+    ///
+    /// It is an error if evaluating an expression in order to extract the
+    /// setting of a serialization parameter from a data model instance would
+    /// yield an error.
+    SEPM0017,
+
+    /// Multiple values for use-character-maps serialization parameter.
+    ///
+    /// It is an error if evaluating an expression in order to extract the
+    /// setting of the use-character-maps serialization parameter from a data
+    /// model instance would yield a sequence of length greater than one.
+    SEPM0018,
+
+    /// Multiple values for serialization parameter.
+    ///
+    /// It is an error if an instance of the data model used to specify the
+    /// settings of serialization parameters specifies the value of the same
+    /// parameter more than once.
+    SEPM0019,
+
+    /// Invalid numeric value in JSON.
+    ///
+    /// It is an error if a numeric value being serialized using the JSON
+    /// output method cannot be represented in the JSON grammar (e.g. +INF,
+    /// -INF, NaN).
+    SERE0020,
+
+    /// Item not allowed in JSON output.
+    ///
+    /// It is an error if a sequence being serialized using the JSON output
+    /// method includes items for which no rules are provided in the
+    /// appropriate section of the serialization rules.
+    SERE0021,
+
+    /// Duplicate key in JSON output.
+    ///
+    /// It is an error if a map being serialized using the JSON output method
+    /// has two keys with the same string value, unless the
+    /// allow-duplicate-names has the value yes, true or 1.
+    SERE0022,
+
+    /// Sequence of length greater than one in JSON output.
+    ///
+    /// It is an error if a sequence being serialized using the JSON output
+    /// method is of length greater than one.
+    SERE0023,
 
     /// An application generated error
     Application(Box<ApplicationError>),
