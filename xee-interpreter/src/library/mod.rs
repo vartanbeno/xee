@@ -10,6 +10,7 @@ mod external;
 mod fn_;
 mod hidden_xslt;
 mod hof;
+mod json;
 mod map;
 mod math;
 mod node;
@@ -45,5 +46,6 @@ pub(crate) fn static_function_descriptions() -> Vec<StaticFunctionDescription> {
     descriptions.extend(uri::static_function_descriptions());
     descriptions.extend(external::static_function_descriptions());
     descriptions.extend(parse::static_function_descriptions());
+    descriptions.extend(json::static_function_descriptions());
     descriptions
 }
