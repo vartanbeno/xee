@@ -6,7 +6,10 @@ use xee_schema_type::Xs;
 
 use crate::{context, error, function::Map};
 
-use super::opc::{OptionParameterConverter, QNameOrString};
+use super::{
+    opc::{OptionParameterConverter, QNameOrString},
+    Sequence,
+};
 
 pub(crate) struct SerializationParameters {
     pub(crate) allow_duplicate_names: bool,
@@ -117,6 +120,93 @@ impl SerializationParameters {
             version,
         })
     }
+}
+
+pub(crate) fn serialize_sequence(
+    arg: &Sequence,
+    parameters: SerializationParameters,
+    xot: &mut Xot,
+) -> error::Result<String> {
+    let node = arg.normalize(&parameters.item_separator, xot)?;
+
+    if let Some(local_name) = parameters.method.local_name() {
+        match local_name {
+            "xml" => serialize_xml(node, parameters, xot),
+            "html" => serialize_html(node, parameters, xot),
+            _ => Err(error::Error::SEPM0016),
+        }
+    } else {
+        Err(error::Error::SEPM0016)
+    }
+}
+
+fn xot_indentation(
+    parameters: &SerializationParameters,
+    xot: &mut Xot,
+) -> Option<xot::output::Indentation> {
+    if !parameters.indent {
+        return None;
+    }
+    let suppress = xot_names(&parameters.suppress_indentation, xot);
+    Some(xot::output::Indentation { suppress })
+}
+
+fn xot_names(names: &[xot::xmlname::OwnedName], xot: &mut Xot) -> Vec<xot::NameId> {
+    names
+        .iter()
+        .map(|owned_name| owned_name.to_ref(xot).name_id())
+        .collect()
+}
+
+fn serialize_xml(
+    node: xot::Node,
+    parameters: SerializationParameters,
+    xot: &mut Xot,
+) -> Result<String, error::Error> {
+    let indentation = xot_indentation(&parameters, xot);
+    let cdata_section_elements = xot_names(&parameters.cdata_section_elements, xot);
+    let declaration = if !parameters.omit_xml_declaration {
+        Some(xot::output::xml::Declaration {
+            encoding: Some(parameters.encoding.to_string()),
+            standalone: parameters.standalone,
+        })
+    } else {
+        None
+    };
+    let doctype = match (parameters.doctype_public, parameters.doctype_system) {
+        (Some(public), Some(system)) => Some(xot::output::xml::DocType::Public { public, system }),
+        (None, Some(system)) => Some(xot::output::xml::DocType::System { system }),
+        // TODO: this should really not happen?
+        (Some(public), None) => Some(xot::output::xml::DocType::Public {
+            public,
+            system: "".to_string(),
+        }),
+        (None, None) => None,
+    };
+    let output_parameters = xot::output::xml::Parameters {
+        indentation,
+        cdata_section_elements,
+        declaration,
+        doctype,
+        ..Default::default()
+    };
+    Ok(xot.serialize_xml_string(output_parameters, node)?)
+}
+
+fn serialize_html(
+    node: xot::Node,
+    parameters: SerializationParameters,
+    xot: &mut Xot,
+) -> Result<String, error::Error> {
+    // TODO: no check yet for html version rejecting versions that aren't 5
+    let cdata_section_elements = xot_names(&parameters.cdata_section_elements, xot);
+    let indentation = xot_indentation(&parameters, xot);
+    let html5 = xot.html5();
+    let output_parameters = xot::output::html5::Parameters {
+        indentation,
+        cdata_section_elements,
+    };
+    Ok(html5.serialize_string(output_parameters, node)?)
 }
 
 #[cfg(test)]

@@ -17,6 +17,8 @@ use crate::stack;
 use crate::string::Collation;
 
 use super::normalization::normalize;
+use super::serialization::serialize_sequence;
+use super::SerializationParameters;
 
 /// A XPath sequence of items.
 ///
@@ -361,6 +363,15 @@ impl Sequence {
     /// <https://www.w3.org/TR/xslt-xquery-serialization-31/#serdm>
     pub fn normalize(&self, item_separator: &str, xot: &mut Xot) -> error::Result<xot::Node> {
         normalize(self.clone(), item_separator, xot)
+    }
+
+    /// Serialize this sequence according to serialization parameters
+    pub fn serialize(
+        &self,
+        params: SerializationParameters,
+        xot: &mut Xot,
+    ) -> error::Result<String> {
+        serialize_sequence(self, params, xot)
     }
 }
 
