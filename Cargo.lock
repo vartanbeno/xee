@@ -2476,6 +2476,12 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "a183cf7feeba97b4dd1c0d46788634f6221d87fa961b305bed08c851829efcc0"
 
 [[package]]
+name = "v_jsonescape"
+version = "0.7.8"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "be8219cc464ba10c48c3231a6871f11d26d831c5c45a47467eea387ea7bb10e8"
+
+[[package]]
 name = "version_check"
 version = "0.9.4"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -2812,6 +2818,7 @@ dependencies = [
  "strum_macros 0.25.3",
  "test-generator",
  "thiserror",
+ "v_jsonescape",
  "xee-name",
  "xee-schema-type",
  "xee-xpath-ast",
