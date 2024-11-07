@@ -66,16 +66,16 @@ Needs enormously complex i18n aware implementation.
 
 Needs enormously complex i18n aware implementation.
 
-## qnames
-
-- fn:in-scope-prefixes
-
 ## JSON
 
 - fn:json-doc
 - fn:json-to-xml
-- fn:parse-json (done, but without options support yet)
 - fn:xml-to-json
+
+### parse-json
+
+Mostly done, but there are some special rules about fallback that don't work
+yet, and `duplicates` won't be implemented.
 
 ## XML parsing and serializing
 
