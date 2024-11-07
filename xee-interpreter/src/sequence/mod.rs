@@ -14,7 +14,7 @@ mod serialization;
 pub use crate::stack::AtomizedIter;
 pub(crate) use item::AtomizedItemIter;
 pub use item::Item;
-pub(crate) use opc::{OptionParameterConverter, QNameOrString};
+pub(crate) use opc::OptionParameterConverter;
 pub use sequence_core::Sequence;
 pub use sequence_core::{ItemIter, NodeIter};
 pub(crate) use serialization::SerializationParameters;

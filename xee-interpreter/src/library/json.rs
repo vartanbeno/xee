@@ -77,6 +77,10 @@ impl ParseJsonParameters {
             "use-last" => Duplicates::UseLast,
             _ => return Err(error::Error::FOJS0005),
         };
+        // the escape is true by default, weird but following the spec.
+        // weirdly enough the default is `false` (contrary to the spec) in
+        // case the map isn't passed at all.
+        // See https://github.com/w3c/qt3tests/issues/65
         let escape = c
             .option_with_default("escape", Xs::Boolean, true)
             .map_err(|_| error::Error::FOJS0005)?;
