@@ -166,9 +166,6 @@ fn name_ids(names: &[String], xot: &mut Xot) -> Vec<NameId> {
     converted
 }
 
-/// A wrapper around a string that represents an XML name.
-struct XmlName<'a>(&'a str);
-
 fn owned_name(name: &str) -> OwnedName {
     let captures = URI_QUALIFIED_NAME_REGEX.captures(name);
     if let Some(captures) = captures {
