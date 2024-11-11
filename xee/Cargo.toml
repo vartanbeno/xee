@@ -19,5 +19,6 @@ ariadne = "0.3.0"
 anyhow.workspace = true
 regex = { workspace = true }
 rustyline = "14.0.0"
+ahash = { workspace = true }
 
 [dev-dependencies]

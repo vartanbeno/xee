@@ -1,13 +1,15 @@
 use std::{
     fs::File,
     io::{BufReader, Read},
-    path::PathBuf,
+    path::{Path, PathBuf},
 };
 
+use ahash::HashMap;
 use clap::Parser;
 use rustyline::error::ReadlineError;
+use xee_xpath::{DocumentHandle, Documents};
 
-use crate::xpath::{execute_query, make_static_context_builder};
+use crate::xpath::execute_query;
 
 #[derive(Debug, Parser)]
 pub(crate) struct Repl {
@@ -26,25 +28,77 @@ pub(crate) struct Repl {
     pub(crate) namespace: Vec<String>,
 }
 
+struct RunContext<'a> {
+    documents: Documents,
+    document_handle: Option<DocumentHandle>,
+    static_context_builder: xee_xpath::context::StaticContextBuilder<'a>,
+}
+
+impl<'a> RunContext<'a> {
+    fn queries(&self) -> xee_xpath::Queries<'a> {
+        xee_xpath::Queries::new(self.static_context_builder.clone())
+    }
+}
+
+impl<'a> RunContext<'a> {
+    fn new() -> Self {
+        Self {
+            documents: Documents::new(),
+            document_handle: None,
+            static_context_builder: xee_xpath::context::StaticContextBuilder::default(),
+        }
+    }
+
+    fn set_default_namespace_uri(&mut self, default_namespace_uri: &'a str) -> anyhow::Result<()> {
+        self.static_context_builder
+            .default_element_namespace(default_namespace_uri);
+        Ok(())
+    }
+
+    fn add_namespace_declaration(&mut self, prefix: &'a str, uri: &'a str) -> anyhow::Result<()> {
+        self.static_context_builder.add_namespace(prefix, uri);
+        Ok(())
+    }
+
+    fn set_context_document(&mut self, path: &Path) -> anyhow::Result<()> {
+        let mut reader = BufReader::new(File::open(path)?);
+        let mut input_xml = String::new();
+        reader.read_to_string(&mut input_xml)?;
+
+        self.document_handle = Some(self.documents.add_string_without_uri(&input_xml)?);
+        Ok(())
+    }
+}
+
 impl Repl {
     pub(crate) fn run(&self) -> anyhow::Result<()> {
-        let mut documents = xee_xpath::Documents::new();
-        let doc = if let Some(infile) = &self.infile {
-            let mut reader = BufReader::new(File::open(infile)?);
-            let mut input_xml = String::new();
-            reader.read_to_string(&mut input_xml)?;
+        let mut run_context = RunContext::new();
+        if let Some(infile) = &self.infile {
+            run_context.set_context_document(infile)?;
+        }
+        if let Some(default_namespace_uri) = &self.default_namespace_uri {
+            run_context.set_default_namespace_uri(default_namespace_uri)?;
+        }
+        for namespace in &self.namespace {
+            let parts = namespace.split('=').collect::<Vec<_>>();
+            if parts.len() != 2 {
+                return Err(anyhow::anyhow!(
+                    "Invalid namespace declaration: {}",
+                    namespace
+                ));
+            }
+            run_context.add_namespace_declaration(parts[0], parts[1])?;
+        }
 
-            Some(documents.add_string_without_uri(&input_xml)?)
-        } else {
-            None
-        };
-
-        let static_context_builder = make_static_context_builder(
-            self.default_namespace_uri.as_deref(),
-            self.namespace.as_slice(),
-        )?;
-
-        let queries = xee_xpath::Queries::new(static_context_builder);
+        let command_definitions = CommandDefinitions::new(vec![CommandDefinition::new(
+            "load",
+            vec![ArgumentDefinition { default: None }],
+            Box::new(|args, run_context| {
+                let path: PathBuf = args[0].into();
+                run_context.set_context_document(&path)?;
+                Ok(())
+            }),
+        )]);
 
         let mut rl = rustyline::DefaultEditor::new()?;
         loop {
@@ -56,7 +110,21 @@ impl Repl {
                         continue;
                     }
                     rl.add_history_entry(line)?;
-                    execute_query(line, &queries, &mut documents, doc)?;
+                    if !line.starts_with("!") {
+                        let queries = run_context.queries();
+                        execute_query(
+                            line,
+                            &queries,
+                            &mut run_context.documents,
+                            run_context.document_handle,
+                        )?;
+                    } else {
+                        let command = line[1..].trim();
+                        if command == "quit" {
+                            break;
+                        }
+                        command_definitions.execute(command, &mut run_context)?;
+                    }
                 }
                 Err(ReadlineError::Interrupted) => {
                     println!("CTRL-C");
@@ -73,5 +141,92 @@ impl Repl {
             }
         }
         Ok(())
+    }
+}
+
+type Execute = Box<dyn Fn(&[&str], &mut RunContext) -> anyhow::Result<()>>;
+
+struct CommandDefinition {
+    name: &'static str,
+    args: Vec<ArgumentDefinition>,
+    execute: Execute,
+}
+
+#[derive(Default)]
+struct CommandDefinitions {
+    definitions: Vec<CommandDefinition>,
+    by_name: HashMap<&'static str, usize>,
+}
+
+struct ArgumentDefinition {
+    default: Option<&'static str>,
+}
+
+impl CommandDefinitions {
+    fn new(defitions: Vec<CommandDefinition>) -> Self {
+        let mut definitions = Self {
+            definitions: Vec::new(),
+            by_name: HashMap::default(),
+        };
+        for definition in defitions {
+            definitions.add(definition);
+        }
+        definitions
+    }
+
+    fn add(&mut self, definition: CommandDefinition) {
+        let index = self.definitions.len();
+        self.by_name.insert(definition.name, index);
+        self.definitions.push(definition);
+    }
+
+    fn execute(&self, command: &str, run_context: &mut RunContext) -> anyhow::Result<()> {
+        let parts = command.split_whitespace().collect::<Vec<_>>();
+        let command_s = parts[0];
+        let args = &parts[1..];
+        let command = self.get(command_s);
+        if let Some(command) = command {
+            if args.len() > command.args.len() {
+                println!("Too many arguments for command: {}", command_s);
+                return Ok(());
+            }
+            let args = command.preprocess_arguments(args);
+            if args.len() < command.args.len() {
+                println!("Too few arguments for command: {}", command_s);
+                return Ok(());
+            }
+            (command.execute)(&args, run_context)
+        } else {
+            println!("Unknown command: {}", command_s);
+            Ok(())
+        }
+    }
+
+    fn get(&self, command: &str) -> Option<&CommandDefinition> {
+        self.by_name.get(command).map(|&i| &self.definitions[i])
+    }
+}
+
+impl CommandDefinition {
+    fn new(name: &'static str, args: Vec<ArgumentDefinition>, execute: Execute) -> Self {
+        Self {
+            name,
+            args,
+            execute,
+        }
+    }
+
+    fn preprocess_arguments<'a>(&'a self, args: &'a [&'a str]) -> Vec<&'a str> {
+        let mut result = Vec::new();
+        let mut i = 0;
+        for arg in &self.args {
+            if i < args.len() {
+                result.push(args[i]);
+                i += 1;
+            } else if let Some(default) = arg.default {
+                result.push(default);
+            }
+        }
+        result
     }
 }

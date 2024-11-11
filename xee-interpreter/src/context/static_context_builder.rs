@@ -1,3 +1,4 @@
+use ahash::HashMap;
 use iri_string::types::IriAbsoluteString;
 use xee_name::Namespaces;
 use xot::xmlname::OwnedName;
@@ -7,7 +8,7 @@ use crate::context;
 #[derive(Debug, Clone, Default)]
 pub struct StaticContextBuilder<'a> {
     variable_names: Vec<OwnedName>,
-    namespaces: Vec<(&'a str, &'a str)>,
+    namespaces: HashMap<&'a str, &'a str>,
     default_element_namespace: &'a str,
     default_function_namespace: &'a str,
     static_base_uri: Option<IriAbsoluteString>,
@@ -41,11 +42,17 @@ impl<'a> StaticContextBuilder<'a> {
         namespaces: impl IntoIterator<Item = (&'a str, &'a str)>,
     ) -> &mut Self {
         for (prefix, uri) in namespaces {
-            if prefix.is_empty() {
-                self.default_element_namespace = uri;
-            } else {
-                self.namespaces.push((prefix, uri));
-            }
+            self.add_namespace(prefix, uri);
+        }
+        self
+    }
+
+    /// Add a namespace prefix that the XPath expression can use.
+    pub fn add_namespace(&mut self, prefix: &'a str, uri: &'a str) -> &mut Self {
+        if prefix.is_empty() {
+            self.default_element_namespace = uri;
+        } else {
+            self.namespaces.insert(prefix, uri);
         }
         self
     }
