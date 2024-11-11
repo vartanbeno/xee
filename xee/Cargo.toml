@@ -17,5 +17,6 @@ xee-xpath-compiler = { path = "../xee-xpath-compiler" }
 clap = { workspace = true, features = ["derive"] }
 ariadne = "0.3.0"
 anyhow.workspace = true
+regex = { workspace = true }
 
 [dev-dependencies]

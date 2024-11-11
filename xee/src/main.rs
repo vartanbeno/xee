@@ -1,4 +1,6 @@
+mod format;
 mod indent;
+mod load_xml;
 
 use clap::{Parser, Subcommand};
 use std::fs::File;
@@ -21,7 +23,10 @@ struct Cli {
 #[derive(Subcommand)]
 enum Commands {
     /// Format an XML document with indentation to make it more readable.
-    Indent { xml: PathBuf },
+    Indent {
+        xml: PathBuf,
+    },
+    Format(format::Format),
     /// Evaluate an xpath expression on an xml document.
     Xpath {
         xml: PathBuf,
@@ -37,6 +42,9 @@ fn main() -> anyhow::Result<()> {
     match cli.command {
         Commands::Indent { xml } => {
             indent(&xml, &mut std::io::stdout())?;
+        }
+        Commands::Format(format) => {
+            format.run()?;
         }
         Commands::Xpath {
             xml,

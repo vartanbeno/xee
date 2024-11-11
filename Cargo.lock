@@ -2782,6 +2782,7 @@ dependencies = [
  "anyhow",
  "ariadne",
  "clap",
+ "regex",
  "xee-xpath-compiler",
  "xot",
 ]
