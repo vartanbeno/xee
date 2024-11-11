@@ -51,7 +51,12 @@ impl Repl {
             let readline = rl.readline(">> ");
             match readline {
                 Ok(line) => {
-                    execute_query(&line, &queries, &mut documents, doc)?;
+                    let line = line.trim();
+                    if line.is_empty() {
+                        continue;
+                    }
+                    rl.add_history_entry(line)?;
+                    execute_query(line, &queries, &mut documents, doc)?;
                 }
                 Err(ReadlineError::Interrupted) => {
                     println!("CTRL-C");
