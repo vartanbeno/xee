@@ -7,9 +7,10 @@ use std::{
 use ahash::HashMap;
 use clap::Parser;
 use rustyline::error::ReadlineError;
-use xee_xpath::{DocumentHandle, Documents};
+use xee_xpath::{error::Error, Atomic, DocumentHandle, Documents, Item, Itemable, Query};
+use xot::{output::xml::Parameters, Xot};
 
-use crate::xpath::execute_query;
+use crate::xpath::{execute_query, make_static_context_builder};
 
 #[derive(Debug, Parser)]
 pub(crate) struct Repl {
@@ -28,35 +29,30 @@ pub(crate) struct Repl {
     pub(crate) namespace: Vec<String>,
 }
 
-struct RunContext<'a> {
+struct RunContext {
     documents: Documents,
     document_handle: Option<DocumentHandle>,
-    static_context_builder: xee_xpath::context::StaticContextBuilder<'a>,
+    default_namespace_uri: Option<String>,
+    namespaces: HashMap<String, String>,
 }
 
-impl<'a> RunContext<'a> {
-    fn queries(&self) -> xee_xpath::Queries<'a> {
-        xee_xpath::Queries::new(self.static_context_builder.clone())
-    }
-}
-
-impl<'a> RunContext<'a> {
+impl RunContext {
     fn new() -> Self {
         Self {
             documents: Documents::new(),
             document_handle: None,
-            static_context_builder: xee_xpath::context::StaticContextBuilder::default(),
+            default_namespace_uri: None,
+            namespaces: HashMap::default(),
         }
     }
 
-    fn set_default_namespace_uri(&mut self, default_namespace_uri: &'a str) -> anyhow::Result<()> {
-        self.static_context_builder
-            .default_element_namespace(default_namespace_uri);
+    fn set_default_namespace_uri(&mut self, default_namespace_uri: String) -> anyhow::Result<()> {
+        self.default_namespace_uri = Some(default_namespace_uri);
         Ok(())
     }
 
-    fn add_namespace_declaration(&mut self, prefix: &'a str, uri: &'a str) -> anyhow::Result<()> {
-        self.static_context_builder.add_namespace(prefix, uri);
+    fn add_namespace_declaration(&mut self, prefix: String, uri: String) -> anyhow::Result<()> {
+        self.namespaces.insert(prefix, uri);
         Ok(())
     }
 
@@ -68,18 +64,59 @@ impl<'a> RunContext<'a> {
         self.document_handle = Some(self.documents.add_string_without_uri(&input_xml)?);
         Ok(())
     }
+
+    fn queries(&self) -> xee_xpath::Queries {
+        let mut static_context_builder = xee_xpath::context::StaticContextBuilder::default();
+        if let Some(default_namespace_uri) = &self.default_namespace_uri {
+            static_context_builder.default_element_namespace(default_namespace_uri);
+        }
+        for (prefix, uri) in &self.namespaces {
+            static_context_builder.add_namespace(prefix, uri);
+        }
+        xee_xpath::Queries::new(static_context_builder)
+    }
+
+    pub(crate) fn execute(&mut self, xpath: &str) -> Result<(), anyhow::Error> {
+        let queries = self.queries();
+        let sequence_query = queries.sequence(xpath);
+        let sequence_query = match sequence_query {
+            Ok(sequence_query) => sequence_query,
+            Err(e) => {
+                render_error(xpath, e);
+                return Ok(());
+            }
+        };
+        let mut context_builder = sequence_query.dynamic_context_builder(&self.documents);
+        if let Some(doc) = self.document_handle {
+            context_builder.context_item(doc.to_item(&self.documents)?);
+        }
+        let context = context_builder.build();
+
+        let sequence = sequence_query.execute_with_context(&mut self.documents, &context);
+        let sequence = match sequence {
+            Ok(sequence) => sequence,
+            Err(e) => {
+                render_error(xpath, e);
+                return Ok(());
+            }
+        };
+        for item in sequence.items()? {
+            display_item(self.documents.xot(), &item).unwrap();
+        }
+        Ok(())
+    }
 }
 
 impl Repl {
-    pub(crate) fn run(&self) -> anyhow::Result<()> {
+    pub(crate) fn run(self) -> anyhow::Result<()> {
         let mut run_context = RunContext::new();
         if let Some(infile) = &self.infile {
             run_context.set_context_document(infile)?;
         }
-        if let Some(default_namespace_uri) = &self.default_namespace_uri {
+        if let Some(default_namespace_uri) = self.default_namespace_uri {
             run_context.set_default_namespace_uri(default_namespace_uri)?;
         }
-        for namespace in &self.namespace {
+        for namespace in self.namespace {
             let parts = namespace.split('=').collect::<Vec<_>>();
             if parts.len() != 2 {
                 return Err(anyhow::anyhow!(
@@ -87,7 +124,7 @@ impl Repl {
                     namespace
                 ));
             }
-            run_context.add_namespace_declaration(parts[0], parts[1])?;
+            run_context.add_namespace_declaration(parts[0].to_string(), parts[1].to_string())?;
         }
 
         let command_definitions = CommandDefinitions::new(vec![
@@ -100,22 +137,23 @@ impl Repl {
                     Ok(())
                 }),
             ),
-            // CommandDefinition::new(
-            //     "default_namespace",
-            //     vec![ArgumentDefinition::default()],
-            //     Box::new(|args, run_context| {
-            //         run_context.set_default_namespace_uri(&args[0])?;
-            //         Ok(())
-            //     }),
-            // ),
-            // CommandDefinition::new(
-            //     "namespace",
-            //     vec![ArgumentDefinition::default(), ArgumentDefinition::default()],
-            //     Box::new(|args, run_context| {
-            //         run_context.add_namespace_declaration(&args[0], &args[1])?;
-            //         Ok(())
-            //     }),
-            // ),
+            CommandDefinition::new(
+                "default_namespace",
+                vec![ArgumentDefinition::default()],
+                Box::new(|args, run_context| {
+                    run_context.set_default_namespace_uri(args[0].to_string())?;
+                    Ok(())
+                }),
+            ),
+            CommandDefinition::new(
+                "namespace",
+                vec![ArgumentDefinition::default(), ArgumentDefinition::default()],
+                Box::new(|args, run_context| {
+                    run_context
+                        .add_namespace_declaration(args[0].to_string(), args[1].to_string())?;
+                    Ok(())
+                }),
+            ),
         ]);
 
         let mut rl = rustyline::DefaultEditor::new()?;
@@ -129,13 +167,7 @@ impl Repl {
                     }
                     rl.add_history_entry(line)?;
                     if !line.starts_with("!") {
-                        let queries = run_context.queries();
-                        execute_query(
-                            line,
-                            &queries,
-                            &mut run_context.documents,
-                            run_context.document_handle,
-                        )?;
+                        run_context.execute(line)?;
                     } else {
                         let command = line[1..].trim();
                         if command == "quit" {
@@ -248,4 +280,66 @@ impl CommandDefinition {
         }
         result
     }
+}
+
+fn display_item(xot: &Xot, item: &Item) -> Result<(), xot::Error> {
+    match item {
+        Item::Node(node) => {
+            println!("node: \n{}", display_node(xot, *node)?);
+        }
+        Item::Atomic(value) => println!("atomic: {}", display_atomic(value)),
+        Item::Function(function) => println!("function: {:?}", function),
+    }
+    Ok(())
+}
+
+fn display_atomic(atomic: &Atomic) -> String {
+    format!("{}", atomic)
+}
+
+fn display_node(xot: &Xot, node: xot::Node) -> Result<String, xot::Error> {
+    match xot.value(node) {
+        xot::Value::Attribute(attribute) => {
+            let value = attribute.value();
+            let (name, namespace) = xot.name_ns_str(attribute.name());
+            let name = if !namespace.is_empty() {
+                format!("Q{{{}}}{}", namespace, name)
+            } else {
+                name.to_string()
+            };
+            Ok(format!("Attribute {}=\"{}\"", name, value))
+        }
+        xot::Value::Namespace(..) => {
+            todo!()
+        }
+        _ => xot.serialize_xml_string(
+            {
+                Parameters {
+                    indentation: Default::default(),
+                    ..Default::default()
+                }
+            },
+            node,
+        ),
+    }
+}
+
+fn render_error(src: &str, e: Error) {
+    let red = ariadne::Color::Red;
+
+    let mut report =
+        ariadne::Report::build(ariadne::ReportKind::Error, "source", 0).with_code(e.error.code());
+
+    if let Some(span) = e.span {
+        report = report.with_label(
+            ariadne::Label::new(("source", span.range()))
+                .with_message(e.error.message())
+                .with_color(red),
+        )
+    }
+    report
+        .finish()
+        .print(("source", ariadne::Source::from(src)))
+        .unwrap();
+    println!("{}", e.error.note());
 }
