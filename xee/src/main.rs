@@ -1,3 +1,5 @@
+mod indent;
+
 use clap::{Parser, Subcommand};
 use std::fs::File;
 use std::io::prelude::*;
@@ -6,6 +8,8 @@ use std::path::PathBuf;
 use xee_xpath_compiler::{atomic::Atomic, error::SpannedError, evaluate_root, sequence::Item};
 use xot::output::xml::Parameters;
 use xot::Xot;
+
+use crate::indent::indent;
 
 #[derive(Parser)]
 #[command(author, version, about, long_about = None)]
@@ -16,6 +20,8 @@ struct Cli {
 
 #[derive(Subcommand)]
 enum Commands {
+    /// Format an XML document with indentation to make it more readable.
+    Indent { xml: PathBuf },
     /// Evaluate an xpath expression on an xml document.
     Xpath {
         xml: PathBuf,
@@ -26,9 +32,12 @@ enum Commands {
     },
 }
 
-fn main() -> xee_xpath_compiler::error::Result<()> {
+fn main() -> anyhow::Result<()> {
     let cli = Cli::parse();
     match cli.command {
+        Commands::Indent { xml } => {
+            indent(&xml, &mut std::io::stdout())?;
+        }
         Commands::Xpath {
             xml,
             xpath,
