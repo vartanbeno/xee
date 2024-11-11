@@ -1,36 +1,86 @@
+use clap::Parser;
 use std::fs::File;
 use std::io::prelude::*;
 use std::io::BufReader;
 use std::path::PathBuf;
-use xee_xpath_compiler::{atomic::Atomic, error::SpannedError, evaluate_root, sequence::Item};
+use xee_xpath::error::Error;
+use xee_xpath::Query;
+use xee_xpath::{Atomic, Item};
 use xot::output::xml::Parameters;
 use xot::Xot;
 
-pub(crate) fn xpath(
-    xml: PathBuf,
-    xpath: String,
-    namespace_default: Option<String>,
-) -> Result<(), anyhow::Error> {
-    let mut xot = Xot::new();
-    let xml_file = File::open(xml).unwrap();
-    let mut buf_reader = BufReader::new(xml_file);
-    let mut xml = String::new();
-    buf_reader.read_to_string(&mut xml).unwrap();
-    let root = xot.parse(&xml).unwrap();
-    let result = evaluate_root(
-        &mut xot,
-        root,
-        &xpath,
-        &namespace_default.unwrap_or(String::new()),
-    );
-    Ok(match result {
-        Ok(sequence) => {
-            for item in sequence.items()? {
-                display_item(&xot, &item).unwrap();
-            }
+#[derive(Debug, Parser)]
+pub(crate) struct XPath {
+    /// xpath expression
+    pub(crate) xpath: String,
+    /// input xml file (default stdin)
+    pub(crate) infile: Option<PathBuf>,
+    /// Namespace URI to use in XPath for element names without a namespace
+    /// prefix.
+    ///
+    /// If omitted, the default namespace is the empty string (i.e. the
+    /// names are not in a namespace).
+    #[arg(long)]
+    pub(crate) default_namespace_uri: Option<String>,
+    /// Namespace declaration to make available in XPath (can be repeated)
+    /// The format is prefix=uri.
+    #[arg(long)]
+    pub(crate) namespace: Vec<String>,
+}
+
+impl XPath {
+    pub(crate) fn run(&self) -> Result<(), anyhow::Error> {
+        let mut reader: Box<dyn BufRead> = if let Some(infile) = &self.infile {
+            Box::new(BufReader::new(File::open(infile)?))
+        } else {
+            Box::new(BufReader::new(std::io::stdin()))
+        };
+
+        let mut input_xml = String::new();
+        reader.read_to_string(&mut input_xml)?;
+
+        let mut documents = xee_xpath::Documents::new();
+        let doc = documents.add_string_without_uri(&input_xml)?;
+
+        let mut static_context_builder = xee_xpath::context::StaticContextBuilder::default();
+        if let Some(default_namespace_uri) = &self.default_namespace_uri {
+            static_context_builder.default_element_namespace(default_namespace_uri);
         }
-        Err(e) => render_error(&xpath, e),
-    })
+        let namespaces = self
+            .namespace
+            .iter()
+            .map(|declaration| {
+                let mut parts = declaration.splitn(2, '=');
+                let prefix = parts.next().ok_or(anyhow::anyhow!("missing prefix"))?;
+                let uri = parts.next().ok_or(anyhow::anyhow!("missing uri"))?;
+                Ok((prefix, uri))
+            })
+            .collect::<Result<Vec<_>, anyhow::Error>>()?;
+
+        static_context_builder.namespaces(namespaces);
+
+        let queries = xee_xpath::Queries::new(static_context_builder);
+        let sequence_query = queries.sequence(&self.xpath);
+        let sequence_query = match sequence_query {
+            Ok(sequence_query) => sequence_query,
+            Err(e) => {
+                render_error(&self.xpath, e);
+                return Ok(());
+            }
+        };
+        let sequence = sequence_query.execute(&mut documents, doc);
+        let sequence = match sequence {
+            Ok(sequence) => sequence,
+            Err(e) => {
+                render_error(&self.xpath, e);
+                return Ok(());
+            }
+        };
+        for item in sequence.items()? {
+            display_item(documents.xot(), &item).unwrap();
+        }
+        Ok(())
+    }
 }
 
 fn display_item(xot: &Xot, item: &Item) -> Result<(), xot::Error> {
@@ -75,7 +125,7 @@ fn display_node(xot: &Xot, node: xot::Node) -> Result<String, xot::Error> {
     }
 }
 
-fn render_error(src: &str, e: SpannedError) {
+fn render_error(src: &str, e: Error) {
     let red = ariadne::Color::Red;
 
     let mut report =

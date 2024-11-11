@@ -3,7 +3,6 @@ mod indent;
 mod xpath;
 
 use clap::{Parser, Subcommand};
-use std::path::PathBuf;
 
 #[derive(Parser)]
 #[command(author, version, about, long_about = None)]
@@ -21,13 +20,7 @@ enum Commands {
     /// This is a shortcut for `format --indent`.
     Indent(indent::Indent),
     /// Evaluate an xpath expression on an xml document.
-    Xpath {
-        xml: PathBuf,
-        xpath: String,
-        /// The default namespace for elements
-        #[arg(long, short)]
-        namespace_default: Option<String>,
-    },
+    Xpath(xpath::XPath),
 }
 
 fn main() -> anyhow::Result<()> {
@@ -39,12 +32,8 @@ fn main() -> anyhow::Result<()> {
         Commands::Format(format) => {
             format.run()?;
         }
-        Commands::Xpath {
-            xml,
-            xpath,
-            namespace_default,
-        } => {
-            xpath::xpath(xml, xpath, namespace_default)?;
+        Commands::Xpath(xpath) => {
+            xpath.run()?;
         }
     }
     Ok(())
