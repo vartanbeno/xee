@@ -1,5 +1,6 @@
 mod format;
 mod indent;
+mod repl;
 mod xpath;
 
 use clap::{Parser, Subcommand};
@@ -21,6 +22,8 @@ enum Commands {
     Indent(indent::Indent),
     /// Evaluate an xpath expression on an xml document.
     Xpath(xpath::XPath),
+    /// Interactive xpath REPL (read-eval-print loop).
+    Repl(repl::Repl),
 }
 
 fn main() -> anyhow::Result<()> {
@@ -34,6 +37,9 @@ fn main() -> anyhow::Result<()> {
         }
         Commands::Xpath(xpath) => {
             xpath.run()?;
+        }
+        Commands::Repl(repl) => {
+            repl.run()?;
         }
     }
     Ok(())
