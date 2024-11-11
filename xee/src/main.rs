@@ -1,6 +1,5 @@
 mod format;
 mod indent;
-mod load_xml;
 
 use clap::{Parser, Subcommand};
 use std::fs::File;
@@ -11,8 +10,6 @@ use xee_xpath_compiler::{atomic::Atomic, error::SpannedError, evaluate_root, seq
 use xot::output::xml::Parameters;
 use xot::Xot;
 
-use crate::indent::indent;
-
 #[derive(Parser)]
 #[command(author, version, about, long_about = None)]
 struct Cli {
@@ -22,11 +19,12 @@ struct Cli {
 
 #[derive(Subcommand)]
 enum Commands {
-    /// Format an XML document with indentation to make it more readable.
-    Indent {
-        xml: PathBuf,
-    },
+    /// Format an XML document with various options.
     Format(format::Format),
+    /// Format an XML document with indentation to make it more readable.
+    ///
+    /// This is a shortcut for `format --indent`.
+    Indent(indent::Indent),
     /// Evaluate an xpath expression on an xml document.
     Xpath {
         xml: PathBuf,
@@ -40,8 +38,8 @@ enum Commands {
 fn main() -> anyhow::Result<()> {
     let cli = Cli::parse();
     match cli.command {
-        Commands::Indent { xml } => {
-            indent(&xml, &mut std::io::stdout())?;
+        Commands::Indent(indent) => {
+            indent.run()?;
         }
         Commands::Format(format) => {
             format.run()?;

@@ -20,47 +20,47 @@ static URI_QUALIFIED_NAME_REGEX: std::sync::LazyLock<regex::Regex> =
 #[derive(Debug, Parser)]
 pub(crate) struct Format {
     /// input xml file (default stdin)
-    infile: Option<PathBuf>,
+    pub(crate) infile: Option<PathBuf>,
     /// output xml file (default stdout)
-    outfile: Option<PathBuf>,
+    pub(crate) outfile: Option<PathBuf>,
     /// Indent the output
     #[arg(long)]
-    indent: bool,
+    pub(crate) indent: bool,
     /// Element name to exclude from indentation (can be repeated)
     /// To specify a namespaced element, use Q{namespace}name
     /// If --indent is not specified, using this option is an error.
     #[arg(long)]
-    suppress_indent: Vec<String>,
+    pub(crate) suppress_indent: Vec<String>,
     /// Element name to output as a CDATA section (can be repeated)
     /// To specify a namespaced element, use Q{namespace}name
     #[arg(long)]
-    cdata_element: Vec<String>,
+    pub(crate) cdata_element: Vec<String>,
     /// doctype public identifier.
     /// A system identifier has to be specified as well, otherwise this is an
     /// error.
     #[arg(long)]
-    doctype_public: Option<String>,
+    pub(crate) doctype_public: Option<String>,
     /// doctype system identifier.
     /// Can be used by itself or with --doctype-public.
     #[arg(long)]
-    doctype_system: Option<String>,
+    pub(crate) doctype_system: Option<String>,
     /// Output the XML declaration (without encoding).
     #[arg(long)]
-    declaration: bool,
+    pub(crate) declaration: bool,
     /// Encoding for the XML declaration
     /// If not specified, the encoding is UTF-8.
     /// Implies --declaration.
     #[arg(long)]
-    declaration_encoding: Option<String>,
+    pub(crate) declaration_encoding: Option<String>,
     /// Standalone declaration for the XML declaration
     /// If not specified, the standalone declaration is omitted.
     /// Implies --declaration. Can be used in combination with
     /// --declaration-encoding.
     #[arg(long)]
-    declaration_standalone: Option<bool>,
+    pub(crate) declaration_standalone: Option<bool>,
     /// Escape gt (>) characters in text content. By default this is false.
     #[arg(long)]
-    escape_gt: bool,
+    pub(crate) escape_gt: bool,
 }
 
 impl Format {
