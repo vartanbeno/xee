@@ -64,6 +64,10 @@ pub(crate) struct Format {
 }
 
 impl Format {
+    // TODO: much better error handling
+    // - file not found
+    // - invalid XML (should show line number, context)
+    // - invalid XML name given as option
     pub(crate) fn run(&self) -> anyhow::Result<()> {
         // open infile from path unless it's not given, in which case
         // we want to use stdin
