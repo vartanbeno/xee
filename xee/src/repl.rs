@@ -90,15 +90,33 @@ impl Repl {
             run_context.add_namespace_declaration(parts[0], parts[1])?;
         }
 
-        let command_definitions = CommandDefinitions::new(vec![CommandDefinition::new(
-            "load",
-            vec![ArgumentDefinition { default: None }],
-            Box::new(|args, run_context| {
-                let path: PathBuf = args[0].into();
-                run_context.set_context_document(&path)?;
-                Ok(())
-            }),
-        )]);
+        let command_definitions = CommandDefinitions::new(vec![
+            CommandDefinition::new(
+                "load",
+                vec![ArgumentDefinition::default()],
+                Box::new(|args, run_context| {
+                    let path: PathBuf = args[0].into();
+                    run_context.set_context_document(&path)?;
+                    Ok(())
+                }),
+            ),
+            // CommandDefinition::new(
+            //     "default_namespace",
+            //     vec![ArgumentDefinition::default()],
+            //     Box::new(|args, run_context| {
+            //         run_context.set_default_namespace_uri(&args[0])?;
+            //         Ok(())
+            //     }),
+            // ),
+            // CommandDefinition::new(
+            //     "namespace",
+            //     vec![ArgumentDefinition::default(), ArgumentDefinition::default()],
+            //     Box::new(|args, run_context| {
+            //         run_context.add_namespace_declaration(&args[0], &args[1])?;
+            //         Ok(())
+            //     }),
+            // ),
+        ]);
 
         let mut rl = rustyline::DefaultEditor::new()?;
         loop {
@@ -158,6 +176,7 @@ struct CommandDefinitions {
     by_name: HashMap<&'static str, usize>,
 }
 
+#[derive(Default)]
 struct ArgumentDefinition {
     default: Option<&'static str>,
 }
@@ -216,7 +235,7 @@ impl CommandDefinition {
         }
     }
 
-    fn preprocess_arguments<'a>(&'a self, args: &'a [&'a str]) -> Vec<&'a str> {
+    fn preprocess_arguments<'a>(&self, args: &[&'a str]) -> Vec<&'a str> {
         let mut result = Vec::new();
         let mut i = 0;
         for arg in &self.args {
