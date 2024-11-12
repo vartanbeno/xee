@@ -4,9 +4,17 @@ mod repl;
 mod xpath;
 
 use clap::{Parser, Subcommand};
+use const_format::formatcp;
+
+pub(crate) const VERSION: &str = formatcp!(
+    "{} ({}, {})",
+    clap::crate_version!(),
+    env!("SOURCE_TIMESTAMP"),
+    env!("GIT_COMMIT")
+);
 
 #[derive(Parser)]
-#[command(author, version, about, long_about = None)]
+#[command(author, about,  version = VERSION, long_about)]
 struct Cli {
     #[command(subcommand)]
     command: Commands,

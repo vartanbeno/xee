@@ -9,6 +9,8 @@ use clap::Parser;
 use rustyline::error::ReadlineError;
 use xee_xpath::{error::Error, DocumentHandle, Documents, Itemable, Query};
 
+use crate::VERSION;
+
 #[derive(Debug, Parser)]
 pub(crate) struct Repl {
     /// Optional input file.
@@ -154,6 +156,8 @@ impl Repl {
             ),
         ]);
 
+        println!("Xee XPath REPL {}", VERSION);
+        println!("Type !help for more information.");
         let mut rl = rustyline::DefaultEditor::new()?;
         loop {
             let readline = rl.readline(">> ");
