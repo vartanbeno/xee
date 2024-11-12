@@ -1,6 +1,7 @@
 mod format;
 mod indent;
 mod repl;
+mod repl_cmd;
 mod xpath;
 
 use clap::{Parser, Subcommand};
