@@ -133,8 +133,10 @@ impl Repl {
         let command_definitions = CommandDefinitions::new(vec![
             CommandDefinition::new(
                 "load",
-                vec![ArgumentDefinition::default()],
-                Box::new(|args, run_context| {
+                Some("l"),
+                "Load an XML file and make it context",
+                vec![ArgumentDefinition::new("path", None)],
+                Box::new(|args, run_context, _| {
                     let path: PathBuf = args[0].into();
                     run_context.set_context_document(&path)?;
                     Ok(())
@@ -142,16 +144,23 @@ impl Repl {
             ),
             CommandDefinition::new(
                 "default_namespace",
-                vec![ArgumentDefinition::default()],
-                Box::new(|args, run_context| {
+                Some("d"),
+                "Set the default namespace URI for XPath",
+                vec![ArgumentDefinition::new("uri", None)],
+                Box::new(|args, run_context, _| {
                     run_context.set_default_namespace_uri(args[0].to_string())?;
                     Ok(())
                 }),
             ),
             CommandDefinition::new(
                 "namespace",
-                vec![ArgumentDefinition::default(), ArgumentDefinition::default()],
-                Box::new(|args, run_context| {
+                Some("n"),
+                "Add a namespace declaration for XPath",
+                vec![
+                    ArgumentDefinition::new("prefix", None),
+                    ArgumentDefinition::new("uri", None),
+                ],
+                Box::new(|args, run_context, _| {
                     run_context
                         .add_namespace_declaration(args[0].to_string(), args[1].to_string())?;
                     Ok(())
@@ -159,14 +168,15 @@ impl Repl {
             ),
             CommandDefinition::new(
                 "help",
+                Some("h"),
+                "Display this help",
                 vec![],
-                Box::new(|_, _| {
+                Box::new(|_, _, definitions| {
                     println!("Commands:");
-                    println!("  load <file> - Load an XML file");
-                    println!("  default_namespace <uri> - Set the default namespace URI");
-                    println!("  namespace <prefix> <uri> - Add a namespace declaration");
-                    println!("  help - Display this help");
-                    println!("  quit - Quit the REPL");
+                    for definition in &definitions.definitions {
+                        println!("  {}", definition.help());
+                    }
+                    println!("  !quit - Quit the REPL (!q)");
                     Ok(())
                 }),
             ),
@@ -188,7 +198,7 @@ impl Repl {
                         run_context.execute(line)?;
                     } else {
                         let command = line[1..].trim();
-                        if command == "quit" {
+                        if command == "quit" || command == "q" {
                             break;
                         }
                         command_definitions.execute(command, &mut run_context)?;

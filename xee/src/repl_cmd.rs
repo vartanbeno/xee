@@ -2,23 +2,32 @@ use ahash::HashMap;
 
 use crate::repl::RunContext;
 
-type Execute = Box<dyn Fn(&[&str], &mut RunContext) -> anyhow::Result<()>>;
+type Execute = Box<dyn Fn(&[&str], &mut RunContext, &CommandDefinitions) -> anyhow::Result<()>>;
 
 pub(crate) struct CommandDefinition {
     name: &'static str,
+    short_name: Option<&'static str>,
+    about: &'static str,
     args: Vec<ArgumentDefinition>,
     execute: Execute,
 }
 
 #[derive(Default)]
 pub(crate) struct CommandDefinitions {
-    definitions: Vec<CommandDefinition>,
+    pub(crate) definitions: Vec<CommandDefinition>,
     by_name: HashMap<&'static str, usize>,
+    by_short_name: HashMap<&'static str, usize>,
 }
 
-#[derive(Default)]
 pub(crate) struct ArgumentDefinition {
+    name: &'static str,
     default: Option<&'static str>,
+}
+
+impl ArgumentDefinition {
+    pub fn new(name: &'static str, default: Option<&'static str>) -> Self {
+        Self { name, default }
+    }
 }
 
 impl CommandDefinitions {
@@ -26,6 +35,7 @@ impl CommandDefinitions {
         let mut definitions = Self {
             definitions: Vec::new(),
             by_name: HashMap::default(),
+            by_short_name: HashMap::default(),
         };
         for definition in defitions {
             definitions.add(definition);
@@ -36,6 +46,9 @@ impl CommandDefinitions {
     pub(crate) fn add(&mut self, definition: CommandDefinition) {
         let index = self.definitions.len();
         self.by_name.insert(definition.name, index);
+        if let Some(short_name) = definition.short_name {
+            self.by_short_name.insert(short_name, index);
+        }
         self.definitions.push(definition);
     }
 
@@ -58,7 +71,7 @@ impl CommandDefinitions {
                 println!("Too few arguments for command: {}", command_s);
                 return Ok(());
             }
-            (command.execute)(&args, run_context)
+            (command.execute)(&args, run_context, self)
         } else {
             println!("Unknown command: {}", command_s);
             Ok(())
@@ -66,17 +79,56 @@ impl CommandDefinitions {
     }
 
     fn get(&self, command: &str) -> Option<&CommandDefinition> {
-        self.by_name.get(command).map(|&i| &self.definitions[i])
+        self.by_name
+            .get(command)
+            .or_else(|| self.by_short_name.get(command))
+            .map(|&i| &self.definitions[i])
     }
 }
 
 impl CommandDefinition {
-    pub(crate) fn new(name: &'static str, args: Vec<ArgumentDefinition>, execute: Execute) -> Self {
+    pub(crate) fn new(
+        name: &'static str,
+        short_name: Option<&'static str>,
+        about: &'static str,
+        args: Vec<ArgumentDefinition>,
+        execute: Execute,
+    ) -> Self {
         Self {
             name,
+            short_name,
+            about,
             args,
             execute,
         }
+    }
+
+    pub(crate) fn help(&self) -> String {
+        let description = self.arg_description();
+        let main = if description.is_empty() {
+            format!("!{} - {}", self.name, self.about)
+        } else {
+            format!("!{} {} - {}", self.name, description, self.about)
+        };
+        if let Some(short_name) = self.short_name {
+            format!("{} (!{})", main, short_name)
+        } else {
+            main
+        }
+    }
+
+    fn arg_description(&self) -> String {
+        self.args
+            .iter()
+            .map(|arg| {
+                if let Some(default) = arg.default {
+                    format!("<{}>={}", arg.name, default)
+                } else {
+                    format!("<{}>", arg.name)
+                }
+            })
+            .collect::<Vec<_>>()
+            .join(" ")
     }
 
     fn preprocess_arguments<'a>(&self, args: &[&'a str]) -> Vec<&'a str> {
