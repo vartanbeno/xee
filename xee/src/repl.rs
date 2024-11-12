@@ -280,48 +280,6 @@ impl CommandDefinition {
     }
 }
 
-fn display_item(xot: &Xot, item: &Item) -> Result<(), xot::Error> {
-    match item {
-        Item::Node(node) => {
-            println!("node: \n{}", display_node(xot, *node)?);
-        }
-        Item::Atomic(value) => println!("atomic: {}", display_atomic(value)),
-        Item::Function(function) => println!("function: {:?}", function),
-    }
-    Ok(())
-}
-
-fn display_atomic(atomic: &Atomic) -> String {
-    format!("{}", atomic)
-}
-
-fn display_node(xot: &Xot, node: xot::Node) -> Result<String, xot::Error> {
-    match xot.value(node) {
-        xot::Value::Attribute(attribute) => {
-            let value = attribute.value();
-            let (name, namespace) = xot.name_ns_str(attribute.name());
-            let name = if !namespace.is_empty() {
-                format!("Q{{{}}}{}", namespace, name)
-            } else {
-                name.to_string()
-            };
-            Ok(format!("Attribute {}=\"{}\"", name, value))
-        }
-        xot::Value::Namespace(..) => {
-            todo!()
-        }
-        _ => xot.serialize_xml_string(
-            {
-                Parameters {
-                    indentation: Default::default(),
-                    ..Default::default()
-                }
-            },
-            node,
-        ),
-    }
-}
-
 fn render_error(src: &str, e: Error) {
     let red = ariadne::Color::Red;
 
