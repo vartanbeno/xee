@@ -51,4 +51,17 @@ impl Function {
             _ => unreachable!(),
         }
     }
+
+    pub fn display_representation(&self, xot: &xot::Xot) -> String {
+        match self {
+            Self::Static {
+                static_function_id, ..
+            } => todo!(),
+            Self::Inline {
+                inline_function_id, ..
+            } => todo!(),
+            Self::Map(map) => format!("map {}", map.display_representation(xot)),
+            Self::Array(array) => format!("array {}", array.display_representation(xot)),
+        }
+    }
 }

@@ -100,9 +100,7 @@ impl RunContext {
                 return Ok(());
             }
         };
-        for item in sequence.items()? {
-            display_item(self.documents.xot(), &item).unwrap();
-        }
+        println!("{}", sequence.display_representation(self.documents.xot()));
         Ok(())
     }
 }

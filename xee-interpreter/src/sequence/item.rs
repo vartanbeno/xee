@@ -122,6 +122,18 @@ impl Item {
         }
     }
 
+    /// Display representation of an item
+    /// For atomics this is a true parseable XPath representation.
+    /// For node and function that does not exist, so we generate a plausible
+    /// version for display purposes only.
+    pub fn display_representation(&self, xot: &Xot) -> error::Result<String> {
+        match self {
+            Item::Atomic(atomic) => Ok(atomic.xpath_representation()),
+            Item::Node(node) => node_display_representation(*node, xot),
+            Item::Function(function) => Ok(function.display_representation(xot)),
+        }
+    }
+
     /// Check whether this item is represents an XPath Map.
     pub(crate) fn is_map(&self) -> bool {
         match self {
@@ -136,6 +148,39 @@ impl Item {
             Item::Function(function) => matches!(function.as_ref(), function::Function::Array(_)),
             _ => false,
         }
+    }
+}
+
+fn node_display_representation(node: xot::Node, xot: &Xot) -> error::Result<String> {
+    match xot.value(node) {
+        xot::Value::Attribute(attribute) => {
+            let value = attribute.value();
+            let (name, namespace) = xot.name_ns_str(attribute.name());
+            let name = if !namespace.is_empty() {
+                format!("Q{{{}}}{}", namespace, name)
+            } else {
+                name.to_string()
+            };
+            Ok(format!("Attribute {}=\"{}\"", name, value))
+        }
+        xot::Value::Namespace(namespace) => {
+            let prefix_id = namespace.prefix();
+            let namespace_id = namespace.namespace();
+            let prefix_str = xot.prefix_str(prefix_id);
+            let namespace_str = xot.namespace_str(namespace_id);
+            Ok(format!("Namespace {}:{}", prefix_str, namespace_str))
+        }
+        xot::Value::Text(text) => Ok(format!("Text \"{}\"", text.get())),
+        // for everything else we can just serialize the node
+        _ => Ok(xot.serialize_xml_string(
+            {
+                xot::output::xml::Parameters {
+                    indentation: Default::default(),
+                    ..Default::default()
+                }
+            },
+            node,
+        )?),
     }
 }
 

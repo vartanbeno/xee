@@ -112,6 +112,22 @@ impl Map {
         }
         Ok(true)
     }
+
+    pub fn display_representation(&self, xot: &Xot) -> String {
+        let mut entries = self
+            .0
+            .iter()
+            .map(|(k, (key, value))| {
+                format!(
+                    "{}: {}",
+                    key.xpath_representation(),
+                    value.display_representation(xot)
+                )
+            })
+            .collect::<Vec<_>>();
+        entries.sort();
+        format!("map {{\n{}\n}}", entries.join(",\n"))
+    }
 }
 
 impl TryFrom<Vec<(atomic::Atomic, sequence::Sequence)>> for Map {

@@ -118,6 +118,15 @@ impl Array {
         }
         Ok(true)
     }
+
+    pub fn display_representation(&self, xot: &Xot) -> String {
+        let members = self
+            .0
+            .iter()
+            .map(|member| member.display_representation(xot))
+            .collect::<Vec<_>>();
+        format!("[\n{}\n]", members.join(",\n"))
+    }
 }
 
 impl From<Vec<sequence::Sequence>> for Array {
