@@ -3,7 +3,7 @@ use std::fmt::Debug;
 
 use xee_xpath_ast::ast;
 
-use crate::function::Function;
+use crate::function::{self, Function};
 use crate::{error::Error, interpreter::Program};
 use crate::{interpreter, sequence};
 
@@ -95,5 +95,19 @@ impl<'a> DynamicContext<'a> {
     /// Access information about a Function.
     pub fn function_info<'b>(&self, function: &'b Function) -> interpreter::FunctionInfo<'a, 'b> {
         self.program.function_info(function)
+    }
+
+    pub(crate) fn static_function_by_id(
+        &self,
+        id: function::StaticFunctionId,
+    ) -> &function::StaticFunction {
+        self.program.static_context().function_by_id(id)
+    }
+
+    pub(crate) fn inline_function_by_id(
+        &self,
+        id: function::InlineFunctionId,
+    ) -> &function::InlineFunction {
+        self.program.inline_function(id)
     }
 }

@@ -7,10 +7,7 @@ use std::{
 use ahash::HashMap;
 use clap::Parser;
 use rustyline::error::ReadlineError;
-use xee_xpath::{error::Error, Atomic, DocumentHandle, Documents, Item, Itemable, Query};
-use xot::{output::xml::Parameters, Xot};
-
-use crate::xpath::{execute_query, make_static_context_builder};
+use xee_xpath::{error::Error, DocumentHandle, Documents, Itemable, Query};
 
 #[derive(Debug, Parser)]
 pub(crate) struct Repl {
@@ -100,7 +97,10 @@ impl RunContext {
                 return Ok(());
             }
         };
-        println!("{}", sequence.display_representation(self.documents.xot()));
+        println!(
+            "{}",
+            sequence.display_representation(self.documents.xot(), &context)
+        );
         Ok(())
     }
 }

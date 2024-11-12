@@ -2,7 +2,7 @@ use std::rc::Rc;
 
 use xot::Xot;
 
-use crate::{error, sequence, string};
+use crate::{context, error, sequence, string};
 
 /// An XPath Array
 ///
@@ -119,11 +119,11 @@ impl Array {
         Ok(true)
     }
 
-    pub fn display_representation(&self, xot: &Xot) -> String {
+    pub fn display_representation(&self, xot: &Xot, context: &context::DynamicContext) -> String {
         let members = self
             .0
             .iter()
-            .map(|member| member.display_representation(xot))
+            .map(|member| member.display_representation(xot, context))
             .collect::<Vec<_>>();
         format!("[\n{}\n]", members.join(",\n"))
     }

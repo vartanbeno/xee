@@ -1,4 +1,4 @@
-use crate::sequence;
+use crate::{context, sequence};
 
 use super::array::Array;
 use super::map::Map;
@@ -52,16 +52,26 @@ impl Function {
         }
     }
 
-    pub fn display_representation(&self, xot: &xot::Xot) -> String {
+    pub fn display_representation(
+        &self,
+        xot: &xot::Xot,
+        context: &context::DynamicContext,
+    ) -> String {
         match self {
             Self::Static {
                 static_function_id, ..
-            } => todo!(),
+            } => {
+                let function = context.static_function_by_id(*static_function_id);
+                function.display_representation()
+            }
             Self::Inline {
                 inline_function_id, ..
-            } => todo!(),
-            Self::Map(map) => format!("map {}", map.display_representation(xot)),
-            Self::Array(array) => format!("array {}", array.display_representation(xot)),
+            } => {
+                let function = context.inline_function_by_id(*inline_function_id);
+                function.display_representation()
+            }
+            Self::Map(map) => map.display_representation(xot, context),
+            Self::Array(array) => array.display_representation(xot, context),
         }
     }
 }

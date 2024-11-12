@@ -1,5 +1,6 @@
 use ahash::{HashMap, HashMapExt};
 use std::fmt::{Debug, Formatter};
+use xot::xmlname::NameStrInfo;
 
 use xee_name::{Name, Namespaces};
 use xee_xpath_ast::ast;
@@ -240,6 +241,12 @@ impl StaticFunction {
 
     pub(crate) fn signature(&self) -> &function::Signature {
         &self.signature
+    }
+
+    pub fn display_representation(&self) -> String {
+        let name = self.name.full_name();
+        let signature = self.signature.display_representation();
+        format!("{}{}", name, signature)
     }
 }
 

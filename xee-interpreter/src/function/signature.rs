@@ -117,6 +117,25 @@ impl Signature {
     pub fn arity(&self) -> usize {
         self.parameter_types.len()
     }
+
+    /// Display representation
+    pub fn display_representation(&self) -> String {
+        let parameter_types = self
+            .parameter_types
+            .iter()
+            .map(|p| match p {
+                Some(p) => p.display_representation(),
+                None => "item()*".to_string(),
+            })
+            .collect::<Vec<_>>()
+            .join(", ");
+        let return_type = self
+            .return_type
+            .as_ref()
+            .map(|r| r.display_representation())
+            .unwrap_or_else(|| "item()*".to_string());
+        format!("({}) as {}", parameter_types, return_type)
+    }
 }
 
 impl From<ast::Signature> for Signature {

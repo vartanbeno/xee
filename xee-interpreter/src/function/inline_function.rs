@@ -45,4 +45,9 @@ impl InlineFunction {
     pub(crate) fn arity(&self) -> usize {
         self.signature.parameter_types().len()
     }
+
+    pub fn display_representation(&self) -> String {
+        let signature = self.signature.display_representation();
+        format!("function{}", signature)
+    }
 }

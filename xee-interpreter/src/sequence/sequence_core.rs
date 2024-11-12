@@ -16,7 +16,6 @@ use crate::sequence::Item;
 use crate::stack;
 use crate::string::Collation;
 
-use super::item;
 use super::normalization::normalize;
 use super::serialization::serialize_sequence;
 use super::SerializationParameters;
@@ -376,15 +375,15 @@ impl Sequence {
     }
 
     /// Display representation of the sequence
-    pub fn display_representation(&self, xot: &Xot) -> String {
+    pub fn display_representation(&self, xot: &Xot, context: &context::DynamicContext) -> String {
         // TODO: various unwraps
         match &self.stack_value {
             stack::Value::Empty => "()".to_string(),
-            stack::Value::One(item) => item.display_representation(xot).unwrap(),
+            stack::Value::One(item) => item.display_representation(xot, context).unwrap(),
             stack::Value::Many(items) => {
                 let mut representations = Vec::with_capacity(self.len());
                 for item in items.iter() {
-                    representations.push(item.display_representation(xot).unwrap());
+                    representations.push(item.display_representation(xot, context).unwrap());
                 }
                 format!("(\n{}\n)", representations.join(",\n"))
             }

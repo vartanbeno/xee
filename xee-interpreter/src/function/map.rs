@@ -113,15 +113,15 @@ impl Map {
         Ok(true)
     }
 
-    pub fn display_representation(&self, xot: &Xot) -> String {
+    pub fn display_representation(&self, xot: &Xot, context: &context::DynamicContext) -> String {
         let mut entries = self
             .0
             .iter()
-            .map(|(k, (key, value))| {
+            .map(|(_k, (key, value))| {
                 format!(
                     "{}: {}",
                     key.xpath_representation(),
-                    value.display_representation(xot)
+                    value.display_representation(xot, context)
                 )
             })
             .collect::<Vec<_>>();

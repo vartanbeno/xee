@@ -2,6 +2,7 @@ use std::rc::Rc;
 use xot::Xot;
 
 use crate::atomic;
+use crate::context;
 use crate::error;
 use crate::function;
 use crate::stack;
@@ -126,11 +127,15 @@ impl Item {
     /// For atomics this is a true parseable XPath representation.
     /// For node and function that does not exist, so we generate a plausible
     /// version for display purposes only.
-    pub fn display_representation(&self, xot: &Xot) -> error::Result<String> {
+    pub fn display_representation(
+        &self,
+        xot: &Xot,
+        context: &context::DynamicContext,
+    ) -> error::Result<String> {
         match self {
             Item::Atomic(atomic) => Ok(atomic.xpath_representation()),
             Item::Node(node) => node_display_representation(*node, xot),
-            Item::Function(function) => Ok(function.display_representation(xot)),
+            Item::Function(function) => Ok(function.display_representation(xot, context)),
         }
     }
 
