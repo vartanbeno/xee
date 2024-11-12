@@ -519,15 +519,15 @@ impl<'a> Interpreter<'a> {
                     let attribute_node = self
                         .state
                         .xot
-                        .new_attribute_node(name_id, value.string_value()?);
+                        .new_attribute_node(name_id, value.string_value());
                     let item = sequence::Item::Node(attribute_node);
                     self.state.push(item.into());
                 }
                 EncodedInstruction::XmlNamespace => {
                     let uri = self.pop_atomic()?;
-                    let namespace_id = self.state.xot.add_namespace(&uri.string_value()?);
+                    let namespace_id = self.state.xot.add_namespace(&uri.string_value());
                     let prefix = self.pop_atomic()?;
-                    let prefix_id = self.state.xot.add_prefix(&prefix.string_value()?);
+                    let prefix_id = self.state.xot.add_prefix(&prefix.string_value());
                     let namespace_node = self.state.xot.new_namespace_node(prefix_id, namespace_id);
                     let item = sequence::Item::Node(namespace_node);
                     self.state.push(item.into());
@@ -1112,7 +1112,7 @@ impl<'a> Interpreter<'a> {
                     // is added once a normal child already exists
                     self.state.xot.any_append(parent_node, node).unwrap();
                 }
-                sequence::Item::Atomic(atomic) => string_values.push(atomic.string_value()?),
+                sequence::Item::Atomic(atomic) => string_values.push(atomic.string_value()),
                 sequence::Item::Function(_) => return Err(error::Error::XTDE0450),
             }
         }

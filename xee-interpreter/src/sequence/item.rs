@@ -116,7 +116,7 @@ impl Item {
     /// - For a function, it errors.
     pub fn string_value(&self, xot: &Xot) -> error::Result<String> {
         match self {
-            Item::Atomic(atomic) => atomic.string_value(),
+            Item::Atomic(atomic) => Ok(atomic.string_value()),
             Item::Node(node) => Ok(xot.string_value(*node)),
             Item::Function(_) => Err(error::Error::FOTY0014),
         }

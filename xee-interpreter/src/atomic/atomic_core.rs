@@ -139,8 +139,8 @@ impl Atomic {
     ///
     /// This is the canonical representation of the atomic value
     /// according to xs:schema.
-    pub(crate) fn string_value(&self) -> error::Result<String> {
-        Ok(self.clone().into_canonical())
+    pub(crate) fn string_value(&self) -> String {
+        self.clone().into_canonical()
     }
 
     /// Check whether this value is the NaN value.

@@ -294,7 +294,7 @@ fn serialize_json_atomic(
         }
         atomic::Atomic::Boolean(b) => Ok(json::JsonValue::Boolean(b)),
         _ => {
-            let s = atomic.string_value()?;
+            let s = atomic.string_value();
             Ok(serialize_json_string(s, parameters))
         }
     }
@@ -363,7 +363,7 @@ fn serialize_json_map(
 ) -> Result<json::JsonValue, error::Error> {
     let mut result = json::object::Object::new();
     for key in map.keys() {
-        let key_s = key.string_value()?;
+        let key_s = key.string_value();
         let value = map.get(&key).unwrap();
         let value = serialize_json_sequence(&value, parameters, xot)?;
         result.insert(&key_s, value);

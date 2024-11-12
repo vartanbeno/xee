@@ -141,7 +141,7 @@ fn concat(
         .map(|argument| {
             let atomic = argument.atomized(interpreter.xot()).option()?;
             if let Some(atomic) = atomic {
-                atomic.string_value()
+                Ok(atomic.string_value())
             } else {
                 Ok("".to_string())
             }
@@ -155,7 +155,7 @@ fn string_join(arg1: &[atomic::Atomic]) -> error::Result<String> {
     let arg1 = arg1
         .iter()
         .map(|a| a.string_value())
-        .collect::<error::Result<Vec<String>>>()?;
+        .collect::<Vec<String>>();
     Ok(arg1.concat())
 }
 
@@ -164,7 +164,7 @@ fn string_join_sep(arg1: &[atomic::Atomic], arg2: &str) -> error::Result<String>
     let arg1 = arg1
         .iter()
         .map(|a| a.string_value())
-        .collect::<error::Result<Vec<String>>>()?;
+        .collect::<Vec<String>>();
     Ok(arg1.join(arg2))
 }
 
