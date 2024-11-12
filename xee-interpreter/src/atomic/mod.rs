@@ -26,6 +26,7 @@ mod op_subtract;
 mod op_unary;
 mod round;
 mod types;
+mod xpath_repr;
 
 pub use atomic_core::Atomic;
 pub(crate) use compare::AtomicCompare;
