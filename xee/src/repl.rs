@@ -7,9 +7,10 @@ use std::{
 use ahash::HashMap;
 use clap::Parser;
 use rustyline::error::ReadlineError;
-use xee_xpath::{error::Error, DocumentHandle, Documents, Itemable, Query};
+use xee_xpath::{DocumentHandle, Documents, Itemable, Query};
 
 use crate::{
+    error::render_error,
     repl_cmd::{ArgumentDefinition, CommandDefinition, CommandDefinitions},
     VERSION,
 };
@@ -220,24 +221,4 @@ impl Repl {
         }
         Ok(())
     }
-}
-
-fn render_error(src: &str, e: Error) {
-    let red = ariadne::Color::Red;
-
-    let mut report =
-        ariadne::Report::build(ariadne::ReportKind::Error, "source", 0).with_code(e.error.code());
-
-    if let Some(span) = e.span {
-        report = report.with_label(
-            ariadne::Label::new(("source", span.range()))
-                .with_message(e.error.message())
-                .with_color(red),
-        )
-    }
-    report
-        .finish()
-        .print(("source", ariadne::Source::from(src)))
-        .unwrap();
-    println!("{}", e.error.note());
 }

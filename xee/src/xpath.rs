@@ -4,12 +4,10 @@ use std::io::prelude::*;
 use std::io::BufReader;
 use std::path::PathBuf;
 use xee_xpath::context::StaticContextBuilder;
-use xee_xpath::error::Error;
 use xee_xpath::Itemable;
 use xee_xpath::Query;
-use xee_xpath::{Atomic, Item};
-use xot::output::xml::Parameters;
-use xot::Xot;
+
+use crate::error::render_error;
 
 #[derive(Debug, Parser)]
 pub(crate) struct XPath {
@@ -109,24 +107,4 @@ pub(crate) fn make_static_context_builder<'a>(
 
     static_context_builder.namespaces(namespaces);
     Ok(static_context_builder)
-}
-
-fn render_error(src: &str, e: Error) {
-    let red = ariadne::Color::Red;
-
-    let mut report =
-        ariadne::Report::build(ariadne::ReportKind::Error, "source", 0).with_code(e.error.code());
-
-    if let Some(span) = e.span {
-        report = report.with_label(
-            ariadne::Label::new(("source", span.range()))
-                .with_message(e.error.message())
-                .with_color(red),
-        )
-    }
-    report
-        .finish()
-        .print(("source", ariadne::Source::from(src)))
-        .unwrap();
-    println!("{}", e.error.note());
 }

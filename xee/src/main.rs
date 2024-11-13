@@ -1,3 +1,4 @@
+mod error;
 mod format;
 mod indent;
 mod repl;
