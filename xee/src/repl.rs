@@ -204,12 +204,7 @@ impl Repl {
                         if command == "quit" || command == "q" {
                             break;
                         }
-                        match command_definitions.execute(command, &mut run_context) {
-                            Ok(()) => {}
-                            Err(e) => {
-                                println!("Error: {}", e);
-                            }
-                        }
+                        command_definitions.execute(command, &mut run_context);
                     }
                 }
                 Err(ReadlineError::Interrupted) => {

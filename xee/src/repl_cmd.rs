@@ -52,11 +52,7 @@ impl CommandDefinitions {
         self.definitions.push(definition);
     }
 
-    pub(crate) fn execute(
-        &self,
-        command: &str,
-        run_context: &mut RunContext,
-    ) -> anyhow::Result<()> {
+    pub(crate) fn execute(&self, command: &str, run_context: &mut RunContext) {
         let parts = command.split_whitespace().collect::<Vec<_>>();
         let command_s = parts[0];
         let args = &parts[1..];
@@ -64,17 +60,22 @@ impl CommandDefinitions {
         if let Some(command) = command {
             if args.len() > command.args.len() {
                 println!("Too many arguments for command: {}", command_s);
-                return Ok(());
+                return;
             }
             let args = command.preprocess_arguments(args);
+
             if args.len() < command.args.len() {
                 println!("Too few arguments for command: {}", command_s);
-                return Ok(());
+                return;
             }
-            (command.execute)(&args, run_context, self)
+            match (command.execute)(&args, run_context, self) {
+                Ok(()) => {}
+                Err(e) => {
+                    println!("Error executing command: {}", e);
+                }
+            }
         } else {
             println!("Unknown command: {}", command_s);
-            Ok(())
         }
     }
 
