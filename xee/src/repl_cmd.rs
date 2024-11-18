@@ -2,7 +2,7 @@ use ahash::HashMap;
 
 use crate::repl::RunContext;
 
-type Execute = Box<dyn Fn(&[&str], &mut RunContext, &CommandDefinitions) -> anyhow::Result<()>>;
+type Execute = Box<dyn Fn(&[&str], &mut RunContext, &CommandDefinitions)>;
 
 pub(crate) struct CommandDefinition {
     name: &'static str,
@@ -68,12 +68,7 @@ impl CommandDefinitions {
                 println!("Too few arguments for command: {}", command_s);
                 return;
             }
-            match (command.execute)(&args, run_context, self) {
-                Ok(()) => {}
-                Err(e) => {
-                    println!("Error executing command: {}", e);
-                }
-            }
+            (command.execute)(&args, run_context, self);
         } else {
             println!("Unknown command: {}", command_s);
         }

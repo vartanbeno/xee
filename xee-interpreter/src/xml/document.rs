@@ -18,7 +18,7 @@ pub enum DocumentsError {
     /// An attempt as made to add a document with a URI that was already known.
     DuplicateUri(String),
     /// An error occurred loading the document XML (using the [`xot`] crate).
-    Xot(xot::Error),
+    Parse(xot::ParseError),
 }
 
 impl std::error::Error for DocumentsError {}
@@ -27,20 +27,14 @@ impl std::fmt::Display for DocumentsError {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
             DocumentsError::DuplicateUri(uri) => write!(f, "Duplicate URI: {}", uri),
-            DocumentsError::Xot(e) => write!(f, "Xot error: {}", e),
+            DocumentsError::Parse(e) => write!(f, "Parse error: {}", e),
         }
-    }
-}
-
-impl From<xot::Error> for DocumentsError {
-    fn from(e: xot::Error) -> Self {
-        DocumentsError::Xot(e)
     }
 }
 
 impl From<xot::ParseError> for DocumentsError {
     fn from(e: xot::ParseError) -> Self {
-        DocumentsError::Xot(e.into())
+        DocumentsError::Parse(e)
     }
 }
 

@@ -10,7 +10,7 @@ use rustyline::error::ReadlineError;
 use xee_xpath::{DocumentHandle, Documents, Itemable, Query};
 
 use crate::{
-    error::render_error,
+    error::{render_error, render_parse_error},
     repl_cmd::{ArgumentDefinition, CommandDefinition, CommandDefinitions},
     VERSION,
 };
@@ -57,13 +57,36 @@ impl RunContext {
         self.namespaces.insert(prefix, uri);
     }
 
-    fn set_context_document(&mut self, path: &Path) -> anyhow::Result<()> {
-        let mut reader = BufReader::new(File::open(path)?);
+    fn set_context_document(&mut self, path: &Path) {
+        let mut reader = match File::open(path) {
+            Ok(file) => BufReader::new(file),
+            Err(e) => {
+                eprintln!("Error opening file: {}", e);
+                return;
+            }
+        };
         let mut input_xml = String::new();
-        reader.read_to_string(&mut input_xml)?;
+        match reader.read_to_string(&mut input_xml) {
+            Ok(_) => {}
+            Err(e) => {
+                eprintln!("Error reading file: {}", e);
+                return;
+            }
+        }
 
-        self.document_handle = Some(self.documents.add_string_without_uri(&input_xml)?);
-        Ok(())
+        let document_handle = match self.documents.add_string_without_uri(&input_xml) {
+            Ok(doc) => Some(doc),
+            Err(e) => {
+                match e {
+                    xee_xpath::error::DocumentsError::Parse(e) => render_parse_error(&input_xml, e),
+                    xee_xpath::error::DocumentsError::DuplicateUri(uri) => {
+                        eprintln!("Duplicate URI: {}", uri);
+                    }
+                }
+                return;
+            }
+        };
+        self.document_handle = document_handle;
     }
 
     fn queries(&self) -> xee_xpath::Queries {
@@ -113,7 +136,7 @@ impl Repl {
     pub(crate) fn run(self) -> anyhow::Result<()> {
         let mut run_context = RunContext::new();
         if let Some(infile) = &self.infile {
-            run_context.set_context_document(infile)?;
+            run_context.set_context_document(infile);
         }
         if let Some(default_namespace_uri) = self.default_namespace_uri {
             run_context.set_default_namespace_uri(default_namespace_uri);
@@ -137,8 +160,7 @@ impl Repl {
                 vec![ArgumentDefinition::new("path", None)],
                 Box::new(|args, run_context, _| {
                     let path: PathBuf = args[0].into();
-                    run_context.set_context_document(&path)?;
-                    Ok(())
+                    run_context.set_context_document(&path);
                 }),
             ),
             CommandDefinition::new(
@@ -148,7 +170,6 @@ impl Repl {
                 vec![ArgumentDefinition::new("uri", None)],
                 Box::new(|args, run_context, _| {
                     run_context.set_default_namespace_uri(args[0].to_string());
-                    Ok(())
                 }),
             ),
             CommandDefinition::new(
@@ -161,7 +182,6 @@ impl Repl {
                 ],
                 Box::new(|args, run_context, _| {
                     run_context.add_namespace_declaration(args[0].to_string(), args[1].to_string());
-                    Ok(())
                 }),
             ),
             CommandDefinition::new(
@@ -175,7 +195,6 @@ impl Repl {
                         println!("  {}", definition.help());
                     }
                     println!("  !quit - Quit the REPL (!q)");
-                    Ok(())
                 }),
             ),
         ]);
