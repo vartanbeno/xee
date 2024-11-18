@@ -49,14 +49,12 @@ impl RunContext {
         }
     }
 
-    fn set_default_namespace_uri(&mut self, default_namespace_uri: String) -> anyhow::Result<()> {
+    fn set_default_namespace_uri(&mut self, default_namespace_uri: String) {
         self.default_namespace_uri = Some(default_namespace_uri);
-        Ok(())
     }
 
-    fn add_namespace_declaration(&mut self, prefix: String, uri: String) -> anyhow::Result<()> {
+    fn add_namespace_declaration(&mut self, prefix: String, uri: String) {
         self.namespaces.insert(prefix, uri);
-        Ok(())
     }
 
     fn set_context_document(&mut self, path: &Path) -> anyhow::Result<()> {
@@ -118,7 +116,7 @@ impl Repl {
             run_context.set_context_document(infile)?;
         }
         if let Some(default_namespace_uri) = self.default_namespace_uri {
-            run_context.set_default_namespace_uri(default_namespace_uri)?;
+            run_context.set_default_namespace_uri(default_namespace_uri);
         }
         for namespace in self.namespace {
             let parts = namespace.split('=').collect::<Vec<_>>();
@@ -128,7 +126,7 @@ impl Repl {
                     namespace
                 ));
             }
-            run_context.add_namespace_declaration(parts[0].to_string(), parts[1].to_string())?;
+            run_context.add_namespace_declaration(parts[0].to_string(), parts[1].to_string());
         }
 
         let command_definitions = CommandDefinitions::new(vec![
@@ -149,7 +147,7 @@ impl Repl {
                 "Set the default namespace URI for XPath",
                 vec![ArgumentDefinition::new("uri", None)],
                 Box::new(|args, run_context, _| {
-                    run_context.set_default_namespace_uri(args[0].to_string())?;
+                    run_context.set_default_namespace_uri(args[0].to_string());
                     Ok(())
                 }),
             ),
@@ -162,8 +160,7 @@ impl Repl {
                     ArgumentDefinition::new("uri", None),
                 ],
                 Box::new(|args, run_context, _| {
-                    run_context
-                        .add_namespace_declaration(args[0].to_string(), args[1].to_string())?;
+                    run_context.add_namespace_declaration(args[0].to_string(), args[1].to_string());
                     Ok(())
                 }),
             ),
