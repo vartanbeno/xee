@@ -38,6 +38,12 @@ impl From<xot::Error> for DocumentsError {
     }
 }
 
+impl From<xot::ParseError> for DocumentsError {
+    fn from(e: xot::ParseError) -> Self {
+        DocumentsError::Xot(e.into())
+    }
+}
+
 #[derive(Debug, Clone)]
 pub struct Document {
     pub(crate) uri: Option<IriString>,

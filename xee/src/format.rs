@@ -14,6 +14,8 @@ use xot::{
 };
 use xot::{xmlname::OwnedName, Xot};
 
+use crate::error::render_parse_error;
+
 static URI_QUALIFIED_NAME_REGEX: std::sync::LazyLock<regex::Regex> =
     std::sync::LazyLock::new(|| regex::Regex::new(r"^Q\{(?P<ns>.*)\}(?P<name>.*)$").unwrap());
 
@@ -152,7 +154,13 @@ impl Format {
         let mut input_xml = String::new();
         reader.read_to_string(&mut input_xml)?;
 
-        let root = xot.parse(&input_xml)?;
+        let root = match xot.parse(&input_xml) {
+            Ok(root) => root,
+            Err(e) => {
+                render_parse_error(&input_xml, e);
+                return Ok(());
+            }
+        };
 
         xot.serialize_xml_write(parameters, root, &mut writer)?;
 

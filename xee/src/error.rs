@@ -19,3 +19,19 @@ pub(crate) fn render_error(src: &str, e: Error) {
         .unwrap();
     println!("{}", e.error.note());
 }
+
+pub(crate) fn render_parse_error(src: &str, e: xot::ParseError) {
+    let red = ariadne::Color::Red;
+    let mut report = ariadne::Report::build(ariadne::ReportKind::Error, "source", 0);
+
+    report = report.with_label(
+        ariadne::Label::new(("source", e.span().range()))
+            .with_message(e)
+            .with_color(red),
+    );
+
+    report
+        .finish()
+        .print(("source", ariadne::Source::from(src)))
+        .unwrap();
+}
