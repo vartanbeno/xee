@@ -79,7 +79,7 @@ impl RunContext {
         xee_xpath::Queries::new(static_context_builder)
     }
 
-    pub(crate) fn execute(&mut self, xpath: &str) -> Result<(), anyhow::Error> {
+    pub(crate) fn execute(&mut self, xpath: &str) -> xee_xpath::error::Result<()> {
         let queries = self.queries();
         let sequence_query = queries.sequence(xpath);
         let sequence_query = match sequence_query {
@@ -196,13 +196,23 @@ impl Repl {
                     }
                     rl.add_history_entry(line)?;
                     if !line.starts_with("!") {
-                        run_context.execute(line)?;
+                        match run_context.execute(line) {
+                            Ok(()) => {}
+                            Err(e) => {
+                                render_error(line, e);
+                            }
+                        }
                     } else {
                         let command = line[1..].trim();
                         if command == "quit" || command == "q" {
                             break;
                         }
-                        command_definitions.execute(command, &mut run_context)?;
+                        match command_definitions.execute(command, &mut run_context) {
+                            Ok(()) => {}
+                            Err(e) => {
+                                println!("Error: {}", e);
+                            }
+                        }
                     }
                 }
                 Err(ReadlineError::Interrupted) => {

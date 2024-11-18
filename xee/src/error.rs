@@ -15,7 +15,7 @@ pub(crate) fn render_error(src: &str, e: Error) {
     }
     report
         .finish()
-        .print(("source", ariadne::Source::from(src)))
+        .eprint(("source", ariadne::Source::from(src)))
         .unwrap();
     println!("{}", e.error.note());
 }
@@ -32,6 +32,6 @@ pub(crate) fn render_parse_error(src: &str, e: xot::ParseError) {
 
     report
         .finish()
-        .print(("source", ariadne::Source::from(src)))
+        .eprint(("source", ariadne::Source::from(src)))
         .unwrap();
 }
