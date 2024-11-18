@@ -15,7 +15,7 @@ needs some way to look up the document URI for a node.
 
 ## collation
 
-- fn:collection-key
+- fn:collation-key
 
 Cannot be supported until icu4x implements it.
 
