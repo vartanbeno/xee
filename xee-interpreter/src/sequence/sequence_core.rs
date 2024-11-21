@@ -497,6 +497,12 @@ pub struct ItemIter {
     value_iter: stack::ValueIter,
 }
 
+impl ItemIter {
+    pub(crate) fn new(value_iter: stack::ValueIter) -> Self {
+        Self { value_iter }
+    }
+}
+
 impl occurrence::Occurrence<Item, error::Error> for ItemIter {
     fn one(&mut self) -> Result<Item, error::Error> {
         if let Some(one) = self.next() {
@@ -542,6 +548,12 @@ impl Iterator for ItemIter {
 /// An iterator over the nodes in a sequence.
 pub struct NodeIter {
     value_iter: stack::ValueIter,
+}
+
+impl NodeIter {
+    pub(crate) fn new(value_iter: stack::ValueIter) -> Self {
+        Self { value_iter }
+    }
 }
 
 impl Iterator for NodeIter {
