@@ -1,16 +1,15 @@
 use std::rc::Rc;
 
-use xot::Node;
-
-use crate::{atomic, error, function, sequence::Item};
-
-use super::{
-    iter::NodeIter,
-    traits::{Sequence, SequenceExt},
+use crate::{
+    atomic::{self, AtomicCompare},
+    context, error, function,
+    sequence::Item,
 };
 
+use super::traits::{Sequence, SequenceCompare, SequenceExt};
+
 #[derive(Debug, Clone)]
-struct Empty {}
+pub struct Empty {}
 
 impl<'a> Sequence<'a, std::iter::Empty<&'a Item>> for Empty {
     #[inline]
@@ -45,7 +44,7 @@ impl<'a> Sequence<'a, std::iter::Empty<&'a Item>> for Empty {
 }
 
 #[derive(Debug, Clone)]
-struct One {
+pub struct One {
     item: Item,
 }
 
@@ -86,7 +85,7 @@ impl<'a> Sequence<'a, std::iter::Once<&'a Item>> for One {
 }
 
 #[derive(Debug, Clone)]
-struct Many {
+pub struct Many {
     items: Rc<Vec<Item>>,
 }
 
@@ -123,10 +122,20 @@ impl<'a> Sequence<'a, std::slice::Iter<'a, Item>> for Many {
 }
 
 // specifically implement the extensions for each version, so that
-// we can avoid dynamic dispatch on the inside
+// we can avoid dynamic dispatch on the inside. We can't do it generically
+// as we want a specialized version for the StackSequence so we can avoid
+// dynamic dispatch on the inside.
 impl<'a, I> SequenceExt<'a, I> for Empty
 where
     I: Iterator<Item = &'a Item>,
+    Empty: Sequence<'a, I>,
+{
+}
+
+impl<'a, I> SequenceCompare<'a, I> for Empty
+where
+    I: Iterator<Item = &'a Item>,
+
     Empty: Sequence<'a, I>,
 {
 }
@@ -138,7 +147,21 @@ where
 {
 }
 
+impl<'a, I> SequenceCompare<'a, I> for One
+where
+    I: Iterator<Item = &'a Item>,
+    One: Sequence<'a, I>,
+{
+}
+
 impl<'a, I> SequenceExt<'a, I> for Many
+where
+    I: Iterator<Item = &'a Item>,
+    Many: Sequence<'a, I>,
+{
+}
+
+impl<'a, I> SequenceCompare<'a, I> for Many
 where
     I: Iterator<Item = &'a Item>,
     Many: Sequence<'a, I>,
@@ -266,6 +289,31 @@ where
             StackSequence::Empty(inner) => inner.to_array(),
             StackSequence::One(inner) => inner.to_array(),
             StackSequence::Many(inner) => inner.to_array(),
+        }
+    }
+}
+
+impl<'a> SequenceCompare<'a, Box<dyn Iterator<Item = &'a Item>>> for StackSequence
+where
+    StackSequence: Sequence<'a, Box<dyn Iterator<Item = &'a Item>>>,
+{
+    #[allow(refining_impl_trait)]
+    fn general_comparison<O>(
+        &'a self,
+        other: &'a impl SequenceExt<'a, Box<dyn Iterator<Item = &'a Item>>>,
+        context: &context::DynamicContext,
+        xot: &'a xot::Xot,
+        op: O,
+    ) -> error::Result<bool>
+    where
+        O: AtomicCompare,
+    {
+        match self {
+            // this will specialize over inner as we know the exact type.
+            // otherw will have to be a boxed trait object, but that's fine
+            StackSequence::Empty(inner) => inner.general_comparison(other, context, xot, op),
+            StackSequence::One(inner) => inner.general_comparison(other, context, xot, op),
+            StackSequence::Many(inner) => inner.general_comparison(other, context, xot, op),
         }
     }
 }

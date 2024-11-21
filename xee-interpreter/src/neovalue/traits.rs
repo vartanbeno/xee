@@ -9,6 +9,7 @@ use crate::{
 
 use super::{
     comparison,
+    core::StackSequence,
     iter::{AtomizedIter, NodeIter},
 };
 
@@ -106,7 +107,8 @@ where
 {
     fn general_comparison<O>(
         &'a self,
-        other: &'a impl SequenceExt<'a, I>,
+        // we can't specialize the other; it's some kind of dynamically dispatched sequence
+        other: &'a impl SequenceExt<'a, Box<dyn Iterator<Item = &'a Item>>>,
         context: &context::DynamicContext,
         xot: &'a Xot,
         op: O,
@@ -114,7 +116,9 @@ where
     where
         O: AtomicCompare,
     {
-        comparison::general_comparison(self.atomized(xot), other.atomized(xot), context, op)
+        let a_atomized = self.atomized(xot);
+        let b_atomized = other.atomized(xot);
+        comparison::general_comparison(a_atomized, b_atomized, context, op)
     }
 }
 
