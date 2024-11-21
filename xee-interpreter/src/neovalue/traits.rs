@@ -9,9 +9,10 @@ use crate::{
 
 use super::{
     comparison,
-    core::StackSequence,
     iter::{AtomizedIter, NodeIter},
 };
+
+pub(crate) type BoxedItemIter<'a> = Box<dyn Iterator<Item = &'a Item>>;
 
 /// The core sequence interface: a sequence must implement this to function.
 ///
@@ -108,7 +109,7 @@ where
     fn general_comparison<O>(
         &'a self,
         // we can't specialize the other; it's some kind of dynamically dispatched sequence
-        other: &'a impl SequenceExt<'a, Box<dyn Iterator<Item = &'a Item>>>,
+        other: &'a impl SequenceExt<'a, BoxedItemIter<'a>>,
         context: &context::DynamicContext,
         xot: &'a Xot,
         op: O,
@@ -135,7 +136,7 @@ where
 
     fn is(
         &'a self,
-        other: &'a impl SequenceOrder<'a, I>,
+        other: &'a impl SequenceOrder<'a, BoxedItemIter<'a>>,
         annotations: &xml::Annotations,
     ) -> error::Result<bool> {
         let a = self.one_node()?;
@@ -147,7 +148,7 @@ where
 
     fn precedes(
         &'a self,
-        other: &'a impl SequenceOrder<'a, I>,
+        other: &'a impl SequenceOrder<'a, BoxedItemIter<'a>>,
         annotations: &xml::Annotations,
     ) -> error::Result<bool> {
         let a = self.one_node()?;
@@ -159,7 +160,7 @@ where
 
     fn follows(
         &'a self,
-        other: &'a impl SequenceOrder<'a, I>,
+        other: &'a impl SequenceOrder<'a, BoxedItemIter<'a>>,
         annotations: &xml::Annotations,
     ) -> error::Result<bool> {
         let a = self.one_node()?;
@@ -169,24 +170,3 @@ where
         Ok(a_annotation.document_order > b_annotation.document_order)
     }
 }
-
-// impl<'a, T, I> SequenceExt<'a, I> for T
-// where
-//     T: Sequence<'a, I>,
-//     I: Iterator<Item = &'a Item>,
-// {
-// }
-
-// impl<'a, T, I> SequenceCompare<'a, I> for T
-// where
-//     T: Sequence<'a, I>,
-//     I: Iterator<Item = &'a Item>,
-// {
-// }
-
-// impl<'a, T, I> SequenceOrder<'a, I> for T
-// where
-//     T: Sequence<'a, I>,
-//     I: Iterator<Item = &'a Item>,
-// {
-// }

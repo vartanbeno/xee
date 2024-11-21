@@ -6,7 +6,7 @@ use crate::{
     sequence::Item,
 };
 
-use super::traits::{Sequence, SequenceCompare, SequenceExt};
+use super::traits::{BoxedItemIter, Sequence, SequenceCompare, SequenceExt, SequenceOrder};
 
 #[derive(Debug, Clone)]
 pub struct Empty {}
@@ -135,7 +135,13 @@ where
 impl<'a, I> SequenceCompare<'a, I> for Empty
 where
     I: Iterator<Item = &'a Item>,
+    Empty: Sequence<'a, I>,
+{
+}
 
+impl<'a, I> SequenceOrder<'a, I> for Empty
+where
+    I: Iterator<Item = &'a Item>,
     Empty: Sequence<'a, I>,
 {
 }
@@ -154,6 +160,13 @@ where
 {
 }
 
+impl<'a, I> SequenceOrder<'a, I> for One
+where
+    I: Iterator<Item = &'a Item>,
+    One: Sequence<'a, I>,
+{
+}
+
 impl<'a, I> SequenceExt<'a, I> for Many
 where
     I: Iterator<Item = &'a Item>,
@@ -162,6 +175,13 @@ where
 }
 
 impl<'a, I> SequenceCompare<'a, I> for Many
+where
+    I: Iterator<Item = &'a Item>,
+    Many: Sequence<'a, I>,
+{
+}
+
+impl<'a, I> SequenceOrder<'a, I> for Many
 where
     I: Iterator<Item = &'a Item>,
     Many: Sequence<'a, I>,
@@ -228,7 +248,7 @@ impl<'a> Sequence<'a, Box<dyn Iterator<Item = &'a Item> + 'a>> for StackSequence
 // we implement these explicitly, because we want to avoid dynamic dispatch until
 // the outer layer. This gives the compiler the chance to optimize the inner
 // layers better.
-impl<'a> SequenceExt<'a, Box<dyn Iterator<Item = &'a Item>>> for StackSequence
+impl<'a> SequenceExt<'a, BoxedItemIter<'a>> for StackSequence
 where
     StackSequence: Sequence<'a, Box<dyn Iterator<Item = &'a Item>>>,
 {
@@ -293,14 +313,14 @@ where
     }
 }
 
-impl<'a> SequenceCompare<'a, Box<dyn Iterator<Item = &'a Item>>> for StackSequence
+impl<'a> SequenceCompare<'a, BoxedItemIter<'a>> for StackSequence
 where
-    StackSequence: Sequence<'a, Box<dyn Iterator<Item = &'a Item>>>,
+    StackSequence: Sequence<'a, BoxedItemIter<'a>>,
 {
     #[allow(refining_impl_trait)]
     fn general_comparison<O>(
         &'a self,
-        other: &'a impl SequenceExt<'a, Box<dyn Iterator<Item = &'a Item>>>,
+        other: &'a impl SequenceExt<'a, BoxedItemIter<'a>>,
         context: &context::DynamicContext,
         xot: &'a xot::Xot,
         op: O,
@@ -314,6 +334,22 @@ where
             StackSequence::Empty(inner) => inner.general_comparison(other, context, xot, op),
             StackSequence::One(inner) => inner.general_comparison(other, context, xot, op),
             StackSequence::Many(inner) => inner.general_comparison(other, context, xot, op),
+        }
+    }
+}
+
+impl<'a> SequenceOrder<'a, BoxedItemIter<'a>> for StackSequence
+where
+    StackSequence: Sequence<'a, BoxedItemIter<'a>>,
+{
+    // only one_node can benefit from specialization
+
+    #[allow(refining_impl_trait)]
+    fn one_node(&'a self) -> error::Result<xot::Node> {
+        match self {
+            StackSequence::Empty(inner) => inner.one_node(),
+            StackSequence::One(inner) => inner.one_node(),
+            StackSequence::Many(inner) => inner.one_node(),
         }
     }
 }
