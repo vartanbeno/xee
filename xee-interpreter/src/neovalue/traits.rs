@@ -1,6 +1,11 @@
 use xot::Xot;
 
-use crate::{atomic::AtomicCompare, context, error, function, sequence::Item, xml};
+use crate::{
+    atomic::{self, AtomicCompare},
+    context, error, function,
+    sequence::Item,
+    xml,
+};
 
 use super::{
     comparison,
@@ -10,7 +15,7 @@ use super::{
 /// The core sequence interface: a sequence must implement this to function.
 ///
 /// If you do, SequenceExt provides a whole of APIs on top of it.
-pub trait Sequence<'a, I>: 'a
+pub trait Sequence<'a, I>
 where
     I: Iterator<Item = &'a Item>,
 {
@@ -25,6 +30,12 @@ where
 
     /// Get the items from the sequence as an iterator
     fn items(&'a self) -> I;
+
+    /// Effective boolean value
+    fn effective_boolean_value(&'a self) -> error::Result<bool>;
+
+    /// String value
+    fn string_value(&'a self, xot: &Xot) -> error::Result<String>;
 }
 
 pub trait SequenceExt<'a, I>: Sequence<'a, I>
@@ -33,15 +44,13 @@ where
 {
     /// Access an iterator over the nodes in the sequence
     ///
-    /// This is fallible as an Absent value is not iterable.
-    ///
     /// An error is returned for items that are not a node.
-    fn nodes(&'a self) -> NodeIter<'a, impl Iterator<Item = &'a Item>> {
+    fn nodes(&'a self) -> impl Iterator<Item = error::Result<xot::Node>> {
         NodeIter::new(self.items())
     }
 
     /// Access an iterator for the atomized values in the sequence
-    fn atomized(&'a self, xot: &'a Xot) -> AtomizedIter<'a, impl Iterator<Item = &'a Item>> {
+    fn atomized(&'a self, xot: &'a Xot) -> impl Iterator<Item = error::Result<atomic::Atomic>> {
         AtomizedIter::new(xot, self.items())
     }
 
@@ -64,7 +73,7 @@ where
     /// An error is returned for items that are not an element.
     fn elements(
         &'a self,
-        xot: &Xot,
+        xot: &'a Xot,
     ) -> error::Result<impl Iterator<Item = error::Result<xot::Node>>> {
         Ok(self.nodes().map(|n| match n {
             Ok(n) => {
@@ -88,24 +97,6 @@ where
         // if this is really fallible, it should be try into. If it's not,
         // this whole function should be infallible.
         Ok(array.into())
-    }
-
-    /// Effective boolean value
-    fn effective_boolean_value(&'a self) -> error::Result<bool> {
-        match self.len() {
-            0 => Ok(false),
-            1 => self.items().next().unwrap().effective_boolean_value(),
-            _ => Err(error::Error::XPTY0004),
-        }
-    }
-
-    /// String value
-    fn string_value(&'a self, xot: &Xot) -> error::Result<String> {
-        match self.len() {
-            0 => Ok(String::new()),
-            1 => self.items().next().unwrap().string_value(xot),
-            _ => Err(error::Error::XPTY0004),
-        }
     }
 }
 
@@ -174,3 +165,24 @@ where
         Ok(a_annotation.document_order > b_annotation.document_order)
     }
 }
+
+// impl<'a, T, I> SequenceExt<'a, I> for T
+// where
+//     T: Sequence<'a, I>,
+//     I: Iterator<Item = &'a Item>,
+// {
+// }
+
+// impl<'a, T, I> SequenceCompare<'a, I> for T
+// where
+//     T: Sequence<'a, I>,
+//     I: Iterator<Item = &'a Item>,
+// {
+// }
+
+// impl<'a, T, I> SequenceOrder<'a, I> for T
+// where
+//     T: Sequence<'a, I>,
+//     I: Iterator<Item = &'a Item>,
+// {
+// }
