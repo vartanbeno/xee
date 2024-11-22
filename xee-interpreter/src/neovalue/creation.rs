@@ -1,3 +1,7 @@
+use ahash::{HashSet, HashSetExt};
+
+use crate::{error, sequence::Item, xml};
+
 use super::{core::Empty, stack::StackSequence, traits::Sequence};
 
 impl StackSequence {
@@ -37,7 +41,55 @@ impl StackSequence {
                 }
                 Self::Many(many.into())
             }
-            _ => unreachable!(),
+        }
+    }
+    // https://www.w3.org/TR/xpath-31/#id-path-operator
+    pub(crate) fn deduplicate(self, annotations: &xml::Annotations) -> error::Result<Self> {
+        let mut s = HashSet::new();
+        let mut non_node_seen = false;
+
+        for item in self.iter() {
+            match item {
+                Item::Node(n) => {
+                    if non_node_seen {
+                        return Err(error::Error::XPTY0004);
+                    }
+                    s.insert(*n);
+                }
+                _ => {
+                    if !s.is_empty() {
+                        return Err(error::Error::XPTY0004);
+                    }
+                    non_node_seen = true;
+                }
+            }
+        }
+        if non_node_seen {
+            Ok(self)
+        } else {
+            Ok(Self::process_set_result(s, annotations))
+        }
+    }
+
+    pub(crate) fn process_set_result(
+        s: HashSet<xot::Node>,
+        annotations: &xml::Annotations,
+    ) -> Self {
+        // sort nodes by document order
+        let mut nodes = s.into_iter().collect::<Vec<_>>();
+        nodes.sort_by_key(|n| annotations.document_order(*n));
+
+        let items = nodes.into_iter().map(Item::Node).collect::<Vec<_>>();
+        items.into()
+    }
+}
+
+impl From<Vec<Item>> for StackSequence {
+    fn from(items: Vec<Item>) -> Self {
+        match items.len() {
+            0 => StackSequence::Empty(Empty {}),
+            1 => StackSequence::One(items.into_iter().next().unwrap().into()),
+            _ => StackSequence::Many(items.into()),
         }
     }
 }
