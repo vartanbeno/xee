@@ -106,7 +106,7 @@ impl Sequence {
         &self,
         context: &context::DynamicContext,
         collation: Rc<Collation>,
-        mut get: F,
+        get: F,
     ) -> error::Result<Self>
     where
         F: FnMut(&Item) -> error::Result<Sequence>,
@@ -115,10 +115,7 @@ impl Sequence {
         // sufficiently different we don't want to try to unify them.
 
         let items = self.iter().collect::<Vec<_>>();
-        let keys = self
-            .iter()
-            .map(|key| get(&key))
-            .collect::<error::Result<Vec<_>>>()?;
+        let keys = self.iter().map(get).collect::<error::Result<Vec<_>>>()?;
 
         let mut keys_and_items = keys.into_iter().zip(items).collect::<Vec<_>>();
         // sort by key. unfortunately sort_by requires the compare function
