@@ -88,8 +88,6 @@ impl StaticContext {
         } else {
             None
         };
-        let collation: Option<&IriReferenceStr> = collation.map(|c| c.into());
-
         self.collation(collation.unwrap_or(self.default_collation_uri()))
     }
 

@@ -27,7 +27,7 @@ impl Sequence {
         for (a, b) in self.iter().zip(other.iter()) {
             match (a, b) {
                 (Item::Atomic(a), Item::Atomic(b)) => {
-                    if !a.deep_equal(&b, collation, default_offset) {
+                    if !a.deep_equal(b, collation, default_offset) {
                         return Ok(false);
                     }
                 }
