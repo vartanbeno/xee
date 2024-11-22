@@ -1,8 +1,10 @@
 // https://www.w3.org/TR/xpath-31/#id-sequencetype-subtype
 
-use xee_xpath_type::ast;
+use crate::ast;
 
-pub(crate) trait TypeInfo {
+/// Type information for a sequence type.
+pub trait TypeInfo {
+    /// Get whether `self` is a subtype of `other`.
     fn subtype(&self, other: &Self) -> bool;
 }
 

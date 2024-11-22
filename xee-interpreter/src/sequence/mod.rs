@@ -8,7 +8,6 @@ mod matching;
 mod normalization;
 mod opc;
 mod sequence_core;
-mod sequence_type;
 mod serialization;
 
 pub use crate::stack::AtomizedIter;

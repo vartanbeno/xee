@@ -6,6 +6,7 @@ use xee_schema_type::Xs;
 use xee_xpath_ast::ast;
 use xee_xpath_ast::parse_sequence_type;
 use xee_xpath_ast::Namespaces;
+use xee_xpath_type::TypeInfo;
 use xot::Xot;
 
 use crate::atomic;
@@ -15,8 +16,6 @@ use crate::function;
 use crate::occurrence::Occurrence;
 use crate::xml;
 use crate::{sequence::Item, sequence::Sequence};
-
-use super::sequence_type::TypeInfo;
 
 impl Sequence {
     /// Check a type for qee-qt assert-type
