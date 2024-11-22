@@ -2,9 +2,9 @@ use ahash::{HashSet, HashSetExt};
 
 use crate::{atomic, error, sequence::Item, xml};
 
-use super::{core::Empty, stack::StackSequence, traits::Sequence};
+use super::{core::Sequence, traits::SequenceCore, variant::Empty};
 
-impl StackSequence {
+impl Sequence {
     pub(crate) fn concat(self, other: Self) -> Self {
         match (self, other) {
             (Self::Empty(_), Self::Empty(_)) => Self::Empty(Empty {}),
@@ -84,17 +84,17 @@ impl StackSequence {
     }
 }
 
-impl From<Vec<Item>> for StackSequence {
+impl From<Vec<Item>> for Sequence {
     fn from(items: Vec<Item>) -> Self {
         match items.len() {
-            0 => StackSequence::Empty(Empty {}),
-            1 => StackSequence::One(items.into_iter().next().unwrap().into()),
-            _ => StackSequence::Many(items.into()),
+            0 => Sequence::Empty(Empty {}),
+            1 => Sequence::One(items.into_iter().next().unwrap().into()),
+            _ => Sequence::Many(items.into()),
         }
     }
 }
 
-impl From<Vec<atomic::Atomic>> for StackSequence {
+impl From<Vec<atomic::Atomic>> for Sequence {
     fn from(atomics: Vec<atomic::Atomic>) -> Self {
         let items = atomics.into_iter().map(Item::from).collect::<Vec<_>>();
         items.into()

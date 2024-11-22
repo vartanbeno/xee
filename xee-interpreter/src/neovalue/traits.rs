@@ -17,7 +17,7 @@ pub(crate) type BoxedItemIter<'a> = Box<dyn Iterator<Item = &'a Item>>;
 /// The core sequence interface: a sequence must implement this to function.
 ///
 /// If you do, SequenceExt provides a whole of APIs on top of it.
-pub trait Sequence<'a, I>
+pub trait SequenceCore<'a, I>
 where
     I: Iterator<Item = &'a Item>,
 {
@@ -40,7 +40,7 @@ where
     fn string_value(&'a self, xot: &Xot) -> error::Result<String>;
 }
 
-pub trait SequenceExt<'a, I>: Sequence<'a, I>
+pub trait SequenceExt<'a, I>: SequenceCore<'a, I>
 where
     I: Iterator<Item = &'a Item>,
 {
@@ -123,7 +123,7 @@ where
     }
 }
 
-pub(crate) trait SequenceOrder<'a, I>: Sequence<'a, I>
+pub(crate) trait SequenceOrder<'a, I>: SequenceCore<'a, I>
 where
     I: Iterator<Item = &'a Item>,
 {

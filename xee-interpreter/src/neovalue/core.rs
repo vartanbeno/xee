@@ -1,211 +1,188 @@
-use std::rc::Rc;
+// this is unfortunately a ridiculous verbose module, wiring everything up
+// carefully so we don't use performance due to dynamic dispatch on the inside. I
+// hope it's worth it. The verbosity is all pretty straightforward though.
 
-use crate::{error, sequence::Item};
+// enum_dispatch could be used to simplify it, but that seems to require co-location
+// of the trait and implementation in the same module and it's less clear what's
+// going on in detail, so I don't use it.
 
-use super::traits::{Sequence, SequenceCompare, SequenceExt, SequenceOrder};
+// creation.rs contains various functions that create Sequence
 
+use crate::{
+    atomic::{self, AtomicCompare},
+    context, error, function,
+    sequence::Item,
+};
+
+use super::{
+    traits::{BoxedItemIter, SequenceCompare, SequenceCore, SequenceExt, SequenceOrder},
+    variant::{Empty, Many, One},
+};
+
+// The Sequence that goes onto the stack is the size of an single item, as
+// that's the biggest thing in it.
 #[derive(Debug, Clone)]
-pub struct Empty {}
+pub enum Sequence {
+    Empty(Empty),
+    One(One),
+    Many(Many),
+}
 
-impl<'a> Sequence<'a, std::iter::Empty<&'a Item>> for Empty {
-    #[inline]
+impl<'a> SequenceCore<'a, Box<dyn Iterator<Item = &'a Item> + 'a>> for Sequence {
     fn is_empty(&self) -> bool {
-        true
-    }
-
-    #[inline]
-    fn len(&self) -> usize {
-        0
-    }
-
-    #[inline]
-    fn get(&self, _index: usize) -> Option<&Item> {
-        None
-    }
-
-    #[inline]
-    fn iter(&self) -> std::iter::Empty<&'a Item> {
-        std::iter::empty()
-    }
-
-    #[inline]
-    fn effective_boolean_value(&self) -> error::Result<bool> {
-        Ok(false)
-    }
-
-    #[inline]
-    fn string_value(&self, _xot: &xot::Xot) -> error::Result<String> {
-        Ok(String::new())
-    }
-}
-
-#[derive(Debug, Clone)]
-pub struct One {
-    item: Item,
-}
-
-impl One {
-    pub(crate) fn item(&self) -> &Item {
-        &self.item
-    }
-
-    pub(crate) fn into_item(self) -> Item {
-        self.item
-    }
-}
-
-impl From<Item> for One {
-    fn from(item: Item) -> Self {
-        One { item }
-    }
-}
-
-impl<'a> Sequence<'a, std::iter::Once<&'a Item>> for One {
-    #[inline]
-    fn is_empty(&self) -> bool {
-        false
-    }
-
-    #[inline]
-    fn len(&self) -> usize {
-        1
-    }
-
-    #[inline]
-    fn get(&self, index: usize) -> Option<&Item> {
-        if index == 0 {
-            Some(&self.item)
-        } else {
-            None
+        match self {
+            Sequence::Empty(inner) => inner.is_empty(),
+            Sequence::One(inner) => inner.is_empty(),
+            Sequence::Many(inner) => inner.is_empty(),
         }
     }
 
-    #[inline]
-    fn iter(&'a self) -> std::iter::Once<&'a Item> {
-        std::iter::once(&self.item)
+    fn len(&self) -> usize {
+        match self {
+            Sequence::Empty(inner) => inner.len(),
+            Sequence::One(inner) => inner.len(),
+            Sequence::Many(inner) => inner.len(),
+        }
     }
 
-    #[inline]
+    fn get(&self, index: usize) -> Option<&Item> {
+        match self {
+            Sequence::Empty(inner) => inner.get(index),
+            Sequence::One(inner) => inner.get(index),
+            Sequence::Many(inner) => inner.get(index),
+        }
+    }
+
+    fn iter(&'a self) -> Box<dyn Iterator<Item = &'a Item> + 'a> {
+        match self {
+            Sequence::Empty(inner) => Box::new(inner.iter()),
+            Sequence::One(inner) => Box::new(inner.iter()),
+            Sequence::Many(inner) => Box::new(inner.iter()),
+        }
+    }
+
     fn effective_boolean_value(&self) -> error::Result<bool> {
-        self.item.effective_boolean_value()
+        match self {
+            Sequence::Empty(inner) => inner.effective_boolean_value(),
+            Sequence::One(inner) => inner.effective_boolean_value(),
+            Sequence::Many(inner) => inner.effective_boolean_value(),
+        }
     }
 
-    #[inline]
     fn string_value(&self, xot: &xot::Xot) -> error::Result<String> {
-        self.item.string_value(xot)
-    }
-}
-
-#[derive(Debug, Clone)]
-pub struct Many {
-    items: Rc<Vec<Item>>,
-}
-
-impl Many {}
-
-impl From<Vec<Item>> for Many {
-    fn from(items: Vec<Item>) -> Self {
-        Many {
-            items: Rc::new(items),
+        match self {
+            Sequence::Empty(inner) => inner.string_value(xot),
+            Sequence::One(inner) => inner.string_value(xot),
+            Sequence::Many(inner) => inner.string_value(xot),
         }
     }
 }
 
-impl<'a> Sequence<'a, std::slice::Iter<'a, Item>> for Many {
-    #[inline]
-    fn is_empty(&self) -> bool {
-        self.items.is_empty()
+// we implement these explicitly, because we want to avoid dynamic dispatch until
+// the outer layer. This gives the compiler the chance to optimize the inner
+// layers better.
+impl<'a> SequenceExt<'a, BoxedItemIter<'a>> for Sequence
+where
+    Sequence: SequenceCore<'a, Box<dyn Iterator<Item = &'a Item>>>,
+{
+    #[allow(refining_impl_trait)]
+    fn nodes(&'a self) -> Box<dyn Iterator<Item = error::Result<xot::Node>> + 'a> {
+        match self {
+            Sequence::Empty(inner) => Box::new(inner.nodes()),
+            Sequence::One(inner) => Box::new(inner.nodes()),
+            Sequence::Many(inner) => Box::new(inner.nodes()),
+        }
     }
 
-    #[inline]
-    fn len(&self) -> usize {
-        self.items.len()
+    #[allow(refining_impl_trait)]
+    fn atomized(
+        &'a self,
+        xot: &'a xot::Xot,
+    ) -> Box<dyn Iterator<Item = error::Result<atomic::Atomic>> + 'a> {
+        match self {
+            Sequence::Empty(inner) => Box::new(inner.atomized(xot)),
+            Sequence::One(inner) => Box::new(inner.atomized(xot)),
+            Sequence::Many(inner) => Box::new(inner.atomized(xot)),
+        }
     }
 
-    #[inline]
-    fn get(&self, index: usize) -> Option<&Item> {
-        self.items.get(index)
+    #[allow(refining_impl_trait)]
+    fn map_iter(&'a self) -> Box<dyn Iterator<Item = error::Result<function::Map>> + 'a> {
+        match self {
+            Sequence::Empty(inner) => Box::new(inner.map_iter()),
+            Sequence::One(inner) => Box::new(inner.map_iter()),
+            Sequence::Many(inner) => Box::new(inner.map_iter()),
+        }
     }
 
-    #[inline]
-    fn iter(&'a self) -> std::slice::Iter<'a, Item> {
-        self.items.iter()
+    #[allow(refining_impl_trait)]
+    fn array_iter(&'a self) -> Box<dyn Iterator<Item = error::Result<function::Array>> + 'a> {
+        match self {
+            Sequence::Empty(inner) => Box::new(inner.array_iter()),
+            Sequence::One(inner) => Box::new(inner.array_iter()),
+            Sequence::Many(inner) => Box::new(inner.array_iter()),
+        }
     }
 
-    #[inline]
-    fn effective_boolean_value(&self) -> error::Result<bool> {
-        Err(error::Error::XPTY0004)
+    #[allow(refining_impl_trait)]
+    fn elements(
+        &'a self,
+        xot: &'a xot::Xot,
+    ) -> error::Result<Box<dyn Iterator<Item = error::Result<xot::Node>> + 'a>> {
+        match self {
+            Sequence::Empty(inner) => Ok(Box::new(inner.elements(xot)?)),
+            Sequence::One(inner) => Ok(Box::new(inner.elements(xot)?)),
+            Sequence::Many(inner) => Ok(Box::new(inner.elements(xot)?)),
+        }
     }
 
-    #[inline]
-    fn string_value(&self, _xot: &xot::Xot) -> error::Result<String> {
-        Err(error::Error::XPTY0004)
+    #[allow(refining_impl_trait)]
+    fn to_array(&'a self) -> error::Result<function::Array> {
+        match self {
+            Sequence::Empty(inner) => inner.to_array(),
+            Sequence::One(inner) => inner.to_array(),
+            Sequence::Many(inner) => inner.to_array(),
+        }
     }
 }
 
-// specifically implement the extensions for each version, so that
-// we can avoid dynamic dispatch on the inside. We can't do it generically
-// as we want a specialized version for the StackSequence so we can avoid
-// dynamic dispatch on the inside.
-impl<'a, I> SequenceExt<'a, I> for Empty
+impl<'a> SequenceCompare<'a, BoxedItemIter<'a>> for Sequence
 where
-    I: Iterator<Item = &'a Item>,
-    Empty: Sequence<'a, I>,
+    Sequence: SequenceCore<'a, BoxedItemIter<'a>>,
 {
+    #[allow(refining_impl_trait)]
+    fn general_comparison<O>(
+        &'a self,
+        other: &'a impl SequenceExt<'a, BoxedItemIter<'a>>,
+        context: &context::DynamicContext,
+        xot: &'a xot::Xot,
+        op: O,
+    ) -> error::Result<bool>
+    where
+        O: AtomicCompare,
+    {
+        match self {
+            // this will specialize over inner as we know the exact type.
+            // otherw will have to be a boxed trait object, but that's fine
+            Sequence::Empty(inner) => inner.general_comparison(other, context, xot, op),
+            Sequence::One(inner) => inner.general_comparison(other, context, xot, op),
+            Sequence::Many(inner) => inner.general_comparison(other, context, xot, op),
+        }
+    }
 }
 
-impl<'a, I> SequenceCompare<'a, I> for Empty
+impl<'a> SequenceOrder<'a, BoxedItemIter<'a>> for Sequence
 where
-    I: Iterator<Item = &'a Item>,
-    Empty: Sequence<'a, I>,
+    Sequence: SequenceCore<'a, BoxedItemIter<'a>>,
 {
-}
+    // only one_node can benefit from specialization
 
-impl<'a, I> SequenceOrder<'a, I> for Empty
-where
-    I: Iterator<Item = &'a Item>,
-    Empty: Sequence<'a, I>,
-{
-}
-
-impl<'a, I> SequenceExt<'a, I> for One
-where
-    I: Iterator<Item = &'a Item>,
-    One: Sequence<'a, I>,
-{
-}
-
-impl<'a, I> SequenceCompare<'a, I> for One
-where
-    I: Iterator<Item = &'a Item>,
-    One: Sequence<'a, I>,
-{
-}
-
-impl<'a, I> SequenceOrder<'a, I> for One
-where
-    I: Iterator<Item = &'a Item>,
-    One: Sequence<'a, I>,
-{
-}
-
-impl<'a, I> SequenceExt<'a, I> for Many
-where
-    I: Iterator<Item = &'a Item>,
-    Many: Sequence<'a, I>,
-{
-}
-
-impl<'a, I> SequenceCompare<'a, I> for Many
-where
-    I: Iterator<Item = &'a Item>,
-    Many: Sequence<'a, I>,
-{
-}
-
-impl<'a, I> SequenceOrder<'a, I> for Many
-where
-    I: Iterator<Item = &'a Item>,
-    Many: Sequence<'a, I>,
-{
+    #[allow(refining_impl_trait)]
+    fn one_node(&'a self) -> error::Result<xot::Node> {
+        match self {
+            Sequence::Empty(inner) => inner.one_node(),
+            Sequence::One(inner) => inner.one_node(),
+            Sequence::Many(inner) => inner.one_node(),
+        }
+    }
 }
