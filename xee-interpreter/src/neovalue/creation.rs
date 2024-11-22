@@ -1,6 +1,6 @@
 use ahash::{HashSet, HashSetExt};
 
-use crate::{error, sequence::Item, xml};
+use crate::{atomic, error, sequence::Item, xml};
 
 use super::{core::Empty, stack::StackSequence, traits::Sequence};
 
@@ -91,5 +91,12 @@ impl From<Vec<Item>> for StackSequence {
             1 => StackSequence::One(items.into_iter().next().unwrap().into()),
             _ => StackSequence::Many(items.into()),
         }
+    }
+}
+
+impl From<Vec<atomic::Atomic>> for StackSequence {
+    fn from(atomics: Vec<atomic::Atomic>) -> Self {
+        let items = atomics.into_iter().map(Item::from).collect::<Vec<_>>();
+        items.into()
     }
 }

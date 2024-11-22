@@ -183,7 +183,7 @@ impl Sequence {
 }
 
 impl Item {
-    fn item_type_matching(
+    pub(crate) fn item_type_matching(
         &self,
         item_type: &ast::ItemType,
         convert_atomic: &impl Fn(&Sequence, Xs) -> error::Result<Sequence>,
@@ -256,7 +256,7 @@ impl Item {
         }
     }
 
-    fn function_arity_matching<'a>(
+    pub(crate) fn function_arity_matching<'a>(
         &self,
         function_test: &ast::FunctionTest,
         get_signature: &impl Fn(&function::Function) -> &'a function::Signature,
@@ -278,7 +278,7 @@ impl Item {
         }
     }
 
-    fn function_type_matching<'a>(
+    pub(crate) fn function_type_matching<'a>(
         &self,
         function_test: &ast::FunctionTest,
         get_signature: &impl Fn(&function::Function) -> &'a function::Signature,
