@@ -5,7 +5,8 @@ use crate::{atomic, error, sequence::Item, xml};
 use super::{core::Sequence, traits::SequenceCore, variant::Empty};
 
 impl Sequence {
-    pub(crate) fn concat(self, other: Self) -> Self {
+    /// Concatenate two sequences producing a new sequence.
+    pub fn concat(self, other: Self) -> Self {
         match (self, other) {
             (Self::Empty(_), Self::Empty(_)) => Self::Empty(Empty {}),
             (Self::Empty(_), Self::One(item)) => Self::One(item),
