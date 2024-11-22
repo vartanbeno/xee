@@ -11,4 +11,5 @@
 mod comparison;
 mod core;
 mod iter;
+mod stack;
 mod traits;
