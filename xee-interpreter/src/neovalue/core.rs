@@ -99,11 +99,24 @@ where
     fn atomized(
         &'a self,
         xot: &'a xot::Xot,
-    ) -> Box<dyn Iterator<Item = error::Result<atomic::Atomic>> + 'a> {
+    ) -> Box<dyn Iterator<Item = error::Result<atomic::Atomic>> + '_> {
         match self {
             Sequence::Empty(inner) => Box::new(inner.atomized(xot)),
             Sequence::One(inner) => Box::new(inner.atomized(xot)),
             Sequence::Many(inner) => Box::new(inner.atomized(xot)),
+        }
+    }
+
+    #[allow(refining_impl_trait)]
+    fn unboxed_atomized<T: 'a>(
+        &'a self,
+        xot: &'a xot::Xot,
+        extract: impl Fn(atomic::Atomic) -> error::Result<T> + 'a,
+    ) -> Box<dyn Iterator<Item = error::Result<T>> + 'a> {
+        match self {
+            Sequence::Empty(inner) => Box::new(inner.unboxed_atomized(xot, extract)),
+            Sequence::One(inner) => Box::new(inner.unboxed_atomized(xot, extract)),
+            Sequence::Many(inner) => Box::new(inner.unboxed_atomized(xot, extract)),
         }
     }
 

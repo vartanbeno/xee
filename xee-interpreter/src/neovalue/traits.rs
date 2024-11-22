@@ -56,6 +56,15 @@ where
         AtomizedIter::new(xot, self.iter())
     }
 
+    /// Is used internally by the library macro.
+    fn unboxed_atomized<T: 'a>(
+        &'a self,
+        xot: &'a Xot,
+        extract: impl Fn(atomic::Atomic) -> error::Result<T> + 'a,
+    ) -> impl Iterator<Item = error::Result<T>> + 'a {
+        self.atomized(xot).map(move |a| extract(a?))
+    }
+
     /// Access an iterator over the XPath maps in the sequence
     ///
     /// An error is returned for items that are not a map.
