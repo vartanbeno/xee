@@ -5,6 +5,10 @@
 // enum_dispatch could be used to simplify it, but that seems to require co-location
 // of the trait and implementation in the same module and it's less clear what's
 // going on in detail, so I don't use it.
+
+// Note that creation.rs contains various functions that create StackSequences,
+// as they only make sense on that level.
+
 use crate::{
     atomic::{self, AtomicCompare},
     context, error, function,
@@ -16,6 +20,10 @@ use super::{
     traits::{BoxedItemIter, Sequence, SequenceCompare, SequenceExt, SequenceOrder},
 };
 
+// The name "StackSequence" is a bit obscure but it's the sequence that goes
+// onto the interpreter stack. The sequence that holds all the other sequence
+// implementations.
+// It's the size of an single item, as that's the biggest thing in it.
 #[derive(Debug, Clone)]
 pub enum StackSequence {
     Empty(Empty),

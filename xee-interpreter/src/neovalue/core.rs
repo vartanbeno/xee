@@ -44,6 +44,22 @@ pub struct One {
     item: Item,
 }
 
+impl One {
+    pub(crate) fn item(&self) -> &Item {
+        &self.item
+    }
+
+    pub(crate) fn into_item(self) -> Item {
+        self.item
+    }
+}
+
+impl From<Item> for One {
+    fn from(item: Item) -> Self {
+        One { item }
+    }
+}
+
 impl<'a> Sequence<'a, std::iter::Once<&'a Item>> for One {
     #[inline]
     fn is_empty(&self) -> bool {
@@ -83,6 +99,16 @@ impl<'a> Sequence<'a, std::iter::Once<&'a Item>> for One {
 #[derive(Debug, Clone)]
 pub struct Many {
     items: Rc<Vec<Item>>,
+}
+
+impl Many {}
+
+impl From<Vec<Item>> for Many {
+    fn from(items: Vec<Item>) -> Self {
+        Many {
+            items: Rc::new(items),
+        }
+    }
 }
 
 impl<'a> Sequence<'a, std::slice::Iter<'a, Item>> for Many {
