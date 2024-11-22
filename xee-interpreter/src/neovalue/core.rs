@@ -7,6 +7,7 @@
 // going on in detail, so I don't use it.
 
 // creation.rs contains various functions that create Sequence
+// compare.rs contains various comparison functions
 
 use crate::{
     atomic::{self, AtomicCompare},

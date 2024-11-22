@@ -8,6 +8,7 @@
 // iterators. This should allow the inner iteration to get compiled away for the
 // empty and one case.
 
+mod compare;
 mod comparison;
 mod core;
 mod creation;
