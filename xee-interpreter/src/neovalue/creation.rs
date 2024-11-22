@@ -1,8 +1,15 @@
+use std::rc::Rc;
+
 use ahash::{HashSet, HashSetExt};
+use xot::Xot;
 
-use crate::{atomic, error, sequence::Item, xml};
+use crate::{atomic, context, error, sequence::Item, string::Collation, xml};
 
-use super::{core::Sequence, traits::SequenceCore, variant::Empty};
+use super::{
+    core::Sequence,
+    traits::{SequenceCore, SequenceExt},
+    variant::Empty,
+};
 
 impl Sequence {
     pub(crate) fn concat(self, other: Self) -> Self {
@@ -84,6 +91,14 @@ impl Sequence {
     }
 }
 
+// turn a single item into a sequence
+impl From<Item> for Sequence {
+    fn from(item: Item) -> Self {
+        Sequence::One(item.into())
+    }
+}
+
+// turn a vector of items into a sequence
 impl From<Vec<Item>> for Sequence {
     fn from(items: Vec<Item>) -> Self {
         match items.len() {
@@ -94,9 +109,12 @@ impl From<Vec<Item>> for Sequence {
     }
 }
 
+// turn a vector of atomics into a sequence
 impl From<Vec<atomic::Atomic>> for Sequence {
     fn from(atomics: Vec<atomic::Atomic>) -> Self {
         let items = atomics.into_iter().map(Item::from).collect::<Vec<_>>();
         items.into()
     }
 }
+
+// TODO: collect APIs to collect iterators into a sequence
