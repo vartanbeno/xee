@@ -149,14 +149,14 @@ impl<'a> SequenceCore<'a, std::slice::Iter<'a, Item>> for Many {
 // dynamic dispatch on the inside.
 impl<'a, I> SequenceExt<'a, I> for Empty
 where
-    I: Iterator<Item = &'a Item>,
+    I: Iterator<Item = &'a Item> + 'a,
     Empty: SequenceCore<'a, I>,
 {
 }
 
 impl<'a, I> SequenceCompare<'a, I> for Empty
 where
-    I: Iterator<Item = &'a Item>,
+    I: Iterator<Item = &'a Item> + 'a,
     Empty: SequenceCore<'a, I>,
 {
 }
@@ -170,14 +170,14 @@ where
 
 impl<'a, I> SequenceExt<'a, I> for One
 where
-    I: Iterator<Item = &'a Item>,
+    I: Iterator<Item = &'a Item> + 'a,
     One: SequenceCore<'a, I>,
 {
 }
 
 impl<'a, I> SequenceCompare<'a, I> for One
 where
-    I: Iterator<Item = &'a Item>,
+    I: Iterator<Item = &'a Item> + 'a,
     One: SequenceCore<'a, I>,
 {
 }
@@ -191,14 +191,14 @@ where
 
 impl<'a, I> SequenceExt<'a, I> for Many
 where
-    I: Iterator<Item = &'a Item>,
+    I: Iterator<Item = &'a Item> + 'a,
     Many: SequenceCore<'a, I>,
 {
 }
 
 impl<'a, I> SequenceCompare<'a, I> for Many
 where
-    I: Iterator<Item = &'a Item>,
+    I: Iterator<Item = &'a Item> + 'a,
     Many: SequenceCore<'a, I>,
 {
 }

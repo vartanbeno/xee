@@ -1,8 +1,15 @@
+use std::rc::Rc;
+
 use ahash::{HashSet, HashSetExt};
+use xot::Xot;
 
-use crate::{atomic, error, sequence::Item, xml};
+use crate::{atomic, context, error, sequence::Item, string::Collation, xml};
 
-use super::{core::Sequence, traits::SequenceCore, variant::Empty};
+use super::{
+    core::Sequence,
+    traits::{SequenceCore, SequenceExt},
+    variant::Empty,
+};
 
 impl Sequence {
     /// Concatenate two sequences producing a new sequence.
@@ -79,9 +86,75 @@ impl Sequence {
         // sort nodes by document order
         let mut nodes = s.into_iter().collect::<Vec<_>>();
         nodes.sort_by_key(|n| annotations.document_order(*n));
+        nodes.into()
+    }
 
-        let items = nodes.into_iter().map(Item::Node).collect::<Vec<_>>();
-        items.into()
+    pub fn sorted(
+        &self,
+        context: &context::DynamicContext,
+        collation: Rc<Collation>,
+        xot: &Xot,
+    ) -> error::Result<Self> {
+        self.sorted_by_key(context, collation, |item| {
+            // the equivalent of fn:data()
+            let seq: Self = item.clone().into();
+            seq.atomized(xot).collect::<error::Result<Sequence>>()
+        })
+    }
+
+    pub fn sorted_by_key<F>(
+        &self,
+        context: &context::DynamicContext,
+        collation: Rc<Collation>,
+        mut get: F,
+    ) -> error::Result<Self>
+    where
+        F: FnMut(&Item) -> error::Result<Sequence>,
+    {
+        // see also sort_by_sequence in array.rs. The signatures are
+        // sufficiently different we don't want to try to unify them.
+
+        let items = self.iter().collect::<Vec<_>>();
+        let keys = self
+            .iter()
+            .map(|key| get(&key))
+            .collect::<error::Result<Vec<_>>>()?;
+
+        let mut keys_and_items = keys.into_iter().zip(items).collect::<Vec<_>>();
+        // sort by key. unfortunately sort_by requires the compare function
+        // to be infallible. It's not in reality, so we make any failures
+        // sort less, so they appear early on in the sequence.
+        keys_and_items.sort_by(|(a_key, _), (b_key, _)| {
+            a_key.compare(b_key, &collation, context.implicit_timezone())
+        });
+        // a pass to detect any errors; if sorting between two items is
+        // impossible we want to raise a type error
+        for ((a_key, _), (b_key, _)) in keys_and_items.iter().zip(keys_and_items.iter().skip(1)) {
+            a_key.fallible_compare(b_key, &collation, context.implicit_timezone())?;
+        }
+        // now pick up items again
+        let result = keys_and_items
+            .into_iter()
+            .map(|(_, item)| item)
+            .collect::<Sequence>();
+        Ok(result)
+    }
+
+    /// Flatten all arrays in this sequence
+    pub fn flatten(&self) -> error::Result<Self> {
+        let mut result = vec![];
+        for item in self.iter() {
+            if let Ok(array) = item.to_array() {
+                for sequence in array.iter() {
+                    for item in sequence.flatten()?.items()? {
+                        result.push(item.clone());
+                    }
+                }
+            } else {
+                result.push(item.clone());
+            }
+        }
+        Ok(result.into())
     }
 }
 
@@ -89,6 +162,22 @@ impl Sequence {
 impl From<Item> for Sequence {
     fn from(item: Item) -> Self {
         Sequence::One(item.into())
+    }
+}
+
+// turn a single atomic into a sequence
+impl From<atomic::Atomic> for Sequence {
+    fn from(atomic: atomic::Atomic) -> Self {
+        let item: Item = atomic.into();
+        item.into()
+    }
+}
+
+// turn a single node into a sequence
+impl From<xot::Node> for Sequence {
+    fn from(node: xot::Node) -> Self {
+        let item: Item = node.into();
+        item.into()
     }
 }
 
@@ -103,11 +192,19 @@ impl From<Vec<Item>> for Sequence {
     }
 }
 
-// turn a vector of atomics into a sequence
+// turn a vector of atomic into a sequence
 impl From<Vec<atomic::Atomic>> for Sequence {
     fn from(atomics: Vec<atomic::Atomic>) -> Self {
-        let items = atomics.into_iter().map(Item::from).collect::<Vec<_>>();
-        items.into()
+        let items = atomics.into_iter().map(Item::from);
+        items.collect()
+    }
+}
+
+// turn a vector of node into a sequence
+impl From<Vec<xot::Node>> for Sequence {
+    fn from(nodes: Vec<xot::Node>) -> Self {
+        let items = nodes.into_iter().map(Item::from);
+        items.collect()
     }
 }
 
@@ -130,6 +227,14 @@ impl<'a> FromIterator<&'a Item> for Sequence {
 // turn an iterator of atomics into a sequence
 impl FromIterator<atomic::Atomic> for Sequence {
     fn from_iter<I: IntoIterator<Item = atomic::Atomic>>(iter: I) -> Self {
+        let items = iter.into_iter().map(Item::from).collect::<Vec<_>>();
+        items.into()
+    }
+}
+
+// turn an iterator of nodes into a sequence
+impl FromIterator<xot::Node> for Sequence {
+    fn from_iter<I: IntoIterator<Item = xot::Node>>(iter: I) -> Self {
         let items = iter.into_iter().map(Item::from).collect::<Vec<_>>();
         items.into()
     }

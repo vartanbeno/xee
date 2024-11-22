@@ -84,7 +84,7 @@ impl<'a> SequenceCore<'a, Box<dyn Iterator<Item = &'a Item> + 'a>> for Sequence 
 // layers better.
 impl<'a> SequenceExt<'a, BoxedItemIter<'a>> for Sequence
 where
-    Sequence: SequenceCore<'a, Box<dyn Iterator<Item = &'a Item>>>,
+    Sequence: SequenceCore<'a, Box<dyn Iterator<Item = &'a Item> + 'a>>,
 {
     #[allow(refining_impl_trait)]
     fn nodes(&'a self) -> Box<dyn Iterator<Item = error::Result<xot::Node>> + 'a> {

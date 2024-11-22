@@ -12,7 +12,7 @@ use super::{
     iter::{AtomizedIter, NodeIter},
 };
 
-pub(crate) type BoxedItemIter<'a> = Box<dyn Iterator<Item = &'a Item>>;
+pub(crate) type BoxedItemIter<'a> = Box<dyn Iterator<Item = &'a Item> + 'a>;
 
 /// The core sequence interface: a sequence must implement this to function.
 ///
@@ -42,7 +42,7 @@ where
 
 pub trait SequenceExt<'a, I>: SequenceCore<'a, I>
 where
-    I: Iterator<Item = &'a Item>,
+    I: Iterator<Item = &'a Item> + 'a,
 {
     /// Access an iterator over the nodes in the sequence
     ///
@@ -104,7 +104,7 @@ where
 
 pub(crate) trait SequenceCompare<'a, I>: SequenceExt<'a, I>
 where
-    I: Iterator<Item = &'a Item>,
+    I: Iterator<Item = &'a Item> + 'a,
 {
     fn general_comparison<O>(
         &'a self,
