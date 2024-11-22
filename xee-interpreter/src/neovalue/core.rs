@@ -24,7 +24,7 @@ impl<'a> Sequence<'a, std::iter::Empty<&'a Item>> for Empty {
     }
 
     #[inline]
-    fn items(&self) -> std::iter::Empty<&'a Item> {
+    fn iter(&self) -> std::iter::Empty<&'a Item> {
         std::iter::empty()
     }
 
@@ -81,7 +81,7 @@ impl<'a> Sequence<'a, std::iter::Once<&'a Item>> for One {
     }
 
     #[inline]
-    fn items(&'a self) -> std::iter::Once<&'a Item> {
+    fn iter(&'a self) -> std::iter::Once<&'a Item> {
         std::iter::once(&self.item)
     }
 
@@ -128,7 +128,7 @@ impl<'a> Sequence<'a, std::slice::Iter<'a, Item>> for Many {
     }
 
     #[inline]
-    fn items(&'a self) -> std::slice::Iter<'a, Item> {
+    fn iter(&'a self) -> std::slice::Iter<'a, Item> {
         self.items.iter()
     }
 

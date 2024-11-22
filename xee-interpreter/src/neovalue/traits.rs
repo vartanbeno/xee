@@ -31,7 +31,7 @@ where
     fn get(&'a self, index: usize) -> Option<&'a Item>;
 
     /// Get the items from the sequence as an iterator
-    fn items(&'a self) -> I;
+    fn iter(&'a self) -> I;
 
     /// Effective boolean value
     fn effective_boolean_value(&'a self) -> error::Result<bool>;
@@ -48,26 +48,26 @@ where
     ///
     /// An error is returned for items that are not a node.
     fn nodes(&'a self) -> impl Iterator<Item = error::Result<xot::Node>> {
-        NodeIter::new(self.items())
+        NodeIter::new(self.iter())
     }
 
     /// Access an iterator for the atomized values in the sequence
     fn atomized(&'a self, xot: &'a Xot) -> impl Iterator<Item = error::Result<atomic::Atomic>> {
-        AtomizedIter::new(xot, self.items())
+        AtomizedIter::new(xot, self.iter())
     }
 
     /// Access an iterator over the XPath maps in the sequence
     ///
     /// An error is returned for items that are not a map.
     fn map_iter(&'a self) -> impl Iterator<Item = error::Result<function::Map>> {
-        self.items().map(|item| item.to_map())
+        self.iter().map(|item| item.to_map())
     }
 
     /// Access an iterator over the XPath arrays in the sequence
     ///
     /// An error is returned for items that are not an array.
     fn array_iter(&'a self) -> impl Iterator<Item = error::Result<function::Array>> {
-        self.items().map(|item| item.to_array())
+        self.iter().map(|item| item.to_array())
     }
 
     /// Access an iterator over elements nodes in the sequence
@@ -92,7 +92,7 @@ where
     /// Create an XPath array from this sequence.
     fn to_array(&'a self) -> error::Result<function::Array> {
         let mut array = Vec::with_capacity(self.len());
-        for item in self.items() {
+        for item in self.iter() {
             array.push(item.clone().into());
         }
         // TODO: array.into() is somehow returning a Result, that seems weird
@@ -129,7 +129,7 @@ where
 {
     fn one_node(&'a self) -> error::Result<xot::Node> {
         match self.len() {
-            1 => self.items().next().unwrap().to_node(),
+            1 => self.iter().next().unwrap().to_node(),
             _ => Err(error::Error::XPTY0004),
         }
     }

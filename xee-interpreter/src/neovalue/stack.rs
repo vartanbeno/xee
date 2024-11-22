@@ -56,11 +56,11 @@ impl<'a> Sequence<'a, Box<dyn Iterator<Item = &'a Item> + 'a>> for StackSequence
         }
     }
 
-    fn items(&'a self) -> Box<dyn Iterator<Item = &'a Item> + 'a> {
+    fn iter(&'a self) -> Box<dyn Iterator<Item = &'a Item> + 'a> {
         match self {
-            StackSequence::Empty(inner) => Box::new(inner.items()),
-            StackSequence::One(inner) => Box::new(inner.items()),
-            StackSequence::Many(inner) => Box::new(inner.items()),
+            StackSequence::Empty(inner) => Box::new(inner.iter()),
+            StackSequence::One(inner) => Box::new(inner.iter()),
+            StackSequence::Many(inner) => Box::new(inner.iter()),
         }
     }
 
