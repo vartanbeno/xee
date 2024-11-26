@@ -2,9 +2,9 @@
 
 use xot::{Node, Xot};
 
-use crate::{atomic, error, sequence::Item};
+use crate::{atomic, error};
 
-use super::{core::Sequence, traits::SequenceCore};
+use super::{core::Sequence, item::Item, traits::SequenceCore};
 
 enum NodeOrString {
     Node(Node),

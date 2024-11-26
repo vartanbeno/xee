@@ -13,11 +13,10 @@ use crate::atomic;
 use crate::context;
 use crate::error;
 use crate::function;
-use crate::occurrence::Occurrence;
-use crate::sequence::Item;
 use crate::xml;
 
 use super::core::Sequence;
+use super::item::Item;
 use super::iter::one;
 use super::iter::option;
 use super::traits::SequenceCore;

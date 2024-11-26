@@ -12,10 +12,10 @@
 use crate::{
     atomic::{self, AtomicCompare},
     context, error, function,
-    sequence::Item,
 };
 
 use super::{
+    item::Item,
     traits::{BoxedItemIter, SequenceCompare, SequenceCore, SequenceExt, SequenceOrder},
     variant::{Empty, Many, One},
 };

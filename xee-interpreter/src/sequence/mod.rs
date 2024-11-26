@@ -3,16 +3,15 @@
 ///
 /// A sequence is a wrapper around a stack value, implemented by the
 /// stack module.
-mod item;
 mod matching;
 mod normalization;
 mod opc;
 mod sequence_core;
 mod serialization;
 
+pub(crate) use crate::neovalue::AtomizedItemIter;
+pub use crate::neovalue::Item;
 pub use crate::stack::AtomizedIter;
-pub(crate) use item::AtomizedItemIter;
-pub use item::Item;
 pub(crate) use opc::OptionParameterConverter;
 pub use sequence_core::Sequence;
 pub use sequence_core::{ItemIter, NodeIter};

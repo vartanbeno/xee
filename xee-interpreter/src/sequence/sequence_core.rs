@@ -10,9 +10,9 @@ use crate::atomic;
 use crate::context;
 use crate::error;
 use crate::function;
+use crate::neovalue::Item;
 use crate::occurrence;
 use crate::sequence;
-use crate::sequence::Item;
 use crate::stack;
 use crate::string::Collation;
 
@@ -311,7 +311,7 @@ impl Sequence {
         mut get: F,
     ) -> error::Result<Self>
     where
-        F: FnMut(&sequence::Item) -> error::Result<sequence::Sequence>,
+        F: FnMut(&Item) -> error::Result<sequence::Sequence>,
     {
         // see also sort_by_sequence in array.rs. The signatures are
         // sufficiently different we don't want to try to unify them.
@@ -416,16 +416,16 @@ impl From<&stack::Value> for Sequence {
     }
 }
 
-impl From<sequence::Item> for Sequence {
-    fn from(item: sequence::Item) -> Self {
+impl From<Item> for Sequence {
+    fn from(item: Item) -> Self {
         Self {
             stack_value: item.into(),
         }
     }
 }
 
-impl From<Vec<sequence::Item>> for Sequence {
-    fn from(items: Vec<sequence::Item>) -> Self {
+impl From<Vec<Item>> for Sequence {
+    fn from(items: Vec<Item>) -> Self {
         Self {
             stack_value: items.into(),
         }
@@ -434,10 +434,7 @@ impl From<Vec<sequence::Item>> for Sequence {
 
 impl From<Vec<xot::Node>> for Sequence {
     fn from(items: Vec<xot::Node>) -> Self {
-        let items = items
-            .into_iter()
-            .map(sequence::Item::from)
-            .collect::<Vec<_>>();
+        let items = items.into_iter().map(Item::from).collect::<Vec<_>>();
         items.into()
     }
 }
@@ -460,7 +457,7 @@ impl From<function::Map> for Sequence {
 
 impl<T> From<Option<T>> for Sequence
 where
-    T: Into<sequence::Item>,
+    T: Into<Item>,
 {
     fn from(item: Option<T>) -> Self {
         match item {
@@ -477,7 +474,7 @@ where
     fn from(items: Vec<T>) -> Self {
         let items = items
             .into_iter()
-            .map(|i| sequence::Item::from(i.into()))
+            .map(|i| Item::from(i.into()))
             .collect::<Vec<_>>();
         Self::from(items)
     }
@@ -488,7 +485,7 @@ where
     T: Into<atomic::Atomic>,
 {
     fn from(item: T) -> Self {
-        Self::from(vec![sequence::Item::from(item.into())])
+        Self::from(vec![Item::from(item.into())])
     }
 }
 
@@ -538,7 +535,7 @@ impl occurrence::Occurrence<Item, error::Error> for ItemIter {
 }
 
 impl Iterator for ItemIter {
-    type Item = sequence::Item;
+    type Item = Item;
 
     fn next(&mut self) -> Option<Self::Item> {
         self.value_iter.next()
@@ -640,7 +637,7 @@ mod tests {
 
     #[test]
     fn test_one() {
-        let item = sequence::Item::from(atomic::Atomic::from(true));
+        let item = Item::from(atomic::Atomic::from(true));
         let sequence = Sequence::from(vec![item.clone()]);
         assert_eq!(sequence.items().unwrap().one().unwrap(), item);
     }

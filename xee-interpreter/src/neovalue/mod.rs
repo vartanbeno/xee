@@ -12,6 +12,7 @@ mod compare;
 mod comparison;
 mod core;
 mod creation;
+mod item;
 mod iter;
 mod matching;
 mod normalization;
@@ -19,3 +20,6 @@ mod opc;
 mod serialization;
 mod traits;
 mod variant;
+
+// pub use core::Sequence;
+pub use item::{AtomizedItemIter, Item};

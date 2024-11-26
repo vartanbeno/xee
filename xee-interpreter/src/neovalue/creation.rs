@@ -3,10 +3,11 @@ use std::rc::Rc;
 use ahash::{HashSet, HashSetExt};
 use xot::Xot;
 
-use crate::{atomic, context, error, sequence::Item, string::Collation, xml};
+use crate::{atomic, context, error, string::Collation, xml};
 
 use super::{
     core::Sequence,
+    item::Item,
     normalization::normalize,
     serialization::{serialize_sequence, SerializationParameters},
     traits::{SequenceCore, SequenceExt},

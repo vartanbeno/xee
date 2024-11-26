@@ -2,13 +2,12 @@ use xot::Xot;
 
 use crate::{
     atomic::{self, AtomicCompare},
-    context, error, function,
-    sequence::Item,
-    xml,
+    context, error, function, xml,
 };
 
 use super::{
     comparison,
+    item::Item,
     iter::{AtomizedIter, NodeIter},
 };
 

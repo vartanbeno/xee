@@ -2,7 +2,7 @@
 
 use xot::{Node, Xot};
 
-use crate::{atomic, error, sequence::Item};
+use crate::{atomic, error, neovalue::Item};
 
 use super::Sequence;
 

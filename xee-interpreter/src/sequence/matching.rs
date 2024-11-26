@@ -15,7 +15,7 @@ use crate::error;
 use crate::function;
 use crate::occurrence::Occurrence;
 use crate::xml;
-use crate::{sequence::Item, sequence::Sequence};
+use crate::{neovalue::Item, sequence::Sequence};
 
 impl Sequence {
     /// Check a type for qee-qt assert-type

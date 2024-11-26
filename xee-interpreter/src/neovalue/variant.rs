@@ -1,7 +1,8 @@
 use std::rc::Rc;
 
-use crate::{error, sequence::Item};
+use crate::error;
 
+use super::item::Item;
 use super::traits::{SequenceCompare, SequenceCore, SequenceExt, SequenceOrder};
 
 #[derive(Debug, Clone, PartialEq)]

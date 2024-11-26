@@ -7,11 +7,11 @@ use xee_schema_type::Xs;
 use crate::{
     atomic, context, error,
     function::{self, Map},
-    sequence::Item,
 };
 
 use super::{
     core::Sequence,
+    item::Item,
     opc::{OptionParameterConverter, QNameOrString},
 };
 

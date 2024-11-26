@@ -7,12 +7,13 @@ use xee_schema_type::Xs;
 use crate::{
     atomic, context, error,
     function::{self, Map},
+    neovalue::Item,
     stack,
 };
 
 use super::{
     opc::{OptionParameterConverter, QNameOrString},
-    Item, Sequence,
+    Sequence,
 };
 
 pub(crate) struct SerializationParameters {

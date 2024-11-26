@@ -2,9 +2,9 @@ use std::cmp::Ordering;
 
 use xot::Xot;
 
-use crate::{error, function, sequence::Item, string::Collation};
+use crate::{error, function, string::Collation};
 
-use super::{core::Sequence, traits::SequenceCore};
+use super::{core::Sequence, item::Item, traits::SequenceCore};
 
 impl Sequence {
     /// Compare two sequences using XPath deep equal rules.
