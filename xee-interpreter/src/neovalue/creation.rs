@@ -3,7 +3,7 @@ use std::rc::Rc;
 use ahash::{HashSet, HashSetExt};
 use xot::Xot;
 
-use crate::{atomic, context, error, string::Collation, xml};
+use crate::{atomic, context, error, function, string::Collation, xml};
 
 use super::{
     core::Sequence,
@@ -243,19 +243,63 @@ impl From<Item> for Sequence {
     }
 }
 
-// turn a single atomic into a sequence
-impl From<atomic::Atomic> for Sequence {
-    fn from(atomic: atomic::Atomic) -> Self {
-        let item: Item = atomic.into();
-        item.into()
-    }
-}
+// // turn a single atomic into a sequence
+// impl From<atomic::Atomic> for Sequence {
+//     fn from(atomic: atomic::Atomic) -> Self {
+//         let item: Item = atomic.into();
+//         item.into()
+//     }
+// }
 
 // turn a single node into a sequence
 impl From<xot::Node> for Sequence {
     fn from(node: xot::Node) -> Self {
         let item: Item = node.into();
         item.into()
+    }
+}
+
+// turn a single array into a sequence
+impl From<function::Array> for Sequence {
+    fn from(array: function::Array) -> Self {
+        let item: Item = array.into();
+        item.into()
+    }
+}
+
+// turn a single map into a sequence
+impl From<function::Map> for Sequence {
+    fn from(map: function::Map) -> Self {
+        let item: Item = map.into();
+        item.into()
+    }
+}
+
+// turn an option that can be turned into an item into a sequence
+impl<T> From<Option<T>> for Sequence
+where
+    T: Into<Item>,
+{
+    fn from(item: Option<T>) -> Self {
+        match item {
+            Some(item) => {
+                let item = item.into();
+                Sequence::One(item.into())
+            }
+            None => Sequence::default(),
+        }
+    }
+}
+
+// turn something that can be turned into an atomic into a sequence
+impl<T> From<T> for Sequence
+where
+    T: Into<atomic::Atomic>,
+{
+    fn from(atomic: T) -> Self {
+        let atomic: atomic::Atomic = atomic.into();
+        let item: Item = atomic.into();
+        Sequence::One(item.into())
     }
 }
 
