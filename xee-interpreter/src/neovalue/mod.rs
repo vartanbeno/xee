@@ -14,5 +14,6 @@ mod core;
 mod creation;
 mod iter;
 mod matching;
+mod normalization;
 mod traits;
 mod variant;
