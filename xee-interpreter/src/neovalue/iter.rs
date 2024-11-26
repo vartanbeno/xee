@@ -219,7 +219,7 @@ where
     }
 }
 
-pub(crate) fn one<'a>(mut iter: impl Iterator<Item = &'a Item>) -> error::Result<&'a Item> {
+pub(crate) fn one<'a>(mut iter: impl Iterator<Item = &'a Item> + 'a) -> error::Result<&'a Item> {
     if let Some(one) = iter.next() {
         if iter.next().is_none() {
             Ok(one)
@@ -232,7 +232,7 @@ pub(crate) fn one<'a>(mut iter: impl Iterator<Item = &'a Item>) -> error::Result
 }
 
 pub(crate) fn option<'a>(
-    mut iter: impl Iterator<Item = &'a Item>,
+    mut iter: impl Iterator<Item = &'a Item> + 'a,
 ) -> error::Result<Option<&'a Item>> {
     if let Some(one) = iter.next() {
         if iter.next().is_none() {
