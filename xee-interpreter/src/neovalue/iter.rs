@@ -216,3 +216,29 @@ where
         }
     }
 }
+
+pub(crate) fn one<'a>(mut iter: impl Iterator<Item = &'a Item>) -> error::Result<&'a Item> {
+    if let Some(one) = iter.next() {
+        if iter.next().is_none() {
+            Ok(one)
+        } else {
+            Err(error::Error::XPTY0004)
+        }
+    } else {
+        Err(error::Error::XPTY0004)
+    }
+}
+
+pub(crate) fn option<'a>(
+    mut iter: impl Iterator<Item = &'a Item>,
+) -> error::Result<Option<&'a Item>> {
+    if let Some(one) = iter.next() {
+        if iter.next().is_none() {
+            Ok(Some(one))
+        } else {
+            Err(error::Error::XPTY0004)
+        }
+    } else {
+        Ok(None)
+    }
+}

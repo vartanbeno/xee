@@ -4,7 +4,7 @@ use crate::{error, sequence::Item};
 
 use super::traits::{SequenceCompare, SequenceCore, SequenceExt, SequenceOrder};
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq)]
 pub struct Empty {}
 
 impl<'a> SequenceCore<'a, std::iter::Empty<&'a Item>> for Empty {
@@ -39,7 +39,7 @@ impl<'a> SequenceCore<'a, std::iter::Empty<&'a Item>> for Empty {
     }
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq)]
 pub struct One {
     item: Item,
 }
@@ -96,7 +96,7 @@ impl<'a> SequenceCore<'a, std::iter::Once<&'a Item>> for One {
     }
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq)]
 pub struct Many {
     items: Rc<Vec<Item>>,
 }

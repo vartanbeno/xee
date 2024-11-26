@@ -13,5 +13,6 @@ mod comparison;
 mod core;
 mod creation;
 mod iter;
+mod matching;
 mod traits;
 mod variant;

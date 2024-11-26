@@ -22,11 +22,17 @@ use super::{
 
 // The Sequence that goes onto the stack is the size of an single item, as
 // that's the biggest thing in it.
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq)]
 pub enum Sequence {
     Empty(Empty),
     One(One),
     Many(Many),
+}
+
+impl Default for Sequence {
+    fn default() -> Self {
+        Self::Empty(Empty {})
+    }
 }
 
 impl<'a> SequenceCore<'a, Box<dyn Iterator<Item = &'a Item> + 'a>> for Sequence {
