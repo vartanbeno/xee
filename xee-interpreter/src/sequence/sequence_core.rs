@@ -7,6 +7,7 @@ use std::rc::Rc;
 use xot::Xot;
 
 use crate::atomic;
+use crate::atomic::AtomicCompare;
 use crate::context;
 use crate::error;
 use crate::function;
@@ -15,6 +16,7 @@ use crate::occurrence;
 use crate::sequence;
 use crate::stack;
 use crate::string::Collation;
+use crate::xml;
 
 use super::normalization::normalize;
 use super::serialization::serialize_sequence;
@@ -390,6 +392,74 @@ impl Sequence {
             stack::Value::Absent => "absent".to_string(),
         }
     }
+
+    pub(crate) fn is(self, other: Sequence, annotations: &xml::Annotations) -> error::Result<bool> {
+        self.stack_value.is(other.stack_value, annotations)
+    }
+
+    pub(crate) fn precedes(
+        self,
+        other: Sequence,
+        annotations: &xml::Annotations,
+    ) -> error::Result<bool> {
+        self.stack_value.precedes(other.stack_value, annotations)
+    }
+
+    pub(crate) fn follows(
+        self,
+        other: Sequence,
+        annotations: &xml::Annotations,
+    ) -> error::Result<bool> {
+        self.stack_value.follows(other.stack_value, annotations)
+    }
+
+    pub(crate) fn union(
+        self,
+        other: Sequence,
+        annotations: &xml::Annotations,
+    ) -> error::Result<Sequence> {
+        self.stack_value
+            .union(other.stack_value, annotations)
+            .map(Sequence::new)
+    }
+
+    pub(crate) fn intersect(
+        self,
+        other: Sequence,
+        annotations: &xml::Annotations,
+    ) -> error::Result<Sequence> {
+        self.stack_value
+            .intersect(other.stack_value, annotations)
+            .map(Sequence::new)
+    }
+
+    pub(crate) fn except(
+        self,
+        other: Sequence,
+        annotations: &xml::Annotations,
+    ) -> error::Result<Sequence> {
+        self.stack_value
+            .except(other.stack_value, annotations)
+            .map(Sequence::new)
+    }
+
+    pub(crate) fn deduplicate(self, annotations: &xml::Annotations) -> error::Result<Sequence> {
+        self.stack_value.deduplicate(annotations).map(Sequence::new)
+    }
+
+    pub(crate) fn general_comparison<O>(
+        &self,
+        other: Self,
+        context: &context::DynamicContext,
+        xot: &Xot,
+        op: O,
+    ) -> error::Result<bool>
+    where
+        O: AtomicCompare,
+    {
+        self.stack_value
+            .general_comparison(other.stack_value, context, xot, op)
+    }
 }
 
 impl Default for Sequence {
@@ -404,10 +474,13 @@ impl From<Sequence> for stack::Value {
     }
 }
 
-impl From<Item> for Sequence {
-    fn from(item: Item) -> Self {
+impl<T> From<T> for Sequence
+where
+    T: Into<Item>,
+{
+    fn from(item: T) -> Self {
         Self {
-            stack_value: item.into(),
+            stack_value: item.into().into(),
         }
     }
 }
@@ -427,19 +500,21 @@ impl From<Vec<xot::Node>> for Sequence {
     }
 }
 
-impl From<function::Array> for Sequence {
-    fn from(array: function::Array) -> Self {
-        Self {
-            stack_value: array.into(),
-        }
+impl TryFrom<Sequence> for xot::Node {
+    type Error = error::Error;
+
+    fn try_from(sequence: Sequence) -> Result<Self, Self::Error> {
+        let item = sequence.get(0)?;
+        item.to_node()
     }
 }
 
-impl From<function::Map> for Sequence {
-    fn from(map: function::Map) -> Self {
-        Self {
-            stack_value: map.into(),
-        }
+impl TryFrom<Sequence> for Rc<function::Function> {
+    type Error = error::Error;
+
+    fn try_from(sequence: Sequence) -> Result<Self, Self::Error> {
+        let item = sequence.get(0)?;
+        item.to_function()
     }
 }
 
@@ -465,15 +540,6 @@ where
             .map(|i| Item::from(i.into()))
             .collect::<Vec<_>>();
         Self::from(items)
-    }
-}
-
-impl<T> From<T> for Sequence
-where
-    T: Into<atomic::Atomic>,
-{
-    fn from(item: T) -> Self {
-        Self::from(vec![Item::from(item.into())])
     }
 }
 

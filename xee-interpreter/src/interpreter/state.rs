@@ -93,8 +93,8 @@ impl<'a> State<'a> {
         self.stack[base + index] = self.stack.pop().unwrap();
     }
 
-    pub(crate) fn pop(&mut self) -> stack::Value {
-        self.stack.pop().unwrap()
+    pub(crate) fn pop(&mut self) -> error::Result<sequence::Sequence> {
+        self.stack.pop().unwrap().try_into()
     }
 
     pub(crate) fn function(&self) -> error::Result<Rc<function::Function>> {
@@ -177,8 +177,8 @@ impl<'a> State<'a> {
         self.stack.truncate(self.stack.len() - (arity + 1));
     }
 
-    pub(crate) fn top(&self) -> &stack::Value {
-        self.stack.last().unwrap()
+    pub(crate) fn top(&self) -> error::Result<sequence::Sequence> {
+        self.stack.last().unwrap().try_into()
     }
 
     pub fn stack(&self) -> &[stack::Value] {
