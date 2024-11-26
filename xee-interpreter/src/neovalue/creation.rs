@@ -8,6 +8,7 @@ use crate::{atomic, context, error, sequence::Item, string::Collation, xml};
 use super::{
     core::Sequence,
     normalization::normalize,
+    serialization::{serialize_sequence, SerializationParameters},
     traits::{SequenceCore, SequenceExt},
     variant::Empty,
 };
@@ -159,6 +160,31 @@ impl Sequence {
     /// <https://www.w3.org/TR/xslt-xquery-serialization-31/#serdm>
     pub fn normalize(&self, item_separator: &str, xot: &mut Xot) -> error::Result<xot::Node> {
         normalize(self, item_separator, xot)
+    }
+
+    /// Serialize this sequence according to serialization parameters
+    pub(crate) fn serialize(
+        &self,
+        params: SerializationParameters,
+        xot: &mut Xot,
+    ) -> error::Result<String> {
+        serialize_sequence(self, params, xot)
+    }
+
+    /// Display representation of the sequence
+    pub fn display_representation(&self, xot: &Xot, context: &context::DynamicContext) -> String {
+        // TODO: various unwraps
+        match &self {
+            Sequence::Empty(_) => "()".to_string(),
+            Sequence::One(item) => item.item().display_representation(xot, context).unwrap(),
+            Sequence::Many(items) => {
+                let mut representations = Vec::with_capacity(self.len());
+                for item in items.iter() {
+                    representations.push(item.display_representation(xot, context).unwrap());
+                }
+                format!("(\n{}\n)", representations.join(",\n"))
+            }
+        }
     }
 }
 
