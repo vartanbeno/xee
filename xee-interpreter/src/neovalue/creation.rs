@@ -157,6 +157,53 @@ impl Sequence {
         Ok(result.into())
     }
 
+    pub(crate) fn union(self, other: Self, annotations: &xml::Annotations) -> error::Result<Self> {
+        let mut s = HashSet::new();
+        for item in self.iter() {
+            let node = item.to_node()?;
+            s.insert(node);
+        }
+        for item in other.iter() {
+            let node = item.to_node()?;
+            s.insert(node);
+        }
+
+        Ok(Self::process_set_result(s, annotations))
+    }
+
+    pub(crate) fn intersect(
+        self,
+        other: Self,
+        annotations: &xml::Annotations,
+    ) -> error::Result<Self> {
+        let mut s = HashSet::new();
+        let mut r = HashSet::new();
+        for item in self.iter() {
+            let node = item.to_node()?;
+            s.insert(node);
+        }
+        for item in other.iter() {
+            let node = item.to_node()?;
+            if s.contains(&node) {
+                r.insert(node);
+            }
+        }
+        Ok(Self::process_set_result(r, annotations))
+    }
+
+    pub(crate) fn except(self, other: Self, annotations: &xml::Annotations) -> error::Result<Self> {
+        let mut s = HashSet::new();
+        for item in self.iter() {
+            let node = item.to_node()?;
+            s.insert(node);
+        }
+        for item in other.iter() {
+            let node = item.to_node()?;
+            s.remove(&node);
+        }
+        Ok(Self::process_set_result(s, annotations))
+    }
+
     /// Normalize this sequence into a document node, according to
     /// <https://www.w3.org/TR/xslt-xquery-serialization-31/#serdm>
     pub fn normalize(&self, item_separator: &str, xot: &mut Xot) -> error::Result<xot::Node> {

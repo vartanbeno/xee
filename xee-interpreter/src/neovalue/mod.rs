@@ -21,5 +21,7 @@ mod serialization;
 mod traits;
 mod variant;
 
-// pub use core::Sequence;
+pub use core::Sequence;
 pub use item::{AtomizedItemIter, Item};
+pub(crate) use traits::{SequenceCompare, SequenceOrder};
+pub use traits::{SequenceCore, SequenceExt};
