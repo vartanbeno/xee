@@ -61,6 +61,12 @@ impl From<Item> for One {
     }
 }
 
+impl From<One> for Item {
+    fn from(one: One) -> Self {
+        one.item
+    }
+}
+
 impl<'a> SequenceCore<'a, std::iter::Once<&'a Item>> for One {
     #[inline]
     fn is_empty(&self) -> bool {
