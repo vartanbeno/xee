@@ -81,7 +81,7 @@ impl<'a> Runnable<'a> {
 
     /// Run the program against a sequence item.
     pub fn many(&self, xot: &'a mut Xot) -> error::SpannedResult<sequence::Sequence> {
-        Ok(self.run_value(xot)?.into())
+        Ok(self.run_value(xot)?.try_into()?)
     }
 
     /// Run the program, expect a single item as the result.

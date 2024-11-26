@@ -191,7 +191,7 @@ impl Sequence {
     pub fn concat(&self, other: &sequence::Sequence) -> Self {
         let a: stack::Value = self.clone().into();
         let b: stack::Value = other.clone().into();
-        a.concat(b).into()
+        sequence::Sequence::new(a.concat(b))
     }
 
     /// Compare two sequences using XPath deep equal rules.
@@ -398,21 +398,9 @@ impl Default for Sequence {
     }
 }
 
-impl From<stack::Value> for Sequence {
-    fn from(stack_value: stack::Value) -> Self {
-        Self { stack_value }
-    }
-}
-
 impl From<Sequence> for stack::Value {
     fn from(sequence: Sequence) -> Self {
         sequence.stack_value
-    }
-}
-
-impl From<&stack::Value> for Sequence {
-    fn from(stack_value: &stack::Value) -> Self {
-        stack_value.clone().into()
     }
 }
 

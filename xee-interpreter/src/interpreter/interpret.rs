@@ -148,7 +148,7 @@ impl<'a> Interpreter<'a> {
                     let closure_function =
                         self.runnable.program().inline_function(inline_function_id);
                     for _ in 0..closure_function.closure_names.len() {
-                        closure_vars.push(self.state.pop().into());
+                        closure_vars.push(self.state.pop().try_into()?);
                     }
                     self.state.push(
                         function::Function::Inline {
@@ -184,7 +184,7 @@ impl<'a> Interpreter<'a> {
                 }
                 EncodedInstruction::CurlyArray => {
                     let value = self.state.pop();
-                    let sequence: sequence::Sequence = value.into();
+                    let sequence: sequence::Sequence = value.try_into()?;
                     self.state.push(sequence.to_array()?.into());
                 }
                 EncodedInstruction::SquareArray => {
@@ -192,7 +192,7 @@ impl<'a> Interpreter<'a> {
                     let length = length.cast_to_integer_value::<i64>()?;
                     let mut popped: Vec<sequence::Sequence> = Vec::with_capacity(length as usize);
                     for _ in 0..length {
-                        popped.push(self.state.pop().into());
+                        popped.push(self.state.pop().try_into()?);
                     }
                     self.state.push(function::Array::new(popped).into());
                 }
@@ -204,7 +204,7 @@ impl<'a> Interpreter<'a> {
                     for _ in 0..length {
                         let value = self.state.pop();
                         let key = self.pop_atomic()?;
-                        popped.push((key, value.into()));
+                        popped.push((key, value.try_into()?));
                     }
                     self.state.push(function::Map::new(popped)?.into());
                 }
@@ -348,7 +348,7 @@ impl<'a> Interpreter<'a> {
                 EncodedInstruction::ReturnConvert => {
                     let sequence_type_id = self.read_u16();
                     let value = self.state.pop();
-                    let sequence: sequence::Sequence = value.into();
+                    let sequence: sequence::Sequence = value.try_into()?;
                     let sequence_type =
                         &(self.current_inline_function().sequence_types[sequence_type_id as usize]);
 
@@ -399,7 +399,7 @@ impl<'a> Interpreter<'a> {
                     let value = self.state.pop();
                     let sequence_type =
                         &(self.current_inline_function().sequence_types[sequence_type_id as usize]);
-                    let sequence: sequence::Sequence = value.into();
+                    let sequence: sequence::Sequence = value.try_into()?;
                     let matches = sequence.sequence_type_matching(
                         sequence_type,
                         self.state.xot(),
@@ -416,7 +416,7 @@ impl<'a> Interpreter<'a> {
                     let value = self.state.top();
                     let sequence_type =
                         &(self.current_inline_function().sequence_types[sequence_type_id as usize]);
-                    let sequence: sequence::Sequence = value.into();
+                    let sequence: sequence::Sequence = value.try_into()?;
                     let matches = sequence.sequence_type_matching(
                         sequence_type,
                         self.state.xot(),
@@ -611,7 +611,7 @@ impl<'a> Interpreter<'a> {
                     let value = self.state.pop();
                     let mode_id = self.read_u16();
                     let mode = pattern::ModeId::new(mode_id as usize);
-                    let value = self.apply_templates_sequence(mode, value.into())?;
+                    let value = self.apply_templates_sequence(mode, value.try_into()?)?;
                     self.state.push(value);
                 }
                 EncodedInstruction::PrintTop => {
@@ -658,7 +658,8 @@ impl<'a> Interpreter<'a> {
         let closure_vars = if static_function.needs_context() {
             let value = get();
             if let Some(value) = value {
-                vec![value.into()]
+                // TODO: unwrap hack
+                vec![value.try_into().unwrap_or(sequence::Sequence::absent())]
             } else {
                 vec![]
             }
@@ -708,7 +709,7 @@ impl<'a> Interpreter<'a> {
             // we started in
             self.run_actual(self.state.frame().base())?;
         }
-        let value = self.state.pop().into();
+        let value = self.state.pop().try_into()?;
         Ok(value)
     }
 
@@ -772,7 +773,7 @@ impl<'a> Interpreter<'a> {
         for parameter_type in parameter_types.iter().rev() {
             let value = self.state.pop();
             if let Some(type_) = parameter_type {
-                let sequence: sequence::Sequence = value.into();
+                let sequence: sequence::Sequence = value.try_into()?;
                 // matching also takes care of function conversion rules
                 let sequence = sequence.sequence_type_matching_function_conversion(
                     type_,

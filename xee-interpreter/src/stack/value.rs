@@ -30,6 +30,32 @@ pub enum Value {
     Absent,
 }
 
+impl TryFrom<Value> for sequence::Sequence {
+    type Error = error::Error;
+
+    fn try_from(value: Value) -> error::Result<Self> {
+        match &value {
+            Value::Empty => Ok(sequence::Sequence::new(value)),
+            Value::One(_item) => Ok(sequence::Sequence::new(value)),
+            Value::Many(_items) => Ok(sequence::Sequence::new(value)),
+            Value::Absent => Err(error::Error::XPDY0002),
+        }
+    }
+}
+
+impl TryFrom<&Value> for sequence::Sequence {
+    type Error = error::Error;
+
+    fn try_from(value: &Value) -> error::Result<Self> {
+        match value {
+            Value::Empty => Ok(sequence::Sequence::new(value.clone())),
+            Value::One(_item) => Ok(sequence::Sequence::new(value.clone())),
+            Value::Many(_items) => Ok(sequence::Sequence::new(value.clone())),
+            Value::Absent => Err(error::Error::XPDY0002),
+        }
+    }
+}
+
 impl Value {
     pub(crate) fn len(&self) -> error::Result<usize> {
         match self {

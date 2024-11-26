@@ -196,7 +196,7 @@ impl StaticFunction {
         if arguments.len() != self.arity {
             return Err(error::Error::XPTY0004);
         }
-        let arguments = into_sequences(arguments);
+        let arguments = into_sequences(arguments)?;
         if let Some(function_rule) = &self.function_rule {
             match function_rule {
                 FunctionRule::ItemFirst | FunctionRule::PositionFirst | FunctionRule::SizeFirst => {
@@ -250,8 +250,14 @@ impl StaticFunction {
     }
 }
 
-fn into_sequences(values: &[stack::Value]) -> Vec<sequence::Sequence> {
-    values.iter().map(|v| v.into()).collect()
+fn into_sequences(values: &[stack::Value]) -> error::Result<Vec<sequence::Sequence>> {
+    values
+        .iter()
+        .map(|v| {
+            let sequence: sequence::Sequence = v.try_into()?;
+            Ok(sequence)
+        })
+        .collect()
 }
 
 #[derive(Debug)]
