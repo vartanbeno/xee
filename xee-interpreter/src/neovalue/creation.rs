@@ -7,6 +7,7 @@ use crate::{atomic, context, error, sequence::Item, string::Collation, xml};
 
 use super::{
     core::Sequence,
+    normalization::normalize,
     traits::{SequenceCore, SequenceExt},
     variant::Empty,
 };
@@ -152,6 +153,12 @@ impl Sequence {
             }
         }
         Ok(result.into())
+    }
+
+    /// Normalize this sequence into a document node, according to
+    /// <https://www.w3.org/TR/xslt-xquery-serialization-31/#serdm>
+    pub fn normalize(&self, item_separator: &str, xot: &mut Xot) -> error::Result<xot::Node> {
+        normalize(self, item_separator, xot)
     }
 }
 

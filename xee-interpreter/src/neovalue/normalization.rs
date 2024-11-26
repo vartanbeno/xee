@@ -12,7 +12,7 @@ enum NodeOrString {
 }
 
 pub(crate) fn normalize(
-    sequence: Sequence,
+    sequence: &Sequence,
     item_separator: &str,
     xot: &mut Xot,
 ) -> error::Result<Node> {
