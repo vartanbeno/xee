@@ -111,6 +111,10 @@ impl<'a> State<'a> {
         self.stack.pop().unwrap().try_into()
     }
 
+    pub(crate) fn pop_value(&mut self) -> stack::Value {
+        self.stack.pop().unwrap()
+    }
+
     pub(crate) fn function(&self) -> error::Result<Rc<function::Function>> {
         // the function is always just below the base
         let value = &self.stack[self.frame().base - 1];

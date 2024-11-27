@@ -1,4 +1,4 @@
-use crate::{context, sequence};
+use crate::{context, sequence, stack};
 
 use super::array::Array;
 use super::map::Map;
@@ -33,18 +33,18 @@ impl StaticFunctionId {
 pub enum Function {
     Static {
         static_function_id: StaticFunctionId,
-        closure_vars: Vec<sequence::Sequence>,
+        closure_vars: Vec<stack::Value>,
     },
     Inline {
         inline_function_id: InlineFunctionId,
-        closure_vars: Vec<sequence::Sequence>,
+        closure_vars: Vec<stack::Value>,
     },
     Map(Map),
     Array(Array),
 }
 
 impl Function {
-    pub(crate) fn closure_vars(&self) -> &[sequence::Sequence] {
+    pub(crate) fn closure_vars(&self) -> &[stack::Value] {
         match self {
             Self::Static { closure_vars, .. } => closure_vars,
             Self::Inline { closure_vars, .. } => closure_vars,

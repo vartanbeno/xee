@@ -189,44 +189,48 @@ impl StaticFunction {
         &self,
         context: &DynamicContext,
         interpreter: &mut interpreter::Interpreter,
-        closure_values: &[sequence::Sequence],
+        closure_values: &[stack::Value],
         arity: u8,
     ) -> error::Result<sequence::Sequence> {
-        let arguments = &interpreter.arguments(arity);
+        let arguments = interpreter.arguments(arity);
         if arguments.len() != self.arity {
             return Err(error::Error::XPTY0004);
         }
-        let arguments = into_sequences(arguments)?;
+
         if let Some(function_rule) = &self.function_rule {
             match function_rule {
                 FunctionRule::ItemFirst | FunctionRule::PositionFirst | FunctionRule::SizeFirst => {
-                    let mut new_arguments = vec![closure_values[0].clone()];
-                    new_arguments.extend_from_slice(&arguments);
+                    let mut new_arguments: Vec<sequence::Sequence> =
+                        vec![closure_values[0].clone().try_into()?];
+                    let arguments = into_sequences(arguments)?;
+                    new_arguments.extend(arguments);
                     (self.func)(context, interpreter, &new_arguments)
                 }
                 FunctionRule::ItemLast => {
-                    let mut new_arguments = arguments.to_vec();
-                    new_arguments.push(closure_values[0].clone());
+                    let mut new_arguments = into_sequences(arguments)?;
+                    new_arguments.push(closure_values[0].clone().try_into()?);
                     (self.func)(context, interpreter, &new_arguments)
                 }
                 FunctionRule::ItemLastOptional => {
-                    let mut new_arguments = arguments.to_vec();
-                    let value = if !closure_values.is_empty() {
-                        closure_values[0].clone()
-                    } else {
-                        sequence::Sequence::default()
-                    };
+                    let mut new_arguments = into_sequences(arguments)?;
+                    let value: sequence::Sequence =
+                        if !closure_values.is_empty() && !closure_values[0].is_absent() {
+                            closure_values[0].clone().try_into()?
+                        } else {
+                            sequence::Sequence::default()
+                        };
                     new_arguments.push(value);
                     (self.func)(context, interpreter, &new_arguments)
                 }
                 FunctionRule::Collation => {
-                    let mut new_arguments = arguments.to_vec();
+                    let mut new_arguments = into_sequences(arguments)?;
                     // the default collation query
                     new_arguments.push(context.static_context().default_collation_uri().into());
                     (self.func)(context, interpreter, &new_arguments)
                 }
             }
         } else {
+            let arguments = into_sequences(arguments)?;
             (self.func)(context, interpreter, &arguments)
         }
     }
@@ -253,9 +257,9 @@ impl StaticFunction {
 fn into_sequences(values: &[stack::Value]) -> error::Result<Vec<sequence::Sequence>> {
     values
         .iter()
-        .map(|v| {
-            let sequence: error::Result<sequence::Sequence> = v.try_into();
-            sequence
+        .map(|v| match v {
+            stack::Value::Sequence(sequence) => Ok(sequence.clone()),
+            stack::Value::Absent => Err(error::Error::XPDY0002),
         })
         .collect()
 }

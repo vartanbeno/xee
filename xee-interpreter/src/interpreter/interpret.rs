@@ -149,7 +149,7 @@ impl<'a> Interpreter<'a> {
                     let closure_function =
                         self.runnable.program().inline_function(inline_function_id);
                     for _ in 0..closure_function.closure_names.len() {
-                        closure_vars.push(self.state.pop()?);
+                        closure_vars.push(self.state.pop_value());
                     }
                     let item: sequence::Item = function::Function::Inline {
                         inline_function_id,
@@ -637,7 +637,7 @@ impl<'a> Interpreter<'a> {
         static_function_id: function::StaticFunctionId,
     ) -> error::Result<function::Function> {
         Self::create_static_closure(self.runnable.dynamic_context(), static_function_id, || {
-            Some(self.state.pop())
+            Some(self.state.pop_value())
         })
     }
 
@@ -648,8 +648,8 @@ impl<'a> Interpreter<'a> {
     ) -> error::Result<function::Function> {
         Self::create_static_closure(self.runnable.dynamic_context(), static_function_id, || {
             arg.map(|n| {
-                let item: sequence::Item = n.into();
-                Ok(item.into())
+                let value: stack::Value = n.into();
+                value
             })
         })
     }
@@ -660,14 +660,14 @@ impl<'a> Interpreter<'a> {
         mut get: F,
     ) -> error::Result<function::Function>
     where
-        F: FnMut() -> Option<error::Result<sequence::Sequence>>,
+        F: FnMut() -> Option<stack::Value>,
     {
         let static_function = &context.static_context().function_by_id(static_function_id);
         // get any context value from the stack if needed
         let closure_vars = if static_function.needs_context() {
             let value = get();
             if let Some(value) = value {
-                vec![value?]
+                vec![value]
             } else {
                 vec![]
             }
@@ -744,7 +744,7 @@ impl<'a> Interpreter<'a> {
         &mut self,
         static_function_id: function::StaticFunctionId,
         arity: u8,
-        closure_vars: &[sequence::Sequence],
+        closure_vars: &[stack::Value],
     ) -> error::Result<()> {
         let static_function = self.runnable.program().static_function(static_function_id);
         if arity as usize != static_function.arity() {

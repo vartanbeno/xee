@@ -261,9 +261,7 @@ fn apply(
     if interpreter.function_arity(function.as_ref()) != arity {
         return Err(error::Error::FOAP0001);
     }
-    let arguments = array.iter().cloned().collect::<Vec<_>>();
-
-    interpreter.call_function_with_arguments(function.clone(), &arguments)
+    interpreter.call_function_with_arguments(function.clone(), &array.0)
 }
 
 pub(crate) fn static_function_descriptions() -> Vec<StaticFunctionDescription> {

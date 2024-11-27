@@ -19,10 +19,16 @@ use crate::xml;
 
 use super::comparison;
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq)]
 pub enum Value {
     Absent,
     Sequence(sequence::Sequence),
+}
+
+impl Value {
+    pub(crate) fn is_absent(&self) -> bool {
+        matches!(self, Value::Absent)
+    }
 }
 
 impl TryFrom<Value> for sequence::Sequence {
@@ -46,12 +52,6 @@ impl TryFrom<&Value> for sequence::Sequence {
         }
     }
 }
-
-// impl From<sequence::Sequence> for Value {
-//     fn from(sequence: sequence::Sequence) -> Self {
-//         Value::Sequence(sequence)
-//     }
-// }
 
 impl<T> From<T> for Value
 where
