@@ -1,11 +1,11 @@
 ---
-source: xee-xpath/tests/xpath.rs
+source: xee-xpath-compiler/tests/xpath.rs
 expression: "run(\"'00:00:00' cast as xs:time\")"
 ---
 Ok(
-    Sequence {
-        stack_value: One(
-            Atomic(
+    One(
+        One {
+            item: Atomic(
                 Time(
                     NaiveTimeWithOffset {
                         time: 00:00:00,
@@ -13,6 +13,6 @@ Ok(
                     },
                 ),
             ),
-        ),
-    },
+        },
+    ),
 )

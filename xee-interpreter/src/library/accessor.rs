@@ -8,6 +8,7 @@ use crate::error;
 use crate::function::StaticFunctionDescription;
 use crate::interpreter::Interpreter;
 use crate::sequence;
+use crate::sequence::SequenceExt;
 use crate::wrap_xpath_fn;
 use crate::xml::BaseUriResolver;
 
@@ -24,7 +25,7 @@ fn node_name(
 }
 
 #[xpath_fn("fn:string($arg as item()?) as xs:string", context_first)]
-fn string(interpreter: &Interpreter, arg: Option<sequence::Item>) -> error::Result<String> {
+fn string(interpreter: &Interpreter, arg: Option<&sequence::Item>) -> error::Result<String> {
     if let Some(arg) = arg {
         arg.string_value(interpreter.xot())
     } else {

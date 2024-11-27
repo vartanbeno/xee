@@ -1,11 +1,11 @@
 ---
-source: xee-xpath/tests/xpath.rs
+source: xee-xpath-compiler/tests/xpath.rs
 expression: "run(\"'aGVsbG8=' cast as xs:base64Binary\")"
 ---
 Ok(
-    Sequence {
-        stack_value: One(
-            Atomic(
+    One(
+        One {
+            item: Atomic(
                 Binary(
                     Base64,
                     [
@@ -17,6 +17,6 @@ Ok(
                     ],
                 ),
             ),
-        ),
-    },
+        },
+    ),
 )

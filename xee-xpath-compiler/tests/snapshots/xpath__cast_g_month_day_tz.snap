@@ -1,11 +1,11 @@
 ---
-source: xee-xpath/tests/xpath.rs
+source: xee-xpath-compiler/tests/xpath.rs
 expression: "run(\"'--01-01Z' cast as xs:gMonthDay\")"
 ---
 Ok(
-    Sequence {
-        stack_value: One(
-            Atomic(
+    One(
+        One {
+            item: Atomic(
                 GMonthDay(
                     GMonthDay {
                         month: 1,
@@ -16,6 +16,6 @@ Ok(
                     },
                 ),
             ),
-        ),
-    },
+        },
+    ),
 )

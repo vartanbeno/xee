@@ -1,11 +1,11 @@
 ---
-source: xee-xpath/tests/xpath.rs
+source: xee-xpath-compiler/tests/xpath.rs
 expression: "run(\"'2019Z' cast as xs:gYear\")"
 ---
 Ok(
-    Sequence {
-        stack_value: One(
-            Atomic(
+    One(
+        One {
+            item: Atomic(
                 GYear(
                     GYear {
                         year: 2019,
@@ -15,6 +15,6 @@ Ok(
                     },
                 ),
             ),
-        ),
-    },
+        },
+    ),
 )

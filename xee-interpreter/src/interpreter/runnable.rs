@@ -12,6 +12,7 @@ use crate::function::Function;
 use crate::interpreter::interpret::ContextInfo;
 use crate::occurrence::Occurrence;
 use crate::sequence;
+use crate::sequence::SequenceCore;
 use crate::stack;
 use crate::{error, string};
 
@@ -43,7 +44,7 @@ impl<'a> Runnable<'a> {
 
         let context_info = if let Some(context_item) = self.dynamic_context.context_item() {
             ContextInfo {
-                item: stack::Value::One(context_item.clone()),
+                item: context_item.clone().into(),
                 position: ibig!(1).into(),
                 size: ibig!(1).into(),
             }
@@ -87,27 +88,25 @@ impl<'a> Runnable<'a> {
     /// Run the program, expect a single item as the result.
     pub fn one(&self, xot: &'a mut Xot) -> error::SpannedResult<sequence::Item> {
         let sequence = self.many(xot)?;
-        let mut items = sequence.items().map_err(|error| SpannedError {
-            error,
-            span: Some(self.program.span().into()),
-        })?;
-        items.one().map_err(|error| SpannedError {
-            error,
-            span: Some(self.program.span().into()),
-        })
+        let items = sequence.iter();
+        sequence::one(items)
+            .map(|item| item.clone())
+            .map_err(|error| SpannedError {
+                error,
+                span: Some(self.program.span().into()),
+            })
     }
 
     /// Run the program, expect an optional single item as the result.
     pub fn option(&self, xot: &'a mut Xot) -> error::SpannedResult<Option<sequence::Item>> {
         let sequence = self.many(xot)?;
-        let mut items = sequence.items().map_err(|error| SpannedError {
-            error,
-            span: Some(self.program.span().into()),
-        })?;
-        items.option().map_err(|error| SpannedError {
-            error,
-            span: Some(self.program.span().into()),
-        })
+        let items = sequence.iter();
+        sequence::option(items)
+            .map(|item| item.cloned())
+            .map_err(|error| SpannedError {
+                error,
+                span: Some(self.program.span().into()),
+            })
     }
 
     pub(crate) fn program(&self) -> &'a Program {

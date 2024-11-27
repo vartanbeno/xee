@@ -1,11 +1,11 @@
 ---
-source: xee-xpath/tests/xpath.rs
+source: xee-xpath-compiler/tests/xpath.rs
 expression: "run(\"xs:QName('xs:bar')\")"
 ---
 Ok(
-    Sequence {
-        stack_value: One(
-            Atomic(
+    One(
+        One {
+            item: Atomic(
                 QName(
                     OwnedName {
                         local_name_str: "bar",
@@ -14,6 +14,6 @@ Ok(
                     },
                 ),
             ),
-        ),
-    },
+        },
+    ),
 )

@@ -15,16 +15,24 @@ use super::{
 };
 
 impl Sequence {
+    fn new(items: Vec<Item>) -> Self {
+        match items.len() {
+            0 => Self::Empty(Empty {}),
+            1 => Self::One(items.into_iter().next().unwrap().into()),
+            _ => Self::Many(items.into()),
+        }
+    }
+
     /// Concatenate two sequences producing a new sequence.
-    pub fn concat(self, other: Self) -> Self {
+    pub fn concat(self, other: &Self) -> Self {
         match (self, other) {
             (Self::Empty(_), Self::Empty(_)) => Self::Empty(Empty {}),
-            (Self::Empty(_), Self::One(item)) => Self::One(item),
+            (Self::Empty(_), Self::One(item)) => Self::One(item.clone()),
             (Self::One(item), Self::Empty(_)) => Self::One(item),
-            (Self::Empty(_), Self::Many(items)) => Self::Many(items),
+            (Self::Empty(_), Self::Many(items)) => Self::Many(items.clone()),
             (Self::Many(items), Self::Empty(_)) => Self::Many(items),
             (Self::One(item1), Self::One(item2)) => {
-                Self::Many((vec![item1.into_item(), item2.into_item()]).into())
+                Self::Many((vec![item1.into_item(), item2.clone().into_item()]).into())
             }
             (Self::One(item), Self::Many(items)) => {
                 let mut many = Vec::with_capacity(items.len() + 1);
@@ -39,7 +47,7 @@ impl Sequence {
                 for item in items.iter() {
                     many.push(item.clone());
                 }
-                many.push(item.into_item());
+                many.push(item.clone().into_item());
                 Self::Many(many.into())
             }
             (Self::Many(items1), Self::Many(items2)) => {
@@ -146,7 +154,7 @@ impl Sequence {
         for item in self.iter() {
             if let Ok(array) = item.to_array() {
                 for sequence in array.iter() {
-                    for item in sequence.flatten()?.items()? {
+                    for item in sequence.flatten()?.iter() {
                         result.push(item.clone());
                     }
                 }
@@ -243,13 +251,11 @@ impl From<Item> for Sequence {
     }
 }
 
-// // turn a single atomic into a sequence
-// impl From<atomic::Atomic> for Sequence {
-//     fn from(atomic: atomic::Atomic) -> Self {
-//         let item: Item = atomic.into();
-//         item.into()
-//     }
-// }
+impl From<&Item> for Sequence {
+    fn from(item: &Item) -> Self {
+        item.clone().into()
+    }
+}
 
 // turn a single node into a sequence
 impl From<xot::Node> for Sequence {
@@ -259,11 +265,49 @@ impl From<xot::Node> for Sequence {
     }
 }
 
+// turn a sequence into a single node
+impl TryFrom<Sequence> for xot::Node {
+    type Error = error::Error;
+
+    fn try_from(sequence: Sequence) -> Result<Self, Self::Error> {
+        match sequence {
+            Sequence::One(item) => item.item().try_into(),
+            _ => Err(error::Error::XPTY0004),
+        }
+    }
+}
+
+impl TryFrom<Sequence> for Rc<function::Function> {
+    type Error = error::Error;
+
+    fn try_from(sequence: Sequence) -> Result<Self, Self::Error> {
+        match sequence {
+            Sequence::One(item) => item.item().try_into(),
+            _ => Err(error::Error::XPTY0004),
+        }
+    }
+}
+
 // turn a single array into a sequence
 impl From<function::Array> for Sequence {
     fn from(array: function::Array) -> Self {
         let item: Item = array.into();
         item.into()
+    }
+}
+
+// turn a sequence into an array
+impl From<Sequence> for function::Array {
+    fn from(sequence: Sequence) -> Self {
+        let items = sequence
+            .iter()
+            .map(|item| {
+                let sequence: Sequence = item.into();
+                sequence
+            })
+            .collect::<Vec<_>>();
+
+        Self::new(items)
     }
 }
 
@@ -303,34 +347,21 @@ where
     }
 }
 
-// turn a vector of items into a sequence
-impl From<Vec<Item>> for Sequence {
-    fn from(items: Vec<Item>) -> Self {
-        match items.len() {
-            0 => Sequence::Empty(Empty {}),
-            1 => Sequence::One(items.into_iter().next().unwrap().into()),
-            _ => Sequence::Many(items.into()),
+impl<T> From<Vec<T>> for Sequence
+where
+    T: Into<Item>,
+{
+    fn from(values: Vec<T>) -> Self {
+        let mut items = Vec::with_capacity(values.len());
+        for value in values {
+            let item: Item = value.into();
+            items.push(item);
         }
+        Sequence::new(items)
     }
 }
 
-// turn a vector of atomic into a sequence
-impl From<Vec<atomic::Atomic>> for Sequence {
-    fn from(atomics: Vec<atomic::Atomic>) -> Self {
-        let items = atomics.into_iter().map(Item::from);
-        items.collect()
-    }
-}
-
-// turn a vector of node into a sequence
-impl From<Vec<xot::Node>> for Sequence {
-    fn from(nodes: Vec<xot::Node>) -> Self {
-        let items = nodes.into_iter().map(Item::from);
-        items.collect()
-    }
-}
-
-// turn an iterator of items into a sequence
+// turn an iterator of things that can be turned into items into a sequence
 impl FromIterator<Item> for Sequence {
     fn from_iter<I: IntoIterator<Item = Item>>(iter: I) -> Self {
         let items = iter.into_iter().collect::<Vec<_>>();

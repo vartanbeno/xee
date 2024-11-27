@@ -3,7 +3,6 @@ use xot::{ValueType, Xot};
 use xee_xpath_ast::ast;
 
 use crate::sequence;
-use crate::stack;
 
 use super::kind_test::kind_test;
 
@@ -13,7 +12,7 @@ pub struct Step {
     pub node_test: ast::NodeTest,
 }
 
-pub(crate) fn resolve_step(step: &Step, node: xot::Node, xot: &Xot) -> stack::Value {
+pub(crate) fn resolve_step(step: &Step, node: xot::Node, xot: &Xot) -> sequence::Sequence {
     let mut new_items = Vec::new();
     for axis_node in node_take_axis(&step.axis, xot, node) {
         if node_test(&step.node_test, &step.axis, xot, axis_node) {
@@ -123,7 +122,7 @@ mod tests {
 
     use super::*;
 
-    fn xot_nodes_to_value(node: &[xot::Node]) -> stack::Value {
+    fn xot_nodes_to_value(node: &[xot::Node]) -> sequence::Sequence {
         node.iter()
             .map(|&node| sequence::Item::Node(node))
             .collect::<Vec<_>>()

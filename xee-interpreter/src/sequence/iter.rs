@@ -2,7 +2,7 @@ use xot::Xot;
 
 use crate::{atomic, error, function};
 
-use super::item::Item;
+use super::{item::Item, SequenceExt};
 
 /// An iterator over the nodes in a sequence.
 pub struct NodeIter<'a, I>
@@ -40,7 +40,7 @@ where
 {
     xot: &'a Xot,
     iter: I,
-    item_iter: Option<AtomizedItemIter<'a, I>>,
+    item_iter: Option<AtomizedItemIter<'a>>,
 }
 
 impl<'a, I> AtomizedIter<'a, I>
@@ -87,37 +87,28 @@ where
 }
 
 /// Atomizing an individual item in a sequence.
-pub enum AtomizedItemIter<'a, I>
-where
-    I: Iterator<Item = &'a Item>,
-{
+pub enum AtomizedItemIter<'a> {
     Atomic(std::iter::Once<atomic::Atomic>),
     Node(AtomizedNodeIter),
-    Array(AtomizedArrayIter<'a, I>),
+    Array(AtomizedArrayIter<'a>),
     // TODO: properly handle functions; for now they error
     Erroring(std::iter::Once<error::Result<atomic::Atomic>>),
 }
 
-impl<'a, I> AtomizedItemIter<'a, I>
-where
-    I: Iterator<Item = &'a Item>,
-{
+impl<'a> AtomizedItemIter<'a> {
     pub(crate) fn new(item: &'a Item, xot: &'a Xot) -> Self {
         match item {
             Item::Atomic(a) => Self::Atomic(std::iter::once(a.clone())),
             Item::Node(n) => Self::Node(AtomizedNodeIter::new(*n, xot)),
             Item::Function(function) => match function.as_ref() {
-                function::Function::Array(a) => Self::Array(AtomizedArrayIter::new(a.clone(), xot)),
+                function::Function::Array(a) => Self::Array(AtomizedArrayIter::new(a, xot)),
                 _ => Self::Erroring(std::iter::once(Err(error::Error::FOTY0013))),
             },
         }
     }
 }
 
-impl<'a, I> Iterator for AtomizedItemIter<'a, I>
-where
-    I: Iterator<Item = &'a Item>,
-{
+impl<'a> Iterator for AtomizedItemIter<'a> {
     type Item = error::Result<atomic::Atomic>;
 
     fn next(&mut self) -> Option<Self::Item> {
@@ -162,21 +153,16 @@ impl Iterator for AtomizedNodeIter {
 }
 
 /// Atomizing a XPath array
-pub struct AtomizedArrayIter<'a, I>
-where
-    I: Iterator<Item = &'a Item>,
-{
+pub struct AtomizedArrayIter<'a> {
     xot: &'a Xot,
-    array: function::Array,
+    array: &'a function::Array,
     array_index: usize,
-    iter: Option<Box<AtomizedIter<'a, I>>>,
+    iter: Option<Box<dyn Iterator<Item = error::Result<atomic::Atomic>> + 'a>>,
+    // iter: Option<Box<AtomizedIter<'a, I>>>,
 }
 
-impl<'a, I> AtomizedArrayIter<'a, I>
-where
-    I: Iterator<Item = &'a Item>,
-{
-    fn new(array: function::Array, xot: &'a Xot) -> Self {
+impl<'a> AtomizedArrayIter<'a> {
+    fn new(array: &'a function::Array, xot: &'a Xot) -> Self {
         Self {
             xot,
             array,
@@ -186,10 +172,7 @@ where
     }
 }
 
-impl<'a, I> Iterator for AtomizedArrayIter<'a, I>
-where
-    I: Iterator<Item = &'a Item>,
-{
+impl<'a> Iterator for AtomizedArrayIter<'a> {
     type Item = error::Result<atomic::Atomic>;
 
     fn next(&mut self) -> Option<Self::Item> {
@@ -208,18 +191,15 @@ where
             if self.array_index >= array.len() {
                 return None;
             }
-            let sequence = array[self.array_index].clone();
+            let sequence = &array[self.array_index];
             self.array_index += 1;
 
-            // TODO: we can't wire this up until the new sequence type is
-            // in place
-            todo!()
-            // self.iter = Some(Box::new(sequence.atomized(self.xot)));
+            self.iter = Some(Box::new(sequence.atomized(self.xot)));
         }
     }
 }
 
-pub(crate) fn one<'a>(mut iter: impl Iterator<Item = &'a Item> + 'a) -> error::Result<&'a Item> {
+pub(crate) fn one<'a, T>(mut iter: impl Iterator<Item = T> + 'a) -> error::Result<T> {
     if let Some(one) = iter.next() {
         if iter.next().is_none() {
             Ok(one)
@@ -231,9 +211,7 @@ pub(crate) fn one<'a>(mut iter: impl Iterator<Item = &'a Item> + 'a) -> error::R
     }
 }
 
-pub(crate) fn option<'a>(
-    mut iter: impl Iterator<Item = &'a Item> + 'a,
-) -> error::Result<Option<&'a Item>> {
+pub(crate) fn option<'a, T>(mut iter: impl Iterator<Item = T> + 'a) -> error::Result<Option<T>> {
     if let Some(one) = iter.next() {
         if iter.next().is_none() {
             Ok(Some(one))

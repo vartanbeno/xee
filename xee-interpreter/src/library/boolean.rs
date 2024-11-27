@@ -4,6 +4,7 @@ use xee_xpath_macros::xpath_fn;
 use crate::error;
 use crate::function::StaticFunctionDescription;
 use crate::sequence;
+use crate::sequence::SequenceCore;
 use crate::wrap_xpath_fn;
 
 #[xpath_fn("fn:true() as xs:boolean")]

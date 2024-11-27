@@ -3,7 +3,7 @@ use xee_xpath_ast::ast;
 use xee_interpreter::interpreter::instruction::{
     encode_instruction, instruction_size, Instruction,
 };
-use xee_interpreter::{context, function, interpreter, span, stack, xml};
+use xee_interpreter::{context, function, interpreter, sequence, span, stack, xml};
 
 use crate::ir;
 
@@ -26,7 +26,7 @@ pub struct FunctionBuilder<'a> {
     program: &'a mut interpreter::Program,
     compiled: Vec<u8>,
     spans: Vec<span::SourceSpan>,
-    constants: Vec<stack::Value>,
+    constants: Vec<sequence::Sequence>,
     steps: Vec<xml::Step>,
     cast_types: Vec<function::CastType>,
     sequence_types: Vec<ast::SequenceType>,
@@ -58,7 +58,7 @@ impl<'a> FunctionBuilder<'a> {
         encode_instruction(instruction, &mut self.compiled);
     }
 
-    pub(crate) fn emit_constant(&mut self, constant: stack::Value, span: span::SourceSpan) {
+    pub(crate) fn emit_constant(&mut self, constant: sequence::Sequence, span: span::SourceSpan) {
         let constant_id = self.constants.len();
         self.constants.push(constant);
         if constant_id > (u16::MAX as usize) {

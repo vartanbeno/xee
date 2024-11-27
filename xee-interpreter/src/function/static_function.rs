@@ -211,10 +211,10 @@ impl StaticFunction {
                 }
                 FunctionRule::ItemLastOptional => {
                     let mut new_arguments = arguments.to_vec();
-                    let value = if !closure_values.is_empty() && !closure_values[0].is_absent() {
+                    let value = if !closure_values.is_empty() {
                         closure_values[0].clone()
                     } else {
-                        sequence::Sequence::empty()
+                        sequence::Sequence::default()
                     };
                     new_arguments.push(value);
                     (self.func)(context, interpreter, &new_arguments)
@@ -254,8 +254,8 @@ fn into_sequences(values: &[stack::Value]) -> error::Result<Vec<sequence::Sequen
     values
         .iter()
         .map(|v| {
-            let sequence: sequence::Sequence = v.try_into()?;
-            Ok(sequence)
+            let sequence: error::Result<sequence::Sequence> = v.try_into();
+            sequence
         })
         .collect()
 }

@@ -6,7 +6,7 @@ use xee_interpreter::context::{self, StaticContext};
 use xee_interpreter::error::SpannedResult as Result;
 use xee_interpreter::interpreter::Program;
 use xee_interpreter::occurrence::Occurrence;
-use xee_interpreter::sequence::{Item, Sequence};
+use xee_interpreter::sequence::{Item, Sequence, SequenceCore};
 
 use crate::{Documents, Itemable};
 
@@ -215,8 +215,7 @@ where
         context: &context::DynamicContext,
     ) -> Result<V> {
         let sequence = self.program.runnable(context).many(document.xot_mut())?;
-        let mut items = sequence.items()?;
-        let item = items.one()?;
+        let item = sequence.one()?;
         (self.convert)(document, &item)
     }
 }
@@ -256,8 +255,7 @@ impl OneRecurseQuery {
         recurse: &Recurse<V>,
     ) -> Result<V> {
         let sequence = self.program.runnable(context).many(document.xot_mut())?;
-        let mut items = sequence.items()?;
-        let item = items.one()?;
+        let item = sequence.one()?;
         recurse.execute(document, &item)
     }
 }
@@ -310,8 +308,7 @@ where
         context: &context::DynamicContext,
     ) -> Result<Option<V>> {
         let sequence = self.program.runnable(context).many(document.xot_mut())?;
-        let mut items = sequence.items()?;
-        let item = items.option()?;
+        let item = sequence.option()?;
         item.map(|item| (self.convert)(document, &item)).transpose()
     }
 }
@@ -348,10 +345,8 @@ impl OptionRecurseQuery {
         recurse: &Recurse<V>,
     ) -> Result<Option<V>> {
         let sequence = self.program.runnable(context).many(document.xot_mut())?;
-        let mut items = sequence.items()?;
-        let item = items.option()?;
-        item.map(|item| recurse.execute(document, &item))
-            .transpose()
+        let item = sequence.option()?;
+        item.map(|item| recurse.execute(document, item)).transpose()
     }
 }
 
@@ -401,8 +396,8 @@ where
     ) -> Result<Vec<V>> {
         let sequence = self.program.runnable(context).many(document.xot_mut())?;
         let items = sequence
-            .items()?
-            .map(|item| (self.convert)(document, &item))
+            .iter()
+            .map(|item| (self.convert)(document, item))
             .collect::<Result<Vec<V>>>()?;
         Ok(items)
     }
@@ -444,8 +439,8 @@ impl ManyRecurseQuery {
     ) -> Result<Vec<V>> {
         let sequence = self.program.runnable(context).many(document.xot_mut())?;
         let items = sequence
-            .items()?
-            .map(|item| recurse.execute(document, &item))
+            .iter()
+            .map(|item| recurse.execute(document, item))
             .collect::<Result<Vec<V>>>()?;
         Ok(items)
     }

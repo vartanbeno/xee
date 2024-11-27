@@ -1,6 +1,7 @@
 use xee_schema_type::Xs;
 use xee_xpath_type::ast::SequenceType;
 
+use crate::sequence;
 use crate::span::SourceSpan;
 use crate::stack;
 use crate::xml;
@@ -27,7 +28,7 @@ pub struct InlineFunction {
     pub name: String,
     pub signature: Signature,
     // things referenced by instructions (by index)
-    pub constants: Vec<stack::Value>,
+    pub constants: Vec<sequence::Sequence>,
     pub steps: Vec<xml::Step>,
     pub cast_types: Vec<CastType>,
     pub sequence_types: Vec<SequenceType>,

@@ -1,16 +1,16 @@
 ---
-source: xee-xpath/tests/xpath.rs
+source: xee-xpath-compiler/tests/xpath.rs
 expression: "run(\"fn:string(1)\")"
 ---
 Ok(
-    Sequence {
-        stack_value: One(
-            Atomic(
+    One(
+        One {
+            item: Atomic(
                 String(
                     String,
                     "1",
                 ),
             ),
-        ),
-    },
+        },
+    ),
 )

@@ -1,11 +1,11 @@
 ---
-source: xee-xpath/tests/xpath.rs
+source: xee-xpath-compiler/tests/xpath.rs
 expression: "run(\"'2019-01-01' cast as xs:date\")"
 ---
 Ok(
-    Sequence {
-        stack_value: One(
-            Atomic(
+    One(
+        One {
+            item: Atomic(
                 Date(
                     NaiveDateWithOffset {
                         date: 2019-01-01,
@@ -13,6 +13,6 @@ Ok(
                     },
                 ),
             ),
-        ),
-    },
+        },
+    ),
 )

@@ -67,7 +67,7 @@ fn error_with_code_and_description(
 fn error_with_code_and_description_and_sequence(
     code: Option<Name>,
     description: &str,
-    _error_object: &[sequence::Item],
+    _error_object: &sequence::Sequence,
 ) -> error::Result<sequence::Sequence> {
     // FIXME: we are not doing anything with _error_object
     error_helper(code, description)

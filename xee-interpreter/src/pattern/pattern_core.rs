@@ -4,7 +4,7 @@ use xot::Xot;
 use xee_xpath_ast::pattern;
 
 use crate::function::InlineFunctionId;
-use crate::neovalue::Item;
+use crate::sequence::Item;
 use crate::xml;
 
 pub(crate) enum NodeMatch {

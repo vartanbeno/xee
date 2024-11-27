@@ -4,6 +4,4 @@
 mod comparison;
 mod value;
 
-pub use value::AtomizedIter;
 pub use value::Value;
-pub(crate) use value::ValueIter;

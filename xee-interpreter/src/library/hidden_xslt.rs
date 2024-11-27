@@ -6,7 +6,8 @@ use xot::Xot;
 use crate::error;
 use crate::function::StaticFunctionDescription;
 use crate::interpreter::Interpreter;
-use crate::sequence;
+use crate::sequence::SequenceExt;
+use crate::sequence::{self, SequenceCore};
 use crate::wrap_xpath_fn;
 
 // TODO: Things should really be hidden from XPath, and not be in the fn prefix
@@ -46,9 +47,9 @@ fn simple_content_text_nodes(
     // fine.
     let mut r: Vec<sequence::Item> = Vec::new();
     let mut last_text: Option<String> = None;
-    for item in arg.items()? {
+    for item in arg.iter() {
         if let sequence::Item::Node(node) = item {
-            if let xot::Value::Text(text) = xot.value(node) {
+            if let xot::Value::Text(text) = xot.value(*node) {
                 let text = text.get();
                 if text.is_empty() {
                     continue;
@@ -67,7 +68,7 @@ fn simple_content_text_nodes(
         if let Some(s) = last_text.take() {
             r.push(sequence::Item::Atomic(s.into()));
         }
-        r.push(item);
+        r.push(item.clone());
     }
     // set the last text node
     if let Some(s) = last_text.take() {
@@ -84,7 +85,7 @@ pub(crate) fn static_function_descriptions() -> Vec<StaticFunctionDescription> {
 mod tests {
     use super::*;
 
-    use sequence::{Item, Sequence};
+    use sequence::{Item, Sequence, SequenceCore};
 
     #[test]
     fn test_filter_empty_text_nodes() {
@@ -100,7 +101,7 @@ mod tests {
         ]);
         let result = simple_content_text_nodes(&sequence, &xot).unwrap();
         assert_eq!(result.len(), 2);
-        let items = result.items().unwrap().collect::<Vec<_>>();
+        let items = result.into_iter().collect::<Vec<_>>();
         assert_eq!(items, vec![Item::Atomic(1.into()), Item::Atomic(2.into())]);
     }
 
@@ -109,10 +110,9 @@ mod tests {
         let mut xot = Xot::new();
         let a = xot.new_text("a");
         let b = xot.new_text("b");
-
         let sequence = Sequence::from(vec![Item::Node(a), Item::Node(b)]);
         let result = simple_content_text_nodes(&sequence, &xot).unwrap();
-        let items = result.items().unwrap().collect::<Vec<_>>();
+        let items = result.into_iter().collect::<Vec<_>>();
         assert_eq!(items, vec![Item::Atomic("ab".into())]);
     }
 
@@ -125,7 +125,7 @@ mod tests {
 
         let sequence = Sequence::from(vec![Item::Node(a), Item::Node(b), Item::Node(c)]);
         let result = simple_content_text_nodes(&sequence, &xot).unwrap();
-        let items = result.items().unwrap().collect::<Vec<_>>();
+        let items = result.into_iter().collect::<Vec<_>>();
         assert_eq!(items, vec![Item::Atomic("abc".into())]);
     }
 
@@ -143,7 +143,7 @@ mod tests {
             Item::Atomic(1.into()),
         ]);
         let result = simple_content_text_nodes(&sequence, &xot).unwrap();
-        let items = result.items().unwrap().collect::<Vec<_>>();
+        let items = result.into_iter().collect::<Vec<_>>();
         assert_eq!(
             items,
             vec![Item::Atomic("abc".into()), Item::Atomic(1.into())]

@@ -1,16 +1,16 @@
 ---
-source: xee-xpath/tests/xpath.rs
+source: xee-xpath-compiler/tests/xpath.rs
 expression: "run_xml(r#\"<doc><a/></doc>\"#, \"doc/a/default-collation()\")"
 ---
 Ok(
-    Sequence {
-        stack_value: One(
-            Atomic(
+    One(
+        One {
+            item: Atomic(
                 String(
                     String,
                     "http://www.w3.org/2005/xpath-functions/collation/codepoint",
                 ),
             ),
-        ),
-    },
+        },
+    ),
 )

@@ -4,7 +4,7 @@ use xee_interpreter::error::Error;
 use xee_interpreter::function::FunctionRule;
 use xee_interpreter::interpreter::instruction::Instruction;
 use xee_interpreter::span::SourceSpan;
-use xee_interpreter::{error, function, stack};
+use xee_interpreter::{error, function, sequence, stack};
 
 use crate::declaration_compiler::ModeIds;
 use crate::ir;
@@ -105,9 +105,9 @@ impl<'a> FunctionCompiler<'a> {
                     ir::Const::Decimal(d) => {
                         self.builder.emit_constant((*d).into(), span);
                     }
-                    ir::Const::EmptySequence => {
-                        self.builder.emit_constant(stack::Value::Empty, span)
-                    }
+                    ir::Const::EmptySequence => self
+                        .builder
+                        .emit_constant(sequence::Sequence::default(), span),
                     ir::Const::StaticFunctionReference(static_function_id, context_names) => {
                         self.compile_static_function_reference(
                             *static_function_id,
@@ -388,7 +388,8 @@ impl<'a> FunctionCompiler<'a> {
                 if let Some(context_names) = context_names {
                     self.compile_variable(&context_names.item, span)?;
                 } else {
-                    self.builder.emit_constant(stack::Value::Empty, span);
+                    self.builder
+                        .emit_constant(sequence::Sequence::default(), span);
                 }
             }
             Some(FunctionRule::PositionFirst) => self.compile_variable(
@@ -521,7 +522,7 @@ impl<'a> FunctionCompiler<'a> {
         }
         // emit constant with size of map
         let len: IBig = map_constructor.members.len().into();
-        let len: stack::Value = len.into();
+        let len: sequence::Sequence = len.into();
         self.builder.emit_constant(len, span);
         self.builder.emit(Instruction::CurlyMap, span);
         Ok(())
@@ -565,7 +566,7 @@ impl<'a> FunctionCompiler<'a> {
         }
         // emit constant with length of array
         let len: IBig = atoms.len().into();
-        let len: stack::Value = len.into();
+        let len: sequence::Sequence = len.into();
         self.builder.emit_constant(len, span);
         self.builder.emit(Instruction::SquareArray, span);
         Ok(())
@@ -895,7 +896,8 @@ impl<'a> FunctionCompiler<'a> {
         } else {
             // the mode was never used by any templates, so compile the empty
             // sequence
-            self.builder.emit_constant(stack::Value::Empty, span);
+            self.builder
+                .emit_constant(sequence::Sequence::default(), span);
         }
         Ok(())
     }

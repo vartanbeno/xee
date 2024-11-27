@@ -7,13 +7,12 @@ use xee_schema_type::Xs;
 use crate::{
     atomic, context, error,
     function::{self, Map},
-    neovalue::Item,
-    stack,
 };
 
 use super::{
+    core::Sequence,
+    item::Item,
     opc::{OptionParameterConverter, QNameOrString},
-    Sequence,
 };
 
 pub(crate) struct SerializationParameters {
@@ -241,31 +240,27 @@ fn serialize_json_sequence(
     parameters: &SerializationParameters,
     xot: &mut Xot,
 ) -> Result<json::JsonValue, error::Error> {
-    let stack_value: stack::Value = arg.clone().into();
-
-    match stack_value {
-        stack::Value::One(item) => serialize_json_item(item, parameters, xot),
-        stack::Value::Empty => Ok(json::JsonValue::Null),
-        stack::Value::Absent => Err(error::Error::XPDY0002),
-
-        stack::Value::Many(_) => Err(error::Error::SERE0023),
+    match arg {
+        Sequence::One(item) => serialize_json_item(item.item(), parameters, xot),
+        Sequence::Empty(_) => Ok(json::JsonValue::Null),
+        Sequence::Many(_) => Err(error::Error::SERE0023),
     }
 }
 
 fn serialize_json_item(
-    item: Item,
+    item: &Item,
     parameters: &SerializationParameters,
     xot: &mut Xot,
 ) -> Result<json::JsonValue, error::Error> {
     match item {
         Item::Atomic(atomic) => serialize_json_atomic(atomic, parameters),
-        Item::Node(node) => serialize_json_node(node, parameters, xot),
+        Item::Node(node) => serialize_json_node(*node, parameters, xot),
         Item::Function(function) => serialize_json_function(function.as_ref(), parameters, xot),
     }
 }
 
 fn serialize_json_atomic(
-    atomic: atomic::Atomic,
+    atomic: &atomic::Atomic,
     parameters: &SerializationParameters,
 ) -> Result<json::JsonValue, error::Error> {
     match atomic {
@@ -293,7 +288,7 @@ fn serialize_json_atomic(
             let i: f64 = integer.to_f64();
             Ok(json::JsonValue::Number(i.into()))
         }
-        atomic::Atomic::Boolean(b) => Ok(json::JsonValue::Boolean(b)),
+        atomic::Atomic::Boolean(b) => Ok(json::JsonValue::Boolean(*b)),
         _ => {
             let s = atomic.string_value();
             Ok(serialize_json_string(s, parameters))

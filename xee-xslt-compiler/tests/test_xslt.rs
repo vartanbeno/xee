@@ -1,13 +1,16 @@
 use std::fmt::Write;
 
-use xee_interpreter::{error, sequence::Sequence};
+use xee_interpreter::{
+    error,
+    sequence::{Sequence, SequenceCore},
+};
 use xee_xslt_compiler::evaluate;
 use xot::Xot;
 
 fn xml(xot: &Xot, sequence: Sequence) -> String {
     let mut f = String::new();
 
-    for item in sequence.items().unwrap() {
+    for item in sequence.iter() {
         f.write_str(&xot.to_string(item.to_node().unwrap()).unwrap())
             .unwrap();
     }

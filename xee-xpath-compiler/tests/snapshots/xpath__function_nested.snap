@@ -1,16 +1,16 @@
 ---
-source: xee-xpath/tests/xpath.rs
+source: xee-xpath-compiler/tests/xpath.rs
 expression: "run(\"function($x) { function($y) { $y + 2 }($x + 1) } (5)\")"
 ---
 Ok(
-    Sequence {
-        stack_value: One(
-            Atomic(
+    One(
+        One {
+            item: Atomic(
                 Integer(
                     Integer,
                     8,
                 ),
             ),
-        ),
-    },
+        },
+    ),
 )

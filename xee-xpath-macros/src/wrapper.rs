@@ -98,11 +98,11 @@ fn make_wrapper(
         Ok(value.into()))
     };
 
-    Ok(
-        quote!(fn #wrapper_name(context: &crate::context::DynamicContext, interpreter: &mut crate::interpreter::Interpreter, arguments: &[crate::sequence::Sequence]) -> Result<crate::sequence::Sequence, crate::error::Error> {
-            #body
-        }),
-    )
+    Ok(quote!(
+        fn #wrapper_name(context: &crate::context::DynamicContext, interpreter: &mut crate::interpreter::Interpreter, arguments: &[crate::sequence::Sequence]) -> Result<crate::sequence::Sequence, crate::error::Error> {
+        use crate::sequence::{SequenceExt, SequenceCore};
+        #body
+    }))
 }
 
 fn get_argument_ident(ast: &ItemFn, index: usize, name: &str) -> syn::Result<Option<Ident>> {

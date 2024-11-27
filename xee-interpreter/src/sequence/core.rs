@@ -60,6 +60,22 @@ impl<'a> SequenceCore<'a, Box<dyn Iterator<Item = &'a Item> + 'a>> for Sequence 
         }
     }
 
+    fn one(&self) -> error::Result<&Item> {
+        match self {
+            Sequence::Empty(inner) => inner.one(),
+            Sequence::One(inner) => inner.one(),
+            Sequence::Many(inner) => inner.one(),
+        }
+    }
+
+    fn option(&self) -> error::Result<Option<&Item>> {
+        match self {
+            Sequence::Empty(inner) => inner.option(),
+            Sequence::One(inner) => inner.option(),
+            Sequence::Many(inner) => inner.option(),
+        }
+    }
+
     fn iter(&'a self) -> Box<dyn Iterator<Item = &'a Item> + 'a> {
         match self {
             Sequence::Empty(inner) => Box::new(inner.iter()),
@@ -81,6 +97,19 @@ impl<'a> SequenceCore<'a, Box<dyn Iterator<Item = &'a Item> + 'a>> for Sequence 
             Sequence::Empty(inner) => inner.string_value(xot),
             Sequence::One(inner) => inner.string_value(xot),
             Sequence::Many(inner) => inner.string_value(xot),
+        }
+    }
+}
+
+impl IntoIterator for Sequence {
+    type Item = Item;
+    type IntoIter = Box<dyn Iterator<Item = Item>>;
+
+    fn into_iter(self) -> Self::IntoIter {
+        match self {
+            Sequence::Empty(inner) => Box::new(inner.into_iter()),
+            Sequence::One(inner) => Box::new(inner.into_iter()),
+            Sequence::Many(inner) => Box::new(inner.into_iter()),
         }
     }
 }

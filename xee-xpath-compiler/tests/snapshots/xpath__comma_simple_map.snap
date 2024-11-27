@@ -1,11 +1,11 @@
 ---
-source: xee-xpath/tests/xpath.rs
+source: xee-xpath-compiler/tests/xpath.rs
 expression: "run(\"(1, 2), (3, 4) ! (. + 1)\")"
 ---
 Ok(
-    Sequence {
-        stack_value: Many(
-            [
+    Many(
+        Many {
+            items: [
                 Atomic(
                     Integer(
                         Integer,
@@ -31,6 +31,6 @@ Ok(
                     ),
                 ),
             ],
-        ),
-    },
+        },
+    ),
 )

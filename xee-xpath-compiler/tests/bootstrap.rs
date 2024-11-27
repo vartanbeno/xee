@@ -1,3 +1,4 @@
+use xee_interpreter::sequence::SequenceCore;
 // ensure we have just enough xpath to help us read the test suite more easily
 use xee_xpath_compiler::evaluate;
 

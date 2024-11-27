@@ -16,6 +16,7 @@ use crate::interpreter;
 use crate::interpreter::Interpreter;
 use crate::occurrence::Occurrence;
 use crate::sequence;
+use crate::sequence::SequenceCore;
 use crate::wrap_xpath_fn;
 
 #[xpath_fn("map:merge($maps as map(*)*) as map(*)")]
@@ -108,7 +109,7 @@ impl MergeOptions {
                 &|function| runnable.program().function_info(function).signature(),
             )?;
         // take the first value, which should be a string
-        let duplicates = duplicates.items()?.one()?;
+        let duplicates = sequence::one(duplicates.iter())?;
         let atomic: atomic::Atomic = duplicates.to_atomic()?;
         atomic.to_string()
     }
@@ -120,7 +121,7 @@ fn merge(maps: &[function::Map], options: MergeOptions) -> error::Result<functio
         MergeDuplicates::UseFirst => combine_maps(maps, |a, _| Ok(a.clone())),
         MergeDuplicates::UseLast => combine_maps(maps, |_, b| Ok(b.clone())),
         MergeDuplicates::UseAny => combine_maps(maps, |a, _| Ok(a.clone())),
-        MergeDuplicates::Combine => combine_maps(maps, |a, b| Ok(a.concat(b))),
+        MergeDuplicates::Combine => combine_maps(maps, |a, b| Ok(a.clone().concat(b))),
     }
 }
 
@@ -161,7 +162,7 @@ fn contains(map: function::Map, key: atomic::Atomic) -> bool {
 
 #[xpath_fn("map:get($map as map(*), $key as xs:anyAtomicType) as item()*")]
 fn get(map: function::Map, key: atomic::Atomic) -> sequence::Sequence {
-    map.get(&key).unwrap_or(sequence::Sequence::empty())
+    map.get(&key).unwrap_or(sequence::Sequence::default())
 }
 
 #[xpath_fn("map:find($input as item()*, $key as xs:anyAtomicType) as array(*)")]
@@ -174,7 +175,7 @@ fn find_helper(
     key: atomic::MapKey,
 ) -> error::Result<Vec<sequence::Sequence>> {
     let mut result: Vec<sequence::Sequence> = Vec::new();
-    for item in input.items()? {
+    for item in input.iter() {
         if let sequence::Item::Function(function) = item {
             match function.as_ref() {
                 function::Function::Array(array) => {
@@ -218,15 +219,15 @@ fn remove(map: function::Map, keys: &[atomic::Atomic]) -> function::Map {
 fn for_each(
     interpreter: &mut Interpreter,
     map: function::Map,
-    action: sequence::Item,
+    action: &sequence::Item,
 ) -> error::Result<sequence::Sequence> {
     let function = action.to_function()?;
     let mut result: Vec<sequence::Item> = Vec::with_capacity(map.len());
     for (_, (key, value)) in map.0.iter() {
         let r = interpreter
             .call_function_with_arguments(function.clone(), &[key.clone().into(), value.clone()])?;
-        for item in r.items()? {
-            result.push(item);
+        for item in r.iter() {
+            result.push(item.clone());
         }
     }
     Ok(result.into())

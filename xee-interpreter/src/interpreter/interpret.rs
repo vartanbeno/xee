@@ -16,7 +16,7 @@ use crate::context::DynamicContext;
 use crate::function;
 use crate::occurrence::Occurrence;
 use crate::pattern::PredicateMatcher;
-use crate::sequence;
+use crate::sequence::{self, SequenceCompare, SequenceCore, SequenceExt, SequenceOrder};
 use crate::span::SourceSpan;
 use crate::stack;
 use crate::xml;
@@ -80,14 +80,14 @@ impl<'a> Interpreter<'a> {
         self.push_context_info(context_info);
         // and any arguments
         for arg in arguments {
-            self.state.push(stack::Value::from(arg));
+            self.state.push(arg);
         }
     }
 
     fn push_context_info(&mut self, context_info: ContextInfo) {
-        self.state.push(context_info.item);
-        self.state.push(context_info.position);
-        self.state.push(context_info.size);
+        self.state.push_value(context_info.item);
+        self.state.push_value(context_info.position);
+        self.state.push_value(context_info.size);
     }
 
     pub fn run(&mut self, start_base: usize) -> error::SpannedResult<()> {
@@ -134,7 +134,8 @@ impl<'a> Interpreter<'a> {
                     let a = a.to_str().unwrap();
                     let b = b.to_str().unwrap();
                     let result = a.to_string() + b;
-                    self.state.push(result.into());
+                    let item: sequence::Item = result.into();
+                    self.state.push(item);
                 }
                 EncodedInstruction::Const => {
                     let index = self.read_u16();
@@ -150,20 +151,21 @@ impl<'a> Interpreter<'a> {
                     for _ in 0..closure_function.closure_names.len() {
                         closure_vars.push(self.state.pop()?);
                     }
-                    self.state.push(
-                        function::Function::Inline {
-                            inline_function_id,
-                            closure_vars,
-                        }
-                        .into(),
-                    );
+                    let item: sequence::Item = function::Function::Inline {
+                        inline_function_id,
+                        closure_vars,
+                    }
+                    .into();
+                    self.state.push(item);
                 }
                 EncodedInstruction::StaticClosure => {
                     let static_function_id = self.read_u16();
                     let static_function_id =
                         function::StaticFunctionId(static_function_id as usize);
-                    let static_closure = self.create_static_closure_from_stack(static_function_id);
-                    self.state.push(static_closure.into());
+                    let static_closure =
+                        self.create_static_closure_from_stack(static_function_id)?;
+                    let item: sequence::Item = static_closure.into();
+                    self.state.push(item);
                 }
                 EncodedInstruction::Var => {
                     let index = self.read_u16();
@@ -180,11 +182,13 @@ impl<'a> Interpreter<'a> {
                 EncodedInstruction::Comma => {
                     let b = self.state.pop()?;
                     let a = self.state.pop()?;
-                    self.state.push(a.concat(&b).into());
+                    let sequence = a.concat(&b);
+                    self.state.push(sequence);
                 }
                 EncodedInstruction::CurlyArray => {
                     let sequence = self.state.pop()?;
-                    self.state.push(sequence.to_array()?.into());
+                    let array: function::Array = sequence.into();
+                    self.state.push(array);
                 }
                 EncodedInstruction::SquareArray => {
                     let length = self.pop_atomic().unwrap();
@@ -193,7 +197,8 @@ impl<'a> Interpreter<'a> {
                     for _ in 0..length {
                         popped.push(self.state.pop()?);
                     }
-                    self.state.push(function::Array::new(popped).into());
+                    let item: sequence::Item = function::Array::new(popped).into();
+                    self.state.push(item);
                 }
                 EncodedInstruction::CurlyMap => {
                     let length = self.pop_atomic().unwrap();
@@ -205,7 +210,8 @@ impl<'a> Interpreter<'a> {
                         let key = self.pop_atomic()?;
                         popped.push((key, value));
                     }
-                    self.state.push(function::Map::new(popped)?.into());
+                    let item: sequence::Item = function::Map::new(popped)?.into();
+                    self.state.push(item);
                 }
                 EncodedInstruction::Jump => {
                     let displacement = self.read_i16();
@@ -263,56 +269,56 @@ impl<'a> Interpreter<'a> {
                     let b = self.state.pop()?;
                     let a = self.state.pop()?;
                     if a.is_empty() || b.is_empty() {
-                        self.state.push(stack::Value::Empty);
+                        self.state.push(sequence::Sequence::default());
                         continue;
                     }
-                    let result = a.is(b, self.runnable.documents().borrow().annotations())?;
-                    self.state.push(result.into());
+                    let result = a.is(&b, self.runnable.documents().borrow().annotations())?;
+                    self.state.push(result);
                 }
                 EncodedInstruction::Precedes => {
                     let b = self.state.pop()?;
                     let a = self.state.pop()?;
                     if a.is_empty() || b.is_empty() {
-                        self.state.push(stack::Value::Empty);
+                        self.state.push(sequence::Sequence::default());
                         continue;
                     }
-                    let result = a.precedes(b, self.runnable.documents().borrow().annotations())?;
-                    self.state.push(result.into());
+                    let result =
+                        a.precedes(&b, self.runnable.documents().borrow().annotations())?;
+                    self.state.push(result);
                 }
                 EncodedInstruction::Follows => {
                     let b = self.state.pop()?;
                     let a = self.state.pop()?;
                     if a.is_empty() || b.is_empty() {
-                        self.state.push(stack::Value::Empty);
+                        self.state.push(sequence::Sequence::default());
                         continue;
                     }
-                    let result = a.follows(b, self.runnable.documents().borrow().annotations())?;
-                    self.state.push(result.into());
+                    let result = a.follows(&b, self.runnable.documents().borrow().annotations())?;
+                    self.state.push(result);
                 }
                 EncodedInstruction::Union => {
                     let b = self.state.pop()?;
                     let a = self.state.pop()?;
                     let combined = a.union(b, self.runnable.documents().borrow().annotations())?;
-                    self.state.push(combined.into());
+                    self.state.push(combined);
                 }
                 EncodedInstruction::Intersect => {
                     let b = self.state.pop()?;
                     let a = self.state.pop()?;
                     let combined =
                         a.intersect(b, self.runnable.documents().borrow().annotations())?;
-                    self.state.push(combined.into());
+                    self.state.push(combined);
                 }
                 EncodedInstruction::Except => {
                     let b = self.state.pop()?;
                     let a = self.state.pop()?;
                     let combined = a.except(b, self.runnable.documents().borrow().annotations())?;
-                    self.state.push(combined.into());
+                    self.state.push(combined);
                 }
                 EncodedInstruction::Dup => {
                     let value = self.state.pop()?;
-                    let value = value.clone();
-                    self.state.push(value.clone().into());
-                    self.state.push(value.into());
+                    self.state.push(value.clone());
+                    self.state.push(value);
                 }
                 EncodedInstruction::Pop => {
                     self.state.pop();
@@ -329,7 +335,7 @@ impl<'a> Interpreter<'a> {
                 }
                 EncodedInstruction::Step => {
                     let step_id = self.read_u16();
-                    let node = self.state.pop()?.try_into()?;
+                    let node: xot::Node = self.state.pop()?.try_into()?;
                     let step = &(self.current_inline_function().steps[step_id as usize]);
                     let value = xml::resolve_step(step, node, self.state.xot());
                     self.state.push(value);
@@ -338,7 +344,7 @@ impl<'a> Interpreter<'a> {
                     let value = self.state.pop()?;
                     let value =
                         value.deduplicate(self.runnable.documents().borrow().annotations())?;
-                    self.state.push(value.into());
+                    self.state.push(value);
                 }
                 EncodedInstruction::Return => {
                     if self.state.inline_return(start_base) {
@@ -357,13 +363,13 @@ impl<'a> Interpreter<'a> {
                         self.state.xot(),
                         &|function| self.runnable.function_info(function).signature(),
                     )?;
-                    self.state.push(sequence.into());
+                    self.state.push(sequence);
                 }
                 EncodedInstruction::LetDone => {
                     let return_value = self.state.pop()?;
                     // pop the variable assignment
                     let _ = self.state.pop();
-                    self.state.push(return_value.into());
+                    self.state.push(return_value);
                 }
                 EncodedInstruction::Cast => {
                     let type_id = self.read_u16();
@@ -372,9 +378,9 @@ impl<'a> Interpreter<'a> {
                     if let Some(value) = value {
                         let cast_value = value
                             .cast_to_schema_type(cast_type.xs, self.runnable.static_context())?;
-                        self.state.push(cast_value.into());
+                        self.state.push(cast_value);
                     } else if cast_type.empty_sequence_allowed {
-                        self.state.push(stack::Value::Empty);
+                        self.state.push(sequence::Sequence::default());
                     } else {
                         Err(error::Error::XPTY0004)?;
                     }
@@ -386,11 +392,11 @@ impl<'a> Interpreter<'a> {
                     if let Some(value) = value {
                         let cast_value =
                             value.cast_to_schema_type(cast_type.xs, self.runnable.static_context());
-                        self.state.push(cast_value.is_ok().into());
+                        self.state.push(cast_value.is_ok());
                     } else if cast_type.empty_sequence_allowed {
-                        self.state.push(true.into())
+                        self.state.push(true)
                     } else {
-                        self.state.push(false.into());
+                        self.state.push(false);
                     }
                 }
                 EncodedInstruction::InstanceOf => {
@@ -404,9 +410,9 @@ impl<'a> Interpreter<'a> {
                         &|function| self.runnable.function_info(function).signature(),
                     );
                     if matches.is_ok() {
-                        self.state.push(true.into());
+                        self.state.push(true);
                     } else {
-                        self.state.push(false.into());
+                        self.state.push(false);
                     }
                 }
                 EncodedInstruction::Treat => {
@@ -428,14 +434,14 @@ impl<'a> Interpreter<'a> {
                     let a = self.state.pop()?;
                     let mut a = a.atomized(self.state.xot());
                     let mut b = b.atomized(self.state.xot());
-                    let a = a.option()?;
-                    let b = b.option()?;
+                    let a = sequence::option(a)?;
+                    let b = sequence::option(b)?;
                     let (a, b) = match (a, b) {
                         (None, None) | (None, _) | (_, None) => {
-                            self.state.push(stack::Value::Empty);
+                            self.state.push(sequence::Sequence::default());
                             continue;
                         }
-                        (Some(a), Some(b)) => (a, b),
+                        (Some(a), Some(b)) => (a?, b?),
                     };
                     // we want to ensure we have integers at this point;
                     // we don't want to be casting strings or anything
@@ -446,8 +452,8 @@ impl<'a> Interpreter<'a> {
                     let b: IBig = b.try_into().unwrap();
 
                     match a.cmp(&b) {
-                        Ordering::Greater => self.state.push(stack::Value::Empty),
-                        Ordering::Equal => self.state.push(a.into()),
+                        Ordering::Greater => self.state.push(sequence::Sequence::default()),
+                        Ordering::Equal => self.state.push(a),
                         Ordering::Less => {
                             let length: IBig = b - &a + 1;
                             if length > MAXIMUM_RANGE_SIZE.into() {
@@ -456,10 +462,12 @@ impl<'a> Interpreter<'a> {
                             let mut items = Vec::with_capacity(length.clone().try_into().unwrap());
                             let mut i: IBig = 0.into();
                             while i < length {
-                                items.push((&a + &i).into());
+                                let item: sequence::Item = (&a + &i).into();
+                                items.push(item);
                                 i += 1;
                             }
-                            self.state.push(items.into())
+                            let sequence: sequence::Sequence = items.into();
+                            self.state.push(sequence)
                         }
                     }
                 }
@@ -467,15 +475,16 @@ impl<'a> Interpreter<'a> {
                 EncodedInstruction::SequenceLen => {
                     let value = self.state.pop()?;
                     let l: IBig = value.len().into();
-                    self.state.push(l.into());
+                    self.state.push(l);
                 }
                 EncodedInstruction::SequenceGet => {
                     let value = self.state.pop()?;
                     let index = self.pop_atomic()?;
                     let index = index.cast_to_integer_value::<i64>()? as usize;
                     // substract 1 as Xpath is 1-indexed
-                    let item = value.get(index - 1)?;
-                    self.state.push(item.into())
+                    let item = value.get(index - 1).ok_or(error::Error::XPTY0004)?;
+                    let sequence: sequence::Sequence = item.clone().into();
+                    self.state.push(sequence)
                 }
                 EncodedInstruction::BuildNew => {
                     self.state.build_new();
@@ -488,7 +497,7 @@ impl<'a> Interpreter<'a> {
                 }
                 EncodedInstruction::IsNumeric => {
                     let is_numeric = self.pop_is_numeric()?;
-                    self.state.push(is_numeric.into());
+                    self.state.push(is_numeric);
                 }
                 EncodedInstruction::XmlName => {
                     let local_name_value = self.pop_atomic()?;
@@ -497,18 +506,18 @@ impl<'a> Interpreter<'a> {
                     let local_name = local_name_value.to_string()?;
                     let name =
                         xee_name::Name::new(local_name, namespace.to_string(), String::new());
-                    self.state.push(name.into());
+                    self.state.push(name);
                 }
                 EncodedInstruction::XmlDocument => {
                     let root_node = self.state.xot.new_document();
                     let item = sequence::Item::Node(root_node);
-                    self.state.push(item.into());
+                    self.state.push(item);
                 }
                 EncodedInstruction::XmlElement => {
                     let name_id = self.pop_xot_name()?;
                     let element_node = self.state.xot.new_element(name_id);
                     let item = sequence::Item::Node(element_node);
-                    self.state.push(item.into());
+                    self.state.push(item);
                 }
                 EncodedInstruction::XmlAttribute => {
                     let value = self.pop_atomic()?;
@@ -518,7 +527,7 @@ impl<'a> Interpreter<'a> {
                         .xot
                         .new_attribute_node(name_id, value.string_value());
                     let item = sequence::Item::Node(attribute_node);
-                    self.state.push(item.into());
+                    self.state.push(item);
                 }
                 EncodedInstruction::XmlNamespace => {
                     let uri = self.pop_atomic()?;
@@ -527,21 +536,21 @@ impl<'a> Interpreter<'a> {
                     let prefix_id = self.state.xot.add_prefix(&prefix.string_value());
                     let namespace_node = self.state.xot.new_namespace_node(prefix_id, namespace_id);
                     let item = sequence::Item::Node(namespace_node);
-                    self.state.push(item.into());
+                    self.state.push(item);
                 }
                 EncodedInstruction::XmlText => {
                     let text_atomic = self.pop_atomic()?;
                     let text = text_atomic.into_canonical();
                     let text_node = self.state.xot.new_text(&text);
                     let item = sequence::Item::Node(text_node);
-                    self.state.push(item.into());
+                    self.state.push(item);
                 }
                 EncodedInstruction::XmlComment => {
                     let text_atomic = self.pop_atomic()?;
                     let text = text_atomic.into_canonical();
                     let comment_node = self.state.xot.new_comment(&text);
                     let item = sequence::Item::Node(comment_node);
-                    self.state.push(item.into());
+                    self.state.push(item);
                 }
                 EncodedInstruction::XmlProcessingInstruction => {
                     let text_atomic = self.pop_atomic()?;
@@ -556,7 +565,7 @@ impl<'a> Interpreter<'a> {
                     let target_id = self.state.xot.add_name(&target);
                     let pi_node = self.state.xot.new_processing_instruction(target_id, text);
                     let item = sequence::Item::Node(pi_node);
-                    self.state.push(item.into());
+                    self.state.push(item);
                 }
                 EncodedInstruction::XmlAppend => {
                     let child_value = self.state.pop()?;
@@ -564,18 +573,18 @@ impl<'a> Interpreter<'a> {
                     self.xml_append(parent_node, child_value)?;
                     // now we can push back the parent node
                     let item = sequence::Item::Node(parent_node);
-                    self.state.push(item.into());
+                    self.state.push(item);
                 }
                 EncodedInstruction::CopyShallow => {
                     let value = &self.state.pop()?;
                     if value.is_empty() {
-                        self.state.push(stack::Value::Empty);
+                        self.state.push(sequence::Sequence::default());
                         continue;
                     }
                     if value.len() > 1 {
                         Err(error::Error::XTTE3180)?;
                     }
-                    let item = value.items()?.next().unwrap();
+                    let item = value.iter().next().unwrap();
                     let copy = match &item {
                         sequence::Item::Atomic(_) | sequence::Item::Function(_) => item.clone(),
                         sequence::Item::Node(node) => {
@@ -583,16 +592,16 @@ impl<'a> Interpreter<'a> {
                             sequence::Item::Node(copied_node)
                         }
                     };
-                    self.state.push(copy.into());
+                    self.state.push(copy);
                 }
                 EncodedInstruction::CopyDeep => {
                     let value = &self.state.pop()?;
                     if value.is_empty() {
-                        self.state.push(stack::Value::Empty);
+                        self.state.push(sequence::Sequence::default());
                         continue;
                     }
                     let mut new_sequence = Vec::with_capacity(value.len());
-                    for item in value.items()? {
+                    for item in value.iter() {
                         let copy = match &item {
                             sequence::Item::Atomic(_) | sequence::Item::Function(_) => item.clone(),
                             sequence::Item::Node(node) => {
@@ -602,7 +611,7 @@ impl<'a> Interpreter<'a> {
                         };
                         new_sequence.push(copy);
                     }
-                    self.state.push(new_sequence.into());
+                    self.state.push(new_sequence);
                 }
                 EncodedInstruction::ApplyTemplates => {
                     let value = self.state.pop()?;
@@ -626,10 +635,9 @@ impl<'a> Interpreter<'a> {
     pub(crate) fn create_static_closure_from_stack(
         &mut self,
         static_function_id: function::StaticFunctionId,
-    ) -> function::Function {
+    ) -> error::Result<function::Function> {
         Self::create_static_closure(self.runnable.dynamic_context(), static_function_id, || {
-            // TODO: absent fallback hack
-            Some(self.state.pop().unwrap_or(sequence::Sequence::absent()))
+            Some(self.state.pop())
         })
     }
 
@@ -637,11 +645,11 @@ impl<'a> Interpreter<'a> {
         &mut self,
         static_function_id: function::StaticFunctionId,
         arg: Option<xot::Node>,
-    ) -> function::Function {
+    ) -> error::Result<function::Function> {
         Self::create_static_closure(self.runnable.dynamic_context(), static_function_id, || {
             arg.map(|n| {
                 let item: sequence::Item = n.into();
-                item.into()
+                Ok(item.into())
             })
         })
     }
@@ -650,27 +658,26 @@ impl<'a> Interpreter<'a> {
         context: &DynamicContext,
         static_function_id: function::StaticFunctionId,
         mut get: F,
-    ) -> function::Function
+    ) -> error::Result<function::Function>
     where
-        F: FnMut() -> Option<sequence::Sequence>,
+        F: FnMut() -> Option<error::Result<sequence::Sequence>>,
     {
         let static_function = &context.static_context().function_by_id(static_function_id);
         // get any context value from the stack if needed
         let closure_vars = if static_function.needs_context() {
             let value = get();
             if let Some(value) = value {
-                // TODO: unwrap hack
-                vec![value.try_into().unwrap_or(sequence::Sequence::absent())]
+                vec![value?]
             } else {
                 vec![]
             }
         } else {
             vec![]
         };
-        function::Function::Static {
+        Ok(function::Function::Static {
             static_function_id,
             closure_vars,
-        }
+        })
     }
 
     pub(crate) fn current_inline_function(&self) -> &function::InlineFunction {
@@ -698,11 +705,12 @@ impl<'a> Interpreter<'a> {
         arguments: &[sequence::Sequence],
     ) -> error::Result<sequence::Sequence> {
         // put function onto the stack
-        self.state.push(function.clone().into());
+        let item: sequence::Item = function.clone().into();
+        self.state.push(item);
         // then arguments
         let arity = arguments.len() as u8;
         for arg in arguments.iter() {
-            self.state.push(arg.clone().into());
+            self.state.push(arg.clone());
         }
         self.call_function(function.clone(), arity)?;
         if matches!(function.as_ref(), function::Function::Inline { .. }) {
@@ -746,7 +754,7 @@ impl<'a> Interpreter<'a> {
             static_function.invoke(self.runnable.dynamic_context, self, closure_vars, arity)?;
         // truncate the stack to the base
         self.state.static_return(arity as usize);
-        self.state.push(result.into());
+        self.state.push(result);
         Ok(())
     }
 
@@ -780,10 +788,10 @@ impl<'a> Interpreter<'a> {
                     self.state.xot(),
                     &|function| self.runnable.function_info(function).signature(),
                 )?;
-                arguments.push(sequence.into())
+                arguments.push(sequence)
             } else {
                 // no need to do any checking or conversion
-                arguments.push(sequence.into());
+                arguments.push(sequence);
             }
         }
         // now we have a list of arguments that we want to push back onto the stack,
@@ -803,9 +811,9 @@ impl<'a> Interpreter<'a> {
         let position = self.pop_atomic()?;
         let sequence = Self::array_get(array, position)?;
         // pop the array off the stack
-        self.state.pop();
+        self.state.pop()?;
         // now push the result
-        self.state.push(sequence.into());
+        self.state.push(sequence);
         Ok(())
     }
 
@@ -831,9 +839,9 @@ impl<'a> Interpreter<'a> {
         // pop the map off the stack
         self.state.pop();
         if let Some(value) = value {
-            self.state.push(value.into());
+            self.state.push(value);
         } else {
-            self.state.push(stack::Value::Empty);
+            self.state.push(sequence::Sequence::default());
         }
         Ok(())
     }
@@ -843,7 +851,8 @@ impl<'a> Interpreter<'a> {
         let value = self.state.pop()?;
         let function: Rc<function::Function> = value.try_into()?;
         let value = self.lookup_value(&function, key_specifier)?;
-        self.state.push(value.into());
+        let sequence: sequence::Sequence = value.into();
+        self.state.push(sequence);
         Ok(())
     }
 
@@ -865,7 +874,7 @@ impl<'a> Interpreter<'a> {
         key_specifier: sequence::Sequence,
     ) -> error::Result<Vec<sequence::Item>> {
         self.lookup_helper(key_specifier, map, |map, atomic| {
-            Ok(map.get(&atomic).unwrap_or(sequence::Sequence::empty()))
+            Ok(map.get(&atomic).unwrap_or(sequence::Sequence::default()))
         })
     }
 
@@ -891,8 +900,8 @@ impl<'a> Interpreter<'a> {
             .collect::<error::Result<Vec<_>>>()?;
         let mut result = Vec::new();
         for key in keys {
-            for item in get_key(&data, key)?.items()? {
-                result.push(item);
+            for item in get_key(&data, key)?.iter() {
+                result.push(item.clone());
             }
         }
         Ok(result)
@@ -923,7 +932,8 @@ impl<'a> Interpreter<'a> {
             }
             _ => return Err(error::Error::XPTY0004),
         };
-        self.state.push(value.into());
+        let sequence: sequence::Sequence = value.into();
+        self.state.push(sequence);
         Ok(())
     }
 
@@ -936,13 +946,15 @@ impl<'a> Interpreter<'a> {
         // https://www.w3.org/TR/xpath-31/#id-value-comparisons
         // If an operand is the empty sequence, the result is the empty sequence
         if a.is_empty() || b.is_empty() {
-            self.state.push(stack::Value::Empty);
+            self.state.push(sequence::Sequence::default());
             return Ok(());
         }
         let mut atomized_a = a.atomized(self.state.xot());
         let mut atomized_b = b.atomized(self.state.xot());
-        let a = atomized_a.one()?;
-        let b = atomized_b.one()?;
+        let a = sequence::one(atomized_a)?;
+        let b = sequence::one(atomized_b)?;
+        let a = a?;
+        let b = b?;
         let collation = self.runnable.default_collation()?;
         let result = O::atomic_compare(
             a,
@@ -950,7 +962,7 @@ impl<'a> Interpreter<'a> {
             |a: &str, b: &str| collation.compare(a, b),
             self.runnable.implicit_timezone(),
         )?;
-        self.state.push(result.into());
+        self.state.push(result);
         Ok(())
     }
 
@@ -960,9 +972,8 @@ impl<'a> Interpreter<'a> {
     {
         let b = self.state.pop()?;
         let a = self.state.pop()?;
-        let value = a
-            .general_comparison(b, self.runnable.dynamic_context(), self.state.xot(), op)?
-            .into();
+        let value =
+            a.general_comparison(&b, self.runnable.dynamic_context(), self.state.xot(), op)?;
         self.state.push(value);
         Ok(())
     }
@@ -983,15 +994,15 @@ impl<'a> Interpreter<'a> {
         // https://www.w3.org/TR/xpath-31/#id-arithmetic
         // 2. If an operand is the empty sequence, the result is the empty sequence
         if a.is_empty() || b.is_empty() {
-            self.state.push(stack::Value::Empty);
+            self.state.push(sequence::Sequence::default());
             return Ok(());
         }
         let mut atomized_a = a.atomized(self.state.xot());
         let mut atomized_b = b.atomized(self.state.xot());
-        let a = atomized_a.one()?;
-        let b = atomized_b.one()?;
-        let result = op(a, b, self.runnable.implicit_timezone())?;
-        self.state.push(result.into());
+        let a = sequence::one(atomized_a)?;
+        let b = sequence::one(atomized_b)?;
+        let result = op(a?, b?, self.runnable.implicit_timezone())?;
+        self.state.push(result);
         Ok(())
     }
 
@@ -1001,22 +1012,22 @@ impl<'a> Interpreter<'a> {
     {
         let a = self.state.pop()?;
         if a.is_empty() {
-            self.state.push(stack::Value::Empty);
+            self.state.push(sequence::Sequence::default());
             return Ok(());
         }
-        let mut atomized_a = a.atomized(self.state.xot());
-        let a = atomized_a.one()?;
-        let value = op(a)?;
-        self.state.push(value.into());
+        let atomized_a = a.atomized(self.state.xot());
+        let a = sequence::one(atomized_a)?;
+        let value = op(a?)?;
+        self.state.push(value);
         Ok(())
     }
 
     fn pop_is_numeric(&mut self) -> error::Result<bool> {
         let value = self.state.pop()?;
-        let mut atomized = value.atomized(self.state.xot());
-        let a = atomized.option()?;
+        let atomized = value.atomized(self.state.xot());
+        let a = sequence::option(atomized)?;
         if let Some(a) = a {
-            Ok(a.is_numeric())
+            Ok(a?.is_numeric())
         } else {
             Ok(false)
         }
@@ -1024,14 +1035,18 @@ impl<'a> Interpreter<'a> {
 
     fn pop_atomic(&mut self) -> error::Result<atomic::Atomic> {
         let value = self.state.pop()?;
-        let mut atomized = value.atomized(self.state.xot());
-        atomized.one()
+        let atomized = value.atomized(self.state.xot());
+        sequence::one(atomized)?
     }
 
     fn pop_atomic_option(&mut self) -> error::Result<Option<atomic::Atomic>> {
         let value = self.state.pop()?;
-        let mut atomized = value.atomized(self.state.xot());
-        atomized.option()
+        let atomized = value.atomized(self.state.xot());
+        if let Some(a) = sequence::option(atomized)? {
+            Ok(Some(a?))
+        } else {
+            Ok(None)
+        }
     }
 
     fn pop_xot_name(&mut self) -> error::Result<xot::NameId> {
@@ -1044,7 +1059,7 @@ impl<'a> Interpreter<'a> {
 
     fn pop_node(&mut self) -> error::Result<xot::Node> {
         let value = self.state.pop()?;
-        let node = value.items()?.one()?.to_node()?;
+        let node = sequence::one(value.iter())?.to_node()?;
         Ok(node)
     }
 
@@ -1081,7 +1096,7 @@ impl<'a> Interpreter<'a> {
         value: sequence::Sequence,
     ) -> error::Result<()> {
         let mut string_values = Vec::new();
-        for item in value.items()? {
+        for item in value.iter() {
             match item {
                 sequence::Item::Node(node) => {
                     // if there were any string values before this node, add them
@@ -1090,7 +1105,7 @@ impl<'a> Interpreter<'a> {
                         self.xml_append_string_values(parent_node, &string_values);
                         string_values.clear();
                     }
-                    match self.state.xot.value(node) {
+                    match self.state.xot.value(*node) {
                         xot::Value::Document => {
                             todo!("Handle adding all the children instead");
                         }
@@ -1107,10 +1122,10 @@ impl<'a> Interpreter<'a> {
 
                     // if we have a parent we're already in another document,
                     // in which case we want to make a clone first
-                    let node = if self.state.xot.parent(node).is_some() {
-                        self.state.xot.clone_node(node)
+                    let node = if self.state.xot.parent(*node).is_some() {
+                        self.state.xot.clone_node(*node)
                     } else {
-                        node
+                        *node
                     };
                     // TODO: error out if namespace or attribute node
                     // is added once a normal child already exists
@@ -1151,15 +1166,15 @@ impl<'a> Interpreter<'a> {
         &mut self,
         mode: pattern::ModeId,
         sequence: sequence::Sequence,
-    ) -> error::Result<stack::Value> {
+    ) -> error::Result<sequence::Sequence> {
         let mut r: Vec<sequence::Item> = Vec::new();
         let size: IBig = sequence.len().into();
 
-        for (i, item) in sequence.items()?.enumerate() {
+        for (i, item) in sequence.iter().enumerate() {
             let sequence = self.apply_templates_item(mode, item, i, size.clone())?;
             if let Some(sequence) = sequence {
-                for item in sequence.items()? {
-                    r.push(item);
+                for item in sequence.iter() {
+                    r.push(item.clone());
                 }
             }
         }
@@ -1169,7 +1184,7 @@ impl<'a> Interpreter<'a> {
     fn apply_templates_item(
         &mut self,
         mode: pattern::ModeId,
-        item: sequence::Item,
+        item: &sequence::Item,
         position: usize,
         size: IBig,
     ) -> error::Result<Option<sequence::Sequence>> {

@@ -1,11 +1,11 @@
 ---
-source: xee-xpath/tests/xpath.rs
+source: xee-xpath-compiler/tests/xpath.rs
 expression: "run(\"(3, 4) ! (let $p := fn:position#0 return $p())\")"
 ---
 Ok(
-    Sequence {
-        stack_value: Many(
-            [
+    Many(
+        Many {
+            items: [
                 Atomic(
                     Integer(
                         Integer,
@@ -19,6 +19,6 @@ Ok(
                     ),
                 ),
             ],
-        ),
-    },
+        },
+    ),
 )

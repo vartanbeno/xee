@@ -1,11 +1,11 @@
 ---
-source: xee-xpath/tests/xpath.rs
+source: xee-xpath-compiler/tests/xpath.rs
 expression: "run(\"'2019-01-01T00:00:00Z' cast as xs:dateTime\")"
 ---
 Ok(
-    Sequence {
-        stack_value: One(
-            Atomic(
+    One(
+        One {
+            item: Atomic(
                 DateTime(
                     NaiveDateTimeWithOffset {
                         date_time: 2019-01-01T00:00:00,
@@ -15,6 +15,6 @@ Ok(
                     },
                 ),
             ),
-        ),
-    },
+        },
+    ),
 )

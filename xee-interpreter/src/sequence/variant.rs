@@ -25,6 +25,16 @@ impl<'a> SequenceCore<'a, std::iter::Empty<&'a Item>> for Empty {
     }
 
     #[inline]
+    fn one(&self) -> error::Result<&Item> {
+        Err(error::Error::XPTY0004)
+    }
+
+    #[inline]
+    fn option(&self) -> error::Result<Option<&Item>> {
+        Ok(None)
+    }
+
+    #[inline]
     fn iter(&self) -> std::iter::Empty<&'a Item> {
         std::iter::empty()
     }
@@ -37,6 +47,15 @@ impl<'a> SequenceCore<'a, std::iter::Empty<&'a Item>> for Empty {
     #[inline]
     fn string_value(&self, _xot: &xot::Xot) -> error::Result<String> {
         Ok(String::new())
+    }
+}
+
+impl IntoIterator for Empty {
+    type Item = Item;
+    type IntoIter = std::iter::Empty<Item>;
+
+    fn into_iter(self) -> Self::IntoIter {
+        std::iter::empty()
     }
 }
 
@@ -67,6 +86,15 @@ impl From<One> for Item {
     }
 }
 
+impl IntoIterator for One {
+    type Item = Item;
+    type IntoIter = std::iter::Once<Item>;
+
+    fn into_iter(self) -> Self::IntoIter {
+        std::iter::once(self.item)
+    }
+}
+
 impl<'a> SequenceCore<'a, std::iter::Once<&'a Item>> for One {
     #[inline]
     fn is_empty(&self) -> bool {
@@ -85,6 +113,16 @@ impl<'a> SequenceCore<'a, std::iter::Once<&'a Item>> for One {
         } else {
             None
         }
+    }
+
+    #[inline]
+    fn one(&self) -> error::Result<&Item> {
+        Ok(&self.item)
+    }
+
+    #[inline]
+    fn option(&self) -> error::Result<Option<&Item>> {
+        Ok(Some(&self.item))
     }
 
     #[inline]
@@ -118,6 +156,17 @@ impl From<Vec<Item>> for Many {
     }
 }
 
+impl IntoIterator for Many {
+    type Item = Item;
+    type IntoIter = std::vec::IntoIter<Item>;
+
+    // TODO: not the most efficient way to do this, but we use
+    // an Rc so we can't just move the items out of the Rc.
+    fn into_iter(self) -> Self::IntoIter {
+        self.items.iter().cloned().collect::<Vec<_>>().into_iter()
+    }
+}
+
 impl<'a> SequenceCore<'a, std::slice::Iter<'a, Item>> for Many {
     #[inline]
     fn is_empty(&self) -> bool {
@@ -132,6 +181,16 @@ impl<'a> SequenceCore<'a, std::slice::Iter<'a, Item>> for Many {
     #[inline]
     fn get(&self, index: usize) -> Option<&Item> {
         self.items.get(index)
+    }
+
+    #[inline]
+    fn one(&self) -> error::Result<&Item> {
+        Err(error::Error::XPTY0004)
+    }
+
+    #[inline]
+    fn option(&self) -> error::Result<Option<&Item>> {
+        Err(error::Error::XPTY0004)
     }
 
     #[inline]

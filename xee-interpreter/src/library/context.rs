@@ -24,9 +24,6 @@ fn bound_position(
     _interpreter: &mut interpreter::Interpreter,
     arguments: &[sequence::Sequence],
 ) -> error::Result<sequence::Sequence> {
-    if arguments[0].is_absent() {
-        return Err(error::Error::XPDY0002);
-    }
     // position should be the context value
     Ok(arguments[0].clone())
 }
@@ -36,9 +33,6 @@ fn bound_last(
     _interpreter: &mut interpreter::Interpreter,
     arguments: &[sequence::Sequence],
 ) -> error::Result<sequence::Sequence> {
-    if arguments[0].is_absent() {
-        return Err(error::Error::XPDY0002);
-    }
     // size should be the context value
     Ok(arguments[0].clone())
 }

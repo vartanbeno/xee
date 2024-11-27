@@ -6,6 +6,7 @@ use xot::Xot;
 use crate::error;
 use crate::function;
 use crate::sequence;
+use crate::sequence::SequenceCore;
 use crate::stack;
 
 const FRAMES_MAX: usize = 64;
@@ -44,8 +45,19 @@ impl<'a> State<'a> {
         }
     }
 
-    pub(crate) fn push(&mut self, value: stack::Value) {
-        self.stack.push(value);
+    pub(crate) fn push<T>(&mut self, sequence: T)
+    where
+        T: Into<sequence::Sequence>,
+    {
+        let sequence: sequence::Sequence = sequence.into();
+        self.stack.push(sequence.into());
+    }
+
+    pub(crate) fn push_value<T>(&mut self, value: T)
+    where
+        T: Into<stack::Value>,
+    {
+        self.stack.push(value.into());
     }
 
     pub(crate) fn build_new(&mut self) {
@@ -68,9 +80,11 @@ impl<'a> State<'a> {
         value: stack::Value,
     ) -> error::Result<()> {
         match value {
-            stack::Value::Empty => {}
-            stack::Value::One(item) => build.push(item),
-            stack::Value::Many(items) => build.extend(items.iter().cloned()),
+            stack::Value::Sequence(sequence::Sequence::Empty(_)) => {}
+            stack::Value::Sequence(sequence::Sequence::One(item)) => build.push(item.into_item()),
+            stack::Value::Sequence(sequence::Sequence::Many(items)) => {
+                build.extend(items.into_iter())
+            }
             stack::Value::Absent => return Err(error::Error::XPDY0002)?,
         }
         Ok(())
@@ -99,7 +113,11 @@ impl<'a> State<'a> {
 
     pub(crate) fn function(&self) -> error::Result<Rc<function::Function>> {
         // the function is always just below the base
-        (&self.stack[self.frame().base - 1]).try_into()
+        let value = &self.stack[self.frame().base - 1];
+        match value {
+            stack::Value::Sequence(sequence) => sequence.clone().try_into(),
+            stack::Value::Absent => Err(error::Error::XPDY0002),
+        }
     }
 
     pub(crate) fn push_start_frame(&mut self, function_id: function::InlineFunctionId) {
@@ -140,8 +158,10 @@ impl<'a> State<'a> {
 
     pub(crate) fn callable(&self, arity: usize) -> error::Result<Rc<function::Function>> {
         let value = &self.stack[self.stack.len() - (arity + 1)];
-        // TODO: check that arity of function matches arity of call
-        value.try_into()
+        match value {
+            stack::Value::Sequence(sequence) => sequence.clone().try_into(),
+            stack::Value::Absent => Err(error::Error::XPDY0002),
+        }
     }
 
     pub(crate) fn arguments(&self, arity: usize) -> &[stack::Value] {

@@ -15,6 +15,8 @@ use crate::function::StaticFunctionDescription;
 use crate::interpreter::Interpreter;
 use crate::occurrence::Occurrence;
 use crate::sequence;
+use crate::sequence::SequenceCore;
+use crate::sequence::SequenceExt;
 use crate::string::Collation;
 use crate::wrap_xpath_fn;
 
@@ -33,28 +35,30 @@ fn function_lookup(
     name: Name,
     arity: IBig,
     arg: Option<xot::Node>,
-) -> Option<sequence::Item> {
+) -> error::Result<Option<sequence::Item>> {
     let arity: u8 = if let Ok(arity) = arity.try_into() {
         arity
     } else {
-        return None;
+        return Ok(None);
     };
     let static_function_id = context.static_context().function_id_by_name(&name, arity);
-    static_function_id.map(|static_function_id| {
-        interpreter
-            .create_static_closure_from_context(static_function_id, arg)
-            .into()
-    })
+    if let Some(static_function_id) = static_function_id {
+        let function = interpreter.create_static_closure_from_context(static_function_id, arg)?;
+        let item: sequence::Item = function.into();
+        Ok(Some(item))
+    } else {
+        Ok(None)
+    }
 }
 
 #[xpath_fn("fn:function-name($func as function(*)) as xs:QName?")]
-fn function_name(interpreter: &Interpreter, func: sequence::Item) -> error::Result<Option<Name>> {
+fn function_name(interpreter: &Interpreter, func: &sequence::Item) -> error::Result<Option<Name>> {
     let function = func.to_function()?;
     Ok(interpreter.function_name(function.as_ref()))
 }
 
 #[xpath_fn("fn:function-arity($func as function(*)) as xs:integer")]
-fn function_arity(interpreter: &Interpreter, func: sequence::Item) -> error::Result<IBig> {
+fn function_arity(interpreter: &Interpreter, func: &sequence::Item) -> error::Result<IBig> {
     let function = func.to_function()?;
     Ok(interpreter.function_arity(function.as_ref()).into())
 }
@@ -63,15 +67,15 @@ fn function_arity(interpreter: &Interpreter, func: sequence::Item) -> error::Res
 fn for_each(
     interpreter: &mut Interpreter,
     seq: &sequence::Sequence,
-    action: sequence::Item,
+    action: &sequence::Item,
 ) -> error::Result<sequence::Sequence> {
     let mut result: Vec<sequence::Item> = Vec::with_capacity(seq.len());
     let function = action.to_function()?;
 
-    for item in seq.items()? {
+    for item in seq.iter() {
         let value = interpreter.call_function_with_arguments(function.clone(), &[item.into()])?;
-        for item in value.items()? {
-            result.push(item);
+        for item in value.iter() {
+            result.push(item.clone());
         }
     }
     Ok(result.into())
@@ -81,18 +85,18 @@ fn for_each(
 fn filter(
     interpreter: &mut Interpreter,
     seq: &sequence::Sequence,
-    predicate: sequence::Item,
+    predicate: &sequence::Item,
 ) -> error::Result<sequence::Sequence> {
     let mut result: Vec<sequence::Item> = Vec::new();
     let function = predicate.to_function()?;
 
-    for item in seq.items()? {
+    for item in seq.iter() {
         let value =
             interpreter.call_function_with_arguments(function.clone(), &[item.clone().into()])?;
-        let atom: atomic::Atomic = value.items()?.one()?.to_atomic()?;
+        let atom: atomic::Atomic = sequence::one(value.iter())?.to_atomic()?;
         let value: bool = atom.try_into()?;
         if value {
-            result.push(item);
+            result.push(item.clone());
         }
     }
     Ok(result.into())
@@ -103,12 +107,12 @@ fn fold_left(
     interpreter: &mut Interpreter,
     seq: &sequence::Sequence,
     zero: &sequence::Sequence,
-    f: sequence::Item,
+    f: &sequence::Item,
 ) -> error::Result<sequence::Sequence> {
     let function = f.to_function()?;
 
     let mut accumulator = zero.clone();
-    for item in seq.items()? {
+    for item in seq.iter() {
         accumulator = interpreter
             .call_function_with_arguments(function.clone(), &[accumulator, item.into()])?;
     }
@@ -120,13 +124,13 @@ fn fold_right(
     interpreter: &mut Interpreter,
     seq: &sequence::Sequence,
     zero: &sequence::Sequence,
-    f: sequence::Item,
+    f: &sequence::Item,
 ) -> error::Result<sequence::Sequence> {
     let function = f.to_function()?;
 
     let mut accumulator = zero.clone();
     // TODO: do not have reverse iterator, so have to collect first
-    let seq = seq.items()?.collect::<Vec<_>>();
+    let seq = seq.iter().collect::<Vec<_>>();
     for item in seq.into_iter().rev() {
         accumulator = interpreter
             .call_function_with_arguments(function.clone(), &[item.into(), accumulator])?;
@@ -139,16 +143,16 @@ fn for_each_pair(
     interpreter: &mut Interpreter,
     seq1: &sequence::Sequence,
     seq2: &sequence::Sequence,
-    action: sequence::Item,
+    action: &sequence::Item,
 ) -> error::Result<sequence::Sequence> {
     let mut result: Vec<sequence::Item> = Vec::with_capacity(seq1.len());
     let function = action.to_function()?;
 
-    for (item1, item2) in seq1.items()?.zip(seq2.items()?) {
+    for (item1, item2) in seq1.iter().zip(seq2.iter()) {
         let value = interpreter
             .call_function_with_arguments(function.clone(), &[item1.into(), item2.into()])?;
-        for item in value.items()? {
-            result.push(item);
+        for item in value.iter() {
+            result.push(item.clone());
         }
     }
     Ok(result.into())
@@ -184,7 +188,7 @@ fn sort3(
     interpreter: &mut Interpreter,
     input: &sequence::Sequence,
     collation: Option<&str>,
-    key: sequence::Item,
+    key: &sequence::Item,
 ) -> error::Result<sequence::Sequence> {
     let collation = context.static_context().resolve_collation_str(collation)?;
     let function = key.to_function()?;
@@ -218,12 +222,12 @@ fn sort_by_sequence<F>(
     get: F,
 ) -> error::Result<sequence::Sequence>
 where
-    F: FnMut(&sequence::Item) -> error::Result<sequence::Sequence>,
+    F: FnMut(&&sequence::Item) -> error::Result<sequence::Sequence>,
 {
     // see also sort_by_sequence in array.rs. The signatures are
     // sufficiently different we don't want to try to unify them.
 
-    let items = input.items()?.collect::<Vec<_>>();
+    let items = input.iter().collect::<Vec<_>>();
     let keys = items.iter().map(get).collect::<error::Result<Vec<_>>>()?;
 
     let mut keys_and_items = keys.into_iter().zip(items).collect::<Vec<_>>();
@@ -241,7 +245,7 @@ where
     // now pick up items again
     let items = keys_and_items
         .into_iter()
-        .map(|(_, item)| item)
+        .map(|(_, item)| item.clone())
         .collect::<Vec<_>>();
     Ok(items.into())
 }
@@ -249,7 +253,7 @@ where
 #[xpath_fn("fn:apply($function as function(*), $array as array(*)) as item()*")]
 fn apply(
     interpreter: &mut Interpreter,
-    function: sequence::Item,
+    function: &sequence::Item,
     array: function::Array,
 ) -> error::Result<sequence::Sequence> {
     let function = function.to_function()?;

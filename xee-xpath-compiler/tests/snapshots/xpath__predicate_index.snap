@@ -1,16 +1,16 @@
 ---
-source: xee-xpath/tests/xpath.rs
+source: xee-xpath-compiler/tests/xpath.rs
 expression: "run(\"(1, 2, 3)[2]\")"
 ---
 Ok(
-    Sequence {
-        stack_value: One(
-            Atomic(
+    One(
+        One {
+            item: Atomic(
                 Integer(
                     Integer,
                     2,
                 ),
             ),
-        ),
-    },
+        },
+    ),
 )

@@ -2,9 +2,9 @@
 
 use xot::{Node, Xot};
 
-use crate::{atomic, error, neovalue::Item};
+use crate::{atomic, error};
 
-use super::Sequence;
+use super::{core::Sequence, item::Item, traits::SequenceCore};
 
 enum NodeOrString {
     Node(Node),
@@ -12,7 +12,7 @@ enum NodeOrString {
 }
 
 pub(crate) fn normalize(
-    sequence: Sequence,
+    sequence: &Sequence,
     item_separator: &str,
     xot: &mut Xot,
 ) -> error::Result<Node> {
@@ -26,10 +26,10 @@ pub(crate) fn normalize(
     };
     // 2. and 3.
     let mut items: Vec<NodeOrString> = Vec::new();
-    for item in sequence.items()? {
+    for item in sequence.iter() {
         match item {
             Item::Atomic(atomic) => {
-                let s = atomic.into_canonical();
+                let s = atomic.clone().into_canonical();
                 if let Some(NodeOrString::String(last_s)) = items.last_mut() {
                     last_s.push_str(item_separator);
                     last_s.push_str(&s);
@@ -38,7 +38,7 @@ pub(crate) fn normalize(
                 }
             }
             Item::Node(node) => {
-                items.push(NodeOrString::Node(node));
+                items.push(NodeOrString::Node(*node));
             }
             Item::Function(_) => {
                 return Err(error::Error::SENR0001);

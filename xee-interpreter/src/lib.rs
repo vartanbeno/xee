@@ -10,7 +10,6 @@ pub mod error;
 pub mod function;
 pub mod interpreter;
 mod library;
-mod neovalue;
 pub mod occurrence;
 pub mod pattern;
 pub mod sequence;

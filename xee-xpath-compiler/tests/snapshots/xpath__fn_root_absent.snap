@@ -8,7 +8,7 @@ Err(
         span: Some(
             SourceSpan(
                 0,
-                9,
+                0,
             ),
         ),
     },

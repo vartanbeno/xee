@@ -3,6 +3,7 @@ use chrono::Offset;
 use std::fmt;
 use xee_xpath::context::{Collation, DynamicContext};
 use xee_xpath::iter::Occurrence;
+use xee_xpath::{SequenceCore, SequenceExt};
 use xot::xmlname::{NameStrInfo, OwnedName as Name};
 use xot::Xot;
 
@@ -497,15 +498,12 @@ impl Assertable for AssertTrue {
         _documents: &mut Documents,
         sequence: &Sequence,
     ) -> TestOutcome {
-        let items = sequence.items();
-        if let Ok(mut items) = items {
-            if let Ok(item) = items.one() {
-                if let Ok(atomic) = item.to_atomic() {
-                    let b: error::ValueResult<bool> = atomic.try_into();
-                    if let Ok(b) = b {
-                        if b {
-                            return TestOutcome::Passed;
-                        }
+        if let Ok(item) = sequence.one() {
+            if let Ok(atomic) = item.to_atomic() {
+                let b: error::ValueResult<bool> = atomic.try_into();
+                if let Ok(b) = b {
+                    if b {
+                        return TestOutcome::Passed;
                     }
                 }
             }
@@ -530,15 +528,12 @@ impl Assertable for AssertFalse {
         _documents: &mut Documents,
         sequence: &Sequence,
     ) -> TestOutcome {
-        let items = sequence.items();
-        if let Ok(mut items) = items {
-            if let Ok(item) = items.one() {
-                if let Ok(atomic) = item.to_atomic() {
-                    let b: error::ValueResult<bool> = atomic.try_into();
-                    if let Ok(b) = b {
-                        if !b {
-                            return TestOutcome::Passed;
-                        }
+        if let Ok(item) = sequence.one() {
+            if let Ok(atomic) = item.to_atomic() {
+                let b: error::ValueResult<bool> = atomic.try_into();
+                if let Ok(b) = b {
+                    if !b {
+                        return TestOutcome::Passed;
                     }
                 }
             }
@@ -563,44 +558,38 @@ impl Assertable for AssertStringValue {
         documents: &mut Documents,
         sequence: &Sequence,
     ) -> TestOutcome {
-        let items = sequence.items();
-        if let Ok(items) = items {
-            let strings = items
-                .map(|item| item.string_value(documents.xot()))
-                .collect::<error::ValueResult<Vec<_>>>();
-            match strings {
-                Ok(strings) => {
-                    let joined = strings.join(" ");
-                    let joined = if self.1 {
-                        // normalize space
-                        joined
-                            .split_ascii_whitespace()
-                            .collect::<Vec<_>>()
-                            .join(" ")
-                    } else {
-                        joined
-                    };
-                    if joined == self.0 {
-                        TestOutcome::Passed
-                    } else {
-                        // the string value is not what we expected
-                        TestOutcome::Failed(Failure::StringValue(
-                            self.clone(),
-                            AssertStringValueFailure::WrongStringValue(joined),
-                        ))
-                    }
+        let items = sequence.iter();
+
+        let strings = items
+            .map(|item| item.string_value(documents.xot()))
+            .collect::<error::ValueResult<Vec<_>>>();
+        match strings {
+            Ok(strings) => {
+                let joined = strings.join(" ");
+                let joined = if self.1 {
+                    // normalize space
+                    joined
+                        .split_ascii_whitespace()
+                        .collect::<Vec<_>>()
+                        .join(" ")
+                } else {
+                    joined
+                };
+                if joined == self.0 {
+                    TestOutcome::Passed
+                } else {
+                    // the string value is not what we expected
+                    TestOutcome::Failed(Failure::StringValue(
+                        self.clone(),
+                        AssertStringValueFailure::WrongStringValue(joined),
+                    ))
                 }
-                // we weren't able to produce a string value
-                Err(_) => TestOutcome::Failed(Failure::StringValue(
-                    self.clone(),
-                    AssertStringValueFailure::WrongValue(sequence.clone()),
-                )),
             }
-        } else {
-            TestOutcome::Failed(Failure::StringValue(
+            // we weren't able to produce a string value
+            Err(_) => TestOutcome::Failed(Failure::StringValue(
                 self.clone(),
                 AssertStringValueFailure::WrongValue(sequence.clone()),
-            ))
+            )),
         }
     }
 }
@@ -1041,7 +1030,7 @@ fn run_xpath_with_result(
 
 pub(crate) fn serialize(xot: &Xot, sequence: &Sequence) -> crate::error::Result<String> {
     let mut xmls = Vec::with_capacity(sequence.len());
-    for item in sequence.items()? {
+    for item in sequence.iter() {
         if let Ok(node) = item.to_node() {
             let xml_value = xot.to_string(node);
             if let Ok(xml_value) = xml_value {

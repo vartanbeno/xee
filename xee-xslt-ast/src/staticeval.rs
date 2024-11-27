@@ -16,6 +16,7 @@
 // statically we need to pass in the names of any known global variables that
 // we've encountered before.
 
+use xee_xpath_compiler::sequence::SequenceCore;
 use xot::{NameId, Node, Xot};
 
 use xee_xpath_ast::ast as xpath_ast;
@@ -138,7 +139,7 @@ impl StaticEvaluator {
                     // check for its existence
                     let as_ = attributes.optional(names.as_, attributes.string())?;
                     if as_.is_some() {
-                        Sequence::empty()
+                        Sequence::default()
                     } else {
                         Sequence::from("")
                     }
@@ -401,7 +402,7 @@ mod tests {
             static_evaluate(&mut state, document_element, static_parameters, &mut xot).unwrap();
         assert_eq!(variables.len(), 1);
 
-        assert_eq!(variables.get(&name), Some(&Sequence::empty()));
+        assert_eq!(variables.get(&name), Some(&Sequence::default()));
     }
 
     #[test]

@@ -16,6 +16,7 @@ use crate::error;
 use crate::function::StaticFunctionDescription;
 use crate::interpreter::Interpreter;
 use crate::sequence;
+use crate::sequence::SequenceCore;
 use crate::string::Collation;
 use crate::wrap_xpath_fn;
 
@@ -31,18 +32,15 @@ fn exists(arg: &sequence::Sequence) -> bool {
 
 #[xpath_fn("fn:head($arg as item()*) as item()?")]
 fn head(arg: &sequence::Sequence) -> Option<sequence::Item> {
-    if arg.is_absent() {
-        return None;
-    }
-    arg.items().unwrap().next().clone()
+    arg.iter().next().cloned()
 }
 
 #[xpath_fn("fn:tail($arg as item()*) as item()*")]
 fn tail(arg: &sequence::Sequence) -> sequence::Sequence {
-    if arg.is_empty() || arg.is_absent() {
-        return sequence::Sequence::empty();
+    if arg.is_empty() {
+        return sequence::Sequence::default();
     }
-    let mut items = arg.items().unwrap();
+    let mut items = arg.clone().into_iter();
     // skip first item
     items.next();
     // now collect the rest
@@ -73,7 +71,7 @@ fn insert_before(
         position
     };
 
-    let mut target_items = target.items()?;
+    let mut target_items = target.iter();
     let mut result = Vec::with_capacity(target.len() + inserts.len());
     let mut i = 0;
     if position > 0 {
@@ -85,11 +83,11 @@ fn insert_before(
             }
         }
     }
-    for item in inserts.items()? {
-        result.push(item);
+    for item in inserts.iter() {
+        result.push(item.clone());
     }
     for item in target_items {
-        result.push(item);
+        result.push(item.clone());
     }
     Ok(result.into())
 }
@@ -106,37 +104,37 @@ fn remove(target: &sequence::Sequence, position: IBig) -> error::Result<sequence
         return Ok(target.clone());
     }
     let position = position.saturating_sub(1);
-    let mut target = target.items()?.collect::<Vec<_>>();
+    let mut target = target.clone().into_iter().collect::<Vec<_>>();
     target.remove(position);
     Ok(target.into())
 }
 
 #[xpath_fn("fn:reverse($arg as item()*) as item()*")]
 fn reverse(arg: &sequence::Sequence) -> sequence::Sequence {
-    if arg.is_empty() || arg.is_absent() {
+    if arg.is_empty() {
         return arg.clone();
     }
-    let mut items = arg.items().unwrap().collect::<Vec<_>>();
+    let mut items = arg.clone().into_iter().collect::<Vec<_>>();
     items.reverse();
     items.into()
 }
 
 #[xpath_fn("fn:subsequence($sourceSeq as item()*, $startingLoc as xs:double) as item()*")]
-fn subsequence2(source_seq: &[sequence::Item], starting_loc: f64) -> Vec<sequence::Item> {
+fn subsequence2(source_seq: &sequence::Sequence, starting_loc: f64) -> Vec<sequence::Item> {
     if starting_loc.is_nan() {
         return Vec::new();
     }
     let starting_loc = starting_loc - 1.0;
     let starting_loc = starting_loc.clamp(0.0, (source_seq.len()) as f64);
     let starting_loc = starting_loc as usize;
-    source_seq[starting_loc..].to_vec()
+    source_seq.iter().skip(starting_loc).cloned().collect()
 }
 
 #[xpath_fn(
     "fn:subsequence($sourceSeq as item()*, $startingLoc as xs:double, $length as xs:double) as item()*"
 )]
 fn subsequence3(
-    source_seq: &[sequence::Item],
+    source_seq: &sequence::Sequence,
     starting_loc: f64,
     length: f64,
 ) -> Vec<sequence::Item> {
@@ -152,7 +150,12 @@ fn subsequence3(
     let starting_loc = starting_loc as usize;
     let end = end as usize;
 
-    source_seq[starting_loc..end].to_vec()
+    source_seq
+        .iter()
+        .skip(starting_loc)
+        .take(end - starting_loc)
+        .cloned()
+        .collect()
 }
 
 #[xpath_fn("fn:unordered($sourceSeq as item()*) as item()*")]
@@ -249,7 +252,7 @@ fn deep_equal(
 fn zero_or_one(arg: &sequence::Sequence) -> error::Result<Option<sequence::Item>> {
     match arg.len() {
         0 => Ok(None),
-        1 => Ok(arg.items()?.next()),
+        1 => Ok(arg.iter().next().cloned()),
         _ => Err(error::Error::FORG0003),
     }
 }
@@ -266,7 +269,7 @@ fn one_or_more(arg: &sequence::Sequence) -> error::Result<sequence::Sequence> {
 #[xpath_fn("fn:exactly-one($arg as item()*) as item()")]
 fn exactly_one(arg: &sequence::Sequence) -> error::Result<sequence::Item> {
     if arg.len() == 1 {
-        Ok(arg.items()?.next().unwrap())
+        Ok(arg.iter().next().unwrap().clone())
     } else {
         Err(error::Error::FORG0005)
     }

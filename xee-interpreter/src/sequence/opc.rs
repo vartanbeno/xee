@@ -8,6 +8,8 @@ use xot::Xot;
 
 use crate::{atomic, context, error, function::Map, occurrence::Occurrence};
 
+use super::{option, SequenceCore};
+
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub enum QNameOrString {
     QName(OwnedName),
@@ -63,7 +65,7 @@ impl<'a> OptionParameterConverter<'a> {
             self.xot,
         )?;
         let value = if let Some(value) = value {
-            value.items()?.option()?
+            option(value.into_iter())?
         } else {
             return Ok(None);
         };
@@ -105,7 +107,7 @@ impl<'a> OptionParameterConverter<'a> {
         )?;
         let values = if let Some(value) = value {
             value
-                .items()?
+                .iter()
                 .map(|item| item.to_atomic()?.try_into())
                 .collect::<Result<Vec<V>, _>>()?
         } else {

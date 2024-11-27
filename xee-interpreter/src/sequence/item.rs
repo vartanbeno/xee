@@ -5,7 +5,9 @@ use crate::atomic;
 use crate::context;
 use crate::error;
 use crate::function;
-use crate::stack;
+
+use super::AtomizedIter;
+use super::SequenceExt;
 
 /// An XPath item. These are the items that make up an XPath sequence.
 #[derive(Debug, Clone, PartialEq)]
@@ -198,9 +200,75 @@ where
     }
 }
 
+impl TryFrom<Item> for atomic::Atomic {
+    type Error = error::Error;
+
+    fn try_from(item: Item) -> error::Result<atomic::Atomic> {
+        match item {
+            Item::Atomic(a) => Ok(a),
+            _ => Err(error::Error::XPTY0004),
+        }
+    }
+}
+
+impl TryFrom<&Item> for atomic::Atomic {
+    type Error = error::Error;
+
+    fn try_from(item: &Item) -> error::Result<atomic::Atomic> {
+        match item {
+            Item::Atomic(a) => Ok(a.clone()),
+            _ => Err(error::Error::XPTY0004),
+        }
+    }
+}
+
 impl From<xot::Node> for Item {
     fn from(node: xot::Node) -> Self {
         Self::Node(node)
+    }
+}
+
+impl TryFrom<Item> for xot::Node {
+    type Error = error::Error;
+
+    fn try_from(item: Item) -> error::Result<Self> {
+        match item {
+            Item::Node(node) => Ok(node),
+            _ => Err(error::Error::XPTY0004),
+        }
+    }
+}
+
+impl TryFrom<&Item> for xot::Node {
+    type Error = error::Error;
+
+    fn try_from(item: &Item) -> error::Result<Self> {
+        match item {
+            Item::Node(node) => Ok(*node),
+            _ => Err(error::Error::XPTY0004),
+        }
+    }
+}
+
+impl TryFrom<Item> for Rc<function::Function> {
+    type Error = error::Error;
+
+    fn try_from(item: Item) -> error::Result<Self> {
+        match item {
+            Item::Function(f) => Ok(f),
+            _ => Err(error::Error::XPTY0004),
+        }
+    }
+}
+
+impl TryFrom<&Item> for Rc<function::Function> {
+    type Error = error::Error;
+
+    fn try_from(item: &Item) -> error::Result<Self> {
+        match item {
+            Item::Function(f) => Ok(f.clone()),
+            _ => Err(error::Error::XPTY0004),
+        }
     }
 }
 
@@ -228,7 +296,6 @@ impl From<function::Map> for Item {
     }
 }
 
-#[derive(Clone)]
 pub enum AtomizedItemIter<'a> {
     Atomic(std::iter::Once<atomic::Atomic>),
     Node(AtomizedNodeIter),
@@ -238,12 +305,12 @@ pub enum AtomizedItemIter<'a> {
 }
 
 impl<'a> AtomizedItemIter<'a> {
-    pub(crate) fn new(item: Item, xot: &'a Xot) -> Self {
+    pub(crate) fn new(item: &'a Item, xot: &'a Xot) -> Self {
         match item {
-            Item::Atomic(a) => Self::Atomic(std::iter::once(a)),
-            Item::Node(n) => Self::Node(AtomizedNodeIter::new(n, xot)),
+            Item::Atomic(a) => Self::Atomic(std::iter::once(a.clone())),
+            Item::Node(n) => Self::Node(AtomizedNodeIter::new(*n, xot)),
             Item::Function(function) => match function.as_ref() {
-                function::Function::Array(a) => Self::Array(AtomizedArrayIter::new(a.clone(), xot)),
+                function::Function::Array(a) => Self::Array(AtomizedArrayIter::new(a, xot)),
                 _ => Self::Erroring(std::iter::once(Err(error::Error::FOTY0013))),
             },
         }
@@ -298,16 +365,15 @@ impl Iterator for AtomizedNodeIter {
     }
 }
 
-#[derive(Clone)]
 pub struct AtomizedArrayIter<'a> {
     xot: &'a Xot,
-    array: function::Array,
+    array: &'a function::Array,
     array_index: usize,
-    iter: Option<Box<stack::AtomizedIter<'a>>>,
+    iter: Option<Box<dyn Iterator<Item = error::Result<atomic::Atomic>> + 'a>>,
 }
 
 impl<'a> AtomizedArrayIter<'a> {
-    fn new(array: function::Array, xot: &'a Xot) -> Self {
+    fn new(array: &'a function::Array, xot: &'a Xot) -> Self {
         Self {
             xot,
             array,
@@ -336,7 +402,7 @@ impl<'a> Iterator for AtomizedArrayIter<'a> {
             if self.array_index >= array.len() {
                 return None;
             }
-            let sequence = array[self.array_index].clone();
+            let sequence = &array[self.array_index];
             self.array_index += 1;
 
             self.iter = Some(Box::new(sequence.atomized(self.xot)));

@@ -5,8 +5,8 @@ use xot::Xot;
 
 use crate::function;
 use crate::interpreter::Interpreter;
-use crate::neovalue::Item;
 use crate::pattern::pattern_core::PredicateMatcher;
+use crate::sequence::{Item, SequenceCore};
 
 #[derive(Debug, Default)]
 pub struct PatternLookup<V: Clone> {
