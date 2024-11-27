@@ -200,7 +200,13 @@ impl<'a> SequenceCore<'a, std::slice::Iter<'a, Item>> for Many {
 
     #[inline]
     fn effective_boolean_value(&self) -> error::Result<bool> {
-        Err(error::Error::XPTY0004)
+        // handle the case where the first item is a node
+        // it has to be a singleton otherwise
+        if matches!(self.items[0], Item::Node(_)) {
+            Ok(true)
+        } else {
+            Err(error::Error::FORG0006)
+        }
     }
 
     #[inline]
