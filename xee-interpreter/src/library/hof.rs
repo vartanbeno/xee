@@ -53,13 +53,13 @@ fn function_lookup(
 #[xpath_fn("fn:function-name($func as function(*)) as xs:QName?")]
 fn function_name(interpreter: &Interpreter, func: &sequence::Item) -> error::Result<Option<Name>> {
     let function = func.to_function()?;
-    Ok(interpreter.function_name(function.as_ref()))
+    Ok(interpreter.function_name(&function))
 }
 
 #[xpath_fn("fn:function-arity($func as function(*)) as xs:integer")]
 fn function_arity(interpreter: &Interpreter, func: &sequence::Item) -> error::Result<IBig> {
     let function = func.to_function()?;
-    Ok(interpreter.function_arity(function.as_ref()).into())
+    Ok(interpreter.function_arity(&function).into())
 }
 
 #[xpath_fn("fn:for-each($seq as item()*, $action as function(item()) as item()*) as item()*")]
@@ -72,7 +72,7 @@ fn for_each(
     let function = action.to_function()?;
 
     for item in seq.iter() {
-        let value = interpreter.call_function_with_arguments(function.clone(), &[item.into()])?;
+        let value = interpreter.call_function_with_arguments(&function, &[item.into()])?;
         for item in value.iter() {
             result.push(item.clone());
         }
@@ -90,8 +90,7 @@ fn filter(
     let function = predicate.to_function()?;
 
     for item in seq.iter() {
-        let value =
-            interpreter.call_function_with_arguments(function.clone(), &[item.clone().into()])?;
+        let value = interpreter.call_function_with_arguments(&function, &[item.clone().into()])?;
         let atom: atomic::Atomic = sequence::one(value.iter())?.to_atomic()?;
         let value: bool = atom.try_into()?;
         if value {
@@ -112,8 +111,8 @@ fn fold_left(
 
     let mut accumulator = zero.clone();
     for item in seq.iter() {
-        accumulator = interpreter
-            .call_function_with_arguments(function.clone(), &[accumulator, item.into()])?;
+        accumulator =
+            interpreter.call_function_with_arguments(&function, &[accumulator, item.into()])?;
     }
     Ok(accumulator)
 }
@@ -131,8 +130,8 @@ fn fold_right(
     // TODO: do not have reverse iterator, so have to collect first
     let seq = seq.iter().collect::<Vec<_>>();
     for item in seq.into_iter().rev() {
-        accumulator = interpreter
-            .call_function_with_arguments(function.clone(), &[item.into(), accumulator])?;
+        accumulator =
+            interpreter.call_function_with_arguments(&function, &[item.into(), accumulator])?;
     }
     Ok(accumulator)
 }
@@ -148,8 +147,8 @@ fn for_each_pair(
     let function = action.to_function()?;
 
     for (item1, item2) in seq1.iter().zip(seq2.iter()) {
-        let value = interpreter
-            .call_function_with_arguments(function.clone(), &[item1.into(), item2.into()])?;
+        let value =
+            interpreter.call_function_with_arguments(&function, &[item1.into(), item2.into()])?;
         for item in value.iter() {
             result.push(item.clone());
         }
@@ -192,8 +191,7 @@ fn sort3(
     let collation = context.static_context().resolve_collation_str(collation)?;
     let function = key.to_function()?;
     input.sorted_by_key(context, collation, |item| {
-        let value =
-            interpreter.call_function_with_arguments(function.clone(), &[item.clone().into()])?;
+        let value = interpreter.call_function_with_arguments(&function, &[item.clone().into()])?;
         Ok(value)
     })
 }
@@ -257,10 +255,10 @@ fn apply(
 ) -> error::Result<sequence::Sequence> {
     let function = function.to_function()?;
     let arity = array.len();
-    if interpreter.function_arity(function.as_ref()) != arity {
+    if interpreter.function_arity(&function) != arity {
         return Err(error::Error::FOAP0001);
     }
-    interpreter.call_function_with_arguments(function.clone(), &array.0)
+    interpreter.call_function_with_arguments(&function, &array.0)
 }
 
 pub(crate) fn static_function_descriptions() -> Vec<StaticFunctionDescription> {

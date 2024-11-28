@@ -358,8 +358,6 @@ mod tests {
 
     use super::*;
 
-    use std::rc::Rc;
-
     use ibig::ibig;
     use xee_name::Namespaces;
     use xee_xpath_ast::parse_sequence_type;
@@ -668,11 +666,9 @@ mod tests {
     fn test_any_function_test() {
         let namespaces = Namespaces::default();
         let sequence_type = parse_sequence_type("function(*)", &namespaces).unwrap();
-        let function = function::Function::Static {
-            static_function_id: function::StaticFunctionId(1),
-            closure_vars: vec![],
-        };
-        let right_sequence = Sequence::from(vec![Item::Function(Rc::new(function))]);
+        let function =
+            function::StaticFunctionData::new(function::StaticFunctionId(1), vec![]).into();
+        let right_sequence = Sequence::from(vec![Item::Function(function)]);
 
         let signature = function::Signature::new(
             vec![Some(
@@ -695,11 +691,9 @@ mod tests {
         let namespaces = Namespaces::default();
         let sequence_type =
             parse_sequence_type("function(xs:integer) as xs:integer", &namespaces).unwrap();
-        let function = function::Function::Static {
-            static_function_id: function::StaticFunctionId(1),
-            closure_vars: vec![],
-        };
-        let right_sequence = Sequence::from(vec![Item::Function(Rc::new(function))]);
+        let function =
+            function::StaticFunctionData::new(function::StaticFunctionId(1), vec![]).into();
+        let right_sequence = Sequence::from(vec![Item::Function(function)]);
 
         let signature = function::Signature::new(
             vec![Some(
@@ -722,11 +716,9 @@ mod tests {
         let namespaces = Namespaces::default();
         let sequence_type =
             parse_sequence_type("function(xs:integer) as xs:integer", &namespaces).unwrap();
-        let function = function::Function::Static {
-            static_function_id: function::StaticFunctionId(1),
-            closure_vars: vec![],
-        };
-        let right_sequence = Sequence::from(vec![Item::Function(Rc::new(function))]);
+        let function =
+            function::StaticFunctionData::new(function::StaticFunctionId(1), vec![]).into();
+        let right_sequence = Sequence::from(vec![Item::Function(function)]);
 
         let signature = function::Signature::new(
             vec![Some(
@@ -749,11 +741,9 @@ mod tests {
         let namespaces = Namespaces::default();
         let sequence_type =
             parse_sequence_type("function(xs:integer) as xs:integer", &namespaces).unwrap();
-        let function = function::Function::Static {
-            static_function_id: function::StaticFunctionId(1),
-            closure_vars: vec![],
-        };
-        let wrong_sequence = Sequence::from(vec![Item::Function(Rc::new(function))]);
+        let function =
+            function::StaticFunctionData::new(function::StaticFunctionId(1), vec![]).into();
+        let wrong_sequence = Sequence::from(vec![Item::Function(function)]);
 
         let signature = function::Signature::new(
             vec![

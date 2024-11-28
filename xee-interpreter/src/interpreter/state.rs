@@ -1,5 +1,3 @@
-use std::rc::Rc;
-
 use arrayvec::ArrayVec;
 use xot::Xot;
 
@@ -112,7 +110,7 @@ impl<'a> State<'a> {
         self.stack.pop().unwrap()
     }
 
-    pub(crate) fn function(&self) -> error::Result<Rc<function::Function>> {
+    pub(crate) fn function(&self) -> error::Result<function::Function> {
         // the function is always just below the base
         let value = &self.stack[self.frame().base - 1];
         match value {
@@ -157,7 +155,7 @@ impl<'a> State<'a> {
         self.frame_mut().ip = (self.frame().ip as i32 + displacement) as usize;
     }
 
-    pub(crate) fn callable(&self, arity: usize) -> error::Result<Rc<function::Function>> {
+    pub(crate) fn callable(&self, arity: usize) -> error::Result<function::Function> {
         let value = &self.stack[self.stack.len() - (arity + 1)];
         match value {
             stack::Value::Sequence(sequence) => sequence.clone().try_into(),

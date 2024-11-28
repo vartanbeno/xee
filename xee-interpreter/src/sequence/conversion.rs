@@ -1,5 +1,3 @@
-use std::rc::Rc;
-
 use crate::{atomic, error, function};
 
 use super::{Item, Sequence, SequenceCore};
@@ -37,7 +35,7 @@ impl TryFrom<Sequence> for xot::Node {
     }
 }
 
-impl TryFrom<Sequence> for Rc<function::Function> {
+impl TryFrom<Sequence> for function::Function {
     type Error = error::Error;
 
     fn try_from(sequence: Sequence) -> Result<Self, Self::Error> {

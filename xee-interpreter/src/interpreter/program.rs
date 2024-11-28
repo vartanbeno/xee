@@ -112,12 +112,8 @@ impl<'a, 'b> FunctionInfo<'a, 'b> {
     /// Return the arity of the function.
     pub fn arity(&self) -> usize {
         match self.function {
-            function::Function::Inline {
-                inline_function_id, ..
-            } => self.program.inline_function(*inline_function_id).arity(),
-            function::Function::Static {
-                static_function_id, ..
-            } => self.program.static_function(*static_function_id).arity(),
+            function::Function::Inline(data) => self.program.inline_function(data.id).arity(),
+            function::Function::Static(data) => self.program.static_function(data.id).arity(),
             function::Function::Array(_) => 1,
             function::Function::Map(_) => 1,
         }
@@ -128,10 +124,8 @@ impl<'a, 'b> FunctionInfo<'a, 'b> {
     /// Note that only static functions have names.
     pub fn name(&self) -> Option<Name> {
         match self.function {
-            function::Function::Static {
-                static_function_id, ..
-            } => {
-                let static_function = self.program.static_function(*static_function_id);
+            function::Function::Static(data) => {
+                let static_function = self.program.static_function(data.id);
                 Some(static_function.name().clone())
             }
             _ => None,
@@ -141,16 +135,12 @@ impl<'a, 'b> FunctionInfo<'a, 'b> {
     /// Return the signature of the function.
     pub fn signature(&self) -> &'a function::Signature {
         match &self.function {
-            function::Function::Static {
-                static_function_id, ..
-            } => {
-                let static_function = self.program.static_function(*static_function_id);
+            function::Function::Static(data) => {
+                let static_function = self.program.static_function(data.id);
                 static_function.signature()
             }
-            function::Function::Inline {
-                inline_function_id, ..
-            } => {
-                let inline_function = self.program.inline_function(*inline_function_id);
+            function::Function::Inline(data) => {
+                let inline_function = self.program.inline_function(data.id);
                 inline_function.signature()
             }
             function::Function::Map(_map) => &self.program.map_signature,

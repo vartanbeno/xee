@@ -122,8 +122,7 @@ fn for_each(
     let function = action.to_function()?;
     let mut result = function::Array::new(vec![]);
     for sequence in array.iter() {
-        let sequence =
-            interpreter.call_function_with_arguments(function.clone(), &[sequence.clone()])?;
+        let sequence = interpreter.call_function_with_arguments(&function, &[sequence.clone()])?;
         result.push(sequence);
     }
     Ok(result)
@@ -140,8 +139,7 @@ fn filter(
     let function = function.to_function()?;
     let mut result = function::Array::new(vec![]);
     for sequence in array.iter() {
-        let include =
-            interpreter.call_function_with_arguments(function.clone(), &[sequence.clone()])?;
+        let include = interpreter.call_function_with_arguments(&function, &[sequence.clone()])?;
         let include: atomic::Atomic = sequence::one(include.iter())?.to_atomic()?;
         let include: bool = include.try_into()?;
         if include {
@@ -163,7 +161,7 @@ fn fold_left(
     let mut accumulator = zero.clone();
     for sequence in array.iter() {
         accumulator = interpreter
-            .call_function_with_arguments(function.clone(), &[accumulator, sequence.clone()])?;
+            .call_function_with_arguments(&function, &[accumulator, sequence.clone()])?;
     }
     Ok(accumulator)
 }
@@ -180,7 +178,7 @@ fn fold_right(
     let mut accumulator = zero.clone();
     for sequence in array.iter().rev() {
         accumulator = interpreter
-            .call_function_with_arguments(function.clone(), &[sequence.clone(), accumulator])?;
+            .call_function_with_arguments(&function, &[sequence.clone(), accumulator])?;
     }
     Ok(accumulator)
 }
@@ -196,10 +194,8 @@ fn for_each_pair(
 
     let mut result = function::Array::new(vec![]);
     for (sequence1, sequence2) in array1.iter().zip(array2.iter()) {
-        let sequence = interpreter.call_function_with_arguments(
-            function.clone(),
-            &[sequence1.clone(), sequence2.clone()],
-        )?;
+        let sequence = interpreter
+            .call_function_with_arguments(&function, &[sequence1.clone(), sequence2.clone()])?;
         result.push(sequence);
     }
     Ok(result)
@@ -239,7 +235,7 @@ fn sort3(
     let function = key.to_function()?;
     sort_by_sequence(context, input, collation, |sequence| {
         let new_sequence =
-            interpreter.call_function_with_arguments(function.clone(), &[sequence.clone()])?;
+            interpreter.call_function_with_arguments(&function, &[sequence.clone()])?;
         Ok(new_sequence)
     })
 }

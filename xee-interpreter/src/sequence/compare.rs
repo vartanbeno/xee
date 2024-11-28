@@ -36,7 +36,7 @@ impl Sequence {
                         return Ok(false);
                     }
                 }
-                (Item::Function(a), Item::Function(b)) => match (a.as_ref(), b.as_ref()) {
+                (Item::Function(a), Item::Function(b)) => match (a, b) {
                     (function::Function::Array(a), function::Function::Array(b)) => {
                         if !a.deep_equal(b.clone(), collation, default_offset, xot)? {
                             return Ok(false);

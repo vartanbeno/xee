@@ -1,5 +1,4 @@
 use std::cmp::Ordering;
-use std::rc::Rc;
 
 use ibig::{ibig, IBig};
 
@@ -150,11 +149,9 @@ impl<'a> Interpreter<'a> {
                     for _ in 0..closure_function.closure_names.len() {
                         closure_vars.push(self.state.pop_value());
                     }
-                    let item: sequence::Item = function::Function::Inline {
-                        inline_function_id,
-                        closure_vars,
-                    }
-                    .into();
+                    let function: function::Function =
+                        function::InlineFunctionData::new(inline_function_id, closure_vars).into();
+                    let item: sequence::Item = function.into();
                     self.state.push(item);
                 }
                 EncodedInstruction::StaticClosure => {
@@ -673,10 +670,7 @@ impl<'a> Interpreter<'a> {
         } else {
             vec![]
         };
-        Ok(function::Function::Static {
-            static_function_id,
-            closure_vars,
-        })
+        Ok(function::StaticFunctionData::new(static_function_id, closure_vars).into())
     }
 
     pub(crate) fn current_inline_function(&self) -> &function::InlineFunction {
@@ -695,12 +689,12 @@ impl<'a> Interpreter<'a> {
 
     fn call(&mut self, arity: u8) -> error::Result<()> {
         let function = self.state.callable(arity as usize)?;
-        self.call_function(function, arity)
+        self.call_function(&function, arity)
     }
 
     pub(crate) fn call_function_with_arguments(
         &mut self,
-        function: Rc<function::Function>,
+        function: &function::Function,
         arguments: &[sequence::Sequence],
     ) -> error::Result<sequence::Sequence> {
         // put function onto the stack
@@ -711,8 +705,8 @@ impl<'a> Interpreter<'a> {
         for arg in arguments.iter() {
             self.state.push(arg.clone());
         }
-        self.call_function(function.clone(), arity)?;
-        if matches!(function.as_ref(), function::Function::Inline { .. }) {
+        self.call_function(function, arity)?;
+        if matches!(function, function::Function::Inline(_)) {
             // run interpreter until we return to the base
             // we started in
             self.run_actual(self.state.frame().base())?;
@@ -720,16 +714,12 @@ impl<'a> Interpreter<'a> {
         self.state.pop()
     }
 
-    fn call_function(&mut self, function: Rc<function::Function>, arity: u8) -> error::Result<()> {
-        match function.as_ref() {
-            function::Function::Static {
-                static_function_id,
-                closure_vars,
-            } => self.call_static(*static_function_id, arity, closure_vars),
-            function::Function::Inline {
-                inline_function_id,
-                closure_vars: _,
-            } => self.call_inline(*inline_function_id, arity),
+    fn call_function(&mut self, function: &function::Function, arity: u8) -> error::Result<()> {
+        match function {
+            function::Function::Static(data) => {
+                self.call_static(data.id, arity, &data.closure_vars)
+            }
+            function::Function::Inline(data) => self.call_inline(data.id, arity),
             function::Function::Array(array) => self.call_array(array, arity as usize),
             function::Function::Map(map) => self.call_map(map, arity as usize),
         }
@@ -848,7 +838,7 @@ impl<'a> Interpreter<'a> {
     fn lookup(&mut self) -> error::Result<()> {
         let key_specifier = self.state.pop()?;
         let value = self.state.pop()?;
-        let function: Rc<function::Function> = value.try_into()?;
+        let function: function::Function = value.try_into()?;
         let value = self.lookup_value(&function, key_specifier)?;
         let sequence: sequence::Sequence = value.into();
         self.state.push(sequence);
@@ -908,12 +898,12 @@ impl<'a> Interpreter<'a> {
 
     fn wildcard_lookup(&mut self) -> error::Result<()> {
         let value = self.state.pop()?;
-        let function: Rc<function::Function> = value.try_into()?;
-        let value = match function.as_ref() {
+        let function: function::Function = value.try_into()?;
+        let value = match function {
             function::Function::Map(map) => {
                 let mut result = Vec::new();
                 for key in map.keys() {
-                    for value in self.lookup_map(map, key.into())? {
+                    for value in self.lookup_map(&map, key.into())? {
                         result.push(value)
                     }
                 }
@@ -923,7 +913,7 @@ impl<'a> Interpreter<'a> {
                 let mut result = Vec::new();
                 for i in 1..(array.len() + 1) {
                     let i: IBig = i.into();
-                    for value in self.lookup_array(array, i.into())? {
+                    for value in self.lookup_array(&array, i.into())? {
                         result.push(value)
                     }
                 }
@@ -1196,11 +1186,8 @@ impl<'a> Interpreter<'a> {
                 atomic::Atomic::from(position).into(),
                 atomic::Atomic::from(size.clone()).into(),
             ];
-            let function = Rc::new(function::Function::Inline {
-                inline_function_id: function_id,
-                closure_vars: Vec::new(),
-            });
-            self.call_function_with_arguments(function, &arguments)
+            let function = function::InlineFunctionData::new(function_id, Vec::new()).into();
+            self.call_function_with_arguments(&function, &arguments)
                 .map(Some)
         } else {
             Ok(None)

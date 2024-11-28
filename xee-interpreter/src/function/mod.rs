@@ -9,7 +9,9 @@ mod static_function;
 
 pub use array::Array;
 pub use function_core::Function;
-pub use function_core::{InlineFunctionId, StaticFunctionId};
+pub use function_core::{
+    InlineFunctionData, InlineFunctionId, StaticFunctionData, StaticFunctionId,
+};
 pub use inline_function::{CastType, InlineFunction, Name};
 pub use map::Map;
 pub use signature::Signature;

@@ -100,7 +100,7 @@ impl<'a> AtomizedItemIter<'a> {
         match item {
             Item::Atomic(a) => Self::Atomic(std::iter::once(a.clone())),
             Item::Node(n) => Self::Node(AtomizedNodeIter::new(*n, xot)),
-            Item::Function(function) => match function.as_ref() {
+            Item::Function(function) => match function {
                 function::Function::Array(a) => Self::Array(AtomizedArrayIter::new(a, xot)),
                 _ => Self::Erroring(std::iter::once(Err(error::Error::FOTY0013))),
             },

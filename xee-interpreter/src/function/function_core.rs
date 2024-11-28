@@ -1,3 +1,5 @@
+use std::rc::Rc;
+
 use crate::{context, stack};
 
 use super::array::Array;
@@ -31,23 +33,53 @@ impl StaticFunctionId {
 
 #[derive(Debug, Clone, PartialEq)]
 pub enum Function {
-    Static {
-        static_function_id: StaticFunctionId,
-        closure_vars: Vec<stack::Value>,
-    },
-    Inline {
-        inline_function_id: InlineFunctionId,
-        closure_vars: Vec<stack::Value>,
-    },
+    Static(Rc<StaticFunctionData>),
+    Inline(Rc<InlineFunctionData>),
     Map(Map),
     Array(Array),
+}
+
+#[derive(Debug, PartialEq)]
+pub struct StaticFunctionData {
+    pub(crate) id: StaticFunctionId,
+    pub(crate) closure_vars: Vec<stack::Value>,
+}
+
+impl From<StaticFunctionData> for Function {
+    fn from(data: StaticFunctionData) -> Self {
+        Self::Static(Rc::new(data))
+    }
+}
+
+impl StaticFunctionData {
+    pub(crate) fn new(id: StaticFunctionId, closure_vars: Vec<stack::Value>) -> Self {
+        StaticFunctionData { id, closure_vars }
+    }
+}
+
+#[derive(Debug, PartialEq)]
+pub struct InlineFunctionData {
+    pub(crate) id: InlineFunctionId,
+    pub(crate) closure_vars: Vec<stack::Value>,
+}
+
+impl From<InlineFunctionData> for Function {
+    fn from(data: InlineFunctionData) -> Self {
+        Self::Inline(Rc::new(data))
+    }
+}
+
+impl InlineFunctionData {
+    pub(crate) fn new(id: InlineFunctionId, closure_vars: Vec<stack::Value>) -> Self {
+        InlineFunctionData { id, closure_vars }
+    }
 }
 
 impl Function {
     pub(crate) fn closure_vars(&self) -> &[stack::Value] {
         match self {
-            Self::Static { closure_vars, .. } => closure_vars,
-            Self::Inline { closure_vars, .. } => closure_vars,
+            Self::Static(data) => &data.closure_vars,
+            Self::Inline(data) => &data.closure_vars,
             _ => unreachable!(),
         }
     }
@@ -58,16 +90,12 @@ impl Function {
         context: &context::DynamicContext,
     ) -> String {
         match self {
-            Self::Static {
-                static_function_id, ..
-            } => {
-                let function = context.static_function_by_id(*static_function_id);
+            Self::Static(data) => {
+                let function = context.static_function_by_id(data.id);
                 function.display_representation()
             }
-            Self::Inline {
-                inline_function_id, ..
-            } => {
-                let function = context.inline_function_by_id(*inline_function_id);
+            Self::Inline(data) => {
+                let function = context.inline_function_by_id(data.id);
                 function.display_representation()
             }
             Self::Map(map) => map.display_representation(xot, context),

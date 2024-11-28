@@ -73,12 +73,8 @@ fn serialize2(
     params: Option<&sequence::Item>,
 ) -> error::Result<String> {
     let map = if let Some(params) = params {
-        if let sequence::Item::Function(function) = params {
-            if let function::Function::Map(map) = function.as_ref() {
-                map.clone()
-            } else {
-                return Err(error::Error::XPTY0004);
-            }
+        if let sequence::Item::Function(function::Function::Map(map)) = params {
+            map.clone()
         } else {
             // TODO: handle element(output::serialization-parameters)
             return Err(error::Error::XPTY0004);

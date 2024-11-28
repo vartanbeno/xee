@@ -21,8 +21,11 @@ pub enum Item {
     /// This is defined using the [`xot`] library.
     Node(xot::Node),
     /// An XPath function type.
-    Function(Rc<function::Function>),
+    Function(function::Function),
 }
+
+#[cfg(target_arch = "x86_64")]
+static_assertions::assert_eq_size!(Item, [u8; 24]);
 
 impl Item {
     /// Try to get the atomic value of the item.
@@ -42,7 +45,7 @@ impl Item {
     }
 
     /// Try to get the function value of the item.
-    pub fn to_function(&self) -> error::Result<Rc<function::Function>> {
+    pub fn to_function(&self) -> error::Result<function::Function> {
         match self {
             Item::Function(f) => Ok(f.clone()),
             _ => Err(error::Error::XPTY0004),
@@ -51,23 +54,19 @@ impl Item {
 
     /// Try to get the value as an XPath Map.
     pub fn to_map(&self) -> error::Result<function::Map> {
-        match self {
-            Item::Function(function) => match function.as_ref() {
-                function::Function::Map(map) => Ok(map.clone()),
-                _ => Err(error::Error::XPTY0004),
-            },
-            _ => Err(error::Error::XPTY0004),
+        if let Item::Function(function::Function::Map(map)) = self {
+            Ok(map.clone())
+        } else {
+            Err(error::Error::XPTY0004)
         }
     }
 
     /// Try to get the value as an XPath Array.
     pub fn to_array(&self) -> error::Result<function::Array> {
-        match self {
-            Item::Function(function) => match function.as_ref() {
-                function::Function::Array(array) => Ok(array.clone()),
-                _ => Err(error::Error::XPTY0004),
-            },
-            _ => Err(error::Error::XPTY0004),
+        if let Item::Function(function::Function::Array(array)) = self {
+            Ok(array.clone())
+        } else {
+            Err(error::Error::XPTY0004)
         }
     }
 
@@ -143,7 +142,7 @@ impl Item {
     /// Check whether this item is represents an XPath Map.
     pub(crate) fn is_map(&self) -> bool {
         match self {
-            Item::Function(function) => matches!(function.as_ref(), function::Function::Map(_)),
+            Item::Function(function) => matches!(function, function::Function::Map(_)),
             _ => false,
         }
     }
@@ -151,7 +150,7 @@ impl Item {
     /// Check whether this item is represents an XPath Array.
     pub(crate) fn is_array(&self) -> bool {
         match self {
-            Item::Function(function) => matches!(function.as_ref(), function::Function::Array(_)),
+            Item::Function(function) => matches!(function, function::Function::Array(_)),
             _ => false,
         }
     }
@@ -249,18 +248,18 @@ impl TryFrom<&Item> for xot::Node {
     }
 }
 
-impl TryFrom<Item> for Rc<function::Function> {
+impl TryFrom<Item> for function::Function {
     type Error = error::Error;
 
     fn try_from(item: Item) -> error::Result<Self> {
         match item {
-            Item::Function(f) => Ok(f),
+            Item::Function(f) => Ok(f.clone()),
             _ => Err(error::Error::XPTY0004),
         }
     }
 }
 
-impl TryFrom<&Item> for Rc<function::Function> {
+impl TryFrom<&Item> for function::Function {
     type Error = error::Error;
 
     fn try_from(item: &Item) -> error::Result<Self> {
@@ -273,25 +272,19 @@ impl TryFrom<&Item> for Rc<function::Function> {
 
 impl From<function::Function> for Item {
     fn from(f: function::Function) -> Self {
-        Self::Function(Rc::new(f))
-    }
-}
-
-impl From<Rc<function::Function>> for Item {
-    fn from(f: Rc<function::Function>) -> Self {
         Self::Function(f)
     }
 }
 
 impl From<function::Array> for Item {
     fn from(array: function::Array) -> Self {
-        Self::Function(Rc::new(function::Function::Array(array)))
+        Self::Function(function::Function::Array(array))
     }
 }
 
 impl From<function::Map> for Item {
     fn from(map: function::Map) -> Self {
-        Self::Function(Rc::new(function::Function::Map(map)))
+        Self::Function(function::Function::Map(map))
     }
 }
 
@@ -308,7 +301,7 @@ impl<'a> AtomizedItemIter<'a> {
         match item {
             Item::Atomic(a) => Self::Atomic(std::iter::once(a.clone())),
             Item::Node(n) => Self::Node(AtomizedNodeIter::new(*n, xot)),
-            Item::Function(function) => match function.as_ref() {
+            Item::Function(function) => match function {
                 function::Function::Array(a) => Self::Array(AtomizedArrayIter::new(a, xot)),
                 _ => Self::Erroring(std::iter::once(Err(error::Error::FOTY0013))),
             },

@@ -176,7 +176,7 @@ fn find_helper(
     let mut result: Vec<sequence::Sequence> = Vec::new();
     for item in input.iter() {
         if let sequence::Item::Function(function) = item {
-            match function.as_ref() {
+            match function {
                 function::Function::Array(array) => {
                     for entry in array.iter() {
                         let found = find_helper(entry, key.clone())?;
@@ -224,7 +224,7 @@ fn for_each(
     let mut result: Vec<sequence::Item> = Vec::with_capacity(map.len());
     for (_, (key, value)) in map.0.iter() {
         let r = interpreter
-            .call_function_with_arguments(function.clone(), &[key.clone().into(), value.clone()])?;
+            .call_function_with_arguments(&function, &[key.clone().into(), value.clone()])?;
         for item in r.iter() {
             result.push(item.clone());
         }

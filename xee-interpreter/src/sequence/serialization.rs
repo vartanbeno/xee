@@ -255,7 +255,7 @@ fn serialize_json_item(
     match item {
         Item::Atomic(atomic) => serialize_json_atomic(atomic, parameters),
         Item::Node(node) => serialize_json_node(*node, parameters, xot),
-        Item::Function(function) => serialize_json_function(function.as_ref(), parameters, xot),
+        Item::Function(function) => serialize_json_function(function, parameters, xot),
     }
 }
 

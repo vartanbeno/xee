@@ -1,5 +1,3 @@
-use std::rc::Rc;
-
 use xee_xpath_ast::Pattern;
 use xot::Xot;
 
@@ -32,10 +30,7 @@ impl<'a> PredicateMatcher for Interpreter<'a> {
         // TODO: extract 'call_function_id_with_arguments' that is used also by
         // apply_templates_sequence. call it with context, position and length,
         // again see apply_templates_sequence
-        let function = Rc::new(function::Function::Inline {
-            inline_function_id,
-            closure_vars: Vec::new(),
-        });
+        let function = function::InlineFunctionData::new(inline_function_id, Vec::new()).into();
         let arguments = if let Item::Node(node) = item {
             if let Some(parent) = self.xot().parent(*node) {
                 let position = self.xot().child_index(parent, *node).unwrap() + 1;
@@ -54,7 +49,7 @@ impl<'a> PredicateMatcher for Interpreter<'a> {
 
         // the specification says to swallow any errors
         // TODO: log errors somehow here?
-        let value = self.call_function_with_arguments(function, &arguments);
+        let value = self.call_function_with_arguments(&function, &arguments);
         if let Ok(value) = value {
             value.effective_boolean_value().unwrap_or(false)
         } else {
