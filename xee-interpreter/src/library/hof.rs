@@ -204,7 +204,7 @@ fn sort_without_key(
 ) -> error::Result<sequence::Sequence> {
     sort_by_sequence(context, input, collation, |item| {
         // the equivalent of fn:data()
-        let seq: sequence::Sequence = item.into();
+        let seq: sequence::Sequence = item.clone().into();
         let atoms = seq
             .atomized(interpreter.xot())
             .collect::<error::Result<Vec<_>>>()?;

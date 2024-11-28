@@ -110,7 +110,7 @@ where
     fn to_array(&'a self) -> error::Result<function::Array> {
         let mut array = Vec::with_capacity(self.len());
         for item in self.iter() {
-            array.push(item.clone().into());
+            array.push(item.into());
         }
         // TODO: array.into() is somehow returning a Result, that seems weird
         // if this is really fallible, it should be try into. If it's not,

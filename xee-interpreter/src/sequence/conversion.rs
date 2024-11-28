@@ -9,12 +9,6 @@ impl From<Item> for Sequence {
     }
 }
 
-impl From<&Item> for Sequence {
-    fn from(item: &Item) -> Self {
-        item.clone().into()
-    }
-}
-
 // turn a single node into a sequence
 impl From<xot::Node> for Sequence {
     fn from(node: xot::Node) -> Self {

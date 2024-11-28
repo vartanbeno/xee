@@ -38,14 +38,14 @@ impl Sequence {
                 let mut many = Vec::with_capacity(items.len() + 1);
                 many.push(item.into_item());
                 for item in items.iter() {
-                    many.push(item.clone());
+                    many.push(item);
                 }
                 Self::Many(many.into())
             }
             (Self::Many(items), Self::One(item)) => {
                 let mut many = Vec::with_capacity(items.len() + 1);
                 for item in items.iter() {
-                    many.push(item.clone());
+                    many.push(item);
                 }
                 many.push(item.clone().into_item());
                 Self::Many(many.into())
@@ -53,10 +53,10 @@ impl Sequence {
             (Self::Many(items1), Self::Many(items2)) => {
                 let mut many = Vec::with_capacity(items1.len() + items2.len());
                 for item in items1.iter() {
-                    many.push(item.clone());
+                    many.push(item);
                 }
                 for item in items2.iter() {
-                    many.push(item.clone());
+                    many.push(item);
                 }
                 Self::Many(many.into())
             }
@@ -108,7 +108,7 @@ impl Sequence {
     ) -> error::Result<Self> {
         self.sorted_by_key(context, collation, |item| {
             // the equivalent of fn:data()
-            let seq: Self = item.clone().into();
+            let seq: Self = item.into();
             seq.atomized(xot).collect::<error::Result<Sequence>>()
         })
     }
@@ -155,11 +155,11 @@ impl Sequence {
             if let Ok(array) = item.to_array() {
                 for sequence in array.iter() {
                     for item in sequence.flatten()?.iter() {
-                        result.push(item.clone());
+                        result.push(item);
                     }
                 }
             } else {
-                result.push(item.clone());
+                result.push(item);
             }
         }
         Ok(result.into())

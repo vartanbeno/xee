@@ -1160,7 +1160,7 @@ impl<'a> Interpreter<'a> {
         let size: IBig = sequence.len().into();
 
         for (i, item) in sequence.iter().enumerate() {
-            let sequence = self.apply_templates_item(mode, &item, i, size.clone())?;
+            let sequence = self.apply_templates_item(mode, item, i, size.clone())?;
             if let Some(sequence) = sequence {
                 for item in sequence.iter() {
                     r.push(item.clone());
@@ -1173,11 +1173,11 @@ impl<'a> Interpreter<'a> {
     fn apply_templates_item(
         &mut self,
         mode: pattern::ModeId,
-        item: &sequence::Item,
+        item: sequence::Item,
         position: usize,
         size: IBig,
     ) -> error::Result<Option<sequence::Sequence>> {
-        let function_id = self.lookup_pattern(mode, item);
+        let function_id = self.lookup_pattern(mode, &item);
 
         if let Some(function_id) = function_id {
             let position: IBig = (position + 1).into();
