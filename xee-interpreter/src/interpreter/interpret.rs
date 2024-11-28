@@ -451,18 +451,34 @@ impl<'a> Interpreter<'a> {
                         Ordering::Greater => self.state.push(sequence::Sequence::default()),
                         Ordering::Equal => self.state.push(a),
                         Ordering::Less => {
-                            let length: IBig = b - &a + 1;
+                            let length: IBig = b.clone() - &a + 1;
                             if length > MAXIMUM_RANGE_SIZE.into() {
                                 return Err(error::Error::FOAR0002);
                             }
-                            let mut items = Vec::with_capacity(length.clone().try_into().unwrap());
-                            let mut i: IBig = 0.into();
-                            while i < length {
-                                let item: sequence::Item = (&a + &i).into();
-                                items.push(item);
-                                i += 1;
-                            }
-                            let sequence: sequence::Sequence = items.into();
+                            // if a and b are in the usize range, we can make
+                            // an efficient range object
+
+                            let a_usize: Result<usize, _> = a.clone().try_into();
+                            let b_usize: Result<usize, _> = b.try_into();
+
+                            let sequence: sequence::Sequence =
+                                if let (Ok(a_usize), Ok(b_usize)) = (a_usize, b_usize) {
+                                    // add one to convert xpath inclusive range into non-inclusive range
+                                    let one: usize = 1;
+                                    let range = sequence::Range::new(a_usize, b_usize + one);
+                                    range.into()
+                                } else {
+                                    let mut items =
+                                        Vec::with_capacity(length.clone().try_into().unwrap());
+                                    let mut i: IBig = 0.into();
+                                    while i < length {
+                                        let item: sequence::Item = (&a + &i).into();
+                                        items.push(item);
+                                        i += 1;
+                                    }
+                                    items.into()
+                                };
+
                             self.state.push(sequence)
                         }
                     }
@@ -479,7 +495,7 @@ impl<'a> Interpreter<'a> {
                     let index = index.cast_to_integer_value::<i64>()? as usize;
                     // substract 1 as Xpath is 1-indexed
                     let item = value.get(index - 1).ok_or(error::Error::XPTY0004)?;
-                    let sequence: sequence::Sequence = item.clone().into();
+                    let sequence: sequence::Sequence = item.into();
                     self.state.push(sequence)
                 }
                 EncodedInstruction::BuildNew => {

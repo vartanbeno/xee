@@ -1,5 +1,7 @@
 use std::rc::Rc;
 
+use ibig::IBig;
+
 use crate::error;
 
 use super::item::Item;
@@ -20,7 +22,7 @@ impl<'a> SequenceCore<'a, std::iter::Empty<Item>> for Empty {
     }
 
     #[inline]
-    fn get(&self, _index: usize) -> Option<&Item> {
+    fn get(&self, _index: usize) -> Option<Item> {
         None
     }
 
@@ -89,9 +91,9 @@ impl<'a> SequenceCore<'a, std::iter::Once<Item>> for One {
     }
 
     #[inline]
-    fn get(&self, index: usize) -> Option<&Item> {
+    fn get(&self, index: usize) -> Option<Item> {
         if index == 0 {
-            Some(&self.item)
+            Some(self.item.clone())
         } else {
             None
         }
@@ -150,8 +152,8 @@ impl<'a> SequenceCore<'a, std::iter::Cloned<std::slice::Iter<'a, Item>>> for Man
     }
 
     #[inline]
-    fn get(&self, index: usize) -> Option<&Item> {
-        self.items.get(index)
+    fn get(&self, index: usize) -> Option<Item> {
+        self.items.get(index).cloned()
     }
 
     #[inline]
@@ -183,6 +185,121 @@ impl<'a> SequenceCore<'a, std::iter::Cloned<std::slice::Iter<'a, Item>>> for Man
     #[inline]
     fn string_value(&self, _xot: &xot::Xot) -> error::Result<String> {
         Err(error::Error::XPTY0004)
+    }
+}
+
+#[derive(Debug, Clone, PartialEq)]
+pub struct Range {
+    start: usize,
+    end: usize,
+}
+
+impl Range {
+    pub(crate) fn new(start: usize, end: usize) -> Self {
+        Range { start, end }
+    }
+
+    pub(crate) fn start(&self) -> usize {
+        self.start
+    }
+    pub(crate) fn end(&self) -> usize {
+        self.end
+    }
+}
+
+impl<'a> SequenceCore<'a, RangeIterator> for Range {
+    #[inline]
+    fn is_empty(&self) -> bool {
+        self.start == self.end
+    }
+
+    #[inline]
+    fn len(&self) -> usize {
+        self.end - self.start
+    }
+
+    #[inline]
+    fn get(&self, index: usize) -> Option<Item> {
+        if index < self.len() {
+            let i: IBig = (self.start + index).into();
+            Some(i.into())
+        } else {
+            None
+        }
+    }
+
+    #[inline]
+    fn one(self) -> error::Result<Item> {
+        match self.len() {
+            0 => Err(error::Error::XPTY0004),
+            1 => {
+                let i: IBig = self.start.into();
+                Ok(i.into())
+            }
+            _ => Err(error::Error::XPTY0004),
+        }
+    }
+
+    #[inline]
+    fn option(self) -> error::Result<Option<Item>> {
+        match self.len() {
+            0 => Ok(None),
+            1 => {
+                let i: IBig = self.start.into();
+                Ok(Some(i.into()))
+            }
+            _ => Err(error::Error::XPTY0004),
+        }
+    }
+
+    #[inline]
+    fn iter(&'a self) -> RangeIterator {
+        RangeIterator {
+            start: self.start,
+            end: self.end,
+            index: 0,
+        }
+    }
+
+    #[inline]
+    fn effective_boolean_value(&self) -> error::Result<bool> {
+        match self.len() {
+            0 => Ok(false),
+            1 => Ok(true),
+            _ => Err(error::Error::FORG0006),
+        }
+    }
+
+    #[inline]
+    fn string_value(&self, _xot: &xot::Xot) -> error::Result<String> {
+        match self.len() {
+            0 => Ok(String::new()),
+            1 => {
+                let i: IBig = self.start.into();
+                Ok(i.to_string())
+            }
+            _ => Err(error::Error::XPTY0004),
+        }
+    }
+}
+
+pub struct RangeIterator {
+    start: usize,
+    end: usize,
+    index: usize,
+}
+
+impl Iterator for RangeIterator {
+    type Item = Item;
+
+    fn next(&mut self) -> Option<Self::Item> {
+        if self.index < (self.end - self.start) {
+            let i: IBig = (self.start + self.index).into();
+            self.index += 1;
+            Some(i.into())
+        } else {
+            None
+        }
     }
 }
 
@@ -250,5 +367,26 @@ impl<'a, I> SequenceOrder<'a, I> for Many
 where
     I: Iterator<Item = Item>,
     Many: SequenceCore<'a, I>,
+{
+}
+
+impl<'a, I> SequenceExt<'a, I> for Range
+where
+    I: Iterator<Item = Item> + 'a,
+    Range: SequenceCore<'a, I>,
+{
+}
+
+impl<'a, I> SequenceCompare<'a, I> for Range
+where
+    I: Iterator<Item = Item> + 'a,
+    Range: SequenceCore<'a, I>,
+{
+}
+
+impl<'a, I> SequenceOrder<'a, I> for Range
+where
+    I: Iterator<Item = Item>,
+    Range: SequenceCore<'a, I>,
 {
 }

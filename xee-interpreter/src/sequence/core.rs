@@ -17,7 +17,7 @@ use crate::{
 use super::{
     item::Item,
     traits::{BoxedItemIter, SequenceCompare, SequenceCore, SequenceExt, SequenceOrder},
-    variant::{Empty, Many, One},
+    variant::{Empty, Many, One, Range},
 };
 
 // The Sequence that goes onto the stack is the size of an single item, as
@@ -27,6 +27,13 @@ pub enum Sequence {
     Empty(Empty),
     One(One),
     Many(Many),
+    Range(Range),
+}
+
+impl From<Range> for Sequence {
+    fn from(inner: Range) -> Self {
+        Self::Range(inner)
+    }
 }
 
 // a static assertion to ensure that Sequence never grows in size
@@ -45,6 +52,7 @@ impl<'a> SequenceCore<'a, BoxedItemIter<'a>> for Sequence {
             Sequence::Empty(inner) => inner.is_empty(),
             Sequence::One(inner) => inner.is_empty(),
             Sequence::Many(inner) => inner.is_empty(),
+            Sequence::Range(inner) => inner.is_empty(),
         }
     }
 
@@ -53,14 +61,16 @@ impl<'a> SequenceCore<'a, BoxedItemIter<'a>> for Sequence {
             Sequence::Empty(inner) => inner.len(),
             Sequence::One(inner) => inner.len(),
             Sequence::Many(inner) => inner.len(),
+            Sequence::Range(inner) => inner.len(),
         }
     }
 
-    fn get(&self, index: usize) -> Option<&Item> {
+    fn get(&self, index: usize) -> Option<Item> {
         match self {
             Sequence::Empty(inner) => inner.get(index),
             Sequence::One(inner) => inner.get(index),
             Sequence::Many(inner) => inner.get(index),
+            Sequence::Range(inner) => inner.get(index),
         }
     }
 
@@ -69,6 +79,7 @@ impl<'a> SequenceCore<'a, BoxedItemIter<'a>> for Sequence {
             Sequence::Empty(inner) => inner.one(),
             Sequence::One(inner) => inner.one(),
             Sequence::Many(inner) => inner.one(),
+            Sequence::Range(inner) => inner.one(),
         }
     }
 
@@ -77,6 +88,7 @@ impl<'a> SequenceCore<'a, BoxedItemIter<'a>> for Sequence {
             Sequence::Empty(inner) => inner.option(),
             Sequence::One(inner) => inner.option(),
             Sequence::Many(inner) => inner.option(),
+            Sequence::Range(inner) => inner.option(),
         }
     }
 
@@ -85,6 +97,7 @@ impl<'a> SequenceCore<'a, BoxedItemIter<'a>> for Sequence {
             Sequence::Empty(inner) => Box::new(inner.iter()),
             Sequence::One(inner) => Box::new(inner.iter()),
             Sequence::Many(inner) => Box::new(inner.iter()),
+            Sequence::Range(inner) => Box::new(inner.iter()),
         }
     }
 
@@ -93,6 +106,7 @@ impl<'a> SequenceCore<'a, BoxedItemIter<'a>> for Sequence {
             Sequence::Empty(inner) => inner.effective_boolean_value(),
             Sequence::One(inner) => inner.effective_boolean_value(),
             Sequence::Many(inner) => inner.effective_boolean_value(),
+            Sequence::Range(inner) => inner.effective_boolean_value(),
         }
     }
 
@@ -101,6 +115,7 @@ impl<'a> SequenceCore<'a, BoxedItemIter<'a>> for Sequence {
             Sequence::Empty(inner) => inner.string_value(xot),
             Sequence::One(inner) => inner.string_value(xot),
             Sequence::Many(inner) => inner.string_value(xot),
+            Sequence::Range(inner) => inner.string_value(xot),
         }
     }
 }
@@ -118,6 +133,7 @@ where
             Sequence::Empty(inner) => Box::new(inner.nodes()),
             Sequence::One(inner) => Box::new(inner.nodes()),
             Sequence::Many(inner) => Box::new(inner.nodes()),
+            Sequence::Range(inner) => Box::new(inner.nodes()),
         }
     }
 
@@ -130,6 +146,7 @@ where
             Sequence::Empty(inner) => Box::new(inner.atomized(xot)),
             Sequence::One(inner) => Box::new(inner.atomized(xot)),
             Sequence::Many(inner) => Box::new(inner.atomized(xot)),
+            Sequence::Range(inner) => Box::new(inner.atomized(xot)),
         }
     }
 
@@ -143,6 +160,7 @@ where
             Sequence::Empty(inner) => Box::new(inner.unboxed_atomized(xot, extract)),
             Sequence::One(inner) => Box::new(inner.unboxed_atomized(xot, extract)),
             Sequence::Many(inner) => Box::new(inner.unboxed_atomized(xot, extract)),
+            Sequence::Range(inner) => Box::new(inner.unboxed_atomized(xot, extract)),
         }
     }
 
@@ -152,6 +170,7 @@ where
             Sequence::Empty(inner) => Box::new(inner.map_iter()),
             Sequence::One(inner) => Box::new(inner.map_iter()),
             Sequence::Many(inner) => Box::new(inner.map_iter()),
+            Sequence::Range(inner) => Box::new(inner.map_iter()),
         }
     }
 
@@ -161,6 +180,7 @@ where
             Sequence::Empty(inner) => Box::new(inner.array_iter()),
             Sequence::One(inner) => Box::new(inner.array_iter()),
             Sequence::Many(inner) => Box::new(inner.array_iter()),
+            Sequence::Range(inner) => Box::new(inner.array_iter()),
         }
     }
 
@@ -173,6 +193,7 @@ where
             Sequence::Empty(inner) => Ok(Box::new(inner.elements(xot)?)),
             Sequence::One(inner) => Ok(Box::new(inner.elements(xot)?)),
             Sequence::Many(inner) => Ok(Box::new(inner.elements(xot)?)),
+            Sequence::Range(inner) => Ok(Box::new(inner.elements(xot)?)),
         }
     }
 
@@ -182,6 +203,7 @@ where
             Sequence::Empty(inner) => inner.to_array(),
             Sequence::One(inner) => inner.to_array(),
             Sequence::Many(inner) => inner.to_array(),
+            Sequence::Range(inner) => inner.to_array(),
         }
     }
 }
@@ -207,6 +229,7 @@ where
             Sequence::Empty(inner) => inner.general_comparison(other, context, xot, op),
             Sequence::One(inner) => inner.general_comparison(other, context, xot, op),
             Sequence::Many(inner) => inner.general_comparison(other, context, xot, op),
+            Sequence::Range(inner) => inner.general_comparison(other, context, xot, op),
         }
     }
 }
@@ -223,6 +246,7 @@ where
             Sequence::Empty(inner) => inner.one_node(),
             Sequence::One(inner) => inner.one_node(),
             Sequence::Many(inner) => inner.one_node(),
+            Sequence::Range(inner) => inner.one_node(),
         }
     }
 }

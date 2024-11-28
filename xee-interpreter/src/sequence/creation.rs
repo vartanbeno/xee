@@ -1,6 +1,7 @@
 use std::rc::Rc;
 
 use ahash::{HashSet, HashSetExt};
+use ibig::IBig;
 use xot::Xot;
 
 use crate::{context, error, string::Collation, xml};
@@ -11,7 +12,7 @@ use super::{
     normalization::normalize,
     serialization::{serialize_sequence, SerializationParameters},
     traits::{SequenceCore, SequenceExt},
-    variant::Empty,
+    variant::{Empty, Range},
 };
 
 impl Sequence {
@@ -60,8 +61,40 @@ impl Sequence {
                 }
                 Self::Many(many.into())
             }
+            (Self::Range(a), Self::Range(b)) => {
+                // if the ranges are consecutive we can merge them
+                if a.end() == b.start() {
+                    Self::Range(Range::new(a.start(), b.end()))
+                } else if b.end() == a.start() {
+                    Self::Range(Range::new(b.start(), a.end()))
+                } else {
+                    // otherwise unfortunately we have to construct the sequence
+                    let mut v = Vec::with_capacity(a.len() + b.len());
+                    for i in a.start()..a.end() {
+                        let i: IBig = i.into();
+                        v.push(i.into());
+                    }
+                    for i in b.start()..b.end() {
+                        let i: IBig = i.into();
+                        v.push(i.into());
+                    }
+                    Self::new(v)
+                }
+            }
+            // handle other cases in less efficient way
+            (a, b) => {
+                let mut v = Vec::with_capacity(a.len() + b.len());
+                for item in a.iter() {
+                    v.push(item);
+                }
+                for item in b.iter() {
+                    v.push(item);
+                }
+                Self::new(v)
+            }
         }
     }
+
     // https://www.w3.org/TR/xpath-31/#id-path-operator
     pub(crate) fn deduplicate(self, annotations: &xml::Annotations) -> error::Result<Self> {
         let mut s = HashSet::new();
@@ -239,6 +272,9 @@ impl Sequence {
                     representations.push(item.display_representation(xot, context).unwrap());
                 }
                 format!("(\n{}\n)", representations.join(",\n"))
+            }
+            Sequence::Range(range) => {
+                format!("{} to {}", range.start(), range.end())
             }
         }
     }

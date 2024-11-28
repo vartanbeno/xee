@@ -80,9 +80,8 @@ impl<'a> State<'a> {
         match value {
             stack::Value::Sequence(sequence::Sequence::Empty(_)) => {}
             stack::Value::Sequence(sequence::Sequence::One(item)) => build.push(item.into_item()),
-            stack::Value::Sequence(sequence::Sequence::Many(items)) => {
-                build.extend(items.iter().collect::<Vec<_>>())
-            }
+            // any other sequence
+            stack::Value::Sequence(sequence) => build.extend(sequence.iter().collect::<Vec<_>>()),
             stack::Value::Absent => return Err(error::Error::XPDY0002)?,
         }
         Ok(())

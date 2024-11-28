@@ -27,7 +27,7 @@ where
     fn len(&self) -> usize;
 
     /// Get an item in the index, if it exists
-    fn get(&'a self, index: usize) -> Option<&'a Item>;
+    fn get(&self, index: usize) -> Option<Item>;
 
     /// Get the items from the sequence as an iterator
     fn iter(&'a self) -> I;
