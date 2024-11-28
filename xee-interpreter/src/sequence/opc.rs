@@ -65,7 +65,7 @@ impl<'a> OptionParameterConverter<'a> {
             self.xot,
         )?;
         let value = if let Some(value) = value {
-            option(value.into_iter())?
+            option(value.iter().cloned())?
         } else {
             return Ok(None);
         };

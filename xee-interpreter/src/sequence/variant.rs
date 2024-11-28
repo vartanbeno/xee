@@ -50,15 +50,6 @@ impl<'a> SequenceCore<'a, std::iter::Empty<&'a Item>> for Empty {
     }
 }
 
-impl IntoIterator for Empty {
-    type Item = Item;
-    type IntoIter = std::iter::Empty<Item>;
-
-    fn into_iter(self) -> Self::IntoIter {
-        std::iter::empty()
-    }
-}
-
 #[derive(Debug, Clone, PartialEq)]
 pub struct One {
     item: Item,
@@ -83,15 +74,6 @@ impl From<Item> for One {
 impl From<One> for Item {
     fn from(one: One) -> Self {
         one.item
-    }
-}
-
-impl IntoIterator for One {
-    type Item = Item;
-    type IntoIter = std::iter::Once<Item>;
-
-    fn into_iter(self) -> Self::IntoIter {
-        std::iter::once(self.item)
     }
 }
 
@@ -153,17 +135,6 @@ impl From<Vec<Item>> for Many {
         Many {
             items: Rc::new(items),
         }
-    }
-}
-
-impl IntoIterator for Many {
-    type Item = Item;
-    type IntoIter = std::vec::IntoIter<Item>;
-
-    // TODO: not the most efficient way to do this, but we use
-    // an Rc so we can't just move the items out of the Rc.
-    fn into_iter(self) -> Self::IntoIter {
-        self.items.iter().cloned().collect::<Vec<_>>().into_iter()
     }
 }
 

@@ -225,8 +225,8 @@ where
     // sufficiently different we don't want to try to unify them.
     let mut keys_and_items = input
         .clone()
-        .into_iter()
-        .map(|item| Ok((get(&item)?, item)))
+        .iter()
+        .map(|item| Ok((get(item)?, item.clone())))
         .collect::<error::Result<Vec<_>>>()?;
     // sort by key. unfortunately sort_by requires the compare function
     // to be infallible. It's not in reality, so we make any failures

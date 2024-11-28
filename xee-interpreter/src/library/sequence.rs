@@ -40,7 +40,7 @@ fn tail(arg: &sequence::Sequence) -> sequence::Sequence {
     if arg.is_empty() {
         return sequence::Sequence::default();
     }
-    let mut items = arg.clone().into_iter();
+    let mut items = arg.iter().cloned();
     // skip first item
     items.next();
     // now collect the rest
@@ -104,7 +104,7 @@ fn remove(target: &sequence::Sequence, position: IBig) -> error::Result<sequence
         return Ok(target.clone());
     }
     let position = position.saturating_sub(1);
-    let mut target = target.clone().into_iter().collect::<Vec<_>>();
+    let mut target = target.clone().iter().cloned().collect::<Vec<_>>();
     target.remove(position);
     Ok(target.into())
 }
@@ -114,7 +114,7 @@ fn reverse(arg: &sequence::Sequence) -> sequence::Sequence {
     if arg.is_empty() {
         return arg.clone();
     }
-    let mut items = arg.clone().into_iter().collect::<Vec<_>>();
+    let mut items = arg.clone().iter().cloned().collect::<Vec<_>>();
     items.reverse();
     items.into()
 }

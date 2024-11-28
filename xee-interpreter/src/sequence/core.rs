@@ -105,19 +105,6 @@ impl<'a> SequenceCore<'a, Box<dyn Iterator<Item = &'a Item> + 'a>> for Sequence 
     }
 }
 
-impl IntoIterator for Sequence {
-    type Item = Item;
-    type IntoIter = Box<dyn Iterator<Item = Item>>;
-
-    fn into_iter(self) -> Self::IntoIter {
-        match self {
-            Sequence::Empty(inner) => Box::new(inner.into_iter()),
-            Sequence::One(inner) => Box::new(inner.into_iter()),
-            Sequence::Many(inner) => Box::new(inner.into_iter()),
-        }
-    }
-}
-
 // we implement these explicitly, because we want to avoid dynamic dispatch until
 // the outer layer. This gives the compiler the chance to optimize the inner
 // layers better.

@@ -101,7 +101,7 @@ mod tests {
         ]);
         let result = simple_content_text_nodes(&sequence, &xot).unwrap();
         assert_eq!(result.len(), 2);
-        let items = result.into_iter().collect::<Vec<_>>();
+        let items = result.iter().cloned().collect::<Vec<_>>();
         assert_eq!(items, vec![Item::Atomic(1.into()), Item::Atomic(2.into())]);
     }
 
@@ -112,7 +112,7 @@ mod tests {
         let b = xot.new_text("b");
         let sequence = Sequence::from(vec![Item::Node(a), Item::Node(b)]);
         let result = simple_content_text_nodes(&sequence, &xot).unwrap();
-        let items = result.into_iter().collect::<Vec<_>>();
+        let items = result.iter().cloned().collect::<Vec<_>>();
         assert_eq!(items, vec![Item::Atomic("ab".into())]);
     }
 
@@ -125,7 +125,7 @@ mod tests {
 
         let sequence = Sequence::from(vec![Item::Node(a), Item::Node(b), Item::Node(c)]);
         let result = simple_content_text_nodes(&sequence, &xot).unwrap();
-        let items = result.into_iter().collect::<Vec<_>>();
+        let items = result.iter().cloned().collect::<Vec<_>>();
         assert_eq!(items, vec![Item::Atomic("abc".into())]);
     }
 
@@ -143,7 +143,7 @@ mod tests {
             Item::Atomic(1.into()),
         ]);
         let result = simple_content_text_nodes(&sequence, &xot).unwrap();
-        let items = result.into_iter().collect::<Vec<_>>();
+        let items = result.iter().cloned().collect::<Vec<_>>();
         assert_eq!(
             items,
             vec![Item::Atomic("abc".into()), Item::Atomic(1.into())]

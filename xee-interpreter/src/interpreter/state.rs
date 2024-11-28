@@ -4,6 +4,7 @@ use xot::Xot;
 use crate::error;
 use crate::function;
 use crate::sequence;
+use crate::sequence::SequenceCore;
 use crate::stack;
 
 const FRAMES_MAX: usize = 64;
@@ -79,7 +80,9 @@ impl<'a> State<'a> {
         match value {
             stack::Value::Sequence(sequence::Sequence::Empty(_)) => {}
             stack::Value::Sequence(sequence::Sequence::One(item)) => build.push(item.into_item()),
-            stack::Value::Sequence(sequence::Sequence::Many(items)) => build.extend(items),
+            stack::Value::Sequence(sequence::Sequence::Many(items)) => {
+                build.extend(items.iter().cloned().collect::<Vec<_>>())
+            }
             stack::Value::Absent => return Err(error::Error::XPDY0002)?,
         }
         Ok(())
