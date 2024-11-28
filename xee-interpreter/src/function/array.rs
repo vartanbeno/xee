@@ -8,16 +8,21 @@ use crate::{context, error, sequence, string};
 ///
 /// Not to be confused with an XPath sequence, this is a type of item that can exist
 /// in a sequence when you need to have an actual list.
+///
+/// I tried to make this a Rc<[]> but this is bigger and blows up the item as a result.
 #[derive(Debug, Clone, PartialEq)]
 pub struct Array(pub(crate) Rc<Vec<sequence::Sequence>>);
 
+#[cfg(target_arch = "x86_64")]
+static_assertions::assert_eq_size!(Array, [u8; 8]);
+
 impl Array {
     pub(crate) fn new(vec: Vec<sequence::Sequence>) -> Self {
-        Self(Rc::new(vec))
+        Self(vec.into())
     }
 
     pub(crate) fn join(arrays: &[Self]) -> Self {
-        let mut vec = Vec::new();
+        let mut vec = Vec::with_capacity(arrays.iter().map(|array| array.0.len()).sum());
         for array in arrays {
             vec.extend(array.0.as_ref().iter().cloned());
         }
@@ -32,21 +37,17 @@ impl Array {
         self.0.iter()
     }
 
-    pub(crate) fn push(&mut self, member: sequence::Sequence) {
-        Rc::make_mut(&mut self.0).push(member);
-    }
-
     pub(crate) fn put(&self, index: usize, member: &sequence::Sequence) -> Option<Self> {
         if index >= self.0.len() {
             return None;
         }
-        let mut vec = self.0.as_ref().clone();
+        let mut vec = self.0.as_ref().to_vec();
         vec[index] = member.clone();
         Some(Self::new(vec))
     }
 
     pub(crate) fn append(&self, appendage: &sequence::Sequence) -> Self {
-        let mut vec = self.0.as_ref().clone();
+        let mut vec = self.0.as_ref().to_vec();
         vec.push(appendage.clone());
         Self::new(vec)
     }
@@ -79,7 +80,7 @@ impl Array {
     }
 
     pub(crate) fn reversed(&self) -> Self {
-        let mut vec = self.0.as_ref().clone();
+        let mut vec = self.0.as_ref().to_vec();
         vec.reverse();
         Self::new(vec)
     }
@@ -92,7 +93,7 @@ impl Array {
         if position > self.0.len() {
             return None;
         }
-        let mut vec = self.0.as_ref().clone();
+        let mut vec = self.0.as_ref().to_vec();
         vec.insert(position, member.clone());
         Some(Self::new(vec))
     }

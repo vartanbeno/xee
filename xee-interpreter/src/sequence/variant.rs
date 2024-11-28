@@ -127,7 +127,7 @@ impl<'a> SequenceCore<'a, std::iter::Once<Item>> for One {
 
 #[derive(Debug, Clone, PartialEq)]
 pub struct Many {
-    items: Rc<Vec<Item>>,
+    items: Rc<[Item]>,
 }
 
 impl Many {}
@@ -135,7 +135,7 @@ impl Many {}
 impl From<Vec<Item>> for Many {
     fn from(items: Vec<Item>) -> Self {
         Many {
-            items: Rc::new(items),
+            items: items.into(),
         }
     }
 }

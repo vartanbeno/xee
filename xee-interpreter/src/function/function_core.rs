@@ -39,10 +39,13 @@ pub enum Function {
     Array(Array),
 }
 
+#[cfg(target_arch = "x86_64")]
+static_assertions::assert_eq_size!(Function, [u8; 16]);
+
 #[derive(Debug, PartialEq)]
 pub struct StaticFunctionData {
     pub(crate) id: StaticFunctionId,
-    pub(crate) closure_vars: Vec<stack::Value>,
+    pub(crate) closure_vars: Box<[stack::Value]>,
 }
 
 impl From<StaticFunctionData> for Function {
@@ -53,14 +56,17 @@ impl From<StaticFunctionData> for Function {
 
 impl StaticFunctionData {
     pub(crate) fn new(id: StaticFunctionId, closure_vars: Vec<stack::Value>) -> Self {
-        StaticFunctionData { id, closure_vars }
+        StaticFunctionData {
+            id,
+            closure_vars: closure_vars.into(),
+        }
     }
 }
 
 #[derive(Debug, PartialEq)]
 pub struct InlineFunctionData {
     pub(crate) id: InlineFunctionId,
-    pub(crate) closure_vars: Vec<stack::Value>,
+    pub(crate) closure_vars: Box<[stack::Value]>,
 }
 
 impl From<InlineFunctionData> for Function {
@@ -71,7 +77,10 @@ impl From<InlineFunctionData> for Function {
 
 impl InlineFunctionData {
     pub(crate) fn new(id: InlineFunctionId, closure_vars: Vec<stack::Value>) -> Self {
-        InlineFunctionData { id, closure_vars }
+        InlineFunctionData {
+            id,
+            closure_vars: closure_vars.into(),
+        }
     }
 }
 

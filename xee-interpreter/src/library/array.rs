@@ -120,12 +120,12 @@ fn for_each(
     action: sequence::Item,
 ) -> error::Result<function::Array> {
     let function = action.to_function()?;
-    let mut result = function::Array::new(vec![]);
+    let mut result = Vec::with_capacity(array.len());
     for sequence in array.iter() {
         let sequence = interpreter.call_function_with_arguments(&function, &[sequence.clone()])?;
         result.push(sequence);
     }
-    Ok(result)
+    Ok(function::Array::new(result))
 }
 
 #[xpath_fn(
@@ -137,7 +137,7 @@ fn filter(
     function: sequence::Item,
 ) -> error::Result<function::Array> {
     let function = function.to_function()?;
-    let mut result = function::Array::new(vec![]);
+    let mut result = Vec::with_capacity(array.len());
     for sequence in array.iter() {
         let include = interpreter.call_function_with_arguments(&function, &[sequence.clone()])?;
         let include: atomic::Atomic = sequence::one(include.iter())?.to_atomic()?;
@@ -146,7 +146,7 @@ fn filter(
             result.push(sequence.clone());
         }
     }
-    Ok(result)
+    Ok(function::Array::new(result))
 }
 
 #[xpath_fn("array:fold-left($array as array(*), $zero as item()*, $function as function(item()*, item()*) as item()*) as item()*")]
@@ -192,13 +192,14 @@ fn for_each_pair(
 ) -> error::Result<function::Array> {
     let function = function.to_function()?;
 
-    let mut result = function::Array::new(vec![]);
+    let mut result = Vec::with_capacity(array1.len().min(array2.len()));
+
     for (sequence1, sequence2) in array1.iter().zip(array2.iter()) {
         let sequence = interpreter
             .call_function_with_arguments(&function, &[sequence1.clone(), sequence2.clone()])?;
         result.push(sequence);
     }
-    Ok(result)
+    Ok(function::Array::new(result))
 }
 
 #[xpath_fn("array:sort($array as array(*)) as array(*)")]
