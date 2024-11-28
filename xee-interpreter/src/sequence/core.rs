@@ -64,7 +64,7 @@ impl<'a> SequenceCore<'a, Box<dyn Iterator<Item = &'a Item> + 'a>> for Sequence 
         }
     }
 
-    fn one(&self) -> error::Result<&Item> {
+    fn one(self) -> error::Result<Item> {
         match self {
             Sequence::Empty(inner) => inner.one(),
             Sequence::One(inner) => inner.one(),
@@ -72,7 +72,7 @@ impl<'a> SequenceCore<'a, Box<dyn Iterator<Item = &'a Item> + 'a>> for Sequence 
         }
     }
 
-    fn option(&self) -> error::Result<Option<&Item>> {
+    fn option(self) -> error::Result<Option<Item>> {
         match self {
             Sequence::Empty(inner) => inner.option(),
             Sequence::One(inner) => inner.option(),

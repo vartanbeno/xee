@@ -215,7 +215,7 @@ where
     ) -> Result<V> {
         let sequence = self.program.runnable(context).many(document.xot_mut())?;
         let item = sequence.one()?;
-        (self.convert)(document, item)
+        (self.convert)(document, &item)
     }
 }
 
@@ -255,7 +255,7 @@ impl OneRecurseQuery {
     ) -> Result<V> {
         let sequence = self.program.runnable(context).many(document.xot_mut())?;
         let item = sequence.one()?;
-        recurse.execute(document, item)
+        recurse.execute(document, &item)
     }
 }
 
@@ -308,7 +308,7 @@ where
     ) -> Result<Option<V>> {
         let sequence = self.program.runnable(context).many(document.xot_mut())?;
         let item = sequence.option()?;
-        item.map(|item| (self.convert)(document, item)).transpose()
+        item.map(|item| (self.convert)(document, &item)).transpose()
     }
 }
 
@@ -345,7 +345,8 @@ impl OptionRecurseQuery {
     ) -> Result<Option<V>> {
         let sequence = self.program.runnable(context).many(document.xot_mut())?;
         let item = sequence.option()?;
-        item.map(|item| recurse.execute(document, item)).transpose()
+        item.map(|item| recurse.execute(document, &item))
+            .transpose()
     }
 }
 

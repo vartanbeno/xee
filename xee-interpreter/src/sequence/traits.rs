@@ -33,10 +33,10 @@ where
     fn iter(&'a self) -> I;
 
     /// Get a single item from the sequence, if it only contains one item
-    fn one(&'a self) -> error::Result<&'a Item>;
+    fn one(self) -> error::Result<Item>;
 
     /// Get a optional item from the sequence
-    fn option(&'a self) -> error::Result<Option<&'a Item>>;
+    fn option(self) -> error::Result<Option<Item>>;
 
     /// Effective boolean value
     fn effective_boolean_value(&'a self) -> error::Result<bool>;

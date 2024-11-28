@@ -25,12 +25,12 @@ impl<'a> SequenceCore<'a, std::iter::Empty<&'a Item>> for Empty {
     }
 
     #[inline]
-    fn one(&self) -> error::Result<&Item> {
+    fn one(self) -> error::Result<Item> {
         Err(error::Error::XPTY0004)
     }
 
     #[inline]
-    fn option(&self) -> error::Result<Option<&Item>> {
+    fn option(self) -> error::Result<Option<Item>> {
         Ok(None)
     }
 
@@ -116,13 +116,13 @@ impl<'a> SequenceCore<'a, std::iter::Once<&'a Item>> for One {
     }
 
     #[inline]
-    fn one(&self) -> error::Result<&Item> {
-        Ok(&self.item)
+    fn one(self) -> error::Result<Item> {
+        Ok(self.item)
     }
 
     #[inline]
-    fn option(&self) -> error::Result<Option<&Item>> {
-        Ok(Some(&self.item))
+    fn option(self) -> error::Result<Option<Item>> {
+        Ok(Some(self.item))
     }
 
     #[inline]
@@ -184,12 +184,12 @@ impl<'a> SequenceCore<'a, std::slice::Iter<'a, Item>> for Many {
     }
 
     #[inline]
-    fn one(&self) -> error::Result<&Item> {
+    fn one(self) -> error::Result<Item> {
         Err(error::Error::XPTY0004)
     }
 
     #[inline]
-    fn option(&self) -> error::Result<Option<&Item>> {
+    fn option(self) -> error::Result<Option<Item>> {
         Err(error::Error::XPTY0004)
     }
 

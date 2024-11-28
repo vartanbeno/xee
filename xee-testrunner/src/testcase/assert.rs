@@ -498,7 +498,7 @@ impl Assertable for AssertTrue {
         _documents: &mut Documents,
         sequence: &Sequence,
     ) -> TestOutcome {
-        if let Ok(item) = sequence.one() {
+        if let Ok(item) = sequence.clone().one() {
             if let Ok(atomic) = item.to_atomic() {
                 let b: error::ValueResult<bool> = atomic.try_into();
                 if let Ok(b) = b {
@@ -528,7 +528,7 @@ impl Assertable for AssertFalse {
         _documents: &mut Documents,
         sequence: &Sequence,
     ) -> TestOutcome {
-        if let Ok(item) = sequence.one() {
+        if let Ok(item) = sequence.clone().one() {
             if let Ok(atomic) = item.to_atomic() {
                 let b: error::ValueResult<bool> = atomic.try_into();
                 if let Ok(b) = b {
