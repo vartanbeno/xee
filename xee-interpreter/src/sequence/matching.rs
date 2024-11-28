@@ -57,7 +57,7 @@ impl Sequence {
                 let sequence: Sequence = atomized.collect::<error::Result<Vec<_>>>()?.into();
                 Ok(sequence)
             },
-            &|function_test, item| item.function_type_matching2(function_test, &get_signature),
+            &|function_test, item| item.function_type_matching(function_test, &get_signature),
             xot,
         )
     }
@@ -73,7 +73,7 @@ impl Sequence {
         self.sequence_type_matching_convert(
             sequence_type,
             &|sequence, xs| Self::convert_atomic(sequence, xs, context, xot),
-            &|function_test, item| item.function_arity_matching2(function_test, &get_signature),
+            &|function_test, item| item.function_arity_matching(function_test, &get_signature),
             xot,
         )
     }
@@ -135,7 +135,7 @@ impl Sequence {
         match occurrence_item.occurrence {
             ast::Occurrence::One => {
                 let one = one(sequence.iter())?;
-                one.item_type_matching2(
+                one.item_type_matching(
                     &occurrence_item.item_type,
                     convert_atomic,
                     check_function,
@@ -146,7 +146,7 @@ impl Sequence {
             ast::Occurrence::Option => {
                 let option = option(sequence.iter())?;
                 if let Some(item) = option {
-                    item.item_type_matching2(
+                    item.item_type_matching(
                         &occurrence_item.item_type,
                         convert_atomic,
                         check_function,
@@ -159,7 +159,7 @@ impl Sequence {
             }
             ast::Occurrence::Many => {
                 for item in sequence.iter() {
-                    item.item_type_matching2(
+                    item.item_type_matching(
                         &occurrence_item.item_type,
                         convert_atomic,
                         check_function,
@@ -173,7 +173,7 @@ impl Sequence {
                     return Err(error::Error::XPTY0004);
                 }
                 for item in sequence.iter() {
-                    item.item_type_matching2(
+                    item.item_type_matching(
                         &occurrence_item.item_type,
                         convert_atomic,
                         check_function,
@@ -187,7 +187,7 @@ impl Sequence {
 }
 
 impl Item {
-    pub(crate) fn item_type_matching2(
+    pub(crate) fn item_type_matching(
         &self,
         item_type: &ast::ItemType,
         convert_atomic: &impl Fn(&Sequence, Xs) -> error::Result<Sequence>,
@@ -196,8 +196,8 @@ impl Item {
     ) -> error::Result<()> {
         match item_type {
             ast::ItemType::Item => Ok(()),
-            ast::ItemType::AtomicOrUnionType(xs) => self.to_atomic()?.atomic_type_matching2(*xs),
-            ast::ItemType::KindTest(kind_test) => self.kind_test_matching2(kind_test, xot),
+            ast::ItemType::AtomicOrUnionType(xs) => self.to_atomic()?.atomic_type_matching(*xs),
+            ast::ItemType::KindTest(kind_test) => self.kind_test_matching(kind_test, xot),
             ast::ItemType::FunctionTest(function_test) => check_function(function_test, self),
             ast::ItemType::MapTest(map_test) => match map_test {
                 ast::MapTest::AnyMapTest => {
@@ -210,7 +210,7 @@ impl Item {
                 ast::MapTest::TypedMapTest(typed_map_test) => {
                     let map = self.to_map()?;
                     for (_, (key, value)) in map.0.iter() {
-                        key.atomic_type_matching2(typed_map_test.key_type)?;
+                        key.atomic_type_matching(typed_map_test.key_type)?;
                         value.clone().sequence_type_matching_convert(
                             &typed_map_test.value_type,
                             convert_atomic,
@@ -245,7 +245,7 @@ impl Item {
         }
     }
 
-    fn kind_test_matching2(&self, kind_test: &ast::KindTest, xot: &Xot) -> error::Result<()> {
+    fn kind_test_matching(&self, kind_test: &ast::KindTest, xot: &Xot) -> error::Result<()> {
         match self {
             Item::Node(node) => {
                 if xml::kind_test(kind_test, xot, *node) {
@@ -259,7 +259,7 @@ impl Item {
         }
     }
 
-    pub(crate) fn function_arity_matching2<'a>(
+    pub(crate) fn function_arity_matching<'a>(
         &self,
         function_test: &ast::FunctionTest,
         get_signature: &impl Fn(&function::Function) -> &'a function::Signature,
@@ -281,7 +281,7 @@ impl Item {
         }
     }
 
-    pub(crate) fn function_type_matching2<'a>(
+    pub(crate) fn function_type_matching<'a>(
         &self,
         function_test: &ast::FunctionTest,
         get_signature: &impl Fn(&function::Function) -> &'a function::Signature,
@@ -297,7 +297,7 @@ impl Item {
                 if signature.arity() != typed_function_test.parameter_types.len() {
                     return Err(error::Error::XPTY0004);
                 }
-                if Self::function_type_matching_helper2(typed_function_test, signature) {
+                if Self::function_type_matching_helper(typed_function_test, signature) {
                     Ok(())
                 } else {
                     Err(error::Error::XPTY0004)
@@ -306,11 +306,11 @@ impl Item {
         }
     }
 
-    fn function_type_matching_helper2(
+    fn function_type_matching_helper(
         function_test: &ast::TypedFunctionTest,
         signature: &function::Signature,
     ) -> bool {
-        let default_sequence_type = Self::default_sequence_type2();
+        let default_sequence_type = Self::default_sequence_type();
         let function_return_type = signature.return_type().unwrap_or(&default_sequence_type);
         // return type is covariant
         if !function_return_type.subtype(&function_test.return_type) {
@@ -334,7 +334,7 @@ impl Item {
         true
     }
 
-    fn default_sequence_type2() -> ast::SequenceType {
+    fn default_sequence_type() -> ast::SequenceType {
         ast::SequenceType::Item(ast::Item {
             item_type: ast::ItemType::Item,
             occurrence: ast::Occurrence::Many,
@@ -343,7 +343,7 @@ impl Item {
 }
 
 impl atomic::Atomic {
-    fn atomic_type_matching2(&self, xs: Xs) -> error::Result<()> {
+    fn atomic_type_matching(&self, xs: Xs) -> error::Result<()> {
         let schema_type = self.schema_type();
         if schema_type.derives_from(xs) || schema_type.matches(xs) {
             Ok(())
