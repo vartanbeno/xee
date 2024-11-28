@@ -87,8 +87,7 @@ impl<'a> Runnable<'a> {
     /// Run the program, expect a single item as the result.
     pub fn one(&self, xot: &'a mut Xot) -> error::SpannedResult<sequence::Item> {
         let sequence = self.many(xot)?;
-        let items = sequence.into_iter();
-        sequence::one(items).map_err(|error| SpannedError {
+        sequence.one().map_err(|error| SpannedError {
             error,
             span: Some(self.program.span().into()),
         })

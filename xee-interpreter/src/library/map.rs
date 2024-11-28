@@ -108,7 +108,7 @@ impl MergeOptions {
                 &|function| runnable.program().function_info(function).signature(),
             )?;
         // take the first value, which should be a string
-        let duplicates = sequence::one(duplicates.iter())?;
+        let duplicates = duplicates.one()?;
         let atomic: atomic::Atomic = duplicates.to_atomic()?;
         atomic.to_string()
     }

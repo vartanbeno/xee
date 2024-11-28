@@ -1048,7 +1048,7 @@ impl<'a> Interpreter<'a> {
 
     fn pop_node(&mut self) -> error::Result<xot::Node> {
         let value = self.state.pop()?;
-        let node = sequence::one(value.iter())?.to_node()?;
+        let node = value.one()?.to_node()?;
         Ok(node)
     }
 
