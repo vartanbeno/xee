@@ -24,6 +24,7 @@ pub enum Item {
     Function(function::Function),
 }
 
+// a static assertion to ensure that Item never grows in size
 #[cfg(target_arch = "x86_64")]
 static_assertions::assert_eq_size!(Item, [u8; 24]);
 
