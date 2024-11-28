@@ -39,7 +39,7 @@ impl Default for Sequence {
     }
 }
 
-impl<'a> SequenceCore<'a, Box<dyn Iterator<Item = &'a Item> + 'a>> for Sequence {
+impl<'a> SequenceCore<'a, BoxedItemIter<'a>> for Sequence {
     fn is_empty(&self) -> bool {
         match self {
             Sequence::Empty(inner) => inner.is_empty(),
@@ -80,7 +80,7 @@ impl<'a> SequenceCore<'a, Box<dyn Iterator<Item = &'a Item> + 'a>> for Sequence 
         }
     }
 
-    fn iter(&'a self) -> Box<dyn Iterator<Item = &'a Item> + 'a> {
+    fn iter(&'a self) -> BoxedItemIter<'a> {
         match self {
             Sequence::Empty(inner) => Box::new(inner.iter()),
             Sequence::One(inner) => Box::new(inner.iter()),
@@ -110,7 +110,7 @@ impl<'a> SequenceCore<'a, Box<dyn Iterator<Item = &'a Item> + 'a>> for Sequence 
 // layers better.
 impl<'a> SequenceExt<'a, BoxedItemIter<'a>> for Sequence
 where
-    Sequence: SequenceCore<'a, Box<dyn Iterator<Item = &'a Item> + 'a>>,
+    Sequence: SequenceCore<'a, BoxedItemIter<'a>>,
 {
     #[allow(refining_impl_trait)]
     fn nodes(&'a self) -> Box<dyn Iterator<Item = error::Result<xot::Node>> + 'a> {
@@ -125,7 +125,7 @@ where
     fn atomized(
         &'a self,
         xot: &'a xot::Xot,
-    ) -> Box<dyn Iterator<Item = error::Result<atomic::Atomic>> + '_> {
+    ) -> Box<dyn Iterator<Item = error::Result<atomic::Atomic>> + 'a> {
         match self {
             Sequence::Empty(inner) => Box::new(inner.atomized(xot)),
             Sequence::One(inner) => Box::new(inner.atomized(xot)),

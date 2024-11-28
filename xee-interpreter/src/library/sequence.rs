@@ -32,7 +32,7 @@ fn exists(arg: &sequence::Sequence) -> bool {
 
 #[xpath_fn("fn:head($arg as item()*) as item()?")]
 fn head(arg: &sequence::Sequence) -> Option<sequence::Item> {
-    arg.iter().next().cloned()
+    arg.iter().next()
 }
 
 #[xpath_fn("fn:tail($arg as item()*) as item()*")]
@@ -40,7 +40,7 @@ fn tail(arg: &sequence::Sequence) -> sequence::Sequence {
     if arg.is_empty() {
         return sequence::Sequence::default();
     }
-    let mut items = arg.iter().cloned();
+    let mut items = arg.iter();
     // skip first item
     items.next();
     // now collect the rest
@@ -104,7 +104,7 @@ fn remove(target: &sequence::Sequence, position: IBig) -> error::Result<sequence
         return Ok(target.clone());
     }
     let position = position.saturating_sub(1);
-    let mut target = target.clone().iter().cloned().collect::<Vec<_>>();
+    let mut target = target.clone().iter().collect::<Vec<_>>();
     target.remove(position);
     Ok(target.into())
 }
@@ -114,7 +114,7 @@ fn reverse(arg: &sequence::Sequence) -> sequence::Sequence {
     if arg.is_empty() {
         return arg.clone();
     }
-    let mut items = arg.clone().iter().cloned().collect::<Vec<_>>();
+    let mut items = arg.clone().iter().collect::<Vec<_>>();
     items.reverse();
     items.into()
 }
@@ -127,7 +127,7 @@ fn subsequence2(source_seq: &sequence::Sequence, starting_loc: f64) -> Vec<seque
     let starting_loc = starting_loc - 1.0;
     let starting_loc = starting_loc.clamp(0.0, (source_seq.len()) as f64);
     let starting_loc = starting_loc as usize;
-    source_seq.iter().skip(starting_loc).cloned().collect()
+    source_seq.iter().skip(starting_loc).collect()
 }
 
 #[xpath_fn(
@@ -154,7 +154,6 @@ fn subsequence3(
         .iter()
         .skip(starting_loc)
         .take(end - starting_loc)
-        .cloned()
         .collect()
 }
 
@@ -252,7 +251,7 @@ fn deep_equal(
 fn zero_or_one(arg: &sequence::Sequence) -> error::Result<Option<sequence::Item>> {
     match arg.len() {
         0 => Ok(None),
-        1 => Ok(arg.iter().next().cloned()),
+        1 => Ok(arg.iter().next()),
         _ => Err(error::Error::FORG0003),
     }
 }

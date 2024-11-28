@@ -70,7 +70,7 @@ fn serialize2(
     context: &context::DynamicContext,
     interpreter: &mut Interpreter,
     arg: &sequence::Sequence,
-    params: Option<&sequence::Item>,
+    params: Option<sequence::Item>,
 ) -> error::Result<String> {
     let map = if let Some(params) = params {
         if let sequence::Item::Function(function::Function::Map(map)) = params {

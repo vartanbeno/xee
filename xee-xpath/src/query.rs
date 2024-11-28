@@ -397,7 +397,7 @@ where
         let sequence = self.program.runnable(context).many(document.xot_mut())?;
         let items = sequence
             .iter()
-            .map(|item| (self.convert)(document, item))
+            .map(|item| (self.convert)(document, &item))
             .collect::<Result<Vec<V>>>()?;
         Ok(items)
     }
@@ -440,7 +440,7 @@ impl ManyRecurseQuery {
         let sequence = self.program.runnable(context).many(document.xot_mut())?;
         let items = sequence
             .iter()
-            .map(|item| recurse.execute(document, item))
+            .map(|item| recurse.execute(document, &item))
             .collect::<Result<Vec<V>>>()?;
         Ok(items)
     }

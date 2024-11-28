@@ -8,7 +8,7 @@ use super::traits::{SequenceCompare, SequenceCore, SequenceExt, SequenceOrder};
 #[derive(Debug, Clone, PartialEq)]
 pub struct Empty {}
 
-impl<'a> SequenceCore<'a, std::iter::Empty<&'a Item>> for Empty {
+impl<'a> SequenceCore<'a, std::iter::Empty<Item>> for Empty {
     #[inline]
     fn is_empty(&self) -> bool {
         true
@@ -35,7 +35,7 @@ impl<'a> SequenceCore<'a, std::iter::Empty<&'a Item>> for Empty {
     }
 
     #[inline]
-    fn iter(&self) -> std::iter::Empty<&'a Item> {
+    fn iter(&self) -> std::iter::Empty<Item> {
         std::iter::empty()
     }
 
@@ -77,7 +77,7 @@ impl From<One> for Item {
     }
 }
 
-impl<'a> SequenceCore<'a, std::iter::Once<&'a Item>> for One {
+impl<'a> SequenceCore<'a, std::iter::Once<Item>> for One {
     #[inline]
     fn is_empty(&self) -> bool {
         false
@@ -108,8 +108,8 @@ impl<'a> SequenceCore<'a, std::iter::Once<&'a Item>> for One {
     }
 
     #[inline]
-    fn iter(&'a self) -> std::iter::Once<&'a Item> {
-        std::iter::once(&self.item)
+    fn iter(&'a self) -> std::iter::Once<Item> {
+        std::iter::once(self.item.clone())
     }
 
     #[inline]
@@ -138,7 +138,7 @@ impl From<Vec<Item>> for Many {
     }
 }
 
-impl<'a> SequenceCore<'a, std::slice::Iter<'a, Item>> for Many {
+impl<'a> SequenceCore<'a, std::iter::Cloned<std::slice::Iter<'a, Item>>> for Many {
     #[inline]
     fn is_empty(&self) -> bool {
         self.items.is_empty()
@@ -165,8 +165,8 @@ impl<'a> SequenceCore<'a, std::slice::Iter<'a, Item>> for Many {
     }
 
     #[inline]
-    fn iter(&'a self) -> std::slice::Iter<'a, Item> {
-        self.items.iter()
+    fn iter(&'a self) -> std::iter::Cloned<std::slice::Iter<'a, Item>> {
+        self.items.iter().cloned()
     }
 
     #[inline]
@@ -192,63 +192,63 @@ impl<'a> SequenceCore<'a, std::slice::Iter<'a, Item>> for Many {
 // dynamic dispatch on the inside.
 impl<'a, I> SequenceExt<'a, I> for Empty
 where
-    I: Iterator<Item = &'a Item> + 'a,
+    I: Iterator<Item = Item> + 'a,
     Empty: SequenceCore<'a, I>,
 {
 }
 
 impl<'a, I> SequenceCompare<'a, I> for Empty
 where
-    I: Iterator<Item = &'a Item> + 'a,
+    I: Iterator<Item = Item> + 'a,
     Empty: SequenceCore<'a, I>,
 {
 }
 
 impl<'a, I> SequenceOrder<'a, I> for Empty
 where
-    I: Iterator<Item = &'a Item>,
+    I: Iterator<Item = Item>,
     Empty: SequenceCore<'a, I>,
 {
 }
 
 impl<'a, I> SequenceExt<'a, I> for One
 where
-    I: Iterator<Item = &'a Item> + 'a,
+    I: Iterator<Item = Item> + 'a,
     One: SequenceCore<'a, I>,
 {
 }
 
 impl<'a, I> SequenceCompare<'a, I> for One
 where
-    I: Iterator<Item = &'a Item> + 'a,
+    I: Iterator<Item = Item> + 'a,
     One: SequenceCore<'a, I>,
 {
 }
 
 impl<'a, I> SequenceOrder<'a, I> for One
 where
-    I: Iterator<Item = &'a Item>,
+    I: Iterator<Item = Item>,
     One: SequenceCore<'a, I>,
 {
 }
 
 impl<'a, I> SequenceExt<'a, I> for Many
 where
-    I: Iterator<Item = &'a Item> + 'a,
+    I: Iterator<Item = Item> + 'a,
     Many: SequenceCore<'a, I>,
 {
 }
 
 impl<'a, I> SequenceCompare<'a, I> for Many
 where
-    I: Iterator<Item = &'a Item> + 'a,
+    I: Iterator<Item = Item> + 'a,
     Many: SequenceCore<'a, I>,
 {
 }
 
 impl<'a, I> SequenceOrder<'a, I> for Many
 where
-    I: Iterator<Item = &'a Item>,
+    I: Iterator<Item = Item>,
     Many: SequenceCore<'a, I>,
 {
 }

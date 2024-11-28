@@ -73,7 +73,7 @@ impl Sequence {
                     if non_node_seen {
                         return Err(error::Error::XPTY0004);
                     }
-                    s.insert(*n);
+                    s.insert(n);
                 }
                 _ => {
                     if !s.is_empty() {
@@ -120,7 +120,7 @@ impl Sequence {
         get: F,
     ) -> error::Result<Self>
     where
-        F: FnMut(&Item) -> error::Result<Sequence>,
+        F: FnMut(Item) -> error::Result<Sequence>,
     {
         // see also sort_by_sequence in array.rs. The signatures are
         // sufficiently different we don't want to try to unify them.

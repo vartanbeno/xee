@@ -11,14 +11,14 @@ use super::{
     iter::{AtomizedIter, NodeIter},
 };
 
-pub(crate) type BoxedItemIter<'a> = Box<dyn Iterator<Item = &'a Item> + 'a>;
+pub(crate) type BoxedItemIter<'a> = Box<dyn Iterator<Item = Item> + 'a>;
 
 /// The core sequence interface: a sequence must implement this to function.
 ///
 /// If you do, SequenceExt provides a whole of APIs on top of it.
 pub trait SequenceCore<'a, I>
 where
-    I: Iterator<Item = &'a Item>,
+    I: Iterator<Item = Item>,
 {
     /// Check whether the sequence is empty
     fn is_empty(&self) -> bool;
@@ -47,17 +47,20 @@ where
 
 pub trait SequenceExt<'a, I>: SequenceCore<'a, I>
 where
-    I: Iterator<Item = &'a Item> + 'a,
+    I: Iterator<Item = Item> + 'a,
 {
     /// Access an iterator over the nodes in the sequence
     ///
     /// An error is returned for items that are not a node.
-    fn nodes(&'a self) -> impl Iterator<Item = error::Result<xot::Node>> {
+    fn nodes(&'a self) -> impl Iterator<Item = error::Result<xot::Node>> + 'a {
         NodeIter::new(self.iter())
     }
 
     /// Access an iterator for the atomized values in the sequence
-    fn atomized(&'a self, xot: &'a Xot) -> impl Iterator<Item = error::Result<atomic::Atomic>> {
+    fn atomized(
+        &'a self,
+        xot: &'a Xot,
+    ) -> impl Iterator<Item = error::Result<atomic::Atomic>> + 'a {
         AtomizedIter::new(xot, self.iter())
     }
 
@@ -118,7 +121,7 @@ where
 
 pub(crate) trait SequenceCompare<'a, I>: SequenceExt<'a, I>
 where
-    I: Iterator<Item = &'a Item> + 'a,
+    I: Iterator<Item = Item> + 'a,
 {
     fn general_comparison<O>(
         &'a self,
@@ -139,7 +142,7 @@ where
 
 pub(crate) trait SequenceOrder<'a, I>: SequenceCore<'a, I>
 where
-    I: Iterator<Item = &'a Item>,
+    I: Iterator<Item = Item>,
 {
     fn one_node(&'a self) -> error::Result<xot::Node> {
         match self.len() {

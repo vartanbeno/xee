@@ -1094,7 +1094,7 @@ impl<'a> Interpreter<'a> {
                         self.xml_append_string_values(parent_node, &string_values);
                         string_values.clear();
                     }
-                    match self.state.xot.value(*node) {
+                    match self.state.xot.value(node) {
                         xot::Value::Document => {
                             todo!("Handle adding all the children instead");
                         }
@@ -1111,10 +1111,10 @@ impl<'a> Interpreter<'a> {
 
                     // if we have a parent we're already in another document,
                     // in which case we want to make a clone first
-                    let node = if self.state.xot.parent(*node).is_some() {
-                        self.state.xot.clone_node(*node)
+                    let node = if self.state.xot.parent(node).is_some() {
+                        self.state.xot.clone_node(node)
                     } else {
-                        *node
+                        node
                     };
                     // TODO: error out if namespace or attribute node
                     // is added once a normal child already exists
@@ -1160,7 +1160,7 @@ impl<'a> Interpreter<'a> {
         let size: IBig = sequence.len().into();
 
         for (i, item) in sequence.iter().enumerate() {
-            let sequence = self.apply_templates_item(mode, item, i, size.clone())?;
+            let sequence = self.apply_templates_item(mode, &item, i, size.clone())?;
             if let Some(sequence) = sequence {
                 for item in sequence.iter() {
                     r.push(item.clone());

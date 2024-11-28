@@ -97,12 +97,10 @@ impl<'a> Runnable<'a> {
     pub fn option(&self, xot: &'a mut Xot) -> error::SpannedResult<Option<sequence::Item>> {
         let sequence = self.many(xot)?;
         let items = sequence.iter();
-        sequence::option(items)
-            .map(|item| item.cloned())
-            .map_err(|error| SpannedError {
-                error,
-                span: Some(self.program.span().into()),
-            })
+        sequence::option(items).map_err(|error| SpannedError {
+            error,
+            span: Some(self.program.span().into()),
+        })
     }
 
     pub(crate) fn program(&self) -> &'a Program {

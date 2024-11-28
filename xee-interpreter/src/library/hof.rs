@@ -51,13 +51,13 @@ fn function_lookup(
 }
 
 #[xpath_fn("fn:function-name($func as function(*)) as xs:QName?")]
-fn function_name(interpreter: &Interpreter, func: &sequence::Item) -> error::Result<Option<Name>> {
+fn function_name(interpreter: &Interpreter, func: sequence::Item) -> error::Result<Option<Name>> {
     let function = func.to_function()?;
     Ok(interpreter.function_name(&function))
 }
 
 #[xpath_fn("fn:function-arity($func as function(*)) as xs:integer")]
-fn function_arity(interpreter: &Interpreter, func: &sequence::Item) -> error::Result<IBig> {
+fn function_arity(interpreter: &Interpreter, func: sequence::Item) -> error::Result<IBig> {
     let function = func.to_function()?;
     Ok(interpreter.function_arity(&function).into())
 }
@@ -66,7 +66,7 @@ fn function_arity(interpreter: &Interpreter, func: &sequence::Item) -> error::Re
 fn for_each(
     interpreter: &mut Interpreter,
     seq: &sequence::Sequence,
-    action: &sequence::Item,
+    action: sequence::Item,
 ) -> error::Result<sequence::Sequence> {
     let mut result: Vec<sequence::Item> = Vec::with_capacity(seq.len());
     let function = action.to_function()?;
@@ -84,7 +84,7 @@ fn for_each(
 fn filter(
     interpreter: &mut Interpreter,
     seq: &sequence::Sequence,
-    predicate: &sequence::Item,
+    predicate: sequence::Item,
 ) -> error::Result<sequence::Sequence> {
     let mut result: Vec<sequence::Item> = Vec::new();
     let function = predicate.to_function()?;
@@ -105,7 +105,7 @@ fn fold_left(
     interpreter: &mut Interpreter,
     seq: &sequence::Sequence,
     zero: &sequence::Sequence,
-    f: &sequence::Item,
+    f: sequence::Item,
 ) -> error::Result<sequence::Sequence> {
     let function = f.to_function()?;
 
@@ -122,7 +122,7 @@ fn fold_right(
     interpreter: &mut Interpreter,
     seq: &sequence::Sequence,
     zero: &sequence::Sequence,
-    f: &sequence::Item,
+    f: sequence::Item,
 ) -> error::Result<sequence::Sequence> {
     let function = f.to_function()?;
 
@@ -141,7 +141,7 @@ fn for_each_pair(
     interpreter: &mut Interpreter,
     seq1: &sequence::Sequence,
     seq2: &sequence::Sequence,
-    action: &sequence::Item,
+    action: sequence::Item,
 ) -> error::Result<sequence::Sequence> {
     let mut result: Vec<sequence::Item> = Vec::with_capacity(seq1.len());
     let function = action.to_function()?;
@@ -186,7 +186,7 @@ fn sort3(
     interpreter: &mut Interpreter,
     input: &sequence::Sequence,
     collation: Option<&str>,
-    key: &sequence::Item,
+    key: sequence::Item,
 ) -> error::Result<sequence::Sequence> {
     let collation = context.static_context().resolve_collation_str(collation)?;
     let function = key.to_function()?;
@@ -226,7 +226,7 @@ where
     let mut keys_and_items = input
         .clone()
         .iter()
-        .map(|item| Ok((get(item)?, item.clone())))
+        .map(|item| Ok((get(&item)?, item)))
         .collect::<error::Result<Vec<_>>>()?;
     // sort by key. unfortunately sort_by requires the compare function
     // to be infallible. It's not in reality, so we make any failures
@@ -250,7 +250,7 @@ where
 #[xpath_fn("fn:apply($function as function(*), $array as array(*)) as item()*")]
 fn apply(
     interpreter: &mut Interpreter,
-    function: &sequence::Item,
+    function: sequence::Item,
     array: function::Array,
 ) -> error::Result<sequence::Sequence> {
     let function = function.to_function()?;

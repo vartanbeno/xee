@@ -38,7 +38,7 @@ pub(crate) fn normalize(
                 }
             }
             Item::Node(node) => {
-                items.push(NodeOrString::Node(*node));
+                items.push(NodeOrString::Node(node));
             }
             Item::Function(_) => {
                 return Err(error::Error::SENR0001);

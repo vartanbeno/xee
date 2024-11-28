@@ -8,7 +8,7 @@ use xot::Xot;
 
 use crate::{atomic, context, error, function::Map};
 
-use super::{option, SequenceCore};
+use super::SequenceCore;
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub enum QNameOrString {
@@ -65,7 +65,7 @@ impl<'a> OptionParameterConverter<'a> {
             self.xot,
         )?;
         let value = if let Some(value) = value {
-            option(value.iter().cloned())?
+            value.option()?
         } else {
             return Ok(None);
         };

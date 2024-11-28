@@ -81,7 +81,7 @@ impl<'a> State<'a> {
             stack::Value::Sequence(sequence::Sequence::Empty(_)) => {}
             stack::Value::Sequence(sequence::Sequence::One(item)) => build.push(item.into_item()),
             stack::Value::Sequence(sequence::Sequence::Many(items)) => {
-                build.extend(items.iter().cloned().collect::<Vec<_>>())
+                build.extend(items.iter().collect::<Vec<_>>())
             }
             stack::Value::Absent => return Err(error::Error::XPDY0002)?,
         }

@@ -117,7 +117,7 @@ fn join(arrays: &[function::Array]) -> function::Array {
 fn for_each(
     interpreter: &mut Interpreter,
     array: function::Array,
-    action: &sequence::Item,
+    action: sequence::Item,
 ) -> error::Result<function::Array> {
     let function = action.to_function()?;
     let mut result = function::Array::new(vec![]);
@@ -134,7 +134,7 @@ fn for_each(
 fn filter(
     interpreter: &mut Interpreter,
     array: function::Array,
-    function: &sequence::Item,
+    function: sequence::Item,
 ) -> error::Result<function::Array> {
     let function = function.to_function()?;
     let mut result = function::Array::new(vec![]);
@@ -154,7 +154,7 @@ fn fold_left(
     interpreter: &mut Interpreter,
     array: function::Array,
     zero: &sequence::Sequence,
-    function: &sequence::Item,
+    function: sequence::Item,
 ) -> error::Result<sequence::Sequence> {
     let function = function.to_function()?;
 
@@ -171,7 +171,7 @@ fn fold_right(
     interpreter: &mut Interpreter,
     array: function::Array,
     zero: &sequence::Sequence,
-    function: &sequence::Item,
+    function: sequence::Item,
 ) -> error::Result<sequence::Sequence> {
     let function = function.to_function()?;
 
@@ -188,7 +188,7 @@ fn for_each_pair(
     interpreter: &mut Interpreter,
     array1: function::Array,
     array2: function::Array,
-    function: &sequence::Item,
+    function: sequence::Item,
 ) -> error::Result<function::Array> {
     let function = function.to_function()?;
 
@@ -229,7 +229,7 @@ fn sort3(
     interpreter: &mut Interpreter,
     input: function::Array,
     collation: Option<&str>,
-    key: &sequence::Item,
+    key: sequence::Item,
 ) -> error::Result<function::Array> {
     let collation = context.static_context().resolve_collation_str(collation)?;
     let function = key.to_function()?;

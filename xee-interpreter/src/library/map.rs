@@ -218,7 +218,7 @@ fn remove(map: function::Map, keys: &[atomic::Atomic]) -> function::Map {
 fn for_each(
     interpreter: &mut Interpreter,
     map: function::Map,
-    action: &sequence::Item,
+    action: sequence::Item,
 ) -> error::Result<sequence::Sequence> {
     let function = action.to_function()?;
     let mut result: Vec<sequence::Item> = Vec::with_capacity(map.len());

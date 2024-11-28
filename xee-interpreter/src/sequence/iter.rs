@@ -5,25 +5,25 @@ use crate::{atomic, error, function};
 use super::{item::Item, SequenceExt};
 
 /// An iterator over the nodes in a sequence.
-pub struct NodeIter<'a, I>
+pub struct NodeIter<I>
 where
-    I: Iterator<Item = &'a Item>,
+    I: Iterator<Item = Item>,
 {
     iter: I,
 }
 
-impl<'a, I> NodeIter<'a, I>
+impl<I> NodeIter<I>
 where
-    I: Iterator<Item = &'a Item>,
+    I: Iterator<Item = Item>,
 {
     pub(crate) fn new(iter: I) -> Self {
         Self { iter }
     }
 }
 
-impl<'a, I> Iterator for NodeIter<'a, I>
+impl<I> Iterator for NodeIter<I>
 where
-    I: Iterator<Item = &'a Item>,
+    I: Iterator<Item = Item>,
 {
     type Item = error::Result<xot::Node>;
 
@@ -36,7 +36,7 @@ where
 /// An iterator atomizing a sequence.
 pub struct AtomizedIter<'a, I>
 where
-    I: Iterator<Item = &'a Item>,
+    I: Iterator<Item = Item> + 'a,
 {
     xot: &'a Xot,
     iter: I,
@@ -45,7 +45,7 @@ where
 
 impl<'a, I> AtomizedIter<'a, I>
 where
-    I: Iterator<Item = &'a Item>,
+    I: Iterator<Item = Item>,
 {
     pub(crate) fn new(xot: &'a Xot, iter: I) -> AtomizedIter<'a, I> {
         AtomizedIter {
@@ -58,7 +58,7 @@ where
 
 impl<'a, I> Iterator for AtomizedIter<'a, I>
 where
-    I: Iterator<Item = &'a Item>,
+    I: Iterator<Item = Item> + 'a,
 {
     type Item = error::Result<atomic::Atomic>;
 
@@ -96,10 +96,10 @@ pub enum AtomizedItemIter<'a> {
 }
 
 impl<'a> AtomizedItemIter<'a> {
-    pub(crate) fn new(item: &'a Item, xot: &'a Xot) -> Self {
+    pub(crate) fn new(item: Item, xot: &'a Xot) -> Self {
         match item {
-            Item::Atomic(a) => Self::Atomic(std::iter::once(a.clone())),
-            Item::Node(n) => Self::Node(AtomizedNodeIter::new(*n, xot)),
+            Item::Atomic(a) => Self::Atomic(std::iter::once(a)),
+            Item::Node(n) => Self::Node(AtomizedNodeIter::new(n, xot)),
             Item::Function(function) => match function {
                 function::Function::Array(a) => Self::Array(AtomizedArrayIter::new(a, xot)),
                 _ => Self::Erroring(std::iter::once(Err(error::Error::FOTY0013))),
@@ -155,14 +155,13 @@ impl Iterator for AtomizedNodeIter {
 /// Atomizing a XPath array
 pub struct AtomizedArrayIter<'a> {
     xot: &'a Xot,
-    array: &'a function::Array,
+    array: function::Array,
     array_index: usize,
-    iter: Option<Box<dyn Iterator<Item = error::Result<atomic::Atomic>> + 'a>>,
-    // iter: Option<Box<AtomizedIter<'a, I>>>,
+    iter: Option<std::vec::IntoIter<error::Result<atomic::Atomic>>>,
 }
 
 impl<'a> AtomizedArrayIter<'a> {
-    fn new(array: &'a function::Array, xot: &'a Xot) -> Self {
+    fn new(array: function::Array, xot: &'a Xot) -> Self {
         Self {
             xot,
             array,
@@ -193,8 +192,12 @@ impl<'a> Iterator for AtomizedArrayIter<'a> {
             }
             let sequence = &array[self.array_index];
             self.array_index += 1;
-
-            self.iter = Some(Box::new(sequence.atomized(self.xot)));
+            // TODO: we have lifetime whackamole issues here, because
+            // an array reference cannot live long enough, but an owned
+            // array also cannot live long enough. So we collect things
+            // into a vector...
+            let v = sequence.atomized(self.xot).collect::<Vec<_>>();
+            self.iter = Some(v.into_iter());
         }
     }
 }
