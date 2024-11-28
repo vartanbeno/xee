@@ -6,7 +6,7 @@ use xee_xpath_ast::ast;
 use xot::xmlname::{NameStrInfo, OwnedName};
 use xot::Xot;
 
-use crate::{atomic, context, error, function::Map, occurrence::Occurrence};
+use crate::{atomic, context, error, function::Map};
 
 use super::{option, SequenceCore};
 

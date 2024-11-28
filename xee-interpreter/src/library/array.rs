@@ -12,7 +12,6 @@ use crate::error;
 use crate::function;
 use crate::function::StaticFunctionDescription;
 use crate::interpreter::Interpreter;
-use crate::occurrence::Occurrence;
 use crate::sequence;
 use crate::sequence::SequenceCore;
 use crate::sequence::SequenceExt;

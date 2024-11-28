@@ -14,7 +14,6 @@ use crate::function;
 use crate::function::StaticFunctionDescription;
 use crate::interpreter;
 use crate::interpreter::Interpreter;
-use crate::occurrence::Occurrence;
 use crate::sequence;
 use crate::sequence::SequenceCore;
 use crate::wrap_xpath_fn;
@@ -162,7 +161,7 @@ fn contains(map: function::Map, key: atomic::Atomic) -> bool {
 
 #[xpath_fn("map:get($map as map(*), $key as xs:anyAtomicType) as item()*")]
 fn get(map: function::Map, key: atomic::Atomic) -> sequence::Sequence {
-    map.get(&key).unwrap_or(sequence::Sequence::default())
+    map.get(&key).unwrap_or_default()
 }
 
 #[xpath_fn("map:find($input as item()*, $key as xs:anyAtomicType) as array(*)")]

@@ -3,7 +3,7 @@ use xee_xpath_ast::ast;
 use xee_interpreter::interpreter::instruction::{
     encode_instruction, instruction_size, Instruction,
 };
-use xee_interpreter::{context, function, interpreter, sequence, span, stack, xml};
+use xee_interpreter::{context, function, interpreter, sequence, span, xml};
 
 use crate::ir;
 

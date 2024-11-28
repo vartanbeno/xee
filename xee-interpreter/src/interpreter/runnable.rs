@@ -10,7 +10,6 @@ use crate::context::StaticContext;
 use crate::error::SpannedError;
 use crate::function::Function;
 use crate::interpreter::interpret::ContextInfo;
-use crate::occurrence::Occurrence;
 use crate::sequence;
 use crate::sequence::SequenceCore;
 use crate::stack;
@@ -88,13 +87,11 @@ impl<'a> Runnable<'a> {
     /// Run the program, expect a single item as the result.
     pub fn one(&self, xot: &'a mut Xot) -> error::SpannedResult<sequence::Item> {
         let sequence = self.many(xot)?;
-        let items = sequence.iter();
-        sequence::one(items)
-            .map(|item| item.clone())
-            .map_err(|error| SpannedError {
-                error,
-                span: Some(self.program.span().into()),
-            })
+        let items = sequence.into_iter();
+        sequence::one(items).map_err(|error| SpannedError {
+            error,
+            span: Some(self.program.span().into()),
+        })
     }
 
     /// Run the program, expect an optional single item as the result.

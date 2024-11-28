@@ -1,4 +1,4 @@
-use crate::{context, sequence, stack};
+use crate::{context, stack};
 
 use super::array::Array;
 use super::map::Map;

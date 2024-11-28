@@ -13,7 +13,6 @@ use crate::error;
 use crate::function;
 use crate::function::StaticFunctionDescription;
 use crate::interpreter::Interpreter;
-use crate::occurrence::Occurrence;
 use crate::sequence;
 use crate::sequence::SequenceCore;
 use crate::sequence::SequenceExt;
@@ -207,7 +206,7 @@ fn sort_without_key(
 ) -> error::Result<sequence::Sequence> {
     sort_by_sequence(context, input, collation, |item| {
         // the equivalent of fn:data()
-        let seq: sequence::Sequence = item.clone().into();
+        let seq: sequence::Sequence = item.into();
         let atoms = seq
             .atomized(interpreter.xot())
             .collect::<error::Result<Vec<_>>>()?;
@@ -219,18 +218,18 @@ fn sort_by_sequence<F>(
     context: &context::DynamicContext,
     input: &sequence::Sequence,
     collation: Rc<Collation>,
-    get: F,
+    mut get: F,
 ) -> error::Result<sequence::Sequence>
 where
-    F: FnMut(&&sequence::Item) -> error::Result<sequence::Sequence>,
+    F: FnMut(&sequence::Item) -> error::Result<sequence::Sequence>,
 {
     // see also sort_by_sequence in array.rs. The signatures are
     // sufficiently different we don't want to try to unify them.
-
-    let items = input.iter().collect::<Vec<_>>();
-    let keys = items.iter().map(get).collect::<error::Result<Vec<_>>>()?;
-
-    let mut keys_and_items = keys.into_iter().zip(items).collect::<Vec<_>>();
+    let mut keys_and_items = input
+        .clone()
+        .into_iter()
+        .map(|item| Ok((get(&item)?, item)))
+        .collect::<error::Result<Vec<_>>>()?;
     // sort by key. unfortunately sort_by requires the compare function
     // to be infallible. It's not in reality, so we make any failures
     // sort less, so they appear early on in the sequence.

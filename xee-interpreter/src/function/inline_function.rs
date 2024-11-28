@@ -3,7 +3,6 @@ use xee_xpath_type::ast::SequenceType;
 
 use crate::sequence;
 use crate::span::SourceSpan;
-use crate::stack;
 use crate::xml;
 
 use super::signature::Signature;

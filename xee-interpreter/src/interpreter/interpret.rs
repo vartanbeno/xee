@@ -14,7 +14,6 @@ use crate::atomic::{
 };
 use crate::context::DynamicContext;
 use crate::function;
-use crate::occurrence::Occurrence;
 use crate::pattern::PredicateMatcher;
 use crate::sequence::{self, SequenceCompare, SequenceCore, SequenceExt, SequenceOrder};
 use crate::span::SourceSpan;
@@ -321,7 +320,7 @@ impl<'a> Interpreter<'a> {
                     self.state.push(value);
                 }
                 EncodedInstruction::Pop => {
-                    self.state.pop();
+                    self.state.pop()?;
                 }
                 EncodedInstruction::Call => {
                     let arity = self.read_u8();
@@ -432,8 +431,8 @@ impl<'a> Interpreter<'a> {
                 EncodedInstruction::Range => {
                     let b = self.state.pop()?;
                     let a = self.state.pop()?;
-                    let mut a = a.atomized(self.state.xot());
-                    let mut b = b.atomized(self.state.xot());
+                    let a = a.atomized(self.state.xot());
+                    let b = b.atomized(self.state.xot());
                     let a = sequence::option(a)?;
                     let b = sequence::option(b)?;
                     let (a, b) = match (a, b) {
@@ -837,7 +836,7 @@ impl<'a> Interpreter<'a> {
         let key = self.pop_atomic()?;
         let value = map.get(&key);
         // pop the map off the stack
-        self.state.pop();
+        self.state.pop()?;
         if let Some(value) = value {
             self.state.push(value);
         } else {
@@ -874,7 +873,7 @@ impl<'a> Interpreter<'a> {
         key_specifier: sequence::Sequence,
     ) -> error::Result<Vec<sequence::Item>> {
         self.lookup_helper(key_specifier, map, |map, atomic| {
-            Ok(map.get(&atomic).unwrap_or(sequence::Sequence::default()))
+            Ok(map.get(&atomic).unwrap_or_default())
         })
     }
 
@@ -949,8 +948,8 @@ impl<'a> Interpreter<'a> {
             self.state.push(sequence::Sequence::default());
             return Ok(());
         }
-        let mut atomized_a = a.atomized(self.state.xot());
-        let mut atomized_b = b.atomized(self.state.xot());
+        let atomized_a = a.atomized(self.state.xot());
+        let atomized_b = b.atomized(self.state.xot());
         let a = sequence::one(atomized_a)?;
         let b = sequence::one(atomized_b)?;
         let a = a?;
@@ -997,8 +996,8 @@ impl<'a> Interpreter<'a> {
             self.state.push(sequence::Sequence::default());
             return Ok(());
         }
-        let mut atomized_a = a.atomized(self.state.xot());
-        let mut atomized_b = b.atomized(self.state.xot());
+        let atomized_a = a.atomized(self.state.xot());
+        let atomized_b = b.atomized(self.state.xot());
         let a = sequence::one(atomized_a)?;
         let b = sequence::one(atomized_b)?;
         let result = op(a?, b?, self.runnable.implicit_timezone())?;
@@ -1188,7 +1187,7 @@ impl<'a> Interpreter<'a> {
         position: usize,
         size: IBig,
     ) -> error::Result<Option<sequence::Sequence>> {
-        let function_id = self.lookup_pattern(mode, &item);
+        let function_id = self.lookup_pattern(mode, item);
 
         if let Some(function_id) = function_id {
             let position: IBig = (position + 1).into();
