@@ -10,6 +10,7 @@
 
 mod compare;
 mod comparison;
+mod conversion;
 mod core;
 mod creation;
 mod item;
