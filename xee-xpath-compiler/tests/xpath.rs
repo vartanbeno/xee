@@ -284,6 +284,11 @@ fn test_range_equal() {
 }
 
 #[test]
+fn test_range_combine_consecutive() {
+    assert_debug_snapshot!(run("(1 to 5, 6 to 10)"));
+}
+
+#[test]
 fn test_for_loop() {
     assert_debug_snapshot!(run("for $x in 1 to 5 return $x + 2"));
 }
