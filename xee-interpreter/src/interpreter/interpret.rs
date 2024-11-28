@@ -455,19 +455,21 @@ impl<'a> Interpreter<'a> {
                             if length > MAXIMUM_RANGE_SIZE.into() {
                                 return Err(error::Error::FOAR0002);
                             }
-                            // if a and b are in the usize range, we can make
-                            // an efficient range object
 
                             let a_usize: Result<usize, _> = a.clone().try_into();
                             let b_usize: Result<usize, _> = b.try_into();
 
                             let sequence: sequence::Sequence =
                                 if let (Ok(a_usize), Ok(b_usize)) = (a_usize, b_usize) {
+                                    // if a and b are in the usize range, we can make
+                                    // an efficient range object
+
                                     // add one to convert xpath inclusive range into non-inclusive range
                                     let one: usize = 1;
                                     let range = sequence::Range::new(a_usize, b_usize + one);
                                     range.into()
                                 } else {
+                                    // otherwise we have to create a sequence of integers
                                     let mut items =
                                         Vec::with_capacity(length.clone().try_into().unwrap());
                                     let mut i: IBig = 0.into();
