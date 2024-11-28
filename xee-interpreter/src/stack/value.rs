@@ -10,6 +10,10 @@ pub enum Value {
     Sequence(sequence::Sequence),
 }
 
+// a static assertion to ensure that Value never grows in size
+#[cfg(target_arch = "x86_64")]
+static_assertions::assert_eq_size!(Value, [u8; 24]);
+
 impl Value {
     pub(crate) fn is_absent(&self) -> bool {
         matches!(self, Value::Absent)

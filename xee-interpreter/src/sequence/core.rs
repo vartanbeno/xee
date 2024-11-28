@@ -29,6 +29,10 @@ pub enum Sequence {
     Many(Many),
 }
 
+// a static assertion to ensure that Sequence never grows in size
+#[cfg(target_arch = "x86_64")]
+static_assertions::assert_eq_size!(Sequence, [u8; 24]);
+
 impl Default for Sequence {
     fn default() -> Self {
         Self::Empty(Empty {})
