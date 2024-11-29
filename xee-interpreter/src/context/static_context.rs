@@ -17,6 +17,13 @@ use crate::string::{Collation, Collations};
 static STATIC_FUNCTIONS: LazyLock<function::StaticFunctions> =
     LazyLock::new(function::StaticFunctions::new);
 
+// use lazy static to initialize the default collation
+static DEFAULT_COLLATION: LazyLock<IriAbsoluteString> = LazyLock::new(|| {
+    "http://www.w3.org/2005/xpath-functions/collation/codepoint"
+        .try_into()
+        .unwrap()
+});
+
 #[derive(Debug)]
 pub struct StaticContext {
     parser_context: XPathParserContext,
@@ -74,9 +81,7 @@ impl StaticContext {
     }
 
     pub fn default_collation_uri(&self) -> &IriReferenceStr {
-        "http://www.w3.org/2005/xpath-functions/collation/codepoint"
-            .try_into()
-            .unwrap()
+        DEFAULT_COLLATION.as_ref()
     }
 
     pub(crate) fn resolve_collation_str(
