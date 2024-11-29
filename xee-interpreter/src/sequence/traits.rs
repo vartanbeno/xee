@@ -66,6 +66,16 @@ where
         AtomizedIter::new(xot, self.iter())
     }
 
+    /// Get just one atomized value from the sequence
+    fn atomized_one(&'a self, xot: &'a Xot) -> error::Result<atomic::Atomic> {
+        iter::one(self.atomized(xot))?
+    }
+
+    /// Get an optional atomized value from the sequence
+    fn atomized_option(&'a self, xot: &'a Xot) -> error::Result<Option<atomic::Atomic>> {
+        iter::option(self.atomized(xot))?.transpose()
+    }
+
     /// Is used internally by the library macro.
     fn unboxed_atomized<T: 'a>(
         &'a self,
@@ -125,26 +135,25 @@ pub(crate) trait SequenceCompare<'a, I>: SequenceExt<'a, I>
 where
     I: Iterator<Item = Item> + 'a,
 {
-    fn general_comparison<O>(
+    fn general_comparison<O, J>(
         &'a self,
-        // we can't specialize the other; it's some kind of dynamically dispatched sequence
-        other: &'a impl SequenceExt<'a, BoxedItemIter<'a>>,
+        other: &'a impl SequenceExt<'a, J>,
         context: &context::DynamicContext,
         xot: &'a Xot,
         op: O,
     ) -> error::Result<bool>
     where
         O: AtomicCompare,
+        J: Iterator<Item = Item> + 'a,
     {
         let a_atomized = self.atomized(xot);
         let b_atomized = other.atomized(xot);
         comparison::general_comparison(a_atomized, b_atomized, context, op)
     }
 
-    fn value_compare<O>(
+    fn value_compare<O, J>(
         &'a self,
-        // we can't specialize the other; it's some kind of dynamically dispatched sequence
-        other: &'a impl SequenceExt<'a, BoxedItemIter<'a>>,
+        other: &'a impl SequenceExt<'a, J>,
         _op: O,
         collation: &Collation,
         timezone: chrono::FixedOffset,
@@ -152,13 +161,10 @@ where
     ) -> error::Result<bool>
     where
         O: AtomicCompare,
+        J: Iterator<Item = Item> + 'a,
     {
-        let atomized_a = self.atomized(xot);
-        let atomized_b = other.atomized(xot);
-        let a = iter::one(atomized_a)?;
-        let b = iter::one(atomized_b)?;
-        let a = a?;
-        let b = b?;
+        let a = self.atomized_one(xot)?;
+        let b = other.atomized_one(xot)?;
         O::atomic_compare(a, b, |a: &str, b: &str| collation.compare(a, b), timezone)
     }
 }

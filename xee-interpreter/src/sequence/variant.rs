@@ -1,6 +1,7 @@
 use std::rc::Rc;
 
 use ibig::IBig;
+use xot::Xot;
 
 use crate::{atomic, error};
 
@@ -318,6 +319,16 @@ where
         _xot: &'a xot::Xot,
     ) -> impl Iterator<Item = error::Result<atomic::Atomic>> + 'a {
         std::iter::empty()
+    }
+
+    /// Get just one atomized value from the sequence
+    fn atomized_one(&'a self, _xot: &'a Xot) -> error::Result<atomic::Atomic> {
+        Err(error::Error::XPTY0004)
+    }
+
+    /// Get an optional atomized value from the sequence
+    fn atomized_option(&'a self, _xot: &'a Xot) -> error::Result<Option<atomic::Atomic>> {
+        Ok(None)
     }
 }
 

@@ -428,16 +428,14 @@ impl<'a> Interpreter<'a> {
                 EncodedInstruction::Range => {
                     let b = self.state.pop()?;
                     let a = self.state.pop()?;
-                    let a = a.atomized(self.state.xot());
-                    let b = b.atomized(self.state.xot());
-                    let a = sequence::option(a)?;
-                    let b = sequence::option(b)?;
+                    let a = a.atomized_option(self.state.xot())?;
+                    let b = b.atomized_option(self.state.xot())?;
                     let (a, b) = match (a, b) {
                         (None, None) | (None, _) | (_, None) => {
                             self.state.push(sequence::Sequence::default());
                             continue;
                         }
-                        (Some(a), Some(b)) => (a?, b?),
+                        (Some(a), Some(b)) => (a, b),
                     };
                     // we want to ensure we have integers at this point;
                     // we don't want to be casting strings or anything
@@ -998,11 +996,9 @@ impl<'a> Interpreter<'a> {
             self.state.push(sequence::Sequence::default());
             return Ok(());
         }
-        let atomized_a = a.atomized(self.state.xot());
-        let atomized_b = b.atomized(self.state.xot());
-        let a = sequence::one(atomized_a)?;
-        let b = sequence::one(atomized_b)?;
-        let result = op(a?, b?, self.runnable.implicit_timezone())?;
+        let a = a.atomized_one(self.state.xot())?;
+        let b = b.atomized_one(self.state.xot())?;
+        let result = op(a, b, self.runnable.implicit_timezone())?;
         self.state.push(result);
         Ok(())
     }
@@ -1016,19 +1012,17 @@ impl<'a> Interpreter<'a> {
             self.state.push(sequence::Sequence::default());
             return Ok(());
         }
-        let atomized_a = a.atomized(self.state.xot());
-        let a = sequence::one(atomized_a)?;
-        let value = op(a?)?;
+        let a = a.atomized_one(self.state.xot())?;
+        let value = op(a)?;
         self.state.push(value);
         Ok(())
     }
 
     fn pop_is_numeric(&mut self) -> error::Result<bool> {
         let value = self.state.pop()?;
-        let atomized = value.atomized(self.state.xot());
-        let a = sequence::option(atomized)?;
+        let a = value.atomized_option(self.state.xot())?;
         if let Some(a) = a {
-            Ok(a?.is_numeric())
+            Ok(a.is_numeric())
         } else {
             Ok(false)
         }
@@ -1036,18 +1030,12 @@ impl<'a> Interpreter<'a> {
 
     fn pop_atomic(&mut self) -> error::Result<atomic::Atomic> {
         let value = self.state.pop()?;
-        let atomized = value.atomized(self.state.xot());
-        sequence::one(atomized)?
+        value.atomized_one(self.state.xot())
     }
 
     fn pop_atomic_option(&mut self) -> error::Result<Option<atomic::Atomic>> {
         let value = self.state.pop()?;
-        let atomized = value.atomized(self.state.xot());
-        if let Some(a) = sequence::option(atomized)? {
-            Ok(Some(a?))
-        } else {
-            Ok(None)
-        }
+        value.atomized_option(self.state.xot())
     }
 
     fn pop_xot_name(&mut self) -> error::Result<xot::NameId> {

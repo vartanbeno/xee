@@ -9,9 +9,12 @@
 // creation.rs contains various functions that create Sequence
 // compare.rs contains various comparison functions
 
+use xot::Xot;
+
 use crate::{
     atomic::{self, AtomicCompare},
     context, error, function,
+    string::Collation,
 };
 
 use super::{
@@ -151,6 +154,26 @@ where
     }
 
     #[allow(refining_impl_trait)]
+    fn atomized_one(&'a self, xot: &'a xot::Xot) -> error::Result<atomic::Atomic> {
+        match self {
+            Sequence::Empty(inner) => inner.atomized_one(xot),
+            Sequence::One(inner) => inner.atomized_one(xot),
+            Sequence::Many(inner) => inner.atomized_one(xot),
+            Sequence::Range(inner) => inner.atomized_one(xot),
+        }
+    }
+
+    #[allow(refining_impl_trait)]
+    fn atomized_option(&'a self, xot: &'a xot::Xot) -> error::Result<Option<atomic::Atomic>> {
+        match self {
+            Sequence::Empty(inner) => inner.atomized_option(xot),
+            Sequence::One(inner) => inner.atomized_option(xot),
+            Sequence::Many(inner) => inner.atomized_option(xot),
+            Sequence::Range(inner) => inner.atomized_option(xot),
+        }
+    }
+
+    #[allow(refining_impl_trait)]
     fn unboxed_atomized<T: 'a>(
         &'a self,
         xot: &'a xot::Xot,
@@ -213,15 +236,16 @@ where
     Sequence: SequenceCore<'a, BoxedItemIter<'a>>,
 {
     #[allow(refining_impl_trait)]
-    fn general_comparison<O>(
+    fn general_comparison<O, J>(
         &'a self,
-        other: &'a impl SequenceExt<'a, BoxedItemIter<'a>>,
+        other: &'a impl SequenceExt<'a, J>,
         context: &context::DynamicContext,
         xot: &'a xot::Xot,
         op: O,
     ) -> error::Result<bool>
     where
         O: AtomicCompare,
+        J: Iterator<Item = Item> + 'a,
     {
         match self {
             // this will specialize over inner as we know the exact type.
@@ -230,6 +254,27 @@ where
             Sequence::One(inner) => inner.general_comparison(other, context, xot, op),
             Sequence::Many(inner) => inner.general_comparison(other, context, xot, op),
             Sequence::Range(inner) => inner.general_comparison(other, context, xot, op),
+        }
+    }
+
+    #[allow(refining_impl_trait)]
+    fn value_compare<O, J>(
+        &'a self,
+        other: &'a impl SequenceExt<'a, J>,
+        _op: O,
+        collation: &Collation,
+        timezone: chrono::FixedOffset,
+        xot: &'a Xot,
+    ) -> error::Result<bool>
+    where
+        O: AtomicCompare,
+        J: Iterator<Item = Item> + 'a,
+    {
+        match self {
+            Sequence::Empty(inner) => inner.value_compare(other, _op, collation, timezone, xot),
+            Sequence::One(inner) => inner.value_compare(other, _op, collation, timezone, xot),
+            Sequence::Many(inner) => inner.value_compare(other, _op, collation, timezone, xot),
+            Sequence::Range(inner) => inner.value_compare(other, _op, collation, timezone, xot),
         }
     }
 }
