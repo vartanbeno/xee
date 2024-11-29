@@ -1,12 +1,8 @@
 use insta::assert_debug_snapshot;
-use xee_xpath::{error, Documents, Queries, Query, Sequence};
 
-fn run(s: &str) -> error::Result<Sequence> {
-    let mut documents = Documents::new();
-    let queries = Queries::default();
-    let q = queries.sequence(s)?;
-    q.execute_build_context(&mut documents, |_builder| ())
-}
+mod common;
+
+use common::run;
 
 #[test]
 fn test_add_int_to_double() {
