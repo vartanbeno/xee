@@ -1,4 +1,4 @@
-// this is unfortunately a ridiculous verbose module, wiring everything up
+// this is unfortunately a ridiculously verbose module, wiring everything up
 // carefully so we don't use performance due to dynamic dispatch on the inside.
 // The verbosity is all pretty straightforward though.
 

@@ -305,10 +305,9 @@ impl Iterator for RangeIterator {
     }
 }
 
-// specifically implement the extensions for each version, so that
-// we can avoid dynamic dispatch on the inside. We can't do it generically
-// as we want a specialized version for the StackSequence so we can avoid
-// dynamic dispatch on the inside.
+// We implement specific interfaces here, instead of generically for all
+// T that implement sequenceCore, because we want to provide a few specialized
+// implementations.
 impl<'a, I> SequenceExt<'a, I> for Empty
 where
     I: Iterator<Item = Item> + 'a,
