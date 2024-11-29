@@ -32,3 +32,8 @@ iri-string = { workspace = true }
 [dev-dependencies]
 insta = { version = "1.29.0", features = ["yaml", "glob"] }
 rust_decimal_macros = { workspace = true }
+divan = "0.1.16"
+
+[[bench]]
+name = "xpath"
+harness = false
