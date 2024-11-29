@@ -25,7 +25,7 @@ where
     /// Check whether the sequence is empty
     fn is_empty(&self) -> bool;
 
-    /// Get an item in the sequenc
+    /// Get the sequence length
     fn len(&self) -> usize;
 
     /// Get an item in the index, if it exists
@@ -138,9 +138,9 @@ where
     fn general_comparison<O, J>(
         &'a self,
         other: &'a impl SequenceExt<'a, J>,
+        op: O,
         context: &context::DynamicContext,
         xot: &'a Xot,
-        op: O,
     ) -> error::Result<bool>
     where
         O: AtomicCompare,
@@ -180,11 +180,14 @@ where
         }
     }
 
-    fn is(
+    fn is<J>(
         &'a self,
-        other: &'a impl SequenceOrder<'a, BoxedItemIter<'a>>,
+        other: &'a impl SequenceOrder<'a, J>,
         annotations: &xml::Annotations,
-    ) -> error::Result<bool> {
+    ) -> error::Result<bool>
+    where
+        J: Iterator<Item = Item> + 'a,
+    {
         let a = self.one_node()?;
         let b = other.one_node()?;
         let a_annotation = annotations.get(a).unwrap();
@@ -192,11 +195,14 @@ where
         Ok(a_annotation.document_order == b_annotation.document_order)
     }
 
-    fn precedes(
+    fn precedes<J>(
         &'a self,
-        other: &'a impl SequenceOrder<'a, BoxedItemIter<'a>>,
+        other: &'a impl SequenceOrder<'a, J>,
         annotations: &xml::Annotations,
-    ) -> error::Result<bool> {
+    ) -> error::Result<bool>
+    where
+        J: Iterator<Item = Item> + 'a,
+    {
         let a = self.one_node()?;
         let b = other.one_node()?;
         let a_annotation = annotations.get(a).unwrap();
@@ -204,11 +210,14 @@ where
         Ok(a_annotation.document_order < b_annotation.document_order)
     }
 
-    fn follows(
+    fn follows<J>(
         &'a self,
-        other: &'a impl SequenceOrder<'a, BoxedItemIter<'a>>,
+        other: &'a impl SequenceOrder<'a, J>,
         annotations: &xml::Annotations,
-    ) -> error::Result<bool> {
+    ) -> error::Result<bool>
+    where
+        J: Iterator<Item = Item> + 'a,
+    {
         let a = self.one_node()?;
         let b = other.one_node()?;
         let a_annotation = annotations.get(a).unwrap();

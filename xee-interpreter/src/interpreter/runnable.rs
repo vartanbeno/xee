@@ -11,7 +11,6 @@ use crate::error::SpannedError;
 use crate::function::Function;
 use crate::interpreter::interpret::ContextInfo;
 use crate::sequence;
-use crate::sequence::SequenceCore;
 use crate::stack;
 use crate::{error, string};
 

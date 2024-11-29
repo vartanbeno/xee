@@ -4,7 +4,7 @@ use xot::{Node, Xot};
 
 use crate::{atomic, error};
 
-use super::{core::Sequence, item::Item, traits::SequenceCore};
+use super::{core::Sequence, item::Item};
 
 enum NodeOrString {
     Node(Node),

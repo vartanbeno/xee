@@ -14,7 +14,7 @@ use crate::atomic::{
 use crate::context::DynamicContext;
 use crate::function;
 use crate::pattern::PredicateMatcher;
-use crate::sequence::{self, SequenceCompare, SequenceCore, SequenceExt, SequenceOrder};
+use crate::sequence;
 use crate::span::SourceSpan;
 use crate::stack;
 use crate::xml;
@@ -972,7 +972,7 @@ impl<'a> Interpreter<'a> {
         let b = self.state.pop()?;
         let a = self.state.pop()?;
         let value =
-            a.general_comparison(&b, self.runnable.dynamic_context(), self.state.xot(), op)?;
+            a.general_comparison(&b, op, self.runnable.dynamic_context(), self.state.xot())?;
         self.state.push(value);
         Ok(())
     }

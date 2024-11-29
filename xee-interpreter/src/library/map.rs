@@ -15,7 +15,6 @@ use crate::function::StaticFunctionDescription;
 use crate::interpreter;
 use crate::interpreter::Interpreter;
 use crate::sequence;
-use crate::sequence::SequenceCore;
 use crate::wrap_xpath_fn;
 
 #[xpath_fn("map:merge($maps as map(*)*) as map(*)")]

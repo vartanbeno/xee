@@ -5,7 +5,7 @@ use std::rc::Rc;
 use xee_interpreter::context::{self, StaticContext};
 use xee_interpreter::error::SpannedResult as Result;
 use xee_interpreter::interpreter::Program;
-use xee_interpreter::sequence::{Item, Sequence, SequenceCore};
+use xee_interpreter::sequence::{Item, Sequence};
 
 use crate::{Documents, Itemable};
 

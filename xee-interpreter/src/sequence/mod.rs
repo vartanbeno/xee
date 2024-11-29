@@ -29,6 +29,4 @@ pub use iter::AtomizedIter;
 pub(crate) use iter::{one, option};
 pub(crate) use opc::OptionParameterConverter;
 pub(crate) use serialization::SerializationParameters;
-pub(crate) use traits::{SequenceCompare, SequenceOrder};
-pub use traits::{SequenceCore, SequenceExt};
 pub(crate) use variant::Range;

@@ -1,9 +1,6 @@
 use std::fmt::Write;
 
-use xee_interpreter::{
-    error,
-    sequence::{Sequence, SequenceCore},
-};
+use xee_interpreter::{error, sequence::Sequence};
 use xee_xslt_compiler::evaluate;
 use xot::Xot;
 

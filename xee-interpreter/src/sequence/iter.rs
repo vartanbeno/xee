@@ -2,7 +2,7 @@ use xot::Xot;
 
 use crate::{atomic, error, function};
 
-use super::{item::Item, SequenceExt};
+use super::item::Item;
 
 /// An iterator over the nodes in a sequence.
 pub struct NodeIter<I>

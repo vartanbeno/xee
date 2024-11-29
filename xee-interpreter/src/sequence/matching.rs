@@ -19,8 +19,6 @@ use super::core::Sequence;
 use super::item::Item;
 use super::iter::one;
 use super::iter::option;
-use super::traits::SequenceCore;
-use super::traits::SequenceExt;
 
 impl Sequence {
     /// Check a type for qee-qt assert-type

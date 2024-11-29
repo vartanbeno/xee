@@ -1,6 +1,6 @@
 use crate::{atomic, error, function};
 
-use super::{Item, Sequence, SequenceCore};
+use super::{Item, Sequence};
 
 // turn a single item into a sequence
 impl From<Item> for Sequence {

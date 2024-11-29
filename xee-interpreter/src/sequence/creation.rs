@@ -11,7 +11,7 @@ use super::{
     item::Item,
     normalization::normalize,
     serialization::{serialize_sequence, SerializationParameters},
-    traits::{SequenceCore, SequenceExt},
+    traits::SequenceCore,
     variant::{Empty, Range},
 };
 

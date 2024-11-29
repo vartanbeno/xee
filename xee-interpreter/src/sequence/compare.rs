@@ -4,7 +4,7 @@ use xot::Xot;
 
 use crate::{error, function, string::Collation};
 
-use super::{core::Sequence, item::Item, traits::SequenceCore};
+use super::{core::Sequence, item::Item};
 
 impl Sequence {
     /// Compare two sequences using XPath deep equal rules.

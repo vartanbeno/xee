@@ -8,7 +8,6 @@ use crate::error;
 use crate::function::StaticFunctionDescription;
 use crate::interpreter::Interpreter;
 use crate::sequence;
-use crate::sequence::SequenceExt;
 use crate::wrap_xpath_fn;
 use crate::xml::BaseUriResolver;
 

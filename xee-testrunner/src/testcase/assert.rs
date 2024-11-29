@@ -3,7 +3,6 @@ use chrono::Offset;
 use std::fmt;
 use xee_xpath::context::{Collation, DynamicContext};
 use xee_xpath::iter::Occurrence;
-use xee_xpath::{SequenceCore, SequenceExt};
 use xot::xmlname::{NameStrInfo, OwnedName as Name};
 use xot::Xot;
 

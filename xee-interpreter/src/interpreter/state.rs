@@ -4,7 +4,6 @@ use xot::Xot;
 use crate::error;
 use crate::function;
 use crate::sequence;
-use crate::sequence::SequenceCore;
 use crate::stack;
 
 const FRAMES_MAX: usize = 64;

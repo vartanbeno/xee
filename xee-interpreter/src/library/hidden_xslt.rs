@@ -6,8 +6,7 @@ use xot::Xot;
 use crate::error;
 use crate::function::StaticFunctionDescription;
 use crate::interpreter::Interpreter;
-use crate::sequence::SequenceExt;
-use crate::sequence::{self, SequenceCore};
+use crate::sequence;
 use crate::wrap_xpath_fn;
 
 // TODO: Things should really be hidden from XPath, and not be in the fn prefix
@@ -85,7 +84,7 @@ pub(crate) fn static_function_descriptions() -> Vec<StaticFunctionDescription> {
 mod tests {
     use super::*;
 
-    use sequence::{Item, Sequence, SequenceCore};
+    use sequence::{Item, Sequence};
 
     #[test]
     fn test_filter_empty_text_nodes() {

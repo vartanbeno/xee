@@ -6,8 +6,6 @@ use crate::context;
 use crate::error;
 use crate::function;
 
-use super::SequenceExt;
-
 /// An XPath item. These are the items that make up an XPath sequence.
 #[derive(Debug, Clone, PartialEq)]
 pub enum Item {

@@ -16,7 +16,6 @@ use xot::Xot;
 use crate::context::DynamicContext;
 use crate::function::{self, StaticFunctionDescription};
 use crate::interpreter::Interpreter;
-use crate::sequence::SequenceExt;
 use crate::string::Collation;
 use crate::{atomic, error, interpreter, occurrence::Occurrence, sequence, wrap_xpath_fn};
 

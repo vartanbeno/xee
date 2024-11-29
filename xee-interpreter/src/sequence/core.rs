@@ -1,10 +1,6 @@
 // this is unfortunately a ridiculous verbose module, wiring everything up
-// carefully so we don't use performance due to dynamic dispatch on the inside. I
-// hope it's worth it. The verbosity is all pretty straightforward though.
-
-// enum_dispatch could be used to simplify it, but that seems to require co-location
-// of the trait and implementation in the same module and it's less clear what's
-// going on in detail, so I don't use it.
+// carefully so we don't use performance due to dynamic dispatch on the inside.
+// The verbosity is all pretty straightforward though.
 
 // creation.rs contains various functions that create Sequence
 // compare.rs contains various comparison functions
@@ -15,6 +11,7 @@ use crate::{
     atomic::{self, AtomicCompare},
     context, error, function,
     string::Collation,
+    xml,
 };
 
 use super::{
@@ -49,8 +46,9 @@ impl Default for Sequence {
     }
 }
 
-impl<'a> SequenceCore<'a, BoxedItemIter<'a>> for Sequence {
-    fn is_empty(&self) -> bool {
+impl Sequence {
+    /// Check whether the sequence is empty
+    pub fn is_empty(&self) -> bool {
         match self {
             Sequence::Empty(inner) => inner.is_empty(),
             Sequence::One(inner) => inner.is_empty(),
@@ -59,7 +57,8 @@ impl<'a> SequenceCore<'a, BoxedItemIter<'a>> for Sequence {
         }
     }
 
-    fn len(&self) -> usize {
+    /// Get the sequence length
+    pub fn len(&self) -> usize {
         match self {
             Sequence::Empty(inner) => inner.len(),
             Sequence::One(inner) => inner.len(),
@@ -68,7 +67,8 @@ impl<'a> SequenceCore<'a, BoxedItemIter<'a>> for Sequence {
         }
     }
 
-    fn get(&self, index: usize) -> Option<Item> {
+    /// Get an item in the index, if it exists
+    pub fn get(&self, index: usize) -> Option<Item> {
         match self {
             Sequence::Empty(inner) => inner.get(index),
             Sequence::One(inner) => inner.get(index),
@@ -77,7 +77,10 @@ impl<'a> SequenceCore<'a, BoxedItemIter<'a>> for Sequence {
         }
     }
 
-    fn one(self) -> error::Result<Item> {
+    /// Get a single item from the sequence, if it only contains one item
+    ///
+    /// Otherwise you get a type error.
+    pub fn one(self) -> error::Result<Item> {
         match self {
             Sequence::Empty(inner) => inner.one(),
             Sequence::One(inner) => inner.one(),
@@ -86,7 +89,10 @@ impl<'a> SequenceCore<'a, BoxedItemIter<'a>> for Sequence {
         }
     }
 
-    fn option(self) -> error::Result<Option<Item>> {
+    /// Get a optional item from the sequence
+    ///
+    /// If it contains more than one item, you get a type error.
+    pub fn option(self) -> error::Result<Option<Item>> {
         match self {
             Sequence::Empty(inner) => inner.option(),
             Sequence::One(inner) => inner.option(),
@@ -95,7 +101,8 @@ impl<'a> SequenceCore<'a, BoxedItemIter<'a>> for Sequence {
         }
     }
 
-    fn iter(&'a self) -> BoxedItemIter<'a> {
+    /// Get the items from the sequence as an iterator
+    pub fn iter(&self) -> BoxedItemIter {
         match self {
             Sequence::Empty(inner) => Box::new(inner.iter()),
             Sequence::One(inner) => Box::new(inner.iter()),
@@ -104,7 +111,8 @@ impl<'a> SequenceCore<'a, BoxedItemIter<'a>> for Sequence {
         }
     }
 
-    fn effective_boolean_value(&self) -> error::Result<bool> {
+    /// Effective boolean value
+    pub fn effective_boolean_value(&self) -> error::Result<bool> {
         match self {
             Sequence::Empty(inner) => inner.effective_boolean_value(),
             Sequence::One(inner) => inner.effective_boolean_value(),
@@ -113,7 +121,8 @@ impl<'a> SequenceCore<'a, BoxedItemIter<'a>> for Sequence {
         }
     }
 
-    fn string_value(&self, xot: &xot::Xot) -> error::Result<String> {
+    /// String value
+    pub fn string_value(&self, xot: &xot::Xot) -> error::Result<String> {
         match self {
             Sequence::Empty(inner) => inner.string_value(xot),
             Sequence::One(inner) => inner.string_value(xot),
@@ -121,17 +130,11 @@ impl<'a> SequenceCore<'a, BoxedItemIter<'a>> for Sequence {
             Sequence::Range(inner) => inner.string_value(xot),
         }
     }
-}
 
-// we implement these explicitly, because we want to avoid dynamic dispatch until
-// the outer layer. This gives the compiler the chance to optimize the inner
-// layers better.
-impl<'a> SequenceExt<'a, BoxedItemIter<'a>> for Sequence
-where
-    Sequence: SequenceCore<'a, BoxedItemIter<'a>>,
-{
-    #[allow(refining_impl_trait)]
-    fn nodes(&'a self) -> Box<dyn Iterator<Item = error::Result<xot::Node>> + 'a> {
+    /// Iterator over the nodes in the sequence
+    ///
+    /// An error is returned for items that are not a node.
+    pub fn nodes<'a>(&'a self) -> Box<dyn Iterator<Item = error::Result<xot::Node>> + 'a> {
         match self {
             Sequence::Empty(inner) => Box::new(inner.nodes()),
             Sequence::One(inner) => Box::new(inner.nodes()),
@@ -140,8 +143,8 @@ where
         }
     }
 
-    #[allow(refining_impl_trait)]
-    fn atomized(
+    /// Iterator for the atomized values in the sequence
+    pub fn atomized<'a>(
         &'a self,
         xot: &'a xot::Xot,
     ) -> Box<dyn Iterator<Item = error::Result<atomic::Atomic>> + 'a> {
@@ -153,8 +156,10 @@ where
         }
     }
 
-    #[allow(refining_impl_trait)]
-    fn atomized_one(&'a self, xot: &'a xot::Xot) -> error::Result<atomic::Atomic> {
+    /// Get just one atomized value from the sequence
+    ///
+    /// If there are less or more, you get a type error.
+    pub fn atomized_one(&self, xot: &xot::Xot) -> error::Result<atomic::Atomic> {
         match self {
             Sequence::Empty(inner) => inner.atomized_one(xot),
             Sequence::One(inner) => inner.atomized_one(xot),
@@ -163,8 +168,10 @@ where
         }
     }
 
-    #[allow(refining_impl_trait)]
-    fn atomized_option(&'a self, xot: &'a xot::Xot) -> error::Result<Option<atomic::Atomic>> {
+    /// Get an optional atomized value from the sequence
+    ///
+    /// If there are more than one, you get a type error.
+    pub fn atomized_option(&self, xot: &xot::Xot) -> error::Result<Option<atomic::Atomic>> {
         match self {
             Sequence::Empty(inner) => inner.atomized_option(xot),
             Sequence::One(inner) => inner.atomized_option(xot),
@@ -173,8 +180,8 @@ where
         }
     }
 
-    #[allow(refining_impl_trait)]
-    fn unboxed_atomized<T: 'a>(
+    /// Is used internally by the library macro.
+    pub(crate) fn unboxed_atomized<'a, T: 'a>(
         &'a self,
         xot: &'a xot::Xot,
         extract: impl Fn(atomic::Atomic) -> error::Result<T> + 'a,
@@ -187,8 +194,10 @@ where
         }
     }
 
-    #[allow(refining_impl_trait)]
-    fn map_iter(&'a self) -> Box<dyn Iterator<Item = error::Result<function::Map>> + 'a> {
+    /// Iterator over the XPath maps in the sequence
+    ///
+    /// An error is returned for items that are not a map.
+    pub fn map_iter<'a>(&'a self) -> Box<dyn Iterator<Item = error::Result<function::Map>> + 'a> {
         match self {
             Sequence::Empty(inner) => Box::new(inner.map_iter()),
             Sequence::One(inner) => Box::new(inner.map_iter()),
@@ -197,8 +206,12 @@ where
         }
     }
 
-    #[allow(refining_impl_trait)]
-    fn array_iter(&'a self) -> Box<dyn Iterator<Item = error::Result<function::Array>> + 'a> {
+    /// Iterator over the XPath arrays in the sequence
+    ///
+    /// An error is returned for items that are not an array.
+    pub fn array_iter<'a>(
+        &'a self,
+    ) -> Box<dyn Iterator<Item = error::Result<function::Array>> + 'a> {
         match self {
             Sequence::Empty(inner) => Box::new(inner.array_iter()),
             Sequence::One(inner) => Box::new(inner.array_iter()),
@@ -207,8 +220,10 @@ where
         }
     }
 
-    #[allow(refining_impl_trait)]
-    fn elements(
+    /// Oterator over elements nodes in the sequence
+    ///
+    /// An error is returned for items that are not an element.
+    pub fn elements<'a>(
         &'a self,
         xot: &'a xot::Xot,
     ) -> error::Result<Box<dyn Iterator<Item = error::Result<xot::Node>> + 'a>> {
@@ -220,8 +235,8 @@ where
         }
     }
 
-    #[allow(refining_impl_trait)]
-    fn to_array(&'a self) -> error::Result<function::Array> {
+    /// Create an XPath array from this sequence.
+    pub fn to_array(&self) -> error::Result<function::Array> {
         match self {
             Sequence::Empty(inner) => inner.to_array(),
             Sequence::One(inner) => inner.to_array(),
@@ -229,69 +244,185 @@ where
             Sequence::Range(inner) => inner.to_array(),
         }
     }
-}
 
-impl<'a> SequenceCompare<'a, BoxedItemIter<'a>> for Sequence
-where
-    Sequence: SequenceCore<'a, BoxedItemIter<'a>>,
-{
-    #[allow(refining_impl_trait)]
-    fn general_comparison<O, J>(
-        &'a self,
-        other: &'a impl SequenceExt<'a, J>,
-        context: &context::DynamicContext,
-        xot: &'a xot::Xot,
+    pub(crate) fn general_comparison<O>(
+        &self,
+        other: &Self,
         op: O,
+        context: &context::DynamicContext,
+        xot: &xot::Xot,
     ) -> error::Result<bool>
     where
         O: AtomicCompare,
-        J: Iterator<Item = Item> + 'a,
     {
         match self {
-            // this will specialize over inner as we know the exact type.
-            // otherw will have to be a boxed trait object, but that's fine
-            Sequence::Empty(inner) => inner.general_comparison(other, context, xot, op),
-            Sequence::One(inner) => inner.general_comparison(other, context, xot, op),
-            Sequence::Many(inner) => inner.general_comparison(other, context, xot, op),
-            Sequence::Range(inner) => inner.general_comparison(other, context, xot, op),
+            Sequence::Empty(inner) => match other {
+                Sequence::Empty(other) => inner.general_comparison(other, op, context, xot),
+                Sequence::One(other) => inner.general_comparison(other, op, context, xot),
+                Sequence::Many(other) => inner.general_comparison(other, op, context, xot),
+                Sequence::Range(other) => inner.general_comparison(other, op, context, xot),
+            },
+            Sequence::One(inner) => match other {
+                Sequence::Empty(other) => inner.general_comparison(other, op, context, xot),
+                Sequence::One(other) => inner.general_comparison(other, op, context, xot),
+                Sequence::Many(other) => inner.general_comparison(other, op, context, xot),
+                Sequence::Range(other) => inner.general_comparison(other, op, context, xot),
+            },
+            Sequence::Many(inner) => match other {
+                Sequence::Empty(other) => inner.general_comparison(other, op, context, xot),
+                Sequence::One(other) => inner.general_comparison(other, op, context, xot),
+                Sequence::Many(other) => inner.general_comparison(other, op, context, xot),
+                Sequence::Range(other) => inner.general_comparison(other, op, context, xot),
+            },
+            Sequence::Range(inner) => match other {
+                Sequence::Empty(other) => inner.general_comparison(other, op, context, xot),
+                Sequence::One(other) => inner.general_comparison(other, op, context, xot),
+                Sequence::Many(other) => inner.general_comparison(other, op, context, xot),
+                Sequence::Range(other) => inner.general_comparison(other, op, context, xot),
+            },
         }
     }
 
-    #[allow(refining_impl_trait)]
-    fn value_compare<O, J>(
-        &'a self,
-        other: &'a impl SequenceExt<'a, J>,
-        _op: O,
+    pub(crate) fn value_compare<O>(
+        &self,
+        other: &Self,
+        op: O,
         collation: &Collation,
         timezone: chrono::FixedOffset,
-        xot: &'a Xot,
+        xot: &Xot,
     ) -> error::Result<bool>
     where
         O: AtomicCompare,
-        J: Iterator<Item = Item> + 'a,
     {
         match self {
-            Sequence::Empty(inner) => inner.value_compare(other, _op, collation, timezone, xot),
-            Sequence::One(inner) => inner.value_compare(other, _op, collation, timezone, xot),
-            Sequence::Many(inner) => inner.value_compare(other, _op, collation, timezone, xot),
-            Sequence::Range(inner) => inner.value_compare(other, _op, collation, timezone, xot),
+            Sequence::Empty(inner) => match other {
+                Sequence::Empty(other) => inner.value_compare(other, op, collation, timezone, xot),
+                Sequence::One(other) => inner.value_compare(other, op, collation, timezone, xot),
+                Sequence::Many(other) => inner.value_compare(other, op, collation, timezone, xot),
+                Sequence::Range(other) => inner.value_compare(other, op, collation, timezone, xot),
+            },
+            Sequence::One(inner) => match other {
+                Sequence::Empty(other) => inner.value_compare(other, op, collation, timezone, xot),
+                Sequence::One(other) => inner.value_compare(other, op, collation, timezone, xot),
+                Sequence::Many(other) => inner.value_compare(other, op, collation, timezone, xot),
+                Sequence::Range(other) => inner.value_compare(other, op, collation, timezone, xot),
+            },
+            Sequence::Many(inner) => match other {
+                Sequence::Empty(other) => inner.value_compare(other, op, collation, timezone, xot),
+                Sequence::One(other) => inner.value_compare(other, op, collation, timezone, xot),
+                Sequence::Many(other) => inner.value_compare(other, op, collation, timezone, xot),
+                Sequence::Range(other) => inner.value_compare(other, op, collation, timezone, xot),
+            },
+            Sequence::Range(inner) => match other {
+                Sequence::Empty(other) => inner.value_compare(other, op, collation, timezone, xot),
+                Sequence::One(other) => inner.value_compare(other, op, collation, timezone, xot),
+                Sequence::Many(other) => inner.value_compare(other, op, collation, timezone, xot),
+                Sequence::Range(other) => inner.value_compare(other, op, collation, timezone, xot),
+            },
         }
     }
-}
 
-impl<'a> SequenceOrder<'a, BoxedItemIter<'a>> for Sequence
-where
-    Sequence: SequenceCore<'a, BoxedItemIter<'a>>,
-{
-    // only one_node can benefit from specialization
-
-    #[allow(refining_impl_trait)]
-    fn one_node(&'a self) -> error::Result<xot::Node> {
+    pub(crate) fn one_node(&self) -> error::Result<xot::Node> {
         match self {
             Sequence::Empty(inner) => inner.one_node(),
             Sequence::One(inner) => inner.one_node(),
             Sequence::Many(inner) => inner.one_node(),
             Sequence::Range(inner) => inner.one_node(),
+        }
+    }
+
+    pub(crate) fn is(&self, other: &Self, annotations: &xml::Annotations) -> error::Result<bool> {
+        match self {
+            Sequence::Empty(inner) => match other {
+                Sequence::Empty(other) => inner.is(other, annotations),
+                Sequence::One(other) => inner.is(other, annotations),
+                Sequence::Many(other) => inner.is(other, annotations),
+                Sequence::Range(other) => inner.is(other, annotations),
+            },
+            Sequence::One(inner) => match other {
+                Sequence::Empty(other) => inner.is(other, annotations),
+                Sequence::One(other) => inner.is(other, annotations),
+                Sequence::Many(other) => inner.is(other, annotations),
+                Sequence::Range(other) => inner.is(other, annotations),
+            },
+            Sequence::Many(inner) => match other {
+                Sequence::Empty(other) => inner.is(other, annotations),
+                Sequence::One(other) => inner.is(other, annotations),
+                Sequence::Many(other) => inner.is(other, annotations),
+                Sequence::Range(other) => inner.is(other, annotations),
+            },
+            Sequence::Range(inner) => match other {
+                Sequence::Empty(other) => inner.is(other, annotations),
+                Sequence::One(other) => inner.is(other, annotations),
+                Sequence::Many(other) => inner.is(other, annotations),
+                Sequence::Range(other) => inner.is(other, annotations),
+            },
+        }
+    }
+
+    pub(crate) fn precedes(
+        &self,
+        other: &Self,
+        annotations: &xml::Annotations,
+    ) -> error::Result<bool> {
+        match self {
+            Sequence::Empty(inner) => match other {
+                Sequence::Empty(other) => inner.precedes(other, annotations),
+                Sequence::One(other) => inner.precedes(other, annotations),
+                Sequence::Many(other) => inner.precedes(other, annotations),
+                Sequence::Range(other) => inner.precedes(other, annotations),
+            },
+            Sequence::One(inner) => match other {
+                Sequence::Empty(other) => inner.precedes(other, annotations),
+                Sequence::One(other) => inner.precedes(other, annotations),
+                Sequence::Many(other) => inner.precedes(other, annotations),
+                Sequence::Range(other) => inner.precedes(other, annotations),
+            },
+            Sequence::Many(inner) => match other {
+                Sequence::Empty(other) => inner.precedes(other, annotations),
+                Sequence::One(other) => inner.precedes(other, annotations),
+                Sequence::Many(other) => inner.precedes(other, annotations),
+                Sequence::Range(other) => inner.precedes(other, annotations),
+            },
+            Sequence::Range(inner) => match other {
+                Sequence::Empty(other) => inner.precedes(other, annotations),
+                Sequence::One(other) => inner.precedes(other, annotations),
+                Sequence::Many(other) => inner.precedes(other, annotations),
+                Sequence::Range(other) => inner.precedes(other, annotations),
+            },
+        }
+    }
+
+    pub(crate) fn follows(
+        &self,
+        other: &Self,
+        annotations: &xml::Annotations,
+    ) -> error::Result<bool> {
+        match self {
+            Sequence::Empty(inner) => match other {
+                Sequence::Empty(other) => inner.follows(other, annotations),
+                Sequence::One(other) => inner.follows(other, annotations),
+                Sequence::Many(other) => inner.follows(other, annotations),
+                Sequence::Range(other) => inner.follows(other, annotations),
+            },
+            Sequence::One(inner) => match other {
+                Sequence::Empty(other) => inner.follows(other, annotations),
+                Sequence::One(other) => inner.follows(other, annotations),
+                Sequence::Many(other) => inner.follows(other, annotations),
+                Sequence::Range(other) => inner.follows(other, annotations),
+            },
+            Sequence::Many(inner) => match other {
+                Sequence::Empty(other) => inner.follows(other, annotations),
+                Sequence::One(other) => inner.follows(other, annotations),
+                Sequence::Many(other) => inner.follows(other, annotations),
+                Sequence::Range(other) => inner.follows(other, annotations),
+            },
+            Sequence::Range(inner) => match other {
+                Sequence::Empty(other) => inner.follows(other, annotations),
+                Sequence::One(other) => inner.follows(other, annotations),
+                Sequence::Many(other) => inner.follows(other, annotations),
+                Sequence::Range(other) => inner.follows(other, annotations),
+            },
         }
     }
 }

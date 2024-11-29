@@ -100,7 +100,6 @@ fn make_wrapper(
 
     Ok(quote!(
         fn #wrapper_name(context: &crate::context::DynamicContext, interpreter: &mut crate::interpreter::Interpreter, arguments: &[crate::sequence::Sequence]) -> Result<crate::sequence::Sequence, crate::error::Error> {
-        use crate::sequence::{SequenceExt, SequenceCore};
         #body
     }))
 }

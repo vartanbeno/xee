@@ -16,7 +16,6 @@ use crate::error;
 use crate::function::StaticFunctionDescription;
 use crate::interpreter::Interpreter;
 use crate::sequence;
-use crate::sequence::SequenceCore;
 use crate::string::Collation;
 use crate::wrap_xpath_fn;
 

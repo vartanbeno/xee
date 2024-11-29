@@ -8,8 +8,6 @@ use xot::Xot;
 
 use crate::{atomic, context, error, function::Map};
 
-use super::SequenceCore;
-
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub enum QNameOrString {
     QName(OwnedName),
