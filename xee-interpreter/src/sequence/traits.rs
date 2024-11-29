@@ -2,13 +2,15 @@ use xot::Xot;
 
 use crate::{
     atomic::{self, AtomicCompare},
-    context, error, function, xml,
+    context, error, function,
+    string::Collation,
+    xml,
 };
 
 use super::{
     comparison,
     item::Item,
-    iter::{AtomizedIter, NodeIter},
+    iter::{self, AtomizedIter, NodeIter},
 };
 
 pub(crate) type BoxedItemIter<'a> = Box<dyn Iterator<Item = Item> + 'a>;
@@ -137,6 +139,27 @@ where
         let a_atomized = self.atomized(xot);
         let b_atomized = other.atomized(xot);
         comparison::general_comparison(a_atomized, b_atomized, context, op)
+    }
+
+    fn value_compare<O>(
+        &'a self,
+        // we can't specialize the other; it's some kind of dynamically dispatched sequence
+        other: &'a impl SequenceExt<'a, BoxedItemIter<'a>>,
+        _op: O,
+        collation: &Collation,
+        timezone: chrono::FixedOffset,
+        xot: &'a Xot,
+    ) -> error::Result<bool>
+    where
+        O: AtomicCompare,
+    {
+        let atomized_a = self.atomized(xot);
+        let atomized_b = other.atomized(xot);
+        let a = iter::one(atomized_a)?;
+        let b = iter::one(atomized_b)?;
+        let a = a?;
+        let b = b?;
+        O::atomic_compare(a, b, |a: &str, b: &str| collation.compare(a, b), timezone)
     }
 }
 

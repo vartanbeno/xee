@@ -944,7 +944,7 @@ impl<'a> Interpreter<'a> {
         Ok(())
     }
 
-    fn value_compare<O>(&mut self, _op: O) -> error::Result<()>
+    fn value_compare<O>(&mut self, op: O) -> error::Result<()>
     where
         O: AtomicCompare,
     {
@@ -956,20 +956,14 @@ impl<'a> Interpreter<'a> {
             self.state.push(sequence::Sequence::default());
             return Ok(());
         }
-        let atomized_a = a.atomized(self.state.xot());
-        let atomized_b = b.atomized(self.state.xot());
-        let a = sequence::one(atomized_a)?;
-        let b = sequence::one(atomized_b)?;
-        let a = a?;
-        let b = b?;
-        let collation = self.runnable.default_collation()?;
-        let result = O::atomic_compare(
-            a,
-            b,
-            |a: &str, b: &str| collation.compare(a, b),
+        let v = a.value_compare(
+            &b,
+            op,
+            self.runnable.default_collation()?.as_ref(),
             self.runnable.implicit_timezone(),
+            self.state.xot(),
         )?;
-        self.state.push(result);
+        self.state.push(v);
         Ok(())
     }
 
