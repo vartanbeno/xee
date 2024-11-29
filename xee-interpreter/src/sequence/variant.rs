@@ -2,10 +2,11 @@ use std::rc::Rc;
 
 use ibig::IBig;
 
-use crate::error;
+use crate::{atomic, error};
 
 use super::item::Item;
 use super::traits::{SequenceCompare, SequenceCore, SequenceExt, SequenceOrder};
+use super::AtomizedItemIter;
 
 #[derive(Debug, Clone, PartialEq)]
 pub struct Empty {}
@@ -312,6 +313,12 @@ where
     I: Iterator<Item = Item> + 'a,
     Empty: SequenceCore<'a, I>,
 {
+    fn atomized(
+        &'a self,
+        _xot: &'a xot::Xot,
+    ) -> impl Iterator<Item = error::Result<atomic::Atomic>> + 'a {
+        std::iter::empty()
+    }
 }
 
 impl<'a, I> SequenceCompare<'a, I> for Empty
@@ -333,6 +340,12 @@ where
     I: Iterator<Item = Item> + 'a,
     One: SequenceCore<'a, I>,
 {
+    fn atomized(
+        &'a self,
+        xot: &'a xot::Xot,
+    ) -> impl Iterator<Item = error::Result<atomic::Atomic>> + 'a {
+        AtomizedItemIter::new(&self.item, xot)
+    }
 }
 
 impl<'a, I> SequenceCompare<'a, I> for One
