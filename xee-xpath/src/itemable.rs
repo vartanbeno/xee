@@ -24,12 +24,7 @@ impl Itemable for DocumentHandle {
         // TODO: This unwrap is not great; we should turn this into an error
         let documents_ref = documents.documents.borrow();
         let document = documents_ref.get_by_handle(*self).unwrap();
-
-        // getting the document element to start things off seems to
-        // be the right expectation for the load API, though I'm not sure why
-        // it shouldn't work with the root (document node) instead.
-        let document_element = documents.xot().document_element(document.root()).unwrap();
-        Ok(Item::Node(document_element))
+        Ok(Item::Node(document.root()))
     }
 }
 

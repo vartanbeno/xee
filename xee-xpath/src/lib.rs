@@ -20,7 +20,7 @@
 //! let doc = documents.add_string("http://example.com".try_into().unwrap(), "<root>foo</root>").unwrap();
 //!
 //! // create a new queries object
-//! let mut queries = Queries::default();
+//! let queries = Queries::default();
 //!
 //! // create a query expecting a single value in the result sequence
 //! // try to convert this value into a Rust `String`

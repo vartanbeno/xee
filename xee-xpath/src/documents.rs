@@ -51,6 +51,11 @@ impl Documents {
             .add_string(&mut self.xot, None, xml)
     }
 
+    /// Given a handle give back the document node
+    pub fn document_node(&self, handle: DocumentHandle) -> Option<xot::Node> {
+        self.documents.borrow().get_node_by_handle(handle)
+    }
+
     /// Get a reference to the documents
     pub fn documents(&self) -> &DocumentsRef {
         &self.documents

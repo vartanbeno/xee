@@ -1,17 +1,9 @@
 use insta::assert_debug_snapshot;
+use xee_xpath::{
+    context::{StaticContextBuilder, Variables},
+    error, Atomic, Documents, Item, Queries, Query, Sequence,
+};
 use xot::Xot;
-
-use xee_interpreter::{
-    atomic::Atomic,
-    context::{StaticContext, Variables},
-    error::SpannedResult,
-    sequence::{Item, Sequence},
-    xml::{Document, Documents},
-};
-use xee_xpath_ast::{ast, Namespaces};
-use xee_xpath_compiler::{
-    evaluate, evaluate_without_focus, evaluate_without_focus_with_variables, parse,
-};
 
 fn xot_nodes_to_items(node: &[xot::Node]) -> Sequence {
     Sequence::from(
@@ -21,58 +13,57 @@ fn xot_nodes_to_items(node: &[xot::Node]) -> Sequence {
     )
 }
 
-fn run(s: &str) -> SpannedResult<Sequence> {
-    evaluate_without_focus(s)
-}
-
-fn run_with_variables(s: &str, variables: Variables) -> SpannedResult<Sequence> {
-    evaluate_without_focus_with_variables(s, variables)
-}
-
-// fn run_debug(s: &str) -> SpannedResult<stack::Value> {
-//     let xot = Xot::new();
-//     let namespaces = Namespaces::default();
-//     let static_context = StaticContext::new(&namespaces);
-//     let context = DynamicContext::new(&xot, &static_context);
-//     let xpath = XPath::new(context.static_context, s)?;
-//     dbg!(&xpath.program.get_function(0).decoded());
-//     xpath.run_value(&context, None)
-// }
-
-fn run_xml(xml: &str, xpath: &str) -> SpannedResult<Sequence> {
-    evaluate(xml, xpath, "")
-}
-
-fn run_xml_default_ns(xml: &str, xpath: &str, ns: &str) -> SpannedResult<Sequence> {
-    evaluate(xml, xpath, ns)
-}
-
-fn assert_nodes<S>(xml: &str, xpath: &str, get_nodes: S) -> SpannedResult<()>
-where
-    S: Fn(&Xot, &Document) -> Vec<xot::Node>,
-{
-    let mut xot = Xot::new();
+fn run(s: &str) -> error::Result<Sequence> {
     let mut documents = Documents::new();
-    let handle = documents.add_string(&mut xot, None, xml).unwrap();
-    let document = documents.get_by_handle(handle).unwrap();
-    let root = document.root();
-    let nodes = get_nodes(&xot, document);
+    let queries = Queries::default();
+    let q = queries.sequence(s)?;
+    q.execute_build_context(&mut documents, |_builder| ())
+}
 
-    let namespaces = Namespaces::new(
-        Namespaces::default_namespaces(),
-        "".to_string(),
-        "".to_string(),
-    );
-    let static_context = StaticContext::from_namespaces(namespaces);
+fn run_with_variables(s: &str, variables: Variables) -> error::Result<Sequence> {
+    let mut documents = Documents::new();
+    let queries = Queries::default();
+    let mut static_context_builder = StaticContextBuilder::default();
+    static_context_builder.variable_names(variables.keys().cloned());
+    let static_context = static_context_builder.build();
+    let q = queries.sequence_with_context(s, static_context)?;
+    q.execute_build_context(&mut documents, |builder| {
+        builder.variables(variables);
+    })
+}
 
-    let program = parse(static_context, xpath)?;
+fn run_xml(xml: &str, xpath: &str) -> error::Result<Sequence> {
+    let mut documents = Documents::new();
+    let handle = documents.add_string_without_uri(xml).unwrap();
+    let queries = Queries::default();
+    let q = queries.sequence(xpath)?;
+    q.execute(&mut documents, handle)
+}
 
-    let mut dynamic_context_builder = program.dynamic_context_builder();
-    dynamic_context_builder.context_node(root);
-    dynamic_context_builder.documents(documents);
-    let context = dynamic_context_builder.build();
+fn run_xml_default_ns(xml: &str, xpath: &str, ns: &str) -> error::Result<Sequence> {
+    let mut documents = Documents::new();
+    let handle = documents.add_string_without_uri(xml).unwrap();
+    let mut static_context_builder = StaticContextBuilder::default();
+    static_context_builder.default_element_namespace(ns);
+    let queries = Queries::new(static_context_builder);
+    let q = queries.sequence(xpath)?;
+    q.execute(&mut documents, handle)
+}
 
-    let result = program.runnable(&context).many(&mut xot)?;
+fn assert_nodes<S>(xml: &str, xpath: &str, get_nodes: S) -> error::Result<()>
+where
+    S: Fn(&Xot, xot::Node) -> Vec<xot::Node>,
+{
+    let mut documents = Documents::new();
+    let handle = documents.add_string_without_uri(xml).unwrap();
+    let root = documents.document_node(handle).unwrap();
+    let nodes = get_nodes(documents.xot(), root);
+
+    let queries = Queries::default();
+    let q = queries.sequence(xpath)?;
+
+    let result = q.execute(&mut documents, handle)?;
+
     assert_eq!(result, xot_nodes_to_items(&nodes));
     Ok(())
 }
@@ -468,9 +459,9 @@ fn test_sequence_predicate_sequence_empty() {
 }
 
 #[test]
-fn test_child_axis_step1() -> SpannedResult<()> {
-    assert_nodes(r#"<doc><a/><b/></doc>"#, "doc/*", |xot, document| {
-        let doc_el = xot.document_element(document.root()).unwrap();
+fn test_child_axis_step1() -> error::Result<()> {
+    assert_nodes(r#"<doc><a/><b/></doc>"#, "doc/*", |xot, root| {
+        let doc_el = xot.document_element(root).unwrap();
         let a = xot.first_child(doc_el).unwrap();
         let b = xot.next_sibling(a).unwrap();
         vec![a, b]
@@ -478,21 +469,21 @@ fn test_child_axis_step1() -> SpannedResult<()> {
 }
 
 #[test]
-fn test_child_axis_step2() -> SpannedResult<()> {
-    assert_nodes(r#"<doc><a/><b/></doc>"#, "doc/a", |xot, document| {
-        let doc_el = xot.document_element(document.root()).unwrap();
+fn test_child_axis_step2() -> error::Result<()> {
+    assert_nodes(r#"<doc><a/><b/></doc>"#, "doc/a", |xot, root| {
+        let doc_el = xot.document_element(root).unwrap();
         let a = xot.first_child(doc_el).unwrap();
         vec![a]
     })
 }
 
 #[test]
-fn test_step_with_predicate() -> SpannedResult<()> {
+fn test_step_with_predicate() -> error::Result<()> {
     assert_nodes(
         r#"<doc><a/><b/></doc>"#,
         "doc/*[fn:position() eq 2]",
-        |xot, document| {
-            let doc_el = xot.document_element(document.root()).unwrap();
+        |xot, root| {
+            let doc_el = xot.document_element(root).unwrap();
             let a = xot.first_child(doc_el).unwrap();
             let b = xot.next_sibling(a).unwrap();
             vec![b]
@@ -501,12 +492,12 @@ fn test_step_with_predicate() -> SpannedResult<()> {
 }
 
 #[test]
-fn test_descendant_axis_step() -> SpannedResult<()> {
+fn test_descendant_axis_step() -> error::Result<()> {
     assert_nodes(
         r#"<doc><a/><b><c/></b></doc>"#,
         "descendant::*",
-        |xot, document| {
-            let doc_el = xot.document_element(document.root()).unwrap();
+        |xot, root| {
+            let doc_el = xot.document_element(root).unwrap();
             let a = xot.first_child(doc_el).unwrap();
             let b = xot.next_sibling(a).unwrap();
             let c = xot.first_child(b).unwrap();
@@ -524,12 +515,12 @@ fn test_descendant_axis_position() {
 }
 
 #[test]
-fn test_descendant_axis_step2() -> SpannedResult<()> {
+fn test_descendant_axis_step2() -> error::Result<()> {
     assert_nodes(
         r#"<doc><a><c/></a><b/></doc>"#,
         "descendant::*",
-        |xot, document| {
-            let doc_el = xot.document_element(document.root()).unwrap();
+        |xot, root| {
+            let doc_el = xot.document_element(root).unwrap();
             let a = xot.first_child(doc_el).unwrap();
             let b = xot.next_sibling(a).unwrap();
             let c = xot.first_child(a).unwrap();
@@ -539,9 +530,9 @@ fn test_descendant_axis_step2() -> SpannedResult<()> {
 }
 
 #[test]
-fn test_comma_nodes() -> SpannedResult<()> {
-    assert_nodes(r#"<doc><a/><b/></doc>"#, "doc/b, doc/a", |xot, document| {
-        let doc_el = xot.document_element(document.root()).unwrap();
+fn test_comma_nodes() -> error::Result<()> {
+    assert_nodes(r#"<doc><a/><b/></doc>"#, "doc/b, doc/a", |xot, root| {
+        let doc_el = xot.document_element(root).unwrap();
         let a = xot.first_child(doc_el).unwrap();
         let b = xot.next_sibling(a).unwrap();
         vec![b, a]
@@ -549,12 +540,12 @@ fn test_comma_nodes() -> SpannedResult<()> {
 }
 
 #[test]
-fn test_union() -> SpannedResult<()> {
+fn test_union() -> error::Result<()> {
     assert_nodes(
         r#"<doc><a/><b/><c/></doc>"#,
         "doc/c | doc/a | doc/b | doc/a",
-        |xot, document| {
-            let doc_el = xot.document_element(document.root()).unwrap();
+        |xot, root| {
+            let doc_el = xot.document_element(root).unwrap();
             let a = xot.first_child(doc_el).unwrap();
             let b = xot.next_sibling(a).unwrap();
             let c = xot.next_sibling(b).unwrap();
@@ -768,12 +759,12 @@ fn test_atomize_xml_attribute_missing() {
 }
 
 #[test]
-fn test_attribute_predicate() -> SpannedResult<()> {
+fn test_attribute_predicate() -> error::Result<()> {
     assert_nodes(
         r#"<doc><a/><b foo="FOO"/><c/></doc>"#,
         "//*[@foo eq 'FOO']",
-        |xot, document| {
-            let doc_el = xot.document_element(document.root()).unwrap();
+        |xot, root| {
+            let doc_el = xot.document_element(root).unwrap();
             let a = xot.first_child(doc_el).unwrap();
             let b = xot.next_sibling(a).unwrap();
             vec![b]
@@ -783,11 +774,13 @@ fn test_attribute_predicate() -> SpannedResult<()> {
 
 #[test]
 fn test_external_variable() {
+    let item: Item = "FOO".into();
+    let sequence: Sequence = item.into();
     assert_debug_snapshot!(run_with_variables(
         "$foo",
         Variables::from([(
-            ast::Name::name("foo"),
-            Item::from(Atomic::from("FOO")).into()
+            xot::xmlname::OwnedName::new("foo".to_string(), "".to_string(), "".to_string()),
+            sequence
         )]),
     ))
 }
@@ -798,11 +791,11 @@ fn test_external_variables() {
         "$foo + $bar",
         Variables::from([
             (
-                ast::Name::name("foo"),
+                xot::xmlname::OwnedName::new("foo".to_string(), "".to_string(), "".to_string()),
                 Item::from(Atomic::from(1i64)).into()
             ),
             (
-                ast::Name::name("bar"),
+                xot::xmlname::OwnedName::new("bar".to_string(), "".to_string(), "".to_string()),
                 Item::from(Atomic::from(2i64)).into()
             )
         ])
@@ -1279,18 +1272,14 @@ fn test_instance_of_node_fails() {
 }
 
 #[test]
-fn test_kind_test_in_path() -> SpannedResult<()> {
-    assert_nodes(
-        r#"<doc><a/>foo<b/></doc>"#,
-        "doc/element()",
-        |xot, document| {
-            let doc_el = xot.document_element(document.root()).unwrap();
-            let a = xot.first_child(doc_el).unwrap();
-            let text = xot.next_sibling(a).unwrap();
-            let b = xot.next_sibling(text).unwrap();
-            vec![a, b]
-        },
-    )
+fn test_kind_test_in_path() -> error::Result<()> {
+    assert_nodes(r#"<doc><a/>foo<b/></doc>"#, "doc/element()", |xot, root| {
+        let doc_el = xot.document_element(root).unwrap();
+        let a = xot.first_child(doc_el).unwrap();
+        let text = xot.next_sibling(a).unwrap();
+        let b = xot.next_sibling(text).unwrap();
+        vec![a, b]
+    })
 }
 
 #[test]

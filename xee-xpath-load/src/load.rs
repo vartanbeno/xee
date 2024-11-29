@@ -40,8 +40,10 @@ pub trait ContextLoadable<C: ?Sized>: Sized {
         let queries = Queries::new(static_context_builder);
 
         let query = Self::load_with_context(&queries, context)?;
-
-        Ok(query.execute(&mut documents, document_id)?)
+        let root = documents.document_node(document_id).unwrap();
+        // the test runner needs to work from the document element
+        let document_element = documents.xot().document_element(root).unwrap();
+        Ok(query.execute(&mut documents, document_element)?)
     }
 }
 

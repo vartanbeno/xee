@@ -1,8 +1,6 @@
 use ahash::AHashMap;
 use std::fmt::Debug;
 
-use xee_xpath_ast::ast;
-
 use crate::function::{self, Function};
 use crate::{error::Error, interpreter::Program};
 use crate::{interpreter, sequence};
@@ -14,7 +12,7 @@ use super::{DocumentsRef, StaticContext};
 /// These are variables to be passed into an XPath evaluation.
 ///
 /// The key is the name of a variable, and the value is an item.
-pub type Variables = AHashMap<ast::Name, sequence::Sequence>;
+pub type Variables = AHashMap<xot::xmlname::OwnedName, sequence::Sequence>;
 
 // a dynamic context is created for each xpath evaluation
 #[derive(Debug)]
