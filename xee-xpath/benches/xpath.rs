@@ -48,3 +48,19 @@ fn string_value(bencher: Bencher) {
         black_box(&mut q).execute(&mut documents, handle).unwrap();
     });
 }
+
+#[divan::bench]
+fn large_map(bencher: Bencher) {
+    let mut documents = Documents::new();
+
+    let queries = Queries::default();
+    let mut q = queries
+        .sequence("map:keys(map:merge(for $n in 1 to 5000 return map:entry($n, $n+1)))")
+        .unwrap();
+
+    bencher.bench_local(move || {
+        black_box(&mut q)
+            .execute_build_context(&mut documents, |_build| ())
+            .unwrap()
+    });
+}

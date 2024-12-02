@@ -129,8 +129,8 @@ fn combine_maps(
 ) -> error::Result<function::Map> {
     let mut result = HashMap::new();
     for map in maps {
-        for (_, (key, value)) in map.0.iter() {
-            let map_key = atomic::MapKey::new(key.clone()).unwrap();
+        for (map_key, (key, value)) in map.0.iter() {
+            let map_key = map_key.clone();
             let entry = result.get(&map_key);
             let value = if let Some((_, a)) = entry {
                 combine(a, value)?
