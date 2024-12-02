@@ -1,7 +1,6 @@
 mod binding;
 mod builder;
 mod compile;
-mod constant_fold;
 mod declaration_compiler;
 mod function_compiler;
 pub mod ir;
