@@ -25,15 +25,15 @@ impl Sequence {
     }
 
     /// Concatenate two sequences producing a new sequence.
-    pub fn concat(self, other: &Self) -> Self {
+    pub fn concat(self, other: Self) -> Self {
         match (self, other) {
             (Self::Empty(_), Self::Empty(_)) => Self::Empty(Empty {}),
-            (Self::Empty(_), Self::One(item)) => Self::One(item.clone()),
+            (Self::Empty(_), Self::One(item)) => Self::One(item),
             (Self::One(item), Self::Empty(_)) => Self::One(item),
-            (Self::Empty(_), Self::Many(items)) => Self::Many(items.clone()),
+            (Self::Empty(_), Self::Many(items)) => Self::Many(items),
             (Self::Many(items), Self::Empty(_)) => Self::Many(items),
             (Self::One(item1), Self::One(item2)) => {
-                Self::Many((vec![item1.into_item(), item2.clone().into_item()]).into())
+                Self::Many((vec![item1.into_item(), item2.into_item()]).into())
             }
             (Self::One(item), Self::Many(items)) => {
                 let mut many = Vec::with_capacity(items.len() + 1);
@@ -48,7 +48,7 @@ impl Sequence {
                 for item in items.iter() {
                     many.push(item);
                 }
-                many.push(item.clone().into_item());
+                many.push(item.into_item());
                 Self::Many(many.into())
             }
             (Self::Many(items1), Self::Many(items2)) => {

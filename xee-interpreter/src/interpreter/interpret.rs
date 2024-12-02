@@ -179,7 +179,7 @@ impl<'a> Interpreter<'a> {
                 EncodedInstruction::Comma => {
                     let b = self.state.pop()?;
                     let a = self.state.pop()?;
-                    let sequence = a.concat(&b);
+                    let sequence = a.concat(b);
                     self.state.push(sequence);
                 }
                 EncodedInstruction::CurlyArray => {

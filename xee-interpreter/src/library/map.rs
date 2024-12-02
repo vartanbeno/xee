@@ -116,24 +116,24 @@ impl MergeOptions {
 fn merge(maps: &[function::Map], options: MergeOptions) -> error::Result<function::Map> {
     match options.duplicates {
         MergeDuplicates::Reject => combine_maps(maps, |_, _| Err(error::Error::FOJS0003)),
-        MergeDuplicates::UseFirst => combine_maps(maps, |a, _| Ok(a.clone())),
-        MergeDuplicates::UseLast => combine_maps(maps, |_, b| Ok(b.clone())),
-        MergeDuplicates::UseAny => combine_maps(maps, |a, _| Ok(a.clone())),
-        MergeDuplicates::Combine => combine_maps(maps, |a, b| Ok(a.clone().concat(b))),
+        MergeDuplicates::UseFirst => combine_maps(maps, |a, _| Ok(a)),
+        MergeDuplicates::UseLast => combine_maps(maps, |_, b| Ok(b)),
+        MergeDuplicates::UseAny => combine_maps(maps, |a, _| Ok(a)),
+        MergeDuplicates::Combine => combine_maps(maps, |a, b| Ok(a.concat(b))),
     }
 }
 
 fn combine_maps(
     maps: &[function::Map],
-    combine: impl Fn(&sequence::Sequence, &sequence::Sequence) -> error::Result<sequence::Sequence>,
+    combine: impl Fn(sequence::Sequence, sequence::Sequence) -> error::Result<sequence::Sequence>,
 ) -> error::Result<function::Map> {
     let mut result = HashMap::new();
     for map in maps {
         for (map_key, (key, value)) in map.0.iter() {
             let map_key = map_key.clone();
-            let entry = result.get(&map_key);
+            let entry = result.remove(&map_key);
             let value = if let Some((_, a)) = entry {
-                combine(a, value)?
+                combine(a, value.clone())?
             } else {
                 value.clone()
             };
