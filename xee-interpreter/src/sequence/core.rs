@@ -255,31 +255,23 @@ impl Sequence {
     where
         O: AtomicCompare,
     {
-        match self {
-            Sequence::Empty(inner) => match other {
-                Sequence::Empty(other) => inner.general_comparison(other, op, context, xot),
-                Sequence::One(other) => inner.general_comparison(other, op, context, xot),
-                Sequence::Many(other) => inner.general_comparison(other, op, context, xot),
-                Sequence::Range(other) => inner.general_comparison(other, op, context, xot),
-            },
-            Sequence::One(inner) => match other {
-                Sequence::Empty(other) => inner.general_comparison(other, op, context, xot),
-                Sequence::One(other) => inner.general_comparison(other, op, context, xot),
-                Sequence::Many(other) => inner.general_comparison(other, op, context, xot),
-                Sequence::Range(other) => inner.general_comparison(other, op, context, xot),
-            },
-            Sequence::Many(inner) => match other {
-                Sequence::Empty(other) => inner.general_comparison(other, op, context, xot),
-                Sequence::One(other) => inner.general_comparison(other, op, context, xot),
-                Sequence::Many(other) => inner.general_comparison(other, op, context, xot),
-                Sequence::Range(other) => inner.general_comparison(other, op, context, xot),
-            },
-            Sequence::Range(inner) => match other {
-                Sequence::Empty(other) => inner.general_comparison(other, op, context, xot),
-                Sequence::One(other) => inner.general_comparison(other, op, context, xot),
-                Sequence::Many(other) => inner.general_comparison(other, op, context, xot),
-                Sequence::Range(other) => inner.general_comparison(other, op, context, xot),
-            },
+        match (self, other) {
+            (Sequence::Empty(a), Sequence::Empty(b)) => a.general_comparison(b, op, context, xot),
+            (Sequence::Empty(a), Sequence::One(b)) => a.general_comparison(b, op, context, xot),
+            (Sequence::Empty(a), Sequence::Many(b)) => a.general_comparison(b, op, context, xot),
+            (Sequence::Empty(a), Sequence::Range(b)) => a.general_comparison(b, op, context, xot),
+            (Sequence::One(a), Sequence::Empty(b)) => a.general_comparison(b, op, context, xot),
+            (Sequence::One(a), Sequence::One(b)) => a.general_comparison(b, op, context, xot),
+            (Sequence::One(a), Sequence::Many(b)) => a.general_comparison(b, op, context, xot),
+            (Sequence::One(a), Sequence::Range(b)) => a.general_comparison(b, op, context, xot),
+            (Sequence::Many(a), Sequence::Empty(b)) => a.general_comparison(b, op, context, xot),
+            (Sequence::Many(a), Sequence::One(b)) => a.general_comparison(b, op, context, xot),
+            (Sequence::Many(a), Sequence::Many(b)) => a.general_comparison(b, op, context, xot),
+            (Sequence::Many(a), Sequence::Range(b)) => a.general_comparison(b, op, context, xot),
+            (Sequence::Range(a), Sequence::Empty(b)) => a.general_comparison(b, op, context, xot),
+            (Sequence::Range(a), Sequence::One(b)) => a.general_comparison(b, op, context, xot),
+            (Sequence::Range(a), Sequence::Many(b)) => a.general_comparison(b, op, context, xot),
+            (Sequence::Range(a), Sequence::Range(b)) => a.general_comparison(b, op, context, xot),
         }
     }
 
@@ -294,31 +286,55 @@ impl Sequence {
     where
         O: AtomicCompare,
     {
-        match self {
-            Sequence::Empty(inner) => match other {
-                Sequence::Empty(other) => inner.value_compare(other, op, collation, timezone, xot),
-                Sequence::One(other) => inner.value_compare(other, op, collation, timezone, xot),
-                Sequence::Many(other) => inner.value_compare(other, op, collation, timezone, xot),
-                Sequence::Range(other) => inner.value_compare(other, op, collation, timezone, xot),
-            },
-            Sequence::One(inner) => match other {
-                Sequence::Empty(other) => inner.value_compare(other, op, collation, timezone, xot),
-                Sequence::One(other) => inner.value_compare(other, op, collation, timezone, xot),
-                Sequence::Many(other) => inner.value_compare(other, op, collation, timezone, xot),
-                Sequence::Range(other) => inner.value_compare(other, op, collation, timezone, xot),
-            },
-            Sequence::Many(inner) => match other {
-                Sequence::Empty(other) => inner.value_compare(other, op, collation, timezone, xot),
-                Sequence::One(other) => inner.value_compare(other, op, collation, timezone, xot),
-                Sequence::Many(other) => inner.value_compare(other, op, collation, timezone, xot),
-                Sequence::Range(other) => inner.value_compare(other, op, collation, timezone, xot),
-            },
-            Sequence::Range(inner) => match other {
-                Sequence::Empty(other) => inner.value_compare(other, op, collation, timezone, xot),
-                Sequence::One(other) => inner.value_compare(other, op, collation, timezone, xot),
-                Sequence::Many(other) => inner.value_compare(other, op, collation, timezone, xot),
-                Sequence::Range(other) => inner.value_compare(other, op, collation, timezone, xot),
-            },
+        match (self, other) {
+            (Sequence::Empty(a), Sequence::Empty(b)) => {
+                a.value_compare(b, op, collation, timezone, xot)
+            }
+            (Sequence::Empty(a), Sequence::One(b)) => {
+                a.value_compare(b, op, collation, timezone, xot)
+            }
+            (Sequence::Empty(a), Sequence::Many(b)) => {
+                a.value_compare(b, op, collation, timezone, xot)
+            }
+            (Sequence::Empty(a), Sequence::Range(b)) => {
+                a.value_compare(b, op, collation, timezone, xot)
+            }
+            (Sequence::One(a), Sequence::Empty(b)) => {
+                a.value_compare(b, op, collation, timezone, xot)
+            }
+            (Sequence::One(a), Sequence::One(b)) => {
+                a.value_compare(b, op, collation, timezone, xot)
+            }
+            (Sequence::One(a), Sequence::Many(b)) => {
+                a.value_compare(b, op, collation, timezone, xot)
+            }
+            (Sequence::One(a), Sequence::Range(b)) => {
+                a.value_compare(b, op, collation, timezone, xot)
+            }
+            (Sequence::Many(a), Sequence::Empty(b)) => {
+                a.value_compare(b, op, collation, timezone, xot)
+            }
+            (Sequence::Many(a), Sequence::One(b)) => {
+                a.value_compare(b, op, collation, timezone, xot)
+            }
+            (Sequence::Many(a), Sequence::Many(b)) => {
+                a.value_compare(b, op, collation, timezone, xot)
+            }
+            (Sequence::Many(a), Sequence::Range(b)) => {
+                a.value_compare(b, op, collation, timezone, xot)
+            }
+            (Sequence::Range(a), Sequence::Empty(b)) => {
+                a.value_compare(b, op, collation, timezone, xot)
+            }
+            (Sequence::Range(a), Sequence::One(b)) => {
+                a.value_compare(b, op, collation, timezone, xot)
+            }
+            (Sequence::Range(a), Sequence::Many(b)) => {
+                a.value_compare(b, op, collation, timezone, xot)
+            }
+            (Sequence::Range(a), Sequence::Range(b)) => {
+                a.value_compare(b, op, collation, timezone, xot)
+            }
         }
     }
 
@@ -332,31 +348,23 @@ impl Sequence {
     }
 
     pub(crate) fn is(&self, other: &Self, annotations: &xml::Annotations) -> error::Result<bool> {
-        match self {
-            Sequence::Empty(inner) => match other {
-                Sequence::Empty(other) => inner.is(other, annotations),
-                Sequence::One(other) => inner.is(other, annotations),
-                Sequence::Many(other) => inner.is(other, annotations),
-                Sequence::Range(other) => inner.is(other, annotations),
-            },
-            Sequence::One(inner) => match other {
-                Sequence::Empty(other) => inner.is(other, annotations),
-                Sequence::One(other) => inner.is(other, annotations),
-                Sequence::Many(other) => inner.is(other, annotations),
-                Sequence::Range(other) => inner.is(other, annotations),
-            },
-            Sequence::Many(inner) => match other {
-                Sequence::Empty(other) => inner.is(other, annotations),
-                Sequence::One(other) => inner.is(other, annotations),
-                Sequence::Many(other) => inner.is(other, annotations),
-                Sequence::Range(other) => inner.is(other, annotations),
-            },
-            Sequence::Range(inner) => match other {
-                Sequence::Empty(other) => inner.is(other, annotations),
-                Sequence::One(other) => inner.is(other, annotations),
-                Sequence::Many(other) => inner.is(other, annotations),
-                Sequence::Range(other) => inner.is(other, annotations),
-            },
+        match (self, other) {
+            (Sequence::Empty(a), Sequence::Empty(b)) => a.is(b, annotations),
+            (Sequence::Empty(a), Sequence::One(b)) => a.is(b, annotations),
+            (Sequence::Empty(a), Sequence::Many(b)) => a.is(b, annotations),
+            (Sequence::Empty(a), Sequence::Range(b)) => a.is(b, annotations),
+            (Sequence::One(a), Sequence::Empty(b)) => a.is(b, annotations),
+            (Sequence::One(a), Sequence::One(b)) => a.is(b, annotations),
+            (Sequence::One(a), Sequence::Many(b)) => a.is(b, annotations),
+            (Sequence::One(a), Sequence::Range(b)) => a.is(b, annotations),
+            (Sequence::Many(a), Sequence::Empty(b)) => a.is(b, annotations),
+            (Sequence::Many(a), Sequence::One(b)) => a.is(b, annotations),
+            (Sequence::Many(a), Sequence::Many(b)) => a.is(b, annotations),
+            (Sequence::Many(a), Sequence::Range(b)) => a.is(b, annotations),
+            (Sequence::Range(a), Sequence::Empty(b)) => a.is(b, annotations),
+            (Sequence::Range(a), Sequence::One(b)) => a.is(b, annotations),
+            (Sequence::Range(a), Sequence::Many(b)) => a.is(b, annotations),
+            (Sequence::Range(a), Sequence::Range(b)) => a.is(b, annotations),
         }
     }
 
@@ -365,31 +373,23 @@ impl Sequence {
         other: &Self,
         annotations: &xml::Annotations,
     ) -> error::Result<bool> {
-        match self {
-            Sequence::Empty(inner) => match other {
-                Sequence::Empty(other) => inner.precedes(other, annotations),
-                Sequence::One(other) => inner.precedes(other, annotations),
-                Sequence::Many(other) => inner.precedes(other, annotations),
-                Sequence::Range(other) => inner.precedes(other, annotations),
-            },
-            Sequence::One(inner) => match other {
-                Sequence::Empty(other) => inner.precedes(other, annotations),
-                Sequence::One(other) => inner.precedes(other, annotations),
-                Sequence::Many(other) => inner.precedes(other, annotations),
-                Sequence::Range(other) => inner.precedes(other, annotations),
-            },
-            Sequence::Many(inner) => match other {
-                Sequence::Empty(other) => inner.precedes(other, annotations),
-                Sequence::One(other) => inner.precedes(other, annotations),
-                Sequence::Many(other) => inner.precedes(other, annotations),
-                Sequence::Range(other) => inner.precedes(other, annotations),
-            },
-            Sequence::Range(inner) => match other {
-                Sequence::Empty(other) => inner.precedes(other, annotations),
-                Sequence::One(other) => inner.precedes(other, annotations),
-                Sequence::Many(other) => inner.precedes(other, annotations),
-                Sequence::Range(other) => inner.precedes(other, annotations),
-            },
+        match (self, other) {
+            (Sequence::Empty(a), Sequence::Empty(b)) => a.precedes(b, annotations),
+            (Sequence::Empty(a), Sequence::One(b)) => a.precedes(b, annotations),
+            (Sequence::Empty(a), Sequence::Many(b)) => a.precedes(b, annotations),
+            (Sequence::Empty(a), Sequence::Range(b)) => a.precedes(b, annotations),
+            (Sequence::One(a), Sequence::Empty(b)) => a.precedes(b, annotations),
+            (Sequence::One(a), Sequence::One(b)) => a.precedes(b, annotations),
+            (Sequence::One(a), Sequence::Many(b)) => a.precedes(b, annotations),
+            (Sequence::One(a), Sequence::Range(b)) => a.precedes(b, annotations),
+            (Sequence::Many(a), Sequence::Empty(b)) => a.precedes(b, annotations),
+            (Sequence::Many(a), Sequence::One(b)) => a.precedes(b, annotations),
+            (Sequence::Many(a), Sequence::Many(b)) => a.precedes(b, annotations),
+            (Sequence::Many(a), Sequence::Range(b)) => a.precedes(b, annotations),
+            (Sequence::Range(a), Sequence::Empty(b)) => a.precedes(b, annotations),
+            (Sequence::Range(a), Sequence::One(b)) => a.precedes(b, annotations),
+            (Sequence::Range(a), Sequence::Many(b)) => a.precedes(b, annotations),
+            (Sequence::Range(a), Sequence::Range(b)) => a.precedes(b, annotations),
         }
     }
 
@@ -398,31 +398,23 @@ impl Sequence {
         other: &Self,
         annotations: &xml::Annotations,
     ) -> error::Result<bool> {
-        match self {
-            Sequence::Empty(inner) => match other {
-                Sequence::Empty(other) => inner.follows(other, annotations),
-                Sequence::One(other) => inner.follows(other, annotations),
-                Sequence::Many(other) => inner.follows(other, annotations),
-                Sequence::Range(other) => inner.follows(other, annotations),
-            },
-            Sequence::One(inner) => match other {
-                Sequence::Empty(other) => inner.follows(other, annotations),
-                Sequence::One(other) => inner.follows(other, annotations),
-                Sequence::Many(other) => inner.follows(other, annotations),
-                Sequence::Range(other) => inner.follows(other, annotations),
-            },
-            Sequence::Many(inner) => match other {
-                Sequence::Empty(other) => inner.follows(other, annotations),
-                Sequence::One(other) => inner.follows(other, annotations),
-                Sequence::Many(other) => inner.follows(other, annotations),
-                Sequence::Range(other) => inner.follows(other, annotations),
-            },
-            Sequence::Range(inner) => match other {
-                Sequence::Empty(other) => inner.follows(other, annotations),
-                Sequence::One(other) => inner.follows(other, annotations),
-                Sequence::Many(other) => inner.follows(other, annotations),
-                Sequence::Range(other) => inner.follows(other, annotations),
-            },
+        match (self, other) {
+            (Sequence::Empty(a), Sequence::Empty(b)) => a.follows(b, annotations),
+            (Sequence::Empty(a), Sequence::One(b)) => a.follows(b, annotations),
+            (Sequence::Empty(a), Sequence::Many(b)) => a.follows(b, annotations),
+            (Sequence::Empty(a), Sequence::Range(b)) => a.follows(b, annotations),
+            (Sequence::One(a), Sequence::Empty(b)) => a.follows(b, annotations),
+            (Sequence::One(a), Sequence::One(b)) => a.follows(b, annotations),
+            (Sequence::One(a), Sequence::Many(b)) => a.follows(b, annotations),
+            (Sequence::One(a), Sequence::Range(b)) => a.follows(b, annotations),
+            (Sequence::Many(a), Sequence::Empty(b)) => a.follows(b, annotations),
+            (Sequence::Many(a), Sequence::One(b)) => a.follows(b, annotations),
+            (Sequence::Many(a), Sequence::Many(b)) => a.follows(b, annotations),
+            (Sequence::Many(a), Sequence::Range(b)) => a.follows(b, annotations),
+            (Sequence::Range(a), Sequence::Empty(b)) => a.follows(b, annotations),
+            (Sequence::Range(a), Sequence::One(b)) => a.follows(b, annotations),
+            (Sequence::Range(a), Sequence::Many(b)) => a.follows(b, annotations),
+            (Sequence::Range(a), Sequence::Range(b)) => a.follows(b, annotations),
         }
     }
 }
