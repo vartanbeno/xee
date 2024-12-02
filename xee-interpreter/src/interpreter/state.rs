@@ -99,25 +99,20 @@ impl<'a> State<'a> {
     }
 
     pub(crate) fn build_push(&mut self) -> error::Result<()> {
+        let value = self.pop()?;
         let build = self.build_stack.last_mut().unwrap();
-        let value = self.stack.pop().unwrap();
-        Self::build_push_helper(build, value)
+        match value {
+            sequence::Sequence::Empty(_) => {}
+            sequence::Sequence::One(item) => build.push(item.into_item()),
+            // any other sequence
+            sequence => build.extend(sequence.iter()),
+        }
+        Ok(())
     }
 
     pub(crate) fn build_complete(&mut self) {
         let build = self.build_stack.pop().unwrap();
         self.stack.push(build.into());
-    }
-
-    fn build_push_helper(build: &mut BuildStackEntry, value: stack::Value) -> error::Result<()> {
-        match value {
-            stack::Value::Sequence(sequence::Sequence::Empty(_)) => {}
-            stack::Value::Sequence(sequence::Sequence::One(item)) => build.push(item.into_item()),
-            // any other sequence
-            stack::Value::Sequence(sequence) => build.extend(sequence.iter()),
-            stack::Value::Absent => return Err(error::Error::XPDY0002)?,
-        }
-        Ok(())
     }
 
     pub(crate) fn push_var(&mut self, index: usize) {
@@ -137,10 +132,12 @@ impl<'a> State<'a> {
         self.stack[base + index] = self.stack.pop().unwrap();
     }
 
+    #[inline]
     pub(crate) fn pop(&mut self) -> error::Result<sequence::Sequence> {
-        self.stack.pop().unwrap().try_into()
+        self.pop_value().try_into()
     }
 
+    #[inline]
     pub(crate) fn pop_value(&mut self) -> stack::Value {
         self.stack.pop().unwrap()
     }
