@@ -1,7 +1,5 @@
 // https://www.w3.org/TR/2017/REC-xpath-functions-31-20170321/#context
 
-use std::rc::Rc;
-
 use xee_name::{Name, Namespaces, FN_NAMESPACE};
 use xee_xpath_ast::ast;
 use xee_xpath_macros::xpath_fn;
@@ -73,7 +71,7 @@ fn static_base_uri(context: &DynamicContext) -> Option<atomic::Atomic> {
     context
         .static_context()
         .static_base_uri()
-        .map(|uri| atomic::Atomic::String(atomic::StringType::AnyURI, Rc::from(uri.to_string())))
+        .map(|uri| atomic::Atomic::String(atomic::StringType::AnyURI, uri.to_string().into()))
 }
 
 pub(crate) fn static_function_descriptions() -> Vec<StaticFunctionDescription> {

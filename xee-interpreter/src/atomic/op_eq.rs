@@ -65,7 +65,6 @@ mod tests {
 
     use chrono::Offset;
     use rust_decimal_macros::dec;
-    use std::rc::Rc;
 
     use crate::atomic;
     use crate::atomic::OpNe;
@@ -86,7 +85,7 @@ mod tests {
     #[test]
     fn test_compare_cast_untyped() {
         let a: atomic::Atomic = "foo".into();
-        let b: atomic::Atomic = atomic::Atomic::Untyped(Rc::from("foo".to_string()));
+        let b: atomic::Atomic = atomic::Atomic::Untyped("foo".to_string().into());
 
         assert!(OpEq::atomic_compare(a.clone(), b.clone(), str::cmp, default_offset()).unwrap());
         assert!(!OpNe::atomic_compare(a, b, str::cmp, default_offset()).unwrap());

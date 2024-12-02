@@ -1,5 +1,3 @@
-use std::rc::Rc;
-
 use chrono::{Offset, TimeZone};
 
 use crate::{atomic::Atomic, error};
@@ -98,7 +96,7 @@ impl Duration {
 
 impl From<Duration> for Atomic {
     fn from(duration: Duration) -> Self {
-        Atomic::Duration(Rc::new(duration))
+        Atomic::Duration(duration.into())
     }
 }
 
@@ -153,7 +151,7 @@ impl From<chrono::DateTime<chrono::FixedOffset>> for NaiveDateTimeWithOffset {
 
 impl From<NaiveDateTimeWithOffset> for Atomic {
     fn from(date_time: NaiveDateTimeWithOffset) -> Self {
-        Atomic::DateTime(Rc::new(date_time))
+        Atomic::DateTime(date_time.into())
     }
 }
 
@@ -231,7 +229,7 @@ impl ToDateTimeStamp for NaiveTimeWithOffset {
 
 impl From<NaiveTimeWithOffset> for Atomic {
     fn from(time: NaiveTimeWithOffset) -> Self {
-        Atomic::Time(Rc::new(time))
+        Atomic::Time(time.into())
     }
 }
 
@@ -275,7 +273,7 @@ impl ToDateTimeStamp for NaiveDateWithOffset {
 
 impl From<NaiveDateWithOffset> for Atomic {
     fn from(date: NaiveDateWithOffset) -> Self {
-        Atomic::Date(Rc::new(date))
+        Atomic::Date(date.into())
     }
 }
 
@@ -302,7 +300,7 @@ impl GYearMonth {
 
 impl From<GYearMonth> for Atomic {
     fn from(g_year_month: GYearMonth) -> Self {
-        Atomic::GYearMonth(Rc::new(g_year_month))
+        Atomic::GYearMonth(g_year_month.into())
     }
 }
 
@@ -324,7 +322,7 @@ impl GYear {
 
 impl From<GYear> for Atomic {
     fn from(g_year: GYear) -> Self {
-        Atomic::GYear(Rc::new(g_year))
+        Atomic::GYear(g_year.into())
     }
 }
 
@@ -347,7 +345,7 @@ impl GMonthDay {
 
 impl From<GMonthDay> for Atomic {
     fn from(g_month_day: GMonthDay) -> Self {
-        Atomic::GMonthDay(Rc::new(g_month_day))
+        Atomic::GMonthDay(g_month_day.into())
     }
 }
 
@@ -369,7 +367,7 @@ impl GDay {
 
 impl From<GDay> for Atomic {
     fn from(g_day: GDay) -> Self {
-        Atomic::GDay(Rc::new(g_day))
+        Atomic::GDay(g_day.into())
     }
 }
 
@@ -391,19 +389,19 @@ impl GMonth {
 
 impl From<GMonth> for Atomic {
     fn from(g_month: GMonth) -> Self {
-        Atomic::GMonth(Rc::new(g_month))
+        Atomic::GMonth(g_month.into())
     }
 }
 
 impl From<chrono::Duration> for Atomic {
     fn from(duration: chrono::Duration) -> Self {
-        Atomic::DayTimeDuration(Rc::new(duration))
+        Atomic::DayTimeDuration(duration.into())
     }
 }
 
 impl From<chrono::DateTime<chrono::FixedOffset>> for Atomic {
     fn from(date_time: chrono::DateTime<chrono::FixedOffset>) -> Self {
-        Atomic::DateTimeStamp(Rc::new(date_time))
+        Atomic::DateTimeStamp(date_time.into())
     }
 }
 
@@ -424,8 +422,8 @@ mod tests {
             Some(chrono::FixedOffset::east_opt(60 * 60 * 7).unwrap()),
         );
 
-        let a: Atomic = Atomic::Date(Rc::new(a_date));
-        let b: Atomic = Atomic::Date(Rc::new(b_date));
+        let a: Atomic = Atomic::Date(a_date.into());
+        let b: Atomic = Atomic::Date(b_date.into());
 
         assert!(
             OpGt::atomic_compare(a.clone(), b.clone(), str::cmp, chrono::offset::Utc.fix())

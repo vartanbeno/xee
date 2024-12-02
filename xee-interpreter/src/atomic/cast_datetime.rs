@@ -3,7 +3,6 @@ use chumsky::prelude::*;
 use chumsky::util::MaybeRef;
 use rust_decimal::prelude::*;
 use std::cmp::Ordering;
-use std::rc::Rc;
 
 use crate::atomic;
 use crate::error;
@@ -253,11 +252,11 @@ impl atomic::Atomic {
             atomic::Atomic::Untyped(s) | atomic::Atomic::String(_, s) => Self::parse_duration(&s),
             atomic::Atomic::Duration(_) => Ok(self.clone()),
             atomic::Atomic::YearMonthDuration(year_month_duration) => Ok(atomic::Atomic::Duration(
-                Rc::new(Duration::from_year_month(year_month_duration)),
+                Duration::from_year_month(year_month_duration).into(),
             )),
-            atomic::Atomic::DayTimeDuration(duration) => Ok(atomic::Atomic::Duration(Rc::new(
-                Duration::from_day_time(*duration.as_ref()),
-            ))),
+            atomic::Atomic::DayTimeDuration(duration) => Ok(atomic::Atomic::Duration(
+                Duration::from_day_time(*duration.as_ref()).into(),
+            )),
             _ => Err(error::Error::XPTY0004),
         }
     }
@@ -286,11 +285,11 @@ impl atomic::Atomic {
                 Self::parse_day_time_duration(&s)
             }
             atomic::Atomic::Duration(duration) => {
-                Ok(atomic::Atomic::DayTimeDuration(Rc::new(duration.day_time)))
+                Ok(atomic::Atomic::DayTimeDuration(duration.day_time.into()))
             }
-            atomic::Atomic::YearMonthDuration(_) => Ok(atomic::Atomic::DayTimeDuration(Rc::new(
-                chrono::Duration::zero(),
-            ))),
+            atomic::Atomic::YearMonthDuration(_) => Ok(atomic::Atomic::DayTimeDuration(
+                chrono::Duration::zero().into(),
+            )),
             atomic::Atomic::DayTimeDuration(_) => Ok(self.clone()),
             _ => Err(error::Error::XPTY0004),
         }
@@ -301,19 +300,21 @@ impl atomic::Atomic {
             atomic::Atomic::String(atomic::StringType::AnyURI, _) => Err(error::Error::XPTY0004),
             atomic::Atomic::Untyped(s) | atomic::Atomic::String(_, s) => Self::parse_date_time(&s),
             atomic::Atomic::DateTime(_) => Ok(self.clone()),
-            atomic::Atomic::DateTimeStamp(date_time) => Ok(atomic::Atomic::DateTime(Rc::new(
+            atomic::Atomic::DateTimeStamp(date_time) => Ok(atomic::Atomic::DateTime(
                 NaiveDateTimeWithOffset::new(
                     date_time.naive_local(),
                     Some(date_time.offset().fix()),
-                ),
-            ))),
-            atomic::Atomic::Date(date) => Ok(atomic::Atomic::DateTime(Rc::new(
+                )
+                .into(),
+            )),
+            atomic::Atomic::Date(date) => Ok(atomic::Atomic::DateTime(
                 NaiveDateTimeWithOffset::new(
                     date.date
                         .and_time(chrono::NaiveTime::from_hms_opt(0, 0, 0).unwrap()),
                     date.offset,
-                ),
-            ))),
+                )
+                .into(),
+            )),
             _ => Err(error::Error::XPTY0004),
         }
     }
@@ -326,9 +327,10 @@ impl atomic::Atomic {
             }
             atomic::Atomic::DateTime(date_time) => {
                 if let Some(offset) = date_time.offset {
-                    Ok(atomic::Atomic::DateTimeStamp(Rc::new(
-                        chrono::DateTime::from_naive_utc_and_offset(date_time.date_time, offset),
-                    )))
+                    Ok(atomic::Atomic::DateTimeStamp(
+                        chrono::DateTime::from_naive_utc_and_offset(date_time.date_time, offset)
+                            .into(),
+                    ))
                 } else {
                     Err(error::Error::XPTY0004)
                 }
@@ -343,12 +345,12 @@ impl atomic::Atomic {
         match self {
             atomic::Atomic::String(atomic::StringType::AnyURI, _) => Err(error::Error::XPTY0004),
             atomic::Atomic::Untyped(s) | atomic::Atomic::String(_, s) => Self::parse_time(&s),
-            atomic::Atomic::DateTime(date_time) => Ok(atomic::Atomic::Time(Rc::new(
-                NaiveTimeWithOffset::new(date_time.date_time.time(), date_time.offset),
-            ))),
-            atomic::Atomic::DateTimeStamp(date_time) => Ok(atomic::Atomic::Time(Rc::new(
-                NaiveTimeWithOffset::new(date_time.time(), Some(date_time.offset().fix())),
-            ))),
+            atomic::Atomic::DateTime(date_time) => Ok(atomic::Atomic::Time(
+                NaiveTimeWithOffset::new(date_time.date_time.time(), date_time.offset).into(),
+            )),
+            atomic::Atomic::DateTimeStamp(date_time) => Ok(atomic::Atomic::Time(
+                NaiveTimeWithOffset::new(date_time.time(), Some(date_time.offset().fix())).into(),
+            )),
             atomic::Atomic::Time(_) => Ok(self.clone()),
             _ => Err(error::Error::XPTY0004),
         }
@@ -358,15 +360,16 @@ impl atomic::Atomic {
         match self {
             atomic::Atomic::String(atomic::StringType::AnyURI, _) => Err(error::Error::XPTY0004),
             atomic::Atomic::Untyped(s) | atomic::Atomic::String(_, s) => Self::parse_date(&s),
-            atomic::Atomic::DateTime(date_time) => Ok(atomic::Atomic::Date(Rc::new(
-                NaiveDateWithOffset::new(date_time.date_time.date(), date_time.offset),
-            ))),
-            atomic::Atomic::DateTimeStamp(date_time) => {
-                Ok(atomic::Atomic::Date(Rc::new(NaiveDateWithOffset::new(
+            atomic::Atomic::DateTime(date_time) => Ok(atomic::Atomic::Date(
+                NaiveDateWithOffset::new(date_time.date_time.date(), date_time.offset).into(),
+            )),
+            atomic::Atomic::DateTimeStamp(date_time) => Ok(atomic::Atomic::Date(
+                NaiveDateWithOffset::new(
                     date_time.naive_utc().date(),
                     Some(date_time.offset().fix()),
-                ))))
-            }
+                )
+                .into(),
+            )),
             atomic::Atomic::Date(_) => Ok(self.clone()),
             _ => Err(error::Error::XPTY0004),
         }
@@ -378,25 +381,25 @@ impl atomic::Atomic {
             atomic::Atomic::Untyped(s) | atomic::Atomic::String(_, s) => {
                 Self::parse_g_year_month(&s)
             }
-            atomic::Atomic::DateTime(date_time) => {
-                Ok(atomic::Atomic::GYearMonth(Rc::new(GYearMonth::new(
+            atomic::Atomic::DateTime(date_time) => Ok(atomic::Atomic::GYearMonth(
+                GYearMonth::new(
                     date_time.date_time.year(),
                     date_time.date_time.month(),
                     date_time.offset,
-                ))))
-            }
-            atomic::Atomic::DateTimeStamp(date_time) => {
-                Ok(atomic::Atomic::GYearMonth(Rc::new(GYearMonth::new(
+                )
+                .into(),
+            )),
+            atomic::Atomic::DateTimeStamp(date_time) => Ok(atomic::Atomic::GYearMonth(
+                GYearMonth::new(
                     date_time.year(),
                     date_time.month(),
                     Some(date_time.offset().fix()),
-                ))))
-            }
-            atomic::Atomic::Date(date) => Ok(atomic::Atomic::GYearMonth(Rc::new(GYearMonth::new(
-                date.date.year(),
-                date.date.month(),
-                date.offset,
-            )))),
+                )
+                .into(),
+            )),
+            atomic::Atomic::Date(date) => Ok(atomic::Atomic::GYearMonth(
+                GYearMonth::new(date.date.year(), date.date.month(), date.offset).into(),
+            )),
             atomic::Atomic::GYearMonth(_) => Ok(self.clone()),
             _ => Err(error::Error::XPTY0004),
         }
@@ -406,17 +409,15 @@ impl atomic::Atomic {
         match self {
             atomic::Atomic::String(atomic::StringType::AnyURI, _) => Err(error::Error::XPTY0004),
             atomic::Atomic::Untyped(s) | atomic::Atomic::String(_, s) => Self::parse_g_year(&s),
-            atomic::Atomic::DateTime(date_time) => Ok(atomic::Atomic::GYear(Rc::new(GYear::new(
-                date_time.date_time.year(),
-                date_time.offset,
-            )))),
-            atomic::Atomic::DateTimeStamp(date_time) => Ok(atomic::Atomic::GYear(Rc::new(
-                GYear::new(date_time.year(), Some(date_time.offset().fix())),
-            ))),
-            atomic::Atomic::Date(date) => Ok(atomic::Atomic::GYear(Rc::new(GYear::new(
-                date.date.year(),
-                date.offset,
-            )))),
+            atomic::Atomic::DateTime(date_time) => Ok(atomic::Atomic::GYear(
+                GYear::new(date_time.date_time.year(), date_time.offset).into(),
+            )),
+            atomic::Atomic::DateTimeStamp(date_time) => Ok(atomic::Atomic::GYear(
+                GYear::new(date_time.year(), Some(date_time.offset().fix())).into(),
+            )),
+            atomic::Atomic::Date(date) => Ok(atomic::Atomic::GYear(
+                GYear::new(date.date.year(), date.offset).into(),
+            )),
             atomic::Atomic::GYear(_) => Ok(self.clone()),
             _ => Err(error::Error::XPTY0004),
         }
@@ -428,25 +429,25 @@ impl atomic::Atomic {
             atomic::Atomic::Untyped(s) | atomic::Atomic::String(_, s) => {
                 Self::parse_g_month_day(&s)
             }
-            atomic::Atomic::DateTime(date_time) => {
-                Ok(atomic::Atomic::GMonthDay(Rc::new(GMonthDay::new(
+            atomic::Atomic::DateTime(date_time) => Ok(atomic::Atomic::GMonthDay(
+                GMonthDay::new(
                     date_time.date_time.month(),
                     date_time.date_time.day(),
                     date_time.offset,
-                ))))
-            }
-            atomic::Atomic::DateTimeStamp(date_time) => {
-                Ok(atomic::Atomic::GMonthDay(Rc::new(GMonthDay::new(
+                )
+                .into(),
+            )),
+            atomic::Atomic::DateTimeStamp(date_time) => Ok(atomic::Atomic::GMonthDay(
+                GMonthDay::new(
                     date_time.month(),
                     date_time.day(),
                     Some(date_time.offset().fix()),
-                ))))
-            }
-            atomic::Atomic::Date(date) => Ok(atomic::Atomic::GMonthDay(Rc::new(GMonthDay::new(
-                date.date.month(),
-                date.date.day(),
-                date.offset,
-            )))),
+                )
+                .into(),
+            )),
+            atomic::Atomic::Date(date) => Ok(atomic::Atomic::GMonthDay(
+                GMonthDay::new(date.date.month(), date.date.day(), date.offset).into(),
+            )),
             atomic::Atomic::GMonthDay(_) => Ok(self.clone()),
             _ => Err(error::Error::XPTY0004),
         }
@@ -456,17 +457,15 @@ impl atomic::Atomic {
         match self {
             atomic::Atomic::String(atomic::StringType::AnyURI, _) => Err(error::Error::XPTY0004),
             atomic::Atomic::Untyped(s) | atomic::Atomic::String(_, s) => Self::parse_g_day(&s),
-            atomic::Atomic::DateTime(date_time) => Ok(atomic::Atomic::GDay(Rc::new(GDay::new(
-                date_time.date_time.day(),
-                date_time.offset,
-            )))),
-            atomic::Atomic::DateTimeStamp(date_time) => Ok(atomic::Atomic::GDay(Rc::new(
-                GDay::new(date_time.day(), Some(date_time.offset().fix())),
-            ))),
-            atomic::Atomic::Date(date) => Ok(atomic::Atomic::GDay(Rc::new(GDay::new(
-                date.date.day(),
-                date.offset,
-            )))),
+            atomic::Atomic::DateTime(date_time) => Ok(atomic::Atomic::GDay(
+                GDay::new(date_time.date_time.day(), date_time.offset).into(),
+            )),
+            atomic::Atomic::DateTimeStamp(date_time) => Ok(atomic::Atomic::GDay(
+                GDay::new(date_time.day(), Some(date_time.offset().fix())).into(),
+            )),
+            atomic::Atomic::Date(date) => Ok(atomic::Atomic::GDay(
+                GDay::new(date.date.day(), date.offset).into(),
+            )),
             atomic::Atomic::GDay(_) => Ok(self.clone()),
             _ => Err(error::Error::XPTY0004),
         }
@@ -476,16 +475,15 @@ impl atomic::Atomic {
         match self {
             atomic::Atomic::String(atomic::StringType::AnyURI, _) => Err(error::Error::XPTY0004),
             atomic::Atomic::Untyped(s) | atomic::Atomic::String(_, s) => Self::parse_g_month(&s),
-            atomic::Atomic::DateTime(date_time) => Ok(atomic::Atomic::GMonth(Rc::new(
-                GMonth::new(date_time.date_time.month(), date_time.offset),
-            ))),
-            atomic::Atomic::DateTimeStamp(date_time) => Ok(atomic::Atomic::GMonth(Rc::new(
-                GMonth::new(date_time.month(), Some(date_time.offset().fix())),
-            ))),
-            atomic::Atomic::Date(date) => Ok(atomic::Atomic::GMonth(Rc::new(GMonth::new(
-                date.date.month(),
-                date.offset,
-            )))),
+            atomic::Atomic::DateTime(date_time) => Ok(atomic::Atomic::GMonth(
+                GMonth::new(date_time.date_time.month(), date_time.offset).into(),
+            )),
+            atomic::Atomic::DateTimeStamp(date_time) => Ok(atomic::Atomic::GMonth(
+                GMonth::new(date_time.month(), Some(date_time.offset().fix())).into(),
+            )),
+            atomic::Atomic::Date(date) => Ok(atomic::Atomic::GMonth(
+                GMonth::new(date.date.month(), date.offset).into(),
+            )),
             atomic::Atomic::GMonth(_) => Ok(self.clone()),
             _ => Err(error::Error::XPTY0004),
         }

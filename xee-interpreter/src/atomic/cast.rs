@@ -1,7 +1,6 @@
 use ibig::IBig;
 use ordered_float::OrderedFloat;
 use rust_decimal::prelude::*;
-use std::rc::Rc;
 use xot::xmlname::NameStrInfo;
 
 use xee_schema_type::Xs;
@@ -220,7 +219,7 @@ impl atomic::Atomic {
                 let s = s.as_ref();
                 let s = whitespace_remove(s);
                 let data = decode(&s)?;
-                Ok(atomic::Atomic::Binary(binary_type, Rc::from(data)))
+                Ok(atomic::Atomic::Binary(binary_type, data.into()))
             }
             atomic::Atomic::Binary(_, data) => Ok(atomic::Atomic::Binary(binary_type, data)),
             _ => Err(error::Error::XPTY0004),
@@ -294,7 +293,7 @@ mod tests {
     #[test]
     fn test_canonical_decimal_is_integer() {
         assert_eq!(
-            atomic::Atomic::Decimal(Rc::new(dec!(1.0))).into_canonical(),
+            atomic::Atomic::Decimal(dec!(1.0).into()).into_canonical(),
             "1"
         );
     }
@@ -302,7 +301,7 @@ mod tests {
     #[test]
     fn test_canonical_decimal_is_decimal() {
         assert_eq!(
-            atomic::Atomic::Decimal(Rc::new(dec!(1.5))).into_canonical(),
+            atomic::Atomic::Decimal(dec!(1.5).into()).into_canonical(),
             "1.5"
         );
     }
@@ -310,7 +309,7 @@ mod tests {
     #[test]
     fn test_canonical_decimal_no_trailing_zeroes() {
         assert_eq!(
-            atomic::Atomic::Decimal(Rc::new(dec!(1.50))).into_canonical(),
+            atomic::Atomic::Decimal(dec!(1.50).into()).into_canonical(),
             "1.5"
         );
     }
@@ -318,7 +317,7 @@ mod tests {
     #[test]
     fn test_canonical_decimal_no_leading_zeroes() {
         assert_eq!(
-            atomic::Atomic::Decimal(Rc::new(dec!(01.50))).into_canonical(),
+            atomic::Atomic::Decimal(dec!(01.50).into()).into_canonical(),
             "1.5"
         );
     }
@@ -326,7 +325,7 @@ mod tests {
     #[test]
     fn test_canonical_decimal_single_leading_zero() {
         assert_eq!(
-            atomic::Atomic::Decimal(Rc::new(dec!(0.50))).into_canonical(),
+            atomic::Atomic::Decimal(dec!(0.50).into()).into_canonical(),
             "0.5"
         );
     }

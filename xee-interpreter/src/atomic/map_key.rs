@@ -93,12 +93,12 @@ impl MapKey {
             // All types of duration as stored the same way, so they
             // can have the same key
             Atomic::Duration(d) => Ok(MapKey::Duration(d.clone())),
-            Atomic::YearMonthDuration(d) => Ok(MapKey::Duration(Rc::new(
-                Duration::from_year_month(d.clone()),
-            ))),
-            Atomic::DayTimeDuration(d) => Ok(MapKey::Duration(Rc::new(Duration::from_day_time(
-                *d.as_ref(),
-            )))),
+            Atomic::YearMonthDuration(d) => Ok(MapKey::Duration(
+                Duration::from_year_month(d.clone()).into(),
+            )),
+            Atomic::DayTimeDuration(d) => Ok(MapKey::Duration(
+                Duration::from_day_time(*d.as_ref()).into(),
+            )),
             // date times with a timezone are stored as a chrono datetime,
             // or they are stored as a naive datetime
             Atomic::DateTime(d) => {
@@ -195,7 +195,7 @@ mod tests {
     #[test]
     fn test_string_and_untyped() {
         let a: Atomic = "foo".into();
-        let b: Atomic = Atomic::Untyped(Rc::from("foo"));
+        let b: Atomic = Atomic::Untyped("foo".into());
         assert_eq!(MapKey::new(a).unwrap(), MapKey::new(b).unwrap());
     }
 
@@ -217,8 +217,8 @@ mod tests {
             Some(chrono::FixedOffset::east_opt(60 * 60).unwrap()),
         );
 
-        let a: Atomic = Atomic::DateTime(Rc::new(a_date_time));
-        let b: Atomic = Atomic::DateTime(Rc::new(b_date_time));
+        let a: Atomic = Atomic::DateTime(a_date_time.into());
+        let b: Atomic = Atomic::DateTime(b_date_time.into());
 
         assert_eq!(MapKey::new(a).unwrap(), MapKey::new(b).unwrap());
     }
@@ -240,8 +240,8 @@ mod tests {
             None,
         );
 
-        let a: Atomic = Atomic::DateTime(Rc::new(a_date_time));
-        let b: Atomic = Atomic::DateTime(Rc::new(b_date_time));
+        let a: Atomic = Atomic::DateTime(a_date_time.into());
+        let b: Atomic = Atomic::DateTime(b_date_time.into());
 
         assert_eq!(MapKey::new(a).unwrap(), MapKey::new(b).unwrap());
     }
@@ -263,8 +263,8 @@ mod tests {
             None,
         );
 
-        let a: Atomic = Atomic::DateTime(Rc::new(a_date_time));
-        let b: Atomic = Atomic::DateTime(Rc::new(b_date_time));
+        let a: Atomic = Atomic::DateTime(a_date_time.into());
+        let b: Atomic = Atomic::DateTime(b_date_time.into());
 
         assert_ne!(MapKey::new(a).unwrap(), MapKey::new(b).unwrap());
     }

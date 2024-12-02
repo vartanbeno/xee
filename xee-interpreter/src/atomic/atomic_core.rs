@@ -88,6 +88,15 @@ pub enum Atomic {
     QName(Rc<Name>),
 }
 
+// This takes 24 bytes to store. Atomic is the largest part of Item. We could
+// try to make it smaller by using Rc<String> and Rc<Vec<u8>> instead of
+// Rc<str> and Rc<[u8]>, but that would pack it so tightly that item, which
+// uses atomic, would need 24 bytes anyway (as it does already), and we'd have
+// more indirections. Since we have no clear evidence that would help, we leave
+// it at 24 for now.
+#[cfg(target_arch = "x86_64")]
+static_assertions::assert_eq_size!(Atomic, [u8; 24]);
+
 impl Atomic {
     /// The [effective boolean
     /// value](https://www.w3.org/TR/xpath-functions-31/#func-boolean) of an
@@ -391,19 +400,19 @@ impl fmt::Display for Atomic {
 
 impl From<String> for Atomic {
     fn from(s: String) -> Self {
-        Atomic::String(StringType::String, Rc::from(s))
+        Atomic::String(StringType::String, s.into())
     }
 }
 
 impl From<&str> for Atomic {
     fn from(s: &str) -> Self {
-        Atomic::String(StringType::String, Rc::from(s))
+        Atomic::String(StringType::String, s.into())
     }
 }
 
 impl From<&String> for Atomic {
     fn from(s: &String) -> Self {
-        Atomic::String(StringType::String, Rc::from(s.clone()))
+        Atomic::String(StringType::String, s.clone().into())
     }
 }
 
@@ -441,7 +450,7 @@ impl TryFrom<Atomic> for bool {
 
 impl From<Decimal> for Atomic {
     fn from(d: Decimal) -> Self {
-        Atomic::Decimal(Rc::new(d))
+        Atomic::Decimal(d.into())
     }
 }
 
@@ -460,19 +469,19 @@ impl TryFrom<Atomic> for Decimal {
 
 impl From<IriString> for Atomic {
     fn from(u: IriString) -> Self {
-        Atomic::String(StringType::AnyURI, Rc::from(u.to_string()))
+        Atomic::String(StringType::AnyURI, u.to_string().into())
     }
 }
 
 impl From<IriReferenceString> for Atomic {
     fn from(u: IriReferenceString) -> Self {
-        Atomic::String(StringType::AnyURI, Rc::from(u.to_string()))
+        Atomic::String(StringType::AnyURI, u.to_string().into())
     }
 }
 
 impl From<&IriReferenceStr> for Atomic {
     fn from(u: &IriReferenceStr) -> Self {
-        Atomic::String(StringType::AnyURI, Rc::from(u.to_string()))
+        Atomic::String(StringType::AnyURI, u.to_string().into())
     }
 }
 
@@ -493,13 +502,13 @@ impl TryFrom<Atomic> for IriReferenceString {
 
 impl From<IBig> for Atomic {
     fn from(i: IBig) -> Self {
-        Atomic::Integer(IntegerType::Integer, Rc::new(i))
+        Atomic::Integer(IntegerType::Integer, i.into())
     }
 }
 
 impl From<Rc<IBig>> for Atomic {
     fn from(i: Rc<IBig>) -> Self {
-        Atomic::Integer(IntegerType::Integer, i)
+        Atomic::Integer(IntegerType::Integer, i.into())
     }
 }
 
@@ -527,7 +536,8 @@ impl TryFrom<Atomic> for IBig {
 
 impl From<i64> for Atomic {
     fn from(i: i64) -> Self {
-        Atomic::Integer(IntegerType::Long, Rc::new(i.into()))
+        let i: IBig = i.into();
+        Atomic::Integer(IntegerType::Long, i.into())
     }
 }
 
@@ -544,7 +554,8 @@ impl TryFrom<Atomic> for i64 {
 
 impl From<i32> for Atomic {
     fn from(i: i32) -> Self {
-        Atomic::Integer(IntegerType::Int, Rc::new(i.into()))
+        let i: IBig = i.into();
+        Atomic::Integer(IntegerType::Int, i.into())
     }
 }
 
@@ -561,7 +572,8 @@ impl TryFrom<Atomic> for i32 {
 
 impl From<i16> for Atomic {
     fn from(i: i16) -> Self {
-        Atomic::Integer(IntegerType::Short, Rc::new(i.into()))
+        let i: IBig = i.into();
+        Atomic::Integer(IntegerType::Short, i.into())
     }
 }
 
@@ -578,7 +590,8 @@ impl TryFrom<Atomic> for i16 {
 
 impl From<i8> for Atomic {
     fn from(i: i8) -> Self {
-        Atomic::Integer(IntegerType::Byte, Rc::new(i.into()))
+        let i: IBig = i.into();
+        Atomic::Integer(IntegerType::Byte, i.into())
     }
 }
 
@@ -595,7 +608,8 @@ impl TryFrom<Atomic> for i8 {
 
 impl From<u64> for Atomic {
     fn from(i: u64) -> Self {
-        Atomic::Integer(IntegerType::UnsignedLong, Rc::new(i.into()))
+        let i: IBig = i.into();
+        Atomic::Integer(IntegerType::UnsignedLong, i.into())
     }
 }
 
@@ -612,7 +626,8 @@ impl TryFrom<Atomic> for u64 {
 
 impl From<u32> for Atomic {
     fn from(i: u32) -> Self {
-        Atomic::Integer(IntegerType::UnsignedInt, Rc::new(i.into()))
+        let i: IBig = i.into();
+        Atomic::Integer(IntegerType::UnsignedInt, i.into())
     }
 }
 
@@ -629,7 +644,8 @@ impl TryFrom<Atomic> for u32 {
 
 impl From<u16> for Atomic {
     fn from(i: u16) -> Self {
-        Atomic::Integer(IntegerType::UnsignedShort, Rc::new(i.into()))
+        let i: IBig = i.into();
+        Atomic::Integer(IntegerType::UnsignedShort, i.into())
     }
 }
 
@@ -646,7 +662,8 @@ impl TryFrom<Atomic> for u16 {
 
 impl From<u8> for Atomic {
     fn from(i: u8) -> Self {
-        Atomic::Integer(IntegerType::UnsignedByte, Rc::new(i.into()))
+        let i: IBig = i.into();
+        Atomic::Integer(IntegerType::UnsignedByte, i.into())
     }
 }
 
@@ -722,7 +739,7 @@ impl TryFrom<Atomic> for f64 {
 
 impl From<Name> for Atomic {
     fn from(n: Name) -> Self {
-        Atomic::QName(Rc::new(n))
+        Atomic::QName(n.into())
     }
 }
 

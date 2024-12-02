@@ -1,5 +1,4 @@
 use regex::Regex;
-use std::rc::Rc;
 use std::sync::OnceLock;
 
 use xee_xpath_ast::parse_name;
@@ -24,11 +23,11 @@ static NC_NAME_REGEX: OnceLock<Regex> = OnceLock::new();
 
 impl atomic::Atomic {
     pub(crate) fn cast_to_string(self) -> atomic::Atomic {
-        atomic::Atomic::String(atomic::StringType::String, Rc::from(self.into_canonical()))
+        atomic::Atomic::String(atomic::StringType::String, self.into_canonical().into())
     }
 
     pub(crate) fn cast_to_untyped_atomic(self) -> atomic::Atomic {
-        atomic::Atomic::Untyped(Rc::from(self.into_canonical()))
+        atomic::Atomic::Untyped(self.into_canonical().into())
     }
 
     pub(crate) fn cast_to_any_uri(self) -> error::Result<atomic::Atomic> {
@@ -36,7 +35,7 @@ impl atomic::Atomic {
         match self {
             atomic::Atomic::String(_, s) => Ok(atomic::Atomic::String(
                 StringType::AnyURI,
-                Rc::from(whitespace_collapse(&s)),
+                whitespace_collapse(&s).into(),
             )),
             atomic::Atomic::Untyped(s) => Ok(atomic::Atomic::String(StringType::AnyURI, s.clone())),
             _ => Err(error::Error::XPTY0004),
@@ -45,12 +44,12 @@ impl atomic::Atomic {
 
     pub(crate) fn cast_to_normalized_string(self) -> atomic::Atomic {
         let s = whitespace_replace(&self.into_canonical());
-        atomic::Atomic::String(atomic::StringType::NormalizedString, Rc::from(s))
+        atomic::Atomic::String(atomic::StringType::NormalizedString, s.into())
     }
 
     pub(crate) fn cast_to_token(self) -> atomic::Atomic {
         let s = whitespace_collapse(&self.into_canonical());
-        atomic::Atomic::String(atomic::StringType::Token, Rc::from(s))
+        atomic::Atomic::String(atomic::StringType::Token, s.into())
     }
 
     fn cast_to_regex<F>(
@@ -65,7 +64,7 @@ impl atomic::Atomic {
         let regex = regex_once_lock.get_or_init(f);
         let s = whitespace_collapse(&self.into_canonical());
         if regex.is_match(&s) {
-            Ok(atomic::Atomic::String(string_type, Rc::from(s)))
+            Ok(atomic::Atomic::String(string_type, s.into()))
         } else {
             Err(error::Error::FORG0001)
         }
@@ -154,9 +153,10 @@ impl atomic::Atomic {
                             // legal for xs:QName
                             Err(error::Error::FORG0001)
                         } else {
-                            Ok(atomic::Atomic::QName(Rc::new(name.with_default_namespace(
-                                namespaces.default_element_namespace(),
-                            ))))
+                            Ok(atomic::Atomic::QName(
+                                name.with_default_namespace(namespaces.default_element_namespace())
+                                    .into(),
+                            ))
                         }
                     }
                     // TODO: We really want to distinguish between parse errors

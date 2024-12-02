@@ -1,7 +1,6 @@
 // https://www.w3.org/TR/xpath-functions-31/#QName-funcs
 
 use ahash::HashMap;
-use std::rc::Rc;
 use xot::xmlname::NameStrInfo;
 use xot::Xot;
 
@@ -99,7 +98,7 @@ fn prefix_from_qname(arg: Option<Name>) -> error::Result<Option<atomic::Atomic>>
         if !prefix.is_empty() {
             Ok(Some(atomic::Atomic::String(
                 atomic::StringType::NCName,
-                Rc::from(prefix.to_string()),
+                prefix.to_string().into(),
             )))
         } else {
             Ok(None)
@@ -114,7 +113,7 @@ fn local_name_from_qname(arg: Option<Name>) -> error::Result<Option<atomic::Atom
     if let Some(arg) = arg {
         Ok(Some(atomic::Atomic::String(
             atomic::StringType::NCName,
-            Rc::from(arg.local_name().to_string()),
+            arg.local_name().to_string().into(),
         )))
     } else {
         Ok(None)
@@ -128,7 +127,7 @@ fn namespace_uri_from_qname(arg: Option<Name>) -> error::Result<Option<atomic::A
         if !namespace.is_empty() {
             Ok(Some(atomic::Atomic::String(
                 atomic::StringType::AnyURI,
-                Rc::from(namespace.to_string()),
+                namespace.to_string().into(),
             )))
         } else {
             Ok(None)
@@ -153,7 +152,7 @@ fn namespace_uri_for_prefix(
         let namespaces = element_namespaces(node, interpreter.xot());
         Ok(namespaces
             .by_prefix(prefix)
-            .map(|s| atomic::Atomic::String(atomic::StringType::AnyURI, Rc::from(s.to_string()))))
+            .map(|s| atomic::Atomic::String(atomic::StringType::AnyURI, s.to_string().into())))
     } else {
         Ok(None)
     }

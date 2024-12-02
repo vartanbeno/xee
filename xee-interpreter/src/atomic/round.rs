@@ -1,4 +1,4 @@
-use std::cmp::Ordering;
+use std::{cmp::Ordering, rc::Rc};
 
 use ibig::{ops::Abs, IBig};
 use num::Zero;
@@ -22,7 +22,7 @@ pub(crate) fn round_atomic(arg: atomic::Atomic, precision: i32) -> error::Result
     }
 }
 
-fn round_integer(i: std::rc::Rc<IBig>, precision: i32) -> Result<atomic::Atomic, error::Error> {
+fn round_integer(i: Rc<IBig>, precision: i32) -> Result<atomic::Atomic, error::Error> {
     if precision < 0 {
         Ok(round_integer_negative(
             i.as_ref().clone(),
@@ -160,10 +160,7 @@ pub(crate) fn round_half_to_even_atomic(
     }
 }
 
-fn round_half_to_even_integer(
-    i: std::rc::Rc<IBig>,
-    precision: i32,
-) -> Result<atomic::Atomic, error::Error> {
+fn round_half_to_even_integer(i: Rc<IBig>, precision: i32) -> Result<atomic::Atomic, error::Error> {
     if precision < 0 {
         Ok(round_half_to_even_integer_negative(
             i.as_ref().clone(),

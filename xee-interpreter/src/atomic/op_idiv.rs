@@ -1,9 +1,10 @@
+use std::rc::Rc;
+
 use ibig::IBig;
 use num_traits::Float;
 use num_traits::ToPrimitive;
 use num_traits::Zero;
 use rust_decimal::Decimal;
-use std::rc::Rc;
 
 use crate::atomic;
 use crate::error;

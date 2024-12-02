@@ -1,9 +1,10 @@
+use std::rc::Rc;
+
 use ibig::IBig;
 use num_traits::Float;
 use num_traits::Zero;
 use ordered_float::OrderedFloat;
 use rust_decimal::Decimal;
-use std::rc::Rc;
 
 use crate::atomic;
 use crate::error;
@@ -72,7 +73,9 @@ fn op_div_integer(a: Rc<IBig>, b: Rc<IBig>) -> error::Result<atomic::Atomic> {
     // xs:integer, then the return type is xs:decimal.
     let a: i128 = a.as_ref().try_into().map_err(|_| error::Error::FOCA0001)?;
     let b: i128 = b.as_ref().try_into().map_err(|_| error::Error::FOCA0001)?;
-    let v = op_div_decimal(Rc::new(a.into()), Rc::new(b.into()))?;
+    let a: Decimal = a.into();
+    let b: Decimal = b.into();
+    let v = op_div_decimal(a.into(), b.into())?;
     Ok(v.into())
 }
 
