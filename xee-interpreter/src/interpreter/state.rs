@@ -27,9 +27,46 @@ impl Frame {
 #[derive(Debug)]
 pub struct State<'a> {
     stack: Vec<stack::Value>,
-    build_stack: Vec<Vec<sequence::Item>>,
+    build_stack: Vec<BuildStackEntry>,
     frames: ArrayVec<Frame, FRAMES_MAX>,
     pub(crate) xot: &'a mut Xot,
+}
+
+#[derive(Debug)]
+struct ItemBuildStackEntry {
+    build_stack: Vec<sequence::Item>,
+}
+
+#[derive(Debug)]
+struct BuildStackEntry {
+    item: ItemBuildStackEntry,
+}
+
+impl BuildStackEntry {
+    fn new() -> Self {
+        Self {
+            item: ItemBuildStackEntry {
+                build_stack: Vec::new(),
+            },
+        }
+    }
+
+    fn push(&mut self, item: sequence::Item) {
+        self.item.build_stack.push(item);
+    }
+
+    fn extend<I: Iterator<Item = sequence::Item>>(
+        &mut self,
+        items: impl IntoIterator<Item = sequence::Item, IntoIter = I>,
+    ) {
+        self.item.build_stack.extend(items);
+    }
+}
+
+impl From<BuildStackEntry> for sequence::Sequence {
+    fn from(build: BuildStackEntry) -> Self {
+        sequence::Sequence::new(build.item.build_stack)
+    }
 }
 
 impl<'a> State<'a> {
@@ -58,11 +95,11 @@ impl<'a> State<'a> {
     }
 
     pub(crate) fn build_new(&mut self) {
-        self.build_stack.push(Vec::new());
+        self.build_stack.push(BuildStackEntry::new());
     }
 
     pub(crate) fn build_push(&mut self) -> error::Result<()> {
-        let build = &mut self.build_stack.last_mut().unwrap();
+        let build = self.build_stack.last_mut().unwrap();
         let value = self.stack.pop().unwrap();
         Self::build_push_helper(build, value)
     }
@@ -72,15 +109,12 @@ impl<'a> State<'a> {
         self.stack.push(build.into());
     }
 
-    fn build_push_helper(
-        build: &mut Vec<sequence::Item>,
-        value: stack::Value,
-    ) -> error::Result<()> {
+    fn build_push_helper(build: &mut BuildStackEntry, value: stack::Value) -> error::Result<()> {
         match value {
             stack::Value::Sequence(sequence::Sequence::Empty(_)) => {}
             stack::Value::Sequence(sequence::Sequence::One(item)) => build.push(item.into_item()),
             // any other sequence
-            stack::Value::Sequence(sequence) => build.extend(sequence.iter().collect::<Vec<_>>()),
+            stack::Value::Sequence(sequence) => build.extend(sequence.iter()),
             stack::Value::Absent => return Err(error::Error::XPDY0002)?,
         }
         Ok(())
