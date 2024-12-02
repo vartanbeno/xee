@@ -128,7 +128,7 @@ impl CommandDefinition {
     }
 
     fn preprocess_arguments<'a>(&self, args: &[&'a str]) -> Vec<&'a str> {
-        let mut result = Vec::new();
+        let mut result = Vec::with_capacity(self.args.len());
         let mut i = 0;
         for arg in &self.args {
             if i < args.len() {
