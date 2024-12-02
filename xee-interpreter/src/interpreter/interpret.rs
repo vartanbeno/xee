@@ -142,10 +142,11 @@ impl<'a> Interpreter<'a> {
                 }
                 EncodedInstruction::Closure => {
                     let function_id = self.read_u16();
-                    let mut closure_vars = Vec::new();
                     let inline_function_id = function::InlineFunctionId(function_id as usize);
                     let closure_function =
                         self.runnable.program().inline_function(inline_function_id);
+
+                    let mut closure_vars = Vec::with_capacity(closure_function.closure_names.len());
                     for _ in 0..closure_function.closure_names.len() {
                         closure_vars.push(self.state.pop_value());
                     }
