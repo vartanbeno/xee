@@ -179,7 +179,11 @@ fn find_helper(
 }
 
 #[xpath_fn("map:put($map as map(*), $key as xs:anyAtomicType, $value as item()*) as map(*)")]
-fn put(map: function::Map, key: atomic::Atomic, value: &sequence::Sequence) -> function::Map {
+fn put(
+    map: function::Map,
+    key: atomic::Atomic,
+    value: &sequence::Sequence,
+) -> error::Result<function::Map> {
     map.put(key, value)
 }
 
@@ -189,7 +193,7 @@ fn entry(key: atomic::Atomic, value: &sequence::Sequence) -> function::Map {
 }
 
 #[xpath_fn("map:remove($map as map(*), $keys as xs:anyAtomicType*) as map(*)")]
-fn remove(map: function::Map, keys: &[atomic::Atomic]) -> function::Map {
+fn remove(map: function::Map, keys: &[atomic::Atomic]) -> error::Result<function::Map> {
     map.remove_keys(keys)
 }
 

@@ -10,16 +10,45 @@ use crate::{atomic, context, error, sequence, string};
 /// An XPath Map (a collection of key-value pairs).
 #[derive(Debug, Clone, PartialEq)]
 pub enum Map {
+    Empty(EmptyMap),
+    One(OneMap),
     Many(ManyMap),
 }
 
 impl Map {
     pub(crate) fn new(entries: Vec<(atomic::Atomic, sequence::Sequence)>) -> error::Result<Self> {
-        Ok(Self::Many(ManyMap::try_from(entries)?))
+        match entries.len() {
+            0 => Ok(Self::Empty(EmptyMap)),
+            1 => {
+                let (key, value) = entries.into_iter().next().unwrap();
+                let map_key = atomic::MapKey::new(key.clone())?;
+                Ok(Self::One(
+                    OneMapValue {
+                        map_key,
+                        key_value: (key, value),
+                    }
+                    .into(),
+                ))
+            }
+            _ => Ok(Self::Many(ManyMap::new(entries)?)),
+        }
     }
 
     fn from_map(map: HashMap<atomic::MapKey, (atomic::Atomic, sequence::Sequence)>) -> Self {
-        Self::Many(ManyMap(Rc::new(map)))
+        match map.len() {
+            0 => Self::Empty(EmptyMap),
+            1 => {
+                let (map_key, (key, value)) = map.into_iter().next().unwrap();
+                Self::One(
+                    OneMapValue {
+                        map_key,
+                        key_value: (key, value),
+                    }
+                    .into(),
+                )
+            }
+            _ => Self::Many(ManyMap(Rc::new(map))),
+        }
     }
 
     pub(crate) fn combine(
@@ -44,51 +73,68 @@ impl Map {
 
     pub(crate) fn len(&self) -> usize {
         match self {
+            Map::Empty(map) => map.len(),
+            Map::One(map) => map.len(),
             Map::Many(map) => map.len(),
         }
     }
     pub(crate) fn is_empty(&self) -> bool {
         match self {
+            Map::Empty(map) => map.is_empty(),
+            Map::One(map) => map.is_empty(),
             Map::Many(map) => map.is_empty(),
         }
     }
     pub(crate) fn get(&self, key: &atomic::Atomic) -> Option<&sequence::Sequence> {
         match self {
+            Map::Empty(map) => map.get(key),
+            Map::One(map) => map.get(key),
             Map::Many(map) => map.get(key),
         }
     }
-    pub(crate) fn keys(&self) -> impl Iterator<Item = &atomic::Atomic> + '_ {
+    pub(crate) fn keys(&self) -> Box<dyn Iterator<Item = &atomic::Atomic> + '_> {
         match self {
-            Map::Many(map) => map.keys(),
+            Map::Empty(map) => Box::new(map.keys()),
+            Map::One(map) => Box::new(map.keys()),
+            Map::Many(map) => Box::new(map.keys()),
         }
     }
     pub(crate) fn entries(
         &self,
-    ) -> impl Iterator<Item = (&atomic::Atomic, &sequence::Sequence)> + '_ {
+    ) -> Box<dyn Iterator<Item = (&atomic::Atomic, &sequence::Sequence)> + '_> {
         match self {
-            Map::Many(map) => map.entries(),
+            Map::Empty(map) => Box::new(map.entries()),
+            Map::One(map) => Box::new(map.entries()),
+            Map::Many(map) => Box::new(map.entries()),
         }
     }
 
-    pub(crate) fn map_keys(&self) -> impl Iterator<Item = &'_ atomic::MapKey> + '_ {
+    pub(crate) fn map_keys(&self) -> Box<dyn Iterator<Item = &'_ atomic::MapKey> + '_> {
         match self {
-            Map::Many(map) => map.map_keys(),
+            Map::Empty(map) => Box::new(map.map_keys()),
+            Map::One(map) => Box::new(map.map_keys()),
+            Map::Many(map) => Box::new(map.map_keys()),
         }
     }
 
     pub(crate) fn map_key_entries(
         &self,
-    ) -> impl Iterator<Item = (&atomic::MapKey, &sequence::Sequence)> + '_ {
+    ) -> Box<dyn Iterator<Item = (&atomic::MapKey, &sequence::Sequence)> + '_> {
         match self {
-            Map::Many(map) => map.map_key_entries(),
+            Map::Empty(map) => Box::new(map.map_key_entries()),
+            Map::One(map) => Box::new(map.map_key_entries()),
+            Map::Many(map) => Box::new(map.map_key_entries()),
         }
     }
 
     pub(crate) fn full_entries(
         &self,
-    ) -> impl Iterator<Item = (&atomic::MapKey, &(atomic::Atomic, sequence::Sequence))> + '_ {
+    ) -> Box<dyn Iterator<Item = (&atomic::MapKey, &(atomic::Atomic, sequence::Sequence))> + '_>
+    {
         match self {
-            Map::Many(map) => map.full_entries(),
+            Map::Empty(map) => Box::new(map.full_entries()),
+            Map::One(map) => Box::new(map.full_entries()),
+            Map::Many(map) => Box::new(map.full_entries()),
         }
     }
 
@@ -101,6 +147,8 @@ impl Map {
         xot: &Xot,
     ) -> error::Result<Option<sequence::Sequence>> {
         match self {
+            Map::Empty(map) => map.get_as_type(key, occurrence, atomic_type, static_context, xot),
+            Map::One(map) => map.get_as_type(key, occurrence, atomic_type, static_context, xot),
             Map::Many(map) => map.get_as_type(key, occurrence, atomic_type, static_context, xot),
         }
     }
@@ -113,7 +161,19 @@ impl Map {
         xot: &Xot,
     ) -> error::Result<bool> {
         match (self, other) {
+            (Map::Empty(_), Map::Empty(_)) => Ok(true),
+            (Map::Empty(_), _) => Ok(false),
+            (_, Map::Empty(_)) => Ok(false),
+            (Map::One(map), Map::One(other)) => {
+                map.deep_equal(other, collation, default_offset, xot)
+            }
+            (Map::One(map), Map::Many(other)) => {
+                map.deep_equal(other, collation, default_offset, xot)
+            }
             (Map::Many(map), Map::Many(other)) => {
+                map.deep_equal(other, collation, default_offset, xot)
+            }
+            (Map::Many(map), Map::One(other)) => {
                 map.deep_equal(other, collation, default_offset, xot)
             }
         }
@@ -121,21 +181,68 @@ impl Map {
 
     pub fn display_representation(&self, xot: &Xot, context: &context::DynamicContext) -> String {
         match self {
+            Map::Empty(map) => map.display_representation(xot, context),
+            Map::One(map) => map.display_representation(xot, context),
             Map::Many(map) => map.display_representation(xot, context),
         }
     }
 
-    pub(crate) fn put(&self, key: atomic::Atomic, value: &sequence::Sequence) -> Self {
-        match self {
+    pub(crate) fn put(
+        &self,
+        key: atomic::Atomic,
+        value: &sequence::Sequence,
+    ) -> error::Result<Self> {
+        Ok(match self {
+            Map::Empty(_) => {
+                // if we add a key to an empty map we get a OneMap
+                let map_key = atomic::MapKey::new(key.clone())?;
+                Map::One(
+                    OneMapValue {
+                        map_key,
+                        key_value: (key, value.clone()),
+                    }
+                    .into(),
+                )
+            }
+            Map::One(one) => {
+                let map_key = atomic::MapKey::new(key.clone())?;
+                if &one.0.map_key == &map_key {
+                    // we merely update the value
+                    Map::One(
+                        OneMapValue {
+                            map_key,
+                            key_value: (key.clone(), value.clone()),
+                        }
+                        .into(),
+                    )
+                } else {
+                    // if we add a key to a one map we get a ManyMap
+                    let entries = vec![
+                        (one.0.key_value.0.clone(), one.0.key_value.1.clone()),
+                        (key, value.clone()),
+                    ];
+                    Map::Many(ManyMap::try_from(entries)?)
+                }
+            }
             // since at most we add keys, this cannot turn into a non-many map
-            Map::Many(map) => Map::Many(map.put(key, value)),
-        }
+            Map::Many(map) => Map::Many(map.put(key, value)?),
+        })
     }
 
-    pub(crate) fn remove_keys(&self, keys: &[atomic::Atomic]) -> Self {
-        match self {
+    pub(crate) fn remove_keys(&self, keys: &[atomic::Atomic]) -> error::Result<Self> {
+        Ok(match self {
+            Map::Empty(_) => Map::Empty(EmptyMap),
+            Map::One(map) => {
+                for key in keys {
+                    let map_key = atomic::MapKey::new(key.clone())?;
+                    if &map.0.map_key == &map_key {
+                        return Ok(Map::Empty(EmptyMap));
+                    }
+                }
+                Map::One(map.clone())
+            }
             Map::Many(map) => Map::from_map(map.remove_keys(keys)),
-        }
+        })
     }
 }
 
@@ -242,6 +349,97 @@ pub(crate) trait Mappable {
 #[derive(Debug, Clone, PartialEq)]
 pub struct EmptyMap;
 
+impl Mappable for EmptyMap {
+    fn len(&self) -> usize {
+        0
+    }
+
+    fn is_empty(&self) -> bool {
+        true
+    }
+
+    fn get_by_map_key(&self, _map_key: &atomic::MapKey) -> Option<&sequence::Sequence> {
+        None
+    }
+
+    fn map_keys(&self) -> impl Iterator<Item = &'_ atomic::MapKey> + '_ {
+        std::iter::empty()
+    }
+
+    fn map_key_entries(&self) -> impl Iterator<Item = (&atomic::MapKey, &sequence::Sequence)> + '_ {
+        std::iter::empty()
+    }
+
+    fn full_entries(
+        &self,
+    ) -> impl Iterator<Item = (&atomic::MapKey, &(atomic::Atomic, sequence::Sequence))> + '_ {
+        std::iter::empty()
+    }
+
+    fn keys(&self) -> impl Iterator<Item = &atomic::Atomic> + '_ {
+        std::iter::empty()
+    }
+
+    fn entries(&self) -> impl Iterator<Item = (&atomic::Atomic, &sequence::Sequence)> + '_ {
+        std::iter::empty()
+    }
+}
+
+#[derive(Debug, Clone, PartialEq)]
+pub struct OneMap(Box<OneMapValue>);
+
+#[derive(Debug, Clone, PartialEq)]
+struct OneMapValue {
+    map_key: atomic::MapKey,
+    key_value: (atomic::Atomic, sequence::Sequence),
+}
+
+impl From<OneMapValue> for OneMap {
+    fn from(value: OneMapValue) -> Self {
+        Self(Box::new(value))
+    }
+}
+
+impl Mappable for OneMap {
+    fn len(&self) -> usize {
+        1
+    }
+
+    fn is_empty(&self) -> bool {
+        false
+    }
+
+    fn get_by_map_key(&self, map_key: &atomic::MapKey) -> Option<&sequence::Sequence> {
+        if &self.0.map_key == map_key {
+            Some(&self.0.key_value.1)
+        } else {
+            None
+        }
+    }
+
+    fn map_keys(&self) -> impl Iterator<Item = &'_ atomic::MapKey> + '_ {
+        std::iter::once(&self.0.map_key)
+    }
+
+    fn map_key_entries(&self) -> impl Iterator<Item = (&atomic::MapKey, &sequence::Sequence)> + '_ {
+        std::iter::once((&self.0.map_key, &self.0.key_value.1))
+    }
+
+    fn full_entries(
+        &self,
+    ) -> impl Iterator<Item = (&atomic::MapKey, &(atomic::Atomic, sequence::Sequence))> + '_ {
+        std::iter::once((&self.0.map_key, &self.0.key_value))
+    }
+
+    fn keys(&self) -> impl Iterator<Item = &atomic::Atomic> + '_ {
+        std::iter::once(&self.0.key_value.0)
+    }
+
+    fn entries(&self) -> impl Iterator<Item = (&atomic::Atomic, &sequence::Sequence)> + '_ {
+        std::iter::once((&self.0.key_value.0, &self.0.key_value.1))
+    }
+}
+
 // a normal map uses a hashmap to store > 1 key-value pairs
 #[derive(Debug, Clone, PartialEq)]
 pub struct ManyMap(Rc<HashMap<atomic::MapKey, (atomic::Atomic, sequence::Sequence)>>);
@@ -259,11 +457,15 @@ impl ManyMap {
         Ok(Self(Rc::new(map)))
     }
 
-    pub(crate) fn put(&self, key: atomic::Atomic, value: &sequence::Sequence) -> Self {
+    pub(crate) fn put(
+        &self,
+        key: atomic::Atomic,
+        value: &sequence::Sequence,
+    ) -> error::Result<Self> {
         let mut map = self.0.as_ref().clone();
-        let map_key = atomic::MapKey::new(key.clone()).unwrap();
+        let map_key = atomic::MapKey::new(key.clone())?;
         map.insert(map_key, (key, value.clone()));
-        Self(Rc::new(map))
+        Ok(Self(Rc::new(map)))
     }
 
     pub(crate) fn remove_keys(

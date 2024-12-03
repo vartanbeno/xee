@@ -20,7 +20,7 @@ use super::{
 
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
 pub enum MapKey {
-    String(Rc<str>),
+    String(Rc<String>),
     PositiveInfinity,
     NegativeInfinity,
     NaN,
@@ -41,15 +41,18 @@ pub enum MapKey {
     GMonthDay(Rc<GMonthDay>),
     GDay(Rc<GDay>),
     Boolean(bool),
-    Binary(BinaryType, Rc<[u8]>),
+    Binary(BinaryType, Rc<Vec<u8>>),
     QName(Rc<Name>),
 }
+
+#[cfg(target_arch = "x86_64")]
+static_assertions::assert_eq_size!(MapKey, [u8; 16]);
 
 impl MapKey {
     pub(crate) fn new(atomic: Atomic) -> error::Result<MapKey> {
         match &atomic {
             // string types (including AnyURI) and untyped are stored as the same key
-            Atomic::String(_, s) | Atomic::Untyped(s) => Ok(MapKey::String(s.clone())),
+            Atomic::String(_, s) | Atomic::Untyped(s) => Ok(MapKey::String(s.to_string().into())),
             // floats and doubles are have special handling for NaN and infinity.
             // Otherwise they are stored as decimals
             Atomic::Float(OrderedFloat(f)) => {
@@ -141,7 +144,7 @@ impl MapKey {
             // booleans are stored as themselves
             Atomic::Boolean(b) => Ok(MapKey::Boolean(*b)),
             // binary types are stored as themselves
-            Atomic::Binary(t, b) => Ok(MapKey::Binary(*t, b.clone())),
+            Atomic::Binary(t, b) => Ok(MapKey::Binary(*t, b.to_vec().into())),
             // qnames are stored as themselves
             Atomic::QName(q) => Ok(MapKey::QName(q.clone())),
         }
