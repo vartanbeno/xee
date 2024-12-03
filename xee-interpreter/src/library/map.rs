@@ -1,7 +1,5 @@
 // https://www.w3.org/TR/xpath-functions-31/#array-functions
 
-use ahash::HashMap;
-use ahash::HashMapExt;
 use ibig::IBig;
 
 use xee_schema_type::Xs;
@@ -115,32 +113,12 @@ impl MergeOptions {
 
 fn merge(maps: &[function::Map], options: MergeOptions) -> error::Result<function::Map> {
     match options.duplicates {
-        MergeDuplicates::Reject => combine_maps(maps, |_, _| Err(error::Error::FOJS0003)),
-        MergeDuplicates::UseFirst => combine_maps(maps, |a, _| Ok(a)),
-        MergeDuplicates::UseLast => combine_maps(maps, |_, b| Ok(b)),
-        MergeDuplicates::UseAny => combine_maps(maps, |a, _| Ok(a)),
-        MergeDuplicates::Combine => combine_maps(maps, |a, b| Ok(a.concat(b))),
+        MergeDuplicates::Reject => function::Map::combine(maps, |_, _| Err(error::Error::FOJS0003)),
+        MergeDuplicates::UseFirst => function::Map::combine(maps, |a, _| Ok(a)),
+        MergeDuplicates::UseLast => function::Map::combine(maps, |_, b| Ok(b)),
+        MergeDuplicates::UseAny => function::Map::combine(maps, |a, _| Ok(a)),
+        MergeDuplicates::Combine => function::Map::combine(maps, |a, b| Ok(a.concat(b))),
     }
-}
-
-fn combine_maps(
-    maps: &[function::Map],
-    combine: impl Fn(sequence::Sequence, sequence::Sequence) -> error::Result<sequence::Sequence>,
-) -> error::Result<function::Map> {
-    let mut result = HashMap::new();
-    for map in maps {
-        for (map_key, (key, value)) in map.0.iter() {
-            let map_key = map_key.clone();
-            let entry = result.remove(&map_key);
-            let value = if let Some((_, a)) = entry {
-                combine(a, value.clone())?
-            } else {
-                value.clone()
-            };
-            result.insert(map_key, (key.clone(), value));
-        }
-    }
-    Ok(function::Map::from_map(result))
 }
 
 #[xpath_fn("map:size($map as map(*)) as xs:integer")]
@@ -150,7 +128,7 @@ fn size(map: function::Map) -> IBig {
 
 #[xpath_fn("map:keys($map as map(*)) as xs:anyAtomicType*")]
 fn keys(map: function::Map) -> sequence::Sequence {
-    map.keys().collect::<Vec<_>>().into()
+    map.keys().cloned().collect::<Vec<_>>().into()
 }
 
 #[xpath_fn("map:contains($map as map(*), $key as xs:anyAtomicType) as xs:boolean")]
@@ -160,7 +138,9 @@ fn contains(map: function::Map, key: atomic::Atomic) -> bool {
 
 #[xpath_fn("map:get($map as map(*), $key as xs:anyAtomicType) as item()*")]
 fn get(map: function::Map, key: atomic::Atomic) -> sequence::Sequence {
-    map.get(&key).unwrap_or_default()
+    map.get(&key)
+        .map(|sequence| sequence.clone())
+        .unwrap_or_default()
 }
 
 #[xpath_fn("map:find($input as item()*, $key as xs:anyAtomicType) as array(*)")]
@@ -183,7 +163,7 @@ fn find_helper(
                     }
                 }
                 function::Function::Map(map) => {
-                    for (k, (_, v)) in map.0.iter() {
+                    for (k, v) in map.map_key_entries() {
                         if k == &key {
                             result.push(v.clone());
                         }
@@ -221,7 +201,7 @@ fn for_each(
 ) -> error::Result<sequence::Sequence> {
     let function = action.to_function()?;
     let mut result: Vec<sequence::Item> = Vec::with_capacity(map.len());
-    for (_, (key, value)) in map.0.iter() {
+    for (key, value) in map.entries() {
         let r = interpreter
             .call_function_with_arguments(&function, &[key.clone().into(), value.clone()])?;
         for item in r.iter() {

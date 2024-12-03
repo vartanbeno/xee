@@ -845,7 +845,7 @@ impl<'a> Interpreter<'a> {
         // pop the map off the stack
         self.state.pop()?;
         if let Some(value) = value {
-            self.state.push(value);
+            self.state.push(value.clone());
         } else {
             self.state.push(sequence::Sequence::default());
         }
@@ -880,7 +880,10 @@ impl<'a> Interpreter<'a> {
         key_specifier: sequence::Sequence,
     ) -> error::Result<Vec<sequence::Item>> {
         self.lookup_helper(key_specifier, map, |map, atomic| {
-            Ok(map.get(&atomic).unwrap_or_default())
+            Ok(map
+                .get(&atomic)
+                .map(|sequence| sequence.clone())
+                .unwrap_or_default())
         })
     }
 
@@ -920,7 +923,7 @@ impl<'a> Interpreter<'a> {
             function::Function::Map(map) => {
                 let mut result = Vec::new();
                 for key in map.keys() {
-                    for value in self.lookup_map(&map, key.into())? {
+                    for value in self.lookup_map(&map, key.clone().into())? {
                         result.push(value)
                     }
                 }

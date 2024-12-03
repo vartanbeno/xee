@@ -43,7 +43,7 @@ impl Sequence {
                         }
                     }
                     (function::Function::Map(a), function::Function::Map(b)) => {
-                        if !a.deep_equal(b.clone(), collation, default_offset, xot)? {
+                        if !a.deep_equal(&b, collation, default_offset, xot)? {
                             return Ok(false);
                         }
                     }

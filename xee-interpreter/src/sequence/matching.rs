@@ -207,7 +207,7 @@ impl Item {
                 }
                 ast::MapTest::TypedMapTest(typed_map_test) => {
                     let map = self.to_map()?;
-                    for (_, (key, value)) in map.0.iter() {
+                    for (key, value) in map.entries() {
                         key.atomic_type_matching(typed_map_test.key_type)?;
                         value.clone().sequence_type_matching_convert(
                             &typed_map_test.value_type,
