@@ -880,10 +880,7 @@ impl<'a> Interpreter<'a> {
         key_specifier: sequence::Sequence,
     ) -> error::Result<Vec<sequence::Item>> {
         self.lookup_helper(key_specifier, map, |map, atomic| {
-            Ok(map
-                .get(&atomic)
-                .map(|sequence| sequence.clone())
-                .unwrap_or_default())
+            Ok(map.get(&atomic).cloned().unwrap_or_default())
         })
     }
 

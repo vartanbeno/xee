@@ -360,8 +360,8 @@ fn serialize_json_map(
     let mut result = json::object::Object::new();
     for key in map.keys() {
         let key_s = key.string_value();
-        let value = map.get(&key).unwrap();
-        let value = serialize_json_sequence(&value, parameters, xot)?;
+        let value = map.get(key).unwrap();
+        let value = serialize_json_sequence(value, parameters, xot)?;
         result.insert(&key_s, value);
     }
     Ok(json::JsonValue::Object(result))

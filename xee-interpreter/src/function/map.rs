@@ -206,7 +206,7 @@ impl Map {
             }
             Map::One(one) => {
                 let map_key = atomic::MapKey::new(key.clone())?;
-                if &one.0.map_key == &map_key {
+                if one.0.map_key == map_key {
                     // we merely update the value
                     Map::One(
                         OneMapValue {
@@ -235,7 +235,7 @@ impl Map {
             Map::One(map) => {
                 for key in keys {
                     let map_key = atomic::MapKey::new(key.clone())?;
-                    if &map.0.map_key == &map_key {
+                    if map.0.map_key == map_key {
                         return Ok(Map::Empty(EmptyMap));
                     }
                 }

@@ -508,7 +508,7 @@ impl From<IBig> for Atomic {
 
 impl From<Rc<IBig>> for Atomic {
     fn from(i: Rc<IBig>) -> Self {
-        Atomic::Integer(IntegerType::Integer, i.into())
+        Atomic::Integer(IntegerType::Integer, i)
     }
 }
 

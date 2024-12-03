@@ -73,7 +73,7 @@ impl MergeOptions {
         let key: atomic::Atomic = "duplicates".to_string().into();
         let duplicates = map.get(&key);
         if let Some(duplicates) = duplicates {
-            let value = Self::duplicates_value(interpreter, &duplicates)?;
+            let value = Self::duplicates_value(interpreter, duplicates)?;
             let duplicates = MergeDuplicates::from_str(&value)?;
             Ok(Self { duplicates })
         } else {
@@ -138,9 +138,7 @@ fn contains(map: function::Map, key: atomic::Atomic) -> bool {
 
 #[xpath_fn("map:get($map as map(*), $key as xs:anyAtomicType) as item()*")]
 fn get(map: function::Map, key: atomic::Atomic) -> sequence::Sequence {
-    map.get(&key)
-        .map(|sequence| sequence.clone())
-        .unwrap_or_default()
+    map.get(&key).cloned().unwrap_or_default()
 }
 
 #[xpath_fn("map:find($input as item()*, $key as xs:anyAtomicType) as array(*)")]
