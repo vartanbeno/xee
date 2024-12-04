@@ -167,12 +167,9 @@ fn unordered(source_seq: &sequence::Sequence) -> sequence::Sequence {
 )]
 fn distinct_values(
     context: &DynamicContext,
-    arg: &[Atomic],
+    arg: impl Iterator<Item = error::Result<Atomic>>,
     collation: &str,
 ) -> error::Result<Vec<Atomic>> {
-    if arg.is_empty() {
-        return Ok(Vec::new());
-    }
     let collation = context
         .static_context()
         .resolve_collation_str(Some(collation))?;
@@ -181,11 +178,12 @@ fn distinct_values(
     // duplicates. It can't generate false positives as the default
     // string compare is in use. We store the order in the value.
     let distinct_set = arg
-        .iter()
-        .cloned()
         .enumerate()
-        .map(|(i, atom)| (atom, i))
-        .collect::<HashMap<_, _>>();
+        .map(|(i, atom)| Ok((atom?, i)))
+        .collect::<error::Result<HashMap<_, _>>>()?;
+    if distinct_set.is_empty() {
+        return Ok(Vec::new());
+    }
 
     // now we sort the distinct set by the order
     let mut distinct_set = distinct_set.into_iter().collect::<Vec<_>>();
@@ -212,7 +210,7 @@ fn distinct_values(
 #[xpath_fn("fn:index-of($seq as xs:anyAtomicType*, $search as xs:anyAtomicType, $collation as xs:string) as xs:integer*", collation)]
 fn index_of(
     context: &DynamicContext,
-    seq: &[Atomic],
+    seq: impl Iterator<Item = error::Result<Atomic>>,
     search: Atomic,
     collation: &str,
 ) -> error::Result<Vec<IBig>> {
@@ -220,15 +218,13 @@ fn index_of(
         .static_context()
         .resolve_collation_str(Some(collation))?;
     let default_offset = context.implicit_timezone();
-    // TODO: annoying that we have to clone both atoms here
-    let indices = seq.iter().enumerate().filter_map(|(i, atom)| {
-        if atom.equal(&search, &collation, default_offset) {
-            Some((i + 1).into())
-        } else {
-            None
+    let mut indices = Vec::new();
+    for (i, atom) in seq.enumerate() {
+        if atom?.equal(&search, &collation, default_offset) {
+            indices.push((i + 1).into());
         }
-    });
-    Ok(indices.collect::<Vec<_>>())
+    }
+    Ok(indices)
 }
 
 #[xpath_fn("fn:deep-equal($parameter1 as item()*, $parameter2 as item()*, $collation as xs:string) as xs:boolean", collation)]
@@ -279,12 +275,17 @@ fn count(arg: &sequence::Sequence) -> IBig {
 }
 
 #[xpath_fn("fn:avg($arg as xs:anyAtomicType*) as xs:anyAtomicType?")]
-fn avg(context: &DynamicContext, arg: &[Atomic]) -> error::Result<Option<Atomic>> {
-    if arg.is_empty() {
+fn avg(
+    context: &DynamicContext,
+    arg: impl Iterator<Item = error::Result<Atomic>>,
+) -> error::Result<Option<Atomic>> {
+    let r = sum_atoms(arg, context.implicit_timezone())?;
+    let (total, count) = if let Some(r) = r {
+        r
+    } else {
         return Ok(None);
-    }
-    let total = sum_atoms(arg[0].clone(), &arg[1..], context.implicit_timezone())?;
-    let count: IBig = arg.len().into();
+    };
+    let count: IBig = count.into();
     Ok(Some(op_div(total, count.into())?))
 }
 
@@ -292,7 +293,11 @@ fn avg(context: &DynamicContext, arg: &[Atomic]) -> error::Result<Option<Atomic>
     "fn:max($arg as xs:anyAtomicType*, $collation as xs:string) as xs:anyAtomicType?",
     collation
 )]
-fn max(context: &DynamicContext, arg: &[Atomic], collation: &str) -> error::Result<Option<Atomic>> {
+fn max(
+    context: &DynamicContext,
+    arg: impl Iterator<Item = error::Result<Atomic>>,
+    collation: &str,
+) -> error::Result<Option<Atomic>> {
     min_or_max(
         context,
         arg,
@@ -312,7 +317,11 @@ fn max(context: &DynamicContext, arg: &[Atomic], collation: &str) -> error::Resu
     "fn:min($arg as xs:anyAtomicType*, $collation as xs:string) as xs:anyAtomicType?",
     collation
 )]
-fn min(context: &DynamicContext, arg: &[Atomic], collation: &str) -> error::Result<Option<Atomic>> {
+fn min(
+    context: &DynamicContext,
+    arg: impl Iterator<Item = error::Result<Atomic>>,
+    collation: &str,
+) -> error::Result<Option<Atomic>> {
     min_or_max(
         context,
         arg,
@@ -330,47 +339,51 @@ fn min(context: &DynamicContext, arg: &[Atomic], collation: &str) -> error::Resu
 
 fn min_or_max<F>(
     context: &DynamicContext,
-    arg: &[Atomic],
+    arg: impl Iterator<Item = error::Result<Atomic>>,
     collation: &str,
     compare: F,
 ) -> error::Result<Option<Atomic>>
 where
     F: Fn(Atomic, Atomic, &Collation, chrono::offset::FixedOffset) -> error::Result<bool>,
 {
-    if !arg.is_empty() {
+    let mut float_seen: bool = false;
+    let mut double_seen: bool = false;
+    let mut any_uri_seen: bool = false;
+    let mut string_seen: bool = false;
+
+    let mut arg = arg.map(|atom: error::Result<Atomic>| {
+        let atom: Atomic = atom?;
+        let r = if atom.is_untyped() {
+            atom.cast_to_double()?
+        } else {
+            atom
+        };
+        match r {
+            Atomic::Float(_) => float_seen = true,
+            Atomic::Double(_) => double_seen = true,
+            Atomic::String(StringType::AnyURI, _) => any_uri_seen = true,
+            Atomic::String(StringType::String, _) => string_seen = true,
+            _ => {}
+        }
+        Ok::<Atomic, error::Error>(r)
+    });
+
+    if let Some(atom) = arg.next() {
+        let mut extreme = atom?;
+        // if extreme is not comparable, then we fail
+        if !extreme.is_comparable() {
+            return Err(error::Error::FORG0006);
+        }
+
         let collation = context
             .static_context()
             .resolve_collation_str(Some(collation))?;
         let default_offset = context.implicit_timezone();
-        let mut float_seen: bool = false;
-        let mut double_seen: bool = false;
-        let mut any_uri_seen: bool = false;
-        let mut string_seen: bool = false;
-        let mut arg_iter = arg.iter().map(|atom| {
-            let atom = if atom.is_untyped() {
-                atom.clone().cast_to_double()
-            } else {
-                Ok(atom.clone())
-            };
-            match atom {
-                Ok(Atomic::Float(_)) => float_seen = true,
-                Ok(Atomic::Double(_)) => double_seen = true,
-                Ok(Atomic::String(StringType::AnyURI, _)) => any_uri_seen = true,
-                Ok(Atomic::String(StringType::String, _)) => string_seen = true,
-                _ => {}
-            }
-            atom
-        });
-        // unwrap is safe as we know it's not empty
-        let mut extreme = arg_iter.next().unwrap()?;
-        // if we know we don't have any more items, and max is
-        // not comparable, then we fail
-        if arg.len() == 1 && !extreme.is_comparable() {
-            return Err(error::Error::FORG0006);
-        }
 
-        for atom in arg_iter {
+        // now compare the other arguments with extreme
+        for atom in arg {
             let atom = atom?;
+
             // we want to handle NaN specifically; we do
             // want to record it so we can't bail out early,
             // as we need to see whether we need to cast in the end.
@@ -406,53 +419,64 @@ where
 }
 
 #[xpath_fn("fn:sum($arg as xs:anyAtomicType*) as xs:anyAtomicType")]
-fn sum1(context: &DynamicContext, arg: &[Atomic]) -> error::Result<Atomic> {
-    if arg.is_empty() {
-        return Ok(0.into());
+fn sum1(
+    context: &DynamicContext,
+    arg: impl Iterator<Item = error::Result<Atomic>>,
+) -> error::Result<Atomic> {
+    let sum = sum_atoms(arg, context.implicit_timezone())?;
+    if let Some((sum, _)) = sum {
+        Ok(sum)
+    } else {
+        Ok(0.into())
     }
-    sum_atoms(arg[0].clone(), &arg[1..], context.implicit_timezone())
 }
 
-#[xpath_fn("fn:sum($arg as xs:anyAtomicType*, $zero as xs:anyAtomicType?) as xs:anyAtomicType")]
+#[xpath_fn("fn:sum($arg as xs:anyAtomicType*, $zero as xs:anyAtomicType?) as xs:anyAtomicType?")]
 fn sum2(
     context: &DynamicContext,
-    arg: &[Atomic],
+    arg: impl Iterator<Item = error::Result<Atomic>>,
     zero: Option<Atomic>,
 ) -> error::Result<Option<Atomic>> {
-    if arg.is_empty() {
-        return Ok(zero);
+    let sum = sum_atoms(arg, context.implicit_timezone())?;
+    if let Some((sum, _)) = sum {
+        Ok(Some(sum))
+    } else {
+        Ok(zero)
     }
-    Ok(Some(sum_atoms(
-        arg[0].clone(),
-        &arg[1..],
-        context.implicit_timezone(),
-    )?))
 }
 
 fn sum_atoms(
-    total: Atomic,
-    arg: &[Atomic],
+    atoms: impl Iterator<Item = error::Result<Atomic>>,
     default_offset: chrono::FixedOffset,
-) -> error::Result<Atomic> {
-    let mut total = if total.is_untyped() {
-        total.clone().cast_to_double()?
-    } else {
-        total.clone()
-    };
-    if arg.is_empty() && !total.is_addable() {
-        return Err(error::Error::FORG0006);
-    }
-    for atom in arg {
-        let atom = if atom.is_untyped() {
-            atom.clone()
-                .cast_to_double()
-                .map_err(|_| error::Error::FORG0006)?
+) -> error::Result<Option<(Atomic, usize)>> {
+    let mut atoms = atoms.map(|atom| {
+        let atom = atom?;
+        if atom.is_untyped() {
+            atom.cast_to_double().map_err(|_| error::Error::FORG0006)
         } else {
-            atom.clone()
-        };
-        total = op_add(total, atom, default_offset).map_err(|_| error::Error::FORG0006)?;
+            Ok(atom)
+        }
+    });
+
+    let total = atoms.next();
+    if let Some(total) = total {
+        // if the first atomic is not addable, bail out
+        let mut total = total?;
+        let mut atoms = atoms.peekable();
+        if atoms.peek().is_none() && !total.is_addable() {
+            return Err(error::Error::FORG0006);
+        }
+        let mut count = 1;
+        // now add all the further atoms
+        for atom in atoms {
+            let atom = atom?;
+            count += 1;
+            total = op_add(total, atom, default_offset).map_err(|_| error::Error::FORG0006)?;
+        }
+        Ok(Some((total, count)))
+    } else {
+        Ok(None)
     }
-    Ok(total)
 }
 
 pub(crate) fn static_function_descriptions() -> Vec<StaticFunctionDescription> {

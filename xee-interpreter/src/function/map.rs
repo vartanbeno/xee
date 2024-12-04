@@ -52,12 +52,12 @@ impl Map {
     }
 
     pub(crate) fn combine(
-        maps: &[Map],
+        maps: impl Iterator<Item = error::Result<Map>>,
         combine: impl Fn(sequence::Sequence, sequence::Sequence) -> error::Result<sequence::Sequence>,
     ) -> error::Result<Map> {
         let mut result = HashMap::new();
         for map in maps {
-            for (map_key, (key, value)) in map.full_entries() {
+            for (map_key, (key, value)) in map?.full_entries() {
                 let map_key = map_key.clone();
                 let entry = result.remove(&map_key);
                 let value = if let Some((_, a)) = entry {
@@ -229,19 +229,22 @@ impl Map {
         })
     }
 
-    pub(crate) fn remove_keys(&self, keys: &[atomic::Atomic]) -> error::Result<Self> {
+    pub(crate) fn remove_keys(
+        &self,
+        keys: impl Iterator<Item = error::Result<atomic::Atomic>>,
+    ) -> error::Result<Self> {
         Ok(match self {
             Map::Empty(_) => Map::Empty(EmptyMap),
             Map::One(map) => {
                 for key in keys {
-                    let map_key = atomic::MapKey::new(key.clone())?;
+                    let map_key = atomic::MapKey::new(key?.clone())?;
                     if map.0.map_key == map_key {
                         return Ok(Map::Empty(EmptyMap));
                     }
                 }
                 Map::One(map.clone())
             }
-            Map::Many(map) => Map::from_map(map.remove_keys(keys)),
+            Map::Many(map) => Map::from_map(map.remove_keys(keys)?),
         })
     }
 }
@@ -470,14 +473,14 @@ impl ManyMap {
 
     pub(crate) fn remove_keys(
         &self,
-        keys: &[atomic::Atomic],
-    ) -> HashMap<atomic::MapKey, (atomic::Atomic, sequence::Sequence)> {
+        keys: impl Iterator<Item = error::Result<atomic::Atomic>>,
+    ) -> error::Result<HashMap<atomic::MapKey, (atomic::Atomic, sequence::Sequence)>> {
         let mut map = self.0.as_ref().clone();
         for key in keys {
-            let map_key = atomic::MapKey::new(key.clone()).unwrap();
+            let map_key = atomic::MapKey::new(key?.clone()).unwrap();
             map.remove(&map_key);
         }
-        map
+        Ok(map)
     }
 }
 

@@ -23,18 +23,18 @@ use crate::{atomic, error, interpreter, occurrence::Occurrence, sequence, wrap_x
 const MAX_CONCAT_ARITY: usize = 99;
 
 #[xpath_fn("fn:codepoints-to-string($arg as xs:integer*) as xs:string")]
-fn codepoints_to_string(arg: &[IBig]) -> error::Result<String> {
-    arg.iter()
-        .map(|c| {
-            let c: u32 = c.try_into().map_err(|_| error::Error::FOCH0001)?;
-            let c = char::from_u32(c).ok_or(error::Error::FOCH0001)?;
-            if is_valid_xml_char(c) {
-                Ok(c)
-            } else {
-                Err(error::Error::FOCH0001)
-            }
-        })
-        .collect::<error::Result<String>>()
+fn codepoints_to_string(arg: impl Iterator<Item = error::Result<IBig>>) -> error::Result<String> {
+    arg.map(|c| {
+        let c = c?;
+        let c: u32 = c.try_into().map_err(|_| error::Error::FOCH0001)?;
+        let c = char::from_u32(c).ok_or(error::Error::FOCH0001)?;
+        if is_valid_xml_char(c) {
+            Ok(c)
+        } else {
+            Err(error::Error::FOCH0001)
+        }
+    })
+    .collect::<error::Result<String>>()
 }
 
 fn is_valid_xml_char(c: char) -> bool {
@@ -102,18 +102,16 @@ fn codepoint_equal(comparand1: Option<&str>, comparand2: Option<&str>) -> Option
 )]
 fn contains_token(
     context: &DynamicContext,
-    input: &[&str],
+    input: impl Iterator<Item = error::Result<String>>,
     token: &str,
     collation: &str,
 ) -> error::Result<bool> {
-    if input.is_empty() {
-        return Ok(false);
-    }
     let collation = context
         .static_context()
         .resolve_collation_str(Some(collation))?;
     let token = token.trim();
     for s in input {
+        let s = s?;
         // if any token in s, tokenized, is token, then we return true
         if s.split_ascii_whitespace()
             .any(|t| collation.compare(t, token).is_eq())
@@ -151,20 +149,21 @@ fn concat(
 }
 
 #[xpath_fn("fn:string-join($arg1 as xs:anyAtomicType*) as xs:string")]
-fn string_join(arg1: &[atomic::Atomic]) -> error::Result<String> {
+fn string_join(arg1: impl Iterator<Item = error::Result<atomic::Atomic>>) -> error::Result<String> {
     let arg1 = arg1
-        .iter()
-        .map(|a| a.string_value())
-        .collect::<Vec<String>>();
+        .map(|a| Ok(a?.string_value()))
+        .collect::<error::Result<Vec<String>>>()?;
     Ok(arg1.concat())
 }
 
 #[xpath_fn("fn:string-join($arg1 as xs:anyAtomicType*, $arg2 as xs:string) as xs:string")]
-fn string_join_sep(arg1: &[atomic::Atomic], arg2: &str) -> error::Result<String> {
+fn string_join_sep(
+    arg1: impl Iterator<Item = error::Result<atomic::Atomic>>,
+    arg2: &str,
+) -> error::Result<String> {
     let arg1 = arg1
-        .iter()
-        .map(|a| a.string_value())
-        .collect::<Vec<String>>();
+        .map(|a| Ok(a?.string_value()))
+        .collect::<error::Result<Vec<String>>>()?;
     Ok(arg1.join(arg2))
 }
 

@@ -16,7 +16,9 @@ use crate::sequence;
 use crate::wrap_xpath_fn;
 
 #[xpath_fn("map:merge($maps as map(*)*) as map(*)")]
-fn merge1(maps: &[function::Map]) -> error::Result<function::Map> {
+fn merge1(
+    maps: impl Iterator<Item = error::Result<function::Map>>,
+) -> error::Result<function::Map> {
     merge(
         maps,
         MergeOptions {
@@ -28,7 +30,7 @@ fn merge1(maps: &[function::Map]) -> error::Result<function::Map> {
 #[xpath_fn("map:merge($maps as map(*)*, $options as map(*)) as map(*)")]
 fn merge2(
     interpreter: &interpreter::Interpreter,
-    maps: &[function::Map],
+    maps: impl Iterator<Item = error::Result<function::Map>>,
     options: function::Map,
 ) -> error::Result<function::Map> {
     let options = MergeOptions::from_map(&options, interpreter)?;
@@ -111,7 +113,10 @@ impl MergeOptions {
     }
 }
 
-fn merge(maps: &[function::Map], options: MergeOptions) -> error::Result<function::Map> {
+fn merge(
+    maps: impl Iterator<Item = error::Result<function::Map>>,
+    options: MergeOptions,
+) -> error::Result<function::Map> {
     match options.duplicates {
         MergeDuplicates::Reject => function::Map::combine(maps, |_, _| Err(error::Error::FOJS0003)),
         MergeDuplicates::UseFirst => function::Map::combine(maps, |a, _| Ok(a)),
@@ -191,7 +196,10 @@ fn entry(key: atomic::Atomic, value: &sequence::Sequence) -> function::Map {
 }
 
 #[xpath_fn("map:remove($map as map(*), $keys as xs:anyAtomicType*) as map(*)")]
-fn remove(map: function::Map, keys: &[atomic::Atomic]) -> error::Result<function::Map> {
+fn remove(
+    map: function::Map,
+    keys: impl Iterator<Item = error::Result<atomic::Atomic>>,
+) -> error::Result<function::Map> {
     map.remove_keys(keys)
 }
 

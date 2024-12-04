@@ -68,10 +68,14 @@ fn has_children(interpreter: &Interpreter, node: Option<xot::Node>) -> bool {
 }
 
 #[xpath_fn("fn:innermost($nodes as node()*) as node()*")]
-fn innermost(interpreter: &Interpreter, nodes: &[xot::Node]) -> Vec<xot::Node> {
+fn innermost(
+    interpreter: &Interpreter,
+    nodes: impl Iterator<Item = error::Result<xot::Node>>,
+) -> error::Result<Vec<xot::Node>> {
+    let nodes: Vec<xot::Node> = nodes.collect::<error::Result<_>>()?;
     // get sequence of ancestors
     let mut ancestors = HashSet::new();
-    for node in nodes {
+    for node in nodes.iter() {
         let mut parent_node = *node;
         // insert all parents into ancestors
         while let Some(parent) = interpreter.xot().parent(parent_node) {
@@ -82,19 +86,23 @@ fn innermost(interpreter: &Interpreter, nodes: &[xot::Node]) -> Vec<xot::Node> {
     // now find all nodes that are not in ancestors
     let mut innermost = Vec::new();
     for node in nodes {
-        if !ancestors.contains(node) {
-            innermost.push(*node);
+        if !ancestors.contains(&node) {
+            innermost.push(node);
         }
     }
-    innermost
+    Ok(innermost)
 }
 
 #[xpath_fn("fn:outermost($nodes as node()*) as node()*")]
-fn outermost(interpreter: &Interpreter, nodes: &[xot::Node]) -> Vec<xot::Node> {
+fn outermost(
+    interpreter: &Interpreter,
+    nodes: impl Iterator<Item = error::Result<xot::Node>>,
+) -> error::Result<Vec<xot::Node>> {
+    let nodes: Vec<xot::Node> = nodes.collect::<error::Result<_>>()?;
     let node_set = nodes.iter().collect::<HashSet<_>>();
     // now find all nodes that don't have an ancestor in the set
     let mut outermost = Vec::new();
-    'outer: for node in nodes {
+    'outer: for node in nodes.iter() {
         let mut parent_node = *node;
         // if we find an ancestor in node_set, then we don't add this node
         while let Some(parent) = interpreter.xot().parent(parent_node) {
@@ -105,7 +113,7 @@ fn outermost(interpreter: &Interpreter, nodes: &[xot::Node]) -> Vec<xot::Node> {
         }
         outermost.push(*node);
     }
-    outermost
+    Ok(outermost)
 }
 
 #[xpath_fn("fn:path($arg as node()?) as xs:string?", context_first)]

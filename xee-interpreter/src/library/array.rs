@@ -64,10 +64,12 @@ fn subarray3(array: function::Array, start: IBig, length: IBig) -> error::Result
 }
 
 #[xpath_fn("array:remove($array as array(*), $positions as xs:integer*) as array(*)")]
-fn remove(array: function::Array, positions: &[IBig]) -> error::Result<function::Array> {
+fn remove(
+    array: function::Array,
+    positions: impl Iterator<Item = error::Result<IBig>>,
+) -> error::Result<function::Array> {
     let positions = positions
-        .iter()
-        .map(|position| convert_position(position.clone()))
+        .map(|position| convert_position(position?.clone()))
         .collect::<error::Result<Vec<usize>>>()?;
     array
         .remove_positions(&positions)
@@ -105,8 +107,11 @@ fn reverse(array: function::Array) -> function::Array {
 }
 
 #[xpath_fn("array:join($arrays as array(*)*) as array(*)")]
-fn join(arrays: &[function::Array]) -> function::Array {
-    function::Array::join(arrays)
+fn join(
+    arrays: impl Iterator<Item = error::Result<function::Array>>,
+) -> error::Result<function::Array> {
+    let arrays = arrays.collect::<error::Result<Vec<function::Array>>>()?;
+    Ok(function::Array::join(&arrays))
 }
 
 #[xpath_fn(

@@ -29,7 +29,6 @@ fn convert_item(
     arg: TokenStream,
 ) -> syn::Result<TokenStream> {
     let (iterator, borrow) = convert_item_type(&item.item_type, arg.clone())?;
-    let occurrence = quote!(crate::occurrence::Occurrence);
 
     Ok(match &item.occurrence {
         ast::Occurrence::One => {
@@ -43,7 +42,7 @@ fn convert_item(
             };
             quote!(
                 #[allow(non_snake_case)]
-                let #name = #occurrence::one(&mut #iterator)?;
+                let #name = crate::occurrence::one(&mut #iterator)?;
                 #as_ref
             )
         }
@@ -58,7 +57,7 @@ fn convert_item(
             };
             quote!(
                 #[allow(non_snake_case)]
-                let #name = #occurrence::option(&mut #iterator)?;
+                let #name = crate::occurrence::option(&mut #iterator)?;
                 #as_ref
             )
         }
@@ -71,24 +70,28 @@ fn convert_item(
                     let #name = &(#arg);
                 ));
             }
-            let name_temp =
-                syn::Ident::new(&format!("tmp_{}", name), proc_macro2::Span::call_site());
-            let as_ref = if borrow {
-                quote!(
-                    #[allow(non_snake_case)]
-                    let #name_temp = #name_temp.iter().map(|s| s.as_ref()).collect::<Vec<_>>();
-                )
-            } else {
-                quote!()
-            };
-            let many = quote!(#occurrence::many(&mut #iterator)?);
+            // let name_temp =
+            //     syn::Ident::new(&format!("tmp_{}", name), proc_macro2::Span::call_site());
+            // let as_ref = if borrow {
+            //     quote!(
+            //         #[allow(non_snake_case)]
+            //         let #name_temp = #name_temp.iter().map(|s| s.as_ref()).collect::<Vec<_>>();
+            //     )
+            // } else {
+            //     quote!()
+            // };
             quote!(
                 #[allow(non_snake_case)]
-                let #name_temp = #many;
-                #as_ref
-                #[allow(non_snake_case)]
-                let #name = #name_temp.as_slice();
+                let mut #name = #iterator;
             )
+            // let many = quote!(#occurrence::many(&mut #iterator)?);
+            // quote!(
+            //     #[allow(non_snake_case)]
+            //     let #name_temp = #many;
+            //     #as_ref
+            //     #[allow(non_snake_case)]
+            //     let #name = #name_temp.as_slice();
+            // )
         }
         ast::Occurrence::NonEmpty => todo!("NonEmpty not yet supported"),
     })
