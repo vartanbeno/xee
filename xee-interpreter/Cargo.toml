@@ -45,7 +45,6 @@ xee-schema-type = { path = "../xee-schema-type" }
 xee-xpath-type = { path = "../xee-xpath-type" }
 xee-name = { path = "../xee-name" }
 lexical = { version = "6.1.1", features = ["format"] }
-regex = { workspace = true }
 hex = "0.4.3"
 base64 = "0.21.2"
 chrono = { workspace = true }
