@@ -1,5 +1,5 @@
 use regex::Regex;
-use std::sync::OnceLock;
+use std::sync::LazyLock;
 
 use xee_xpath_ast::parse_name;
 
@@ -14,12 +14,39 @@ use super::StringType;
 // 	NameStartChar	   ::=   	":" | [A-Z] | "_" | [a-z] | [#xC0-#xD6] | [#xD8-#xF6] | [#xF8-#x2FF] | [#x370-#x37D] | [#x37F-#x1FFF] | [#x200C-#x200D] | [#x2070-#x218F] | [#x2C00-#x2FEF] | [#x3001-#xD7FF] | [#xF900-#xFDCF] | [#xFDF0-#xFFFD] | [#x10000-#xEFFFF]
 // We create the NCName versions without colon (:) so we can do ncnames easily later
 static NCNAME_START_CHAR: &str = r"A-Z_a-z\xc0-\xd6\xd8-\xf6\xf8-\u02ff\u0370-\u037d\u037f-\u1fff\u200c\u200d\u2070-\u218f\u2c00-\u2fef\u3001-\ud7ff\uf900-\ufdcf\ufdf0-\ufffd\U00010000-\U000effff";
-// 	NameChar	   ::=   	NameStartChar | "-" | "." | [0-9] | #xB7 | [#x0300-#x036F] | [#x203F-#x2040]
+// NameChar	   ::=   	NameStartChar | "-" | "." | [0-9] | #xB7 | [#x0300-#x036F] | [#x203F-#x2040]
 static NCNAME_CHAR_ADDITIONS: &str = r"-\.0-9\xb7\u0300-\u036F\u203F-\u2040";
-static LANGUAGE_REGEX: OnceLock<Regex> = OnceLock::new();
-static NMTOKEN_REGEX: OnceLock<Regex> = OnceLock::new();
-static NAME_REGEX: OnceLock<Regex> = OnceLock::new();
-static NC_NAME_REGEX: OnceLock<Regex> = OnceLock::new();
+static LANGUAGE_REGEX: LazyLock<Regex> =
+    LazyLock::new(|| Regex::new(r"^[a-zA-Z]{1,8}(-[a-zA-Z0-9]{1,8})*$").expect("Invalid regex"));
+// Nmtoken	 ::= (NameChar)+
+static NMTOKEN_REGEX: LazyLock<Regex> = LazyLock::new(|| {
+    // we have to add the colon for NAME_START_CHAR / NAME_CHAR
+    Regex::new(&format!(
+        "^[:{}{}]+$",
+        NCNAME_START_CHAR, NCNAME_CHAR_ADDITIONS
+    ))
+    .expect("Invalid regex")
+});
+// Name	   ::=   	NameStartChar (NameChar)*
+static NAME_REGEX: LazyLock<Regex> = LazyLock::new(|| {
+    // we have to add the colon for NAME_START_CHAR / NAME_CHAR
+    Regex::new(&format!(
+        "^[:{}][:{}{}]*$",
+        NCNAME_START_CHAR, NCNAME_START_CHAR, NCNAME_CHAR_ADDITIONS
+    ))
+    .expect("Invalid regex")
+});
+// https://www.w3.org/TR/xml-names11/#NT-NCName
+// 	NCName	   ::=   	NCNameStartChar NCNameChar*
+// 	NCNameChar	   ::=   	NameChar - ':'
+//	NCNameStartChar	   ::=   	NameStartChar - ':'
+static NC_NAME_REGEX: LazyLock<Regex> = LazyLock::new(|| {
+    Regex::new(&format!(
+        "^[{}][{}{}]*$",
+        NCNAME_START_CHAR, NCNAME_START_CHAR, NCNAME_CHAR_ADDITIONS
+    ))
+    .expect("Invalid regex")
+});
 
 impl atomic::Atomic {
     pub(crate) fn cast_to_string(self) -> atomic::Atomic {
@@ -52,16 +79,11 @@ impl atomic::Atomic {
         atomic::Atomic::String(atomic::StringType::Token, s.into())
     }
 
-    fn cast_to_regex<F>(
+    fn cast_to_regex(
         self,
         string_type: atomic::StringType,
-        regex_once_lock: &OnceLock<Regex>,
-        f: F,
-    ) -> error::Result<atomic::Atomic>
-    where
-        F: FnOnce() -> Regex,
-    {
-        let regex = regex_once_lock.get_or_init(f);
+        regex: &LazyLock<Regex>,
+    ) -> error::Result<atomic::Atomic> {
         let s = whitespace_collapse(&self.into_canonical());
         if regex.is_match(&s) {
             Ok(atomic::Atomic::String(string_type, s.into()))
@@ -71,50 +93,22 @@ impl atomic::Atomic {
     }
 
     pub(crate) fn cast_to_language(self) -> error::Result<atomic::Atomic> {
-        self.cast_to_regex(atomic::StringType::Language, &LANGUAGE_REGEX, || {
-            Regex::new(r"^[a-zA-Z]{1,8}(-[a-zA-Z0-9]{1,8})*$").expect("Invalid regex")
-        })
+        self.cast_to_regex(atomic::StringType::Language, &LANGUAGE_REGEX)
     }
 
     pub(crate) fn cast_to_nmtoken(self) -> error::Result<atomic::Atomic> {
-        // Nmtoken	 ::= (NameChar)+
-        self.cast_to_regex(atomic::StringType::NMTOKEN, &NMTOKEN_REGEX, || {
-            // we have to add the colon for NAME_START_CHAR / NAME_CHAR
-            Regex::new(&format!(
-                "^[:{}{}]+$",
-                NCNAME_START_CHAR, NCNAME_CHAR_ADDITIONS
-            ))
-            .expect("Invalid regex")
-        })
+        self.cast_to_regex(atomic::StringType::NMTOKEN, &NMTOKEN_REGEX)
     }
 
     pub(crate) fn cast_to_name(self) -> error::Result<atomic::Atomic> {
-        // 	Name	   ::=   	NameStartChar (NameChar)*
-        self.cast_to_regex(atomic::StringType::Name, &NAME_REGEX, || {
-            // we have to add the colon for NAME_START_CHAR / NAME_CHAR
-            Regex::new(&format!(
-                "^[:{}][:{}{}]*$",
-                NCNAME_START_CHAR, NCNAME_START_CHAR, NCNAME_CHAR_ADDITIONS
-            ))
-            .expect("Invalid regex")
-        })
+        self.cast_to_regex(atomic::StringType::Name, &NAME_REGEX)
     }
 
     fn cast_to_ncname_helper(
         self,
         string_type: atomic::StringType,
     ) -> error::Result<atomic::Atomic> {
-        // https://www.w3.org/TR/xml-names11/#NT-NCName
-        // 	NCName	   ::=   	NCNameStartChar NCNameChar*
-        // 	NCNameChar	   ::=   	NameChar - ':'
-        //	NCNameStartChar	   ::=   	NameStartChar - ':'
-        self.cast_to_regex(string_type, &NC_NAME_REGEX, || {
-            Regex::new(&format!(
-                "^[{}][{}{}]*$",
-                NCNAME_START_CHAR, NCNAME_START_CHAR, NCNAME_CHAR_ADDITIONS
-            ))
-            .expect("Invalid regex")
-        })
+        self.cast_to_regex(string_type, &NC_NAME_REGEX)
     }
 
     pub(crate) fn cast_to_ncname(self) -> error::Result<atomic::Atomic> {
