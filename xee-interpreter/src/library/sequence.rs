@@ -452,7 +452,7 @@ fn sum_atoms(
     let mut atoms = atoms.map(|atom| {
         let atom = atom?;
         if atom.is_untyped() {
-            atom.cast_to_double().map_err(|_| error::Error::FORG0006)
+            atom.cast_to_double()
         } else {
             Ok(atom)
         }
