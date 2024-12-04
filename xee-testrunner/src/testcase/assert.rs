@@ -2,7 +2,6 @@ use ahash::AHashMap;
 use chrono::Offset;
 use std::fmt;
 use xee_xpath::context::{Collation, DynamicContext};
-use xee_xpath::iter::Occurrence;
 use xot::xmlname::{NameStrInfo, OwnedName as Name};
 use xot::Xot;
 
@@ -226,15 +225,14 @@ impl Assertable for AssertEq {
 
         match expected_sequence {
             Ok(expected_sequence) => {
-                let atom = sequence.atomized(documents.xot()).one();
+                let atom = xee_xpath::iter::one(sequence.atomized(documents.xot()));
                 let atom = match atom {
                     Ok(atom) => atom,
                     Err(error) => return TestOutcome::RuntimeError(error),
                 };
-                let expected_atom = expected_sequence
-                    .atomized(documents.xot())
-                    .one()
-                    .expect("Should get single atom in sequence");
+                let expected_atom =
+                    xee_xpath::iter::one(expected_sequence.atomized(documents.xot()))
+                        .expect("Should get single atom in sequence");
                 if expected_atom.simple_equal(&atom) {
                     TestOutcome::Passed
                 } else {

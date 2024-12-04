@@ -17,7 +17,6 @@ mod item;
 mod iter;
 mod matching;
 mod normalization;
-mod occurrence;
 mod opc;
 mod serialization;
 mod traits;

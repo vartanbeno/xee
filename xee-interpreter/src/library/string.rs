@@ -17,7 +17,7 @@ use crate::context::DynamicContext;
 use crate::function::{self, StaticFunctionDescription};
 use crate::interpreter::Interpreter;
 use crate::string::Collation;
-use crate::{atomic, error, interpreter, occurrence::Occurrence, sequence, wrap_xpath_fn};
+use crate::{atomic, error, interpreter, occurrence, sequence, wrap_xpath_fn};
 
 // we don't accept concat() invocations with an arity greater than this
 const MAX_CONCAT_ARITY: usize = 99;
@@ -137,7 +137,7 @@ fn concat(
     let strings = arguments
         .iter()
         .map(|argument| {
-            let atomic = argument.atomized(interpreter.xot()).option()?;
+            let atomic = occurrence::option(argument.atomized(interpreter.xot()))?;
             if let Some(atomic) = atomic {
                 Ok(atomic.string_value())
             } else {
