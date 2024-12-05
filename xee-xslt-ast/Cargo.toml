@@ -2,12 +2,9 @@
 name = "xee-xslt-ast"
 version = "0.1.0"
 edition = "2021"
-authors = [
-    "Martijn Faassen <faassen@startifact.com>",
-    "Nalle Rooth <nalle.rooth@paligo.net>",
-]
+authors = ["The Xee Project Developers"]
 keywords = ["xml", "xslt"]
-license = "Apache-2.0"
+license = "MIT OR Apache-2.0"
 description = "XSLT parser and AST implementation"
 repository = "http://github.com/Paligo/xee"
 readme = "README.md"
@@ -15,7 +12,12 @@ documentation = "https://docs.rs/xee-xslt"
 homepage = "https://github.com/Paligo/xee-xslt"
 
 [features]
-serde = ["dep:serde", "xee-xpath-ast/serde", "xee-xpath-compiler/serde", "xot/serde"]
+serde = [
+    "dep:serde",
+    "xee-xpath-ast/serde",
+    "xee-xpath-compiler/serde",
+    "xot/serde",
+]
 
 [dependencies]
 ahash = { workspace = true }

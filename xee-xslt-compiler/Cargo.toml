@@ -2,9 +2,9 @@
 name = "xee-xslt-compiler"
 version = "0.1.0"
 edition = "2021"
-authors = ["Martijn Faassen <faassen@startifact.com>"]
+authors = ["The Xee Project Developers"]
 keywords = ["xml", "xslt"]
-license = "Apache-2.0"
+license = "MIT OR Apache-2.0"
 description = "XSLT 3.0 compiler to Xee IR"
 repository = "http://github.com/Paligo/xee"
 readme = "README.md"

@@ -1,29 +1,51 @@
 # Xee
 
-XML Execution Engine.
+XML Execution Engine written in Rust.
+
+It's been made possible by the generous support of
+[Paligo](https://paligo.net/).
 
 ## What is Xee?
 
-Xee implements the following:
+The Xee project contains the following:
 
-- A reasonably complete XPath 3.1 implementation.
+- An almost complete [XPath 3.1](https://www.w3.org/TR/xpath-31/)
+  implementation. Use it via the `xee-xpath` crate.
 
-- A very incomplete XSLT 3.0 implementation.
+- A command line tool, `xee`, which can be used to load XML documents, issue
+  XPath expressions against them, including in a REPL, and pretty-print XML
+  documents. It's intended to become a Swiss Army knife CLI for XML.
 
-Xee implements these as a bytecode interpreter, in Rust. The XPath functions
-are implemented in Rust using a Rust binding system.
+- An incomplete [XSLT 3.0](https://www.w3.org/TR/xslt-30/) implementation. At
+  the time of writing a lot of XSLT is yet to be implemented, but there is a
+  strong foundation. Please contribute!
 
-This project undergoes extensive automated testing using using specific
-developer tests written with `cargo test` as well as using the `xee-testrunner`
-infrastructure for running conformance tests.
+## How is Xee implemented?
+
+Both XPath and XSLT are supported by the same bytecode interpreter. Compilation
+machinery exists to transform XPath and XSLT into bytecode, which the
+interpreter can then execute.
+
+The XPath functions in [the XPath standard function library](https://www.w3.org/TR/xpath-functions-31/) are implemented in Rust, using a Rust binding system.
 
 An affiliated project is `regexml`, which contains an XML Schema and XPath
-compatible version of regular expressions for Rust.
+compatible version of regular expressions for Rust. 
+
+`xee-php` is the start of PHP bindings for Xee.
+
+## Testing
+
+This project undergoes extensive automated testing using using specific
+developer tests executed using `cargo test` as well as using the
+`xee-testrunner` infrastructure for running conformance tests.
 
 ## What's missing?
 
-Here is a brief description of the state of conformance in this project.
-Contributions are encouraged!
+The XML world is very heavily specified, so this project implements detailed
+and very extensive specifications.
+
+Here is a brief description of the state of specification conformance in this
+project. Contributions are encouraged!
 
 ### XPath
 
@@ -32,8 +54,9 @@ Contributions are encouraged!
   not yet implemented. Contributions are welcome!
 
 - Of the 21859 tests in the QT3 test suite (vendored into `vendor/xpath-tests`)
-  that match the features we support (so excluding Query tests), we have 19060
-  passing tests. The failures are mostly due to missing library implementation.
+  that match the features we support (so excluding XQuery tests), we support
+  over have 19800 at the time of writing. The failures are mostly due to
+  missing library implementation.
 
 - XMLSchema support. While the basic `xs:*` data types as defined by XML Schema
   are implemented, deep XML Schema integration does not exist.
@@ -41,31 +64,34 @@ Contributions are encouraged!
 - The Rust binding system for XPath can only be used to implement standard
   library functions - support for extension functions needs to be created.
 
-- No significant optimization work has been done. We do believe Xee provides a
-  solid basis for optimization work.
+- We do believe Xee provides a solid basis for optimization work but we've only
+  scratched the surface of what's possible.
 
 ### XSLT
 
-- XSLT support is early days. The basic infrastructure of compiling XSLT
-  to bytecode has been implemented, including a full XSLT AST, but much XSLT
-  functionality yet remains to be implemented.
+- The basic infrastructure of compiling XSLT to bytecode has been implemented,
+  including a full XSLT AST, basic control flow, and template selection, but
+  much XSLT functionality yet remains to be implemented.
 
 ## Architecture
 
-XPath gets lexed into tokens using a lexer. This is then turned into an XPath
-AST (abstract syntax tree). This AST is then compiled down into a specialized
-IR (intermediate representation) which normalizes all variables and simplifies
-the code a lot. This IR is then compiled down into a bytecode, executed using a
-specialized interpreter.
+XPath gets lexed into tokens using a lexer (logos) in `xee-xpath-lexer`. This
+is then parsed into an XPath AST (abstract syntax tree) by `xee-xpath-ast`.
+This AST is then compiled down into a specialized IR (intermediate
+representation) by `xee-xpath-compiler`. This IR is then compiled down into a
+bytecode by `xee-ir`. This bytecode is executed using the interpreter
+implemented in `xee-interpreter`.
 
-XPath library functions are implemented with a special Rust binding system based
-around Rust macros, which allows you to create Rust functions and register them
-into XPath.
+An XPath API is exposed for use by others in `xee-xpath`.
 
-XSLT support is very similar: XSLT XML is parsed, then turned into an XSLT AST.
-Any embedded XPath expressions are also transformed into the XPath AST. XSLT is
-then compiled into the IR, and the IR is compiled into bytecode using the same
-infrastructure as for XPath.
+XPath library functions are implemented with a special Rust binding system
+based around Rust macros (defined in `xee-xpath-macros`), which allows you to
+create Rust functions and register them into XPath.
+
+XSLT support is very similar: XSLT XML is parsed, then turned into an XSLT AST
+by `xee-xslt-ast`. Any embedded XPath expressions are also transformed into the
+XPath AST. The XSLT AST is then compiled into the IR by `xee-xslt-compiler`.
+The IR and interpreter are shared with XPath.
 
 ## Project structure
 
@@ -73,37 +99,39 @@ infrastructure as for XPath.
 
 The Xee project is composed of many crates. Here is a quick overview:
 
-- `xee` - the start of a CLI tool for using Xee.
+- `xee` - Swiss Army knife for XML manipulation.
 
-- `xee-interpreter` - the core virtual machine interpreter that can execute XPath and
-  XSLT. Also contains the functions and operators implementation.
-
-- `xee-ir` - an intermediate language (in functional single assignment form)
-  with logic to compile it down to Xee bytecode used by `xee-interpreter`.
-
-- `xee-name` - support code for XML namespaces
-
-- `xee-schema-type` - support code defininig properties of core XML schema
-  basic datatypes (`xs:*`).
+- `xee-xpath` - Combines the underlying components to provide a high level API
+  to support XPath queries in Rust.
 
 - `xee-testrunner` - a testrunner that can run the QT3 conformance suite of
-  XPath tests. It has also been generalized towards supporting running XSLT
-  conformance tests, but that implementation is not complete yet.
+  XPath tests (in `vendor/xpath-tests`). It has also been generalized towards
+  supporting running XSLT conformance tests, but that implementation is not
+  complete yet.
+
+- `xee-xpath-lexer` - A lexer for XPath expressions.
+
+- `xee-xpath-ast` - Defines an XPath AST. Turns `xee-xpath-lexer` output into
+  an XPath AST.
+
+- `xee-xslt-ast` - Parse XSLT documents into an AST. Uses `xee-xpath-ast` for
+  the underlying XPath expressions.
 
 - `xee-xpath-compiler` - Compiles XPath AST provided by `xee-xpath-ast` to
   IR supported by `xee-ir`, which it then uses to create bytecode for
   `xee-interpreter`.
 
-- `xee-xpath` - Combines the underlying components to provide a high level API
-  to support XPath queries in Rust.
+- `xee-xslt-compiler` - A compiler of the XSLT AST (defined by
+  `xee-xslt-ast`) into `xee-ir` IR, so that XSLT code can be run by the
+  `xee-interpreter` engine.
 
-- `xee-xpath-ast` - Defines an XPath AST. Turns `xee-xpath-lexer` output into
-  an XPath AST.
+- `xee-ir` - an intermediate language (in functional single assignment form)
+  with logic to compile it down to Xee bytecode used by `xee-interpreter`.
 
-- `xee-xpath-lexer` - A lexer for XPath expressions.
+- `xee-interpreter` - the core virtual machine interpreter that can execute
+  XPath and XSLT. Also contains the XPath functions and operators implementation.
 
-- `xee-xpath-load` - Infastructure to help defining loaders for XML data used
-  by `xee-testrunner`.
+- `xee-name` - support code for XML namespaces
 
 - `xee-xpath-macros` - Macros used by `xee-interpreter` to help implement the
   XPath library functions. Provides a way to create Rust bindings for XPath,
@@ -113,12 +141,20 @@ The Xee project is composed of many crates. Here is a quick overview:
   AST. These are used separately by `xee-xpath-macros` for its Rust bindings
   infrastructure.
 
-- `xee-xslt-compiler` - The start of compiler of the XSLT AST (defined by
-  `xee-xslt-ast`) into `xee-ir` IR, so that XSLT code can be run by the
-  `xee-interpreter` engine.
+- `xee-schema-type` - support code defininig properties of core XML schema
+  basic datatypes (`xs:*`).
 
-- `xee-xslt-ast` - Parse XSLT documents into an AST. Uses `xee-xpath-ast` for
-  the underlying XPath expressions.
+- `xee-xpath-load` - Infastructure to help defining loaders for XML data used
+  by `xee-testrunner`.
+
+Some affiliated projects exist as well maintained outside of this project:
+
+- `xot` - XML tree library implementation. Contains logic for traversal,
+  manipulation, parsing and serialization.
+
+- `regexml` - XML Schema and XPath compatible regex engine.
+
+- `xee-php` - PHP bindings for Xee.
 
 ### Other directories
 

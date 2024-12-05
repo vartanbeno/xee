@@ -2,10 +2,10 @@
 name = "xee-xpath-macros"
 version = "0.1.0"
 description = "Proc macros for xee-interpreter function library"
-authors = ["Martijn Faassen <faassen@startifact.com>"]
+authors = ["The Xee Project Developers"]
 edition = "2021"
 keywords = ["xml", "xpath"]
-license = "Apache-2.0"
+license = "MIT OR Apache-2.0"
 repository = "http://github.com/Paligo/xee"
 readme = "README.md"
 documentation = "https://docs.rs/xee-xpath-macros"
