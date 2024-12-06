@@ -317,6 +317,7 @@ pub enum ApplyTemplatesModeValue {
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize))]
+#[allow(clippy::large_enum_variant)]
 pub enum ApplyTemplatesContent {
     Sort(Sort),
     WithParam(WithParam),

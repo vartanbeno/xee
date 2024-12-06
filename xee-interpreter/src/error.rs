@@ -620,11 +620,12 @@ pub enum Error {
     /// parameter is specified.
     SEPM0009,
 
-    /// undeclare prefixesa not allowed in XML version 1.0
+    /// undeclare-prefixes is not allowed in XML version 1.0
     ///
     /// It is an error if the output method is xml or xhtml, the value of the
     /// undeclare-prefixes parameter is one of, yes, true or 1, and the value
     /// of the version parameter is 1.0.
+    SEPM0010,
 
     /// Unsupported normalization form
     ///

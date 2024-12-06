@@ -21,7 +21,7 @@ impl<'a> InterpreterPredicateMatcher<'a> {
     }
 }
 
-impl<'a> PredicateMatcher for Interpreter<'a> {
+impl PredicateMatcher for Interpreter<'_> {
     fn match_predicate(
         &mut self,
         inline_function_id: function::InlineFunctionId,

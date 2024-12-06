@@ -12,7 +12,7 @@ use super::AtomizedItemIter;
 #[derive(Debug, Clone, PartialEq)]
 pub struct Empty {}
 
-impl<'a> SequenceCore<'a, std::iter::Empty<Item>> for Empty {
+impl SequenceCore<'_, std::iter::Empty<Item>> for Empty {
     #[inline]
     fn is_empty(&self) -> bool {
         true

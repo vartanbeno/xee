@@ -9,7 +9,7 @@ pub(crate) enum SymbolType {
     Error,
 }
 
-impl<'a> Token<'a> {
+impl Token<'_> {
     pub(crate) fn symbol_type(&self) -> SymbolType {
         use crate::lexer::Token::*;
         match self {

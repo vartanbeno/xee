@@ -292,9 +292,7 @@ impl InstructionParser for ast::ApplyTemplates {
         Ok(ast::ApplyTemplates {
             select: attributes.optional(names.select, attributes.xpath())?,
             mode,
-
             span: content.span()?,
-
             content: parse(content)?,
         })
     }

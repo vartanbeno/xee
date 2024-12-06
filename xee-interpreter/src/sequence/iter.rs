@@ -108,7 +108,7 @@ impl<'a> AtomizedItemIter<'a> {
     }
 }
 
-impl<'a> Iterator for AtomizedItemIter<'a> {
+impl Iterator for AtomizedItemIter<'_> {
     type Item = error::Result<atomic::Atomic>;
 
     fn next(&mut self) -> Option<Self::Item> {
@@ -171,7 +171,7 @@ impl<'a> AtomizedArrayIter<'a> {
     }
 }
 
-impl<'a> Iterator for AtomizedArrayIter<'a> {
+impl Iterator for AtomizedArrayIter<'_> {
     type Item = error::Result<atomic::Atomic>;
 
     fn next(&mut self) -> Option<Self::Item> {
