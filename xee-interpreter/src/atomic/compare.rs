@@ -12,8 +12,7 @@ pub(crate) trait AtomicCompare {
     where
         F: Fn(&str, &str) -> Ordering;
 
-    // an inversion of the comparison is the same as the opposite comparison:
-    // it's really when the arguments are inverted
+    // comparison when the arguments are inverted
     // so, a = b is the same as b = a
     // and a < b is the same as b > a
     // and a <= b is the same as b >= a
