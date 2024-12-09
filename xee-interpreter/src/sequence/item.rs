@@ -288,7 +288,7 @@ impl From<function::Map> for Item {
 
 pub enum AtomizedItemIter<'a> {
     Atomic(std::iter::Once<atomic::Atomic>),
-    Node(AtomizedNodeIter),
+    Node(std::iter::Once<atomic::Atomic>),
     Array(AtomizedArrayIter<'a>),
     // TODO: properly handle functions; for now they error
     Erroring(std::iter::Once<error::Result<atomic::Atomic>>),
@@ -298,7 +298,11 @@ impl<'a> AtomizedItemIter<'a> {
     pub(crate) fn new(item: &'a Item, xot: &'a Xot) -> Self {
         match item {
             Item::Atomic(a) => Self::Atomic(std::iter::once(a.clone())),
-            Item::Node(n) => Self::Node(AtomizedNodeIter::new(*n, xot)),
+            Item::Node(n) => {
+                let s = xot.string_value(*n);
+                let value = atomic::Atomic::Untyped(s.into());
+                Self::Node(std::iter::once(value))
+            }
             Item::Function(function) => match function {
                 function::Function::Array(a) => Self::Array(AtomizedArrayIter::new(a, xot)),
                 _ => Self::Erroring(std::iter::once(Err(error::Error::FOTY0013))),
@@ -329,45 +333,47 @@ impl Iterator for AtomizedItemIter<'_> {
     }
 }
 
-#[derive(Debug, Clone)]
-pub struct AtomizedNodeIter {
-    typed_value: Vec<atomic::Atomic>,
-    typed_value_index: usize,
-}
+// This complex atomized node iter is overkill, until such time when
+// a node can deliver more than atomic value.
+// #[derive(Debug, Clone)]
+// pub struct AtomizedNodeIter {
+//     typed_value: Vec<atomic::Atomic>,
+//     typed_value_index: usize,
+// }
 
-impl AtomizedNodeIter {
-    fn new(node: xot::Node, xot: &Xot) -> Self {
-        Self {
-            typed_value: typed_value(xot, node),
-            typed_value_index: 0,
-        }
-    }
-}
+// impl AtomizedNodeIter {
+//     fn new(node: xot::Node, xot: &Xot) -> Self {
+//         Self {
+//             typed_value: typed_value(xot, node),
+//             typed_value_index: 0,
+//         }
+//     }
+// }
 
-fn typed_value(xot: &Xot, node: xot::Node) -> Vec<atomic::Atomic> {
-    // for now we don't know any types of nodes yet; everything is untyped
-    let s = xot.string_value(node);
-    vec![atomic::Atomic::Untyped(s.into())]
-}
+// fn typed_value(xot: &Xot, node: xot::Node) -> Vec<atomic::Atomic> {
+//     // for now we don't know any types of nodes yet; everything is untyped
+//     let s = xot.string_value(node);
+//     vec![atomic::Atomic::Untyped(s.into())]
+// }
 
-impl Iterator for AtomizedNodeIter {
-    type Item = atomic::Atomic;
+// impl Iterator for AtomizedNodeIter {
+//     type Item = atomic::Atomic;
 
-    fn next(&mut self) -> Option<Self::Item> {
-        if self.typed_value_index < self.typed_value.len() {
-            let item = self.typed_value[self.typed_value_index].clone();
-            self.typed_value_index += 1;
-            Some(item)
-        } else {
-            None
-        }
-    }
+//     fn next(&mut self) -> Option<Self::Item> {
+//         if self.typed_value_index < self.typed_value.len() {
+//             let item = self.typed_value[self.typed_value_index].clone();
+//             self.typed_value_index += 1;
+//             Some(item)
+//         } else {
+//             None
+//         }
+//     }
 
-    fn size_hint(&self) -> (usize, Option<usize>) {
-        let remaining = self.typed_value.len() - self.typed_value_index;
-        (remaining, Some(remaining))
-    }
-}
+//     fn size_hint(&self) -> (usize, Option<usize>) {
+//         let remaining = self.typed_value.len() - self.typed_value_index;
+//         (remaining, Some(remaining))
+//     }
+// }
 
 pub struct AtomizedArrayIter<'a> {
     xot: &'a Xot,
