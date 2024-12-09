@@ -252,7 +252,7 @@ impl<'a> SequenceCore<'a, RangeIterator> for Range {
         match self.len() {
             0 => Err(error::Error::XPTY0004),
             1 => {
-                let i: IBig = self.start.as_ref().clone().into();
+                let i: IBig = self.start.as_ref().clone();
                 Ok(i.into())
             }
             _ => Err(error::Error::XPTY0004),
@@ -264,7 +264,7 @@ impl<'a> SequenceCore<'a, RangeIterator> for Range {
         match self.len() {
             0 => Ok(None),
             1 => {
-                let i: IBig = self.start.as_ref().clone().into();
+                let i: IBig = self.start.as_ref().clone();
                 Ok(Some(i.into()))
             }
             _ => Err(error::Error::XPTY0004),
