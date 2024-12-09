@@ -318,6 +318,15 @@ impl Iterator for AtomizedItemIter<'_> {
             Self::Erroring(iter) => iter.next(),
         }
     }
+
+    fn size_hint(&self) -> (usize, Option<usize>) {
+        match self {
+            Self::Atomic(iter) => iter.size_hint(),
+            Self::Node(iter) => iter.size_hint(),
+            Self::Array(iter) => iter.size_hint(),
+            Self::Erroring(iter) => iter.size_hint(),
+        }
+    }
 }
 
 #[derive(Debug, Clone)]
@@ -352,6 +361,11 @@ impl Iterator for AtomizedNodeIter {
         } else {
             None
         }
+    }
+
+    fn size_hint(&self) -> (usize, Option<usize>) {
+        let remaining = self.typed_value.len() - self.typed_value_index;
+        (remaining, Some(remaining))
     }
 }
 
@@ -397,5 +411,14 @@ impl Iterator for AtomizedArrayIter<'_> {
 
             self.iter = Some(Box::new(sequence.atomized(self.xot)));
         }
+    }
+
+    fn size_hint(&self) -> (usize, Option<usize>) {
+        // a very low lower bound, but it's the best we can do
+        // we could potentially improve this by adding all the lens of the sequences
+        // and then subtracing the lens of the sequences we have seen so far, but
+        // this is a more involved calculation that touches a lot of places in memory
+        let remaining = self.array.0.len() - self.array_index;
+        (remaining, None)
     }
 }

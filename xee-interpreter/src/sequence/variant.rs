@@ -9,6 +9,9 @@ use super::item::Item;
 use super::traits::{SequenceCompare, SequenceCore, SequenceExt, SequenceOrder};
 use super::AtomizedItemIter;
 
+// this size should be below a usize
+const MAXIMUM_RANGE_SIZE: i64 = 2_i64.pow(25);
+
 #[derive(Debug, Clone, PartialEq)]
 pub struct Empty {}
 
@@ -197,11 +200,16 @@ pub struct Range {
 }
 
 impl Range {
-    pub(crate) fn new(start: IBig, end: IBig) -> Self {
-        Range {
+    pub(crate) fn new(start: IBig, end: IBig) -> error::Result<Self> {
+        let length: IBig = &end - &start;
+        if length > MAXIMUM_RANGE_SIZE.into() {
+            return Err(error::Error::FOAR0002);
+        }
+
+        Ok(Range {
             start: start.into(),
             end: end.into(),
-        }
+        })
     }
 
     pub(crate) fn start(&self) -> &IBig {
@@ -318,6 +326,14 @@ impl Iterator for RangeIterator {
         } else {
             None
         }
+    }
+
+    fn size_hint(&self) -> (usize, Option<usize>) {
+        let len = &self.end - &self.start;
+        // we know that we don't have a range that's > usize as we cannot construct
+        // any
+        let len: usize = len.try_into().expect("range size is within usize");
+        (len, Some(len))
     }
 }
 

@@ -31,6 +31,10 @@ where
         let next = self.iter.next();
         next.map(|v| v.to_node())
     }
+
+    fn size_hint(&self) -> (usize, Option<usize>) {
+        self.iter.size_hint()
+    }
 }
 
 /// An iterator atomizing a sequence.
@@ -84,6 +88,14 @@ where
             }
         }
     }
+
+    fn size_hint(&self) -> (usize, Option<usize>) {
+        // using iter as the lower bound is safe, as we will
+        // go through each item at least once. it's harder to determine an upper
+        // bound however
+        let (lower, _) = self.iter.size_hint();
+        (lower, None)
+    }
 }
 
 /// Atomizing an individual item in a sequence.
@@ -119,6 +131,15 @@ impl Iterator for AtomizedItemIter<'_> {
             Self::Erroring(iter) => iter.next(),
         }
     }
+
+    fn size_hint(&self) -> (usize, Option<usize>) {
+        match self {
+            Self::Atomic(iter) => iter.size_hint(),
+            Self::Node(iter) => iter.size_hint(),
+            Self::Array(iter) => iter.size_hint(),
+            Self::Erroring(iter) => iter.size_hint(),
+        }
+    }
 }
 
 /// Atomizing a node
@@ -149,6 +170,11 @@ impl Iterator for AtomizedNodeIter {
         } else {
             None
         }
+    }
+
+    fn size_hint(&self) -> (usize, Option<usize>) {
+        let remaining = self.typed_value.len() - self.typed_value_index;
+        (remaining, Some(remaining))
     }
 }
 
@@ -199,6 +225,13 @@ impl Iterator for AtomizedArrayIter<'_> {
             let v = sequence.atomized(self.xot).collect::<Vec<_>>();
             self.iter = Some(v.into_iter());
         }
+    }
+
+    fn size_hint(&self) -> (usize, Option<usize>) {
+        // we will have at least as many entries as in the array, but
+        // we don't really know the upper bound
+        let remaining = self.array.0.len() - self.array_index;
+        (remaining, None)
     }
 }
 

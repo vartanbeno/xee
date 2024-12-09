@@ -23,8 +23,8 @@ impl Sequence {
     }
 
     /// Concatenate two sequences producing a new sequence.
-    pub fn concat(self, other: Self) -> Self {
-        match (self, other) {
+    pub fn concat(self, other: Self) -> error::Result<Self> {
+        Ok(match (self, other) {
             (Self::Empty(_), Self::Empty(_)) => Self::Empty(Empty {}),
             (Self::Empty(_), Self::One(item)) => Self::One(item),
             (Self::One(item), Self::Empty(_)) => Self::One(item),
@@ -62,9 +62,9 @@ impl Sequence {
             (Self::Range(a), Self::Range(b)) => {
                 // if the ranges are consecutive we can merge them
                 if a.end() == b.start() {
-                    Self::Range(Range::new(a.start().clone(), b.end().clone()))
+                    Self::Range(Range::new(a.start().clone(), b.end().clone())?)
                 } else if b.end() == a.start() {
-                    Self::Range(Range::new(b.start().clone(), a.end().clone()))
+                    Self::Range(Range::new(b.start().clone(), a.end().clone())?)
                 } else {
                     // otherwise unfortunately we have to construct the sequence
                     let mut v = Vec::with_capacity(a.len() + b.len());
@@ -88,7 +88,7 @@ impl Sequence {
                 }
                 Self::new(v)
             }
-        }
+        })
     }
 
     // https://www.w3.org/TR/xpath-31/#id-path-operator

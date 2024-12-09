@@ -25,9 +25,6 @@ use super::instruction::{read_i16, read_instruction, read_u16, read_u8, EncodedI
 use super::runnable::Runnable;
 use super::state::State;
 
-// this size should be below a usize
-const MAXIMUM_RANGE_SIZE: i64 = 2_i64.pow(25);
-
 pub struct Interpreter<'a> {
     runnable: &'a Runnable<'a>,
     pub(crate) state: State<'a>,
@@ -181,7 +178,7 @@ impl<'a> Interpreter<'a> {
                 EncodedInstruction::Comma => {
                     let b = self.state.pop()?;
                     let a = self.state.pop()?;
-                    let sequence = a.concat(b);
+                    let sequence = a.concat(b)?;
                     self.state.push(sequence);
                 }
                 EncodedInstruction::CurlyArray => {
@@ -452,12 +449,8 @@ impl<'a> Interpreter<'a> {
                         Ordering::Greater => self.state.push(sequence::Sequence::default()),
                         Ordering::Equal => self.state.push(a),
                         Ordering::Less => {
-                            let length: IBig = b.clone() - &a + 1;
-                            if length > MAXIMUM_RANGE_SIZE.into() {
-                                return Err(error::Error::FOAR0002);
-                            }
                             let sequence: sequence::Sequence =
-                                sequence::Range::new(a, b + 1).into();
+                                sequence::Range::new(a, b + 1)?.into();
                             self.state.push(sequence)
                         }
                     }

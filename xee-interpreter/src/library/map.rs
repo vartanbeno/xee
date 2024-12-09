@@ -122,7 +122,7 @@ fn merge(
         MergeDuplicates::UseFirst => function::Map::combine(maps, |a, _| Ok(a)),
         MergeDuplicates::UseLast => function::Map::combine(maps, |_, b| Ok(b)),
         MergeDuplicates::UseAny => function::Map::combine(maps, |a, _| Ok(a)),
-        MergeDuplicates::Combine => function::Map::combine(maps, |a, b| Ok(a.concat(b))),
+        MergeDuplicates::Combine => function::Map::combine(maps, |a, b| a.concat(b)),
     }
 }
 
