@@ -49,4 +49,8 @@ impl AtomicCompare for OpLe {
             _ => Err(error::Error::XPTY0004),
         }
     }
+
+    fn arguments_inverted() -> impl AtomicCompare {
+        super::OpGe
+    }
 }

@@ -19,4 +19,8 @@ impl AtomicCompare for OpNe {
     {
         OpEq::atomic_compare(a, b, string_compare, default_offset).map(|eq| !eq)
     }
+
+    fn arguments_inverted() -> impl AtomicCompare {
+        super::OpNe
+    }
 }

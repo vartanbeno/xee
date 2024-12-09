@@ -148,7 +148,16 @@ where
     {
         let a_atomized = self.atomized(xot);
         let b_atomized = other.atomized(xot);
-        comparison::general_comparison(a_atomized, b_atomized, context, op)
+        // if a is actually larger than b, then we want to pass a as the second argument
+        let (a_lower_bound, _) = a_atomized.size_hint();
+        let (b_lower_bound, _) = b_atomized.size_hint();
+        // if the lower bound of a is smaller than that of b, we invert the comparison
+        // so that a (a smaller sequence) is actually collected and then compared with.
+        if a_lower_bound < b_lower_bound {
+            comparison::general_comparison(b_atomized, a_atomized, context, O::arguments_inverted())
+        } else {
+            comparison::general_comparison(a_atomized, b_atomized, context, op)
+        }
     }
 
     fn value_compare<O, J>(
