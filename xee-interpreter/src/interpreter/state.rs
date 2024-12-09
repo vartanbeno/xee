@@ -1,3 +1,8 @@
+use std::cell::RefCell;
+use std::rc::Rc;
+
+use ahash::HashMap;
+use ahash::HashMapExt;
 use arrayvec::ArrayVec;
 use xot::Xot;
 
@@ -24,11 +29,18 @@ impl Frame {
     }
 }
 
+#[derive(Debug, Clone, PartialEq, Eq, Hash)]
+struct RegexKey {
+    pattern: String,
+    flags: String,
+}
+
 #[derive(Debug)]
 pub struct State<'a> {
     stack: Vec<stack::Value>,
     build_stack: Vec<BuildStackEntry>,
     frames: ArrayVec<Frame, FRAMES_MAX>,
+    regex_cache: RefCell<HashMap<RegexKey, Rc<regexml::Regex>>>,
     pub(crate) xot: &'a mut Xot,
 }
 
@@ -75,6 +87,7 @@ impl<'a> State<'a> {
             stack: vec![],
             build_stack: vec![],
             frames: ArrayVec::new(),
+            regex_cache: RefCell::new(HashMap::new()),
             xot,
         }
     }
@@ -234,6 +247,25 @@ impl<'a> State<'a> {
 
     pub fn stack(&self) -> &[stack::Value] {
         &self.stack
+    }
+
+    pub fn regex(&self, pattern: &str, flags: &str) -> error::Result<Rc<regexml::Regex>> {
+        // TODO: would be nice if we could not do to_string here but use &str
+        // but unfortunately otherwise lifetime issues bubble up all the way to
+        // the library bindings if we do so
+        let key = RegexKey {
+            pattern: pattern.to_string(),
+            flags: flags.to_string(),
+        };
+        let mut cache = self.regex_cache.borrow_mut();
+        let entry = cache.entry(key);
+        match entry {
+            std::collections::hash_map::Entry::Occupied(entry) => Ok(entry.get().clone()),
+            std::collections::hash_map::Entry::Vacant(entry) => {
+                let v = entry.insert(Rc::new(regexml::Regex::xpath(pattern, flags)?));
+                Ok(v.clone())
+            }
+        }
     }
 
     pub fn xot(&self) -> &Xot {

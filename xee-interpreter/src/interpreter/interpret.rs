@@ -1,4 +1,5 @@
 use std::cmp::Ordering;
+use std::rc::Rc;
 
 use ibig::{ibig, IBig};
 
@@ -1070,6 +1071,10 @@ impl<'a> Interpreter<'a> {
     fn pop_effective_boolean(&mut self) -> error::Result<bool> {
         let a = self.state.pop()?;
         a.effective_boolean_value()
+    }
+
+    pub(crate) fn regex(&self, pattern: &str, flags: &str) -> error::Result<Rc<regexml::Regex>> {
+        self.state.regex(pattern, flags)
     }
 
     pub(crate) fn xot(&self) -> &Xot {

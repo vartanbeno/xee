@@ -6,7 +6,7 @@ use ahash::{HashMap, HashMapExt, HashSet, HashSetExt};
 use ibig::IBig;
 use icu::normalizer::{ComposingNormalizer, DecomposingNormalizer};
 
-use regexml::{AnalyzeEntry, MatchEntry, Regex};
+use regexml::{AnalyzeEntry, MatchEntry};
 use xee_name::{Name, FN_NAMESPACE};
 use xee_schema_type::Xs;
 use xee_xpath_macros::xpath_fn;
@@ -512,62 +512,97 @@ fn substring_after(
 #[xpath_fn(
     "fn:matches($input as xs:string?, $pattern as xs:string, $flags as xs:string) as xs:boolean"
 )]
-fn matches3(input: Option<&str>, pattern: &str, flags: &str) -> error::Result<bool> {
-    matches(input, pattern, flags)
+fn matches3(
+    interpreter: &mut Interpreter,
+    input: Option<&str>,
+    pattern: &str,
+    flags: &str,
+) -> error::Result<bool> {
+    matches(interpreter, input, pattern, flags)
 }
 
 #[xpath_fn("fn:matches($input as xs:string?, $pattern as xs:string) as xs:boolean")]
-fn matches2(input: Option<&str>, pattern: &str) -> error::Result<bool> {
-    matches(input, pattern, "")
+fn matches2(
+    interpreter: &mut Interpreter,
+    input: Option<&str>,
+    pattern: &str,
+) -> error::Result<bool> {
+    matches(interpreter, input, pattern, "")
 }
 
-fn matches(input: Option<&str>, pattern: &str, flags: &str) -> error::Result<bool> {
+fn matches(
+    interpreter: &mut Interpreter,
+    input: Option<&str>,
+    pattern: &str,
+    flags: &str,
+) -> error::Result<bool> {
+    let regex = interpreter.regex(pattern, flags)?;
     let input = input.unwrap_or("");
-    let regex = Regex::xpath(pattern, flags)?;
     Ok(regex.is_match(input))
 }
 
 #[xpath_fn("fn:replace($input as xs:string?, $pattern as xs:string, $replacement as xs:string, $flags as xs:string) as xs:string")]
 fn replace4(
+    interpreter: &mut Interpreter,
     input: Option<&str>,
     pattern: &str,
     replacement: &str,
     flags: &str,
 ) -> error::Result<String> {
-    replace(input, pattern, replacement, flags)
+    replace(interpreter, input, pattern, replacement, flags)
 }
 
 #[xpath_fn("fn:replace($input as xs:string?, $pattern as xs:string, $replacement as xs:string) as xs:string")]
-fn replace3(input: Option<&str>, pattern: &str, replacement: &str) -> error::Result<String> {
-    replace(input, pattern, replacement, "")
+fn replace3(
+    interpreter: &mut Interpreter,
+    input: Option<&str>,
+    pattern: &str,
+    replacement: &str,
+) -> error::Result<String> {
+    replace(interpreter, input, pattern, replacement, "")
 }
 
 fn replace(
+    interpreter: &mut Interpreter,
     input: Option<&str>,
     pattern: &str,
     replacement: &str,
     flags: &str,
 ) -> error::Result<String> {
+    let regex = interpreter.regex(pattern, flags)?;
     let input = input.unwrap_or("");
-    let regex = Regex::xpath(pattern, flags)?;
     Ok(regex.replace_all(input, replacement)?)
 }
 
 #[xpath_fn(
     "fn:tokenize($input as xs:string?, $pattern as xs:string, $flags as xs:string) as xs:string*"
 )]
-fn tokenize3(input: Option<&str>, pattern: &str, flags: &str) -> error::Result<Vec<String>> {
-    tokenize(input, pattern, flags)
+fn tokenize3(
+    interpreter: &mut Interpreter,
+    input: Option<&str>,
+    pattern: &str,
+    flags: &str,
+) -> error::Result<Vec<String>> {
+    tokenize(interpreter, input, pattern, flags)
 }
 
 #[xpath_fn("fn:tokenize($input as xs:string?, $pattern as xs:string) as xs:string*")]
-fn tokenize2(input: Option<&str>, pattern: &str) -> error::Result<Vec<String>> {
-    tokenize(input, pattern, "")
+fn tokenize2(
+    interpreter: &mut Interpreter,
+    input: Option<&str>,
+    pattern: &str,
+) -> error::Result<Vec<String>> {
+    tokenize(interpreter, input, pattern, "")
 }
 
-fn tokenize(input: Option<&str>, pattern: &str, flags: &str) -> error::Result<Vec<String>> {
+fn tokenize(
+    interpreter: &mut Interpreter,
+    input: Option<&str>,
+    pattern: &str,
+    flags: &str,
+) -> error::Result<Vec<String>> {
+    let regex = interpreter.regex(pattern, flags)?;
     let input = input.unwrap_or("");
-    let regex = Regex::xpath(pattern, flags)?;
     Ok(regex.tokenize(input)?.collect::<Vec<_>>())
 }
 
@@ -623,8 +658,8 @@ fn analyze_string(
     pattern: &str,
     flags: &str,
 ) -> error::Result<sequence::Sequence> {
+    let regex = interpreter.regex(pattern, flags)?;
     let input = input.unwrap_or("");
-    let regex = Regex::xpath(pattern, flags)?;
     let analyze_results = regex.analyze(input)?;
 
     let xot = interpreter.state.xot_mut();
