@@ -29,7 +29,7 @@ mod types;
 mod xpath_repr;
 
 pub use atomic_core::Atomic;
-pub(crate) use compare::AtomicCompare;
+pub(crate) use compare::{AtomicCompare, AtomicCompareValue};
 pub(crate) use datetime::ToDateTimeStamp;
 pub use datetime::{
     Duration, GDay, GMonth, GMonthDay, GYear, GYearMonth, NaiveDateTimeWithOffset,

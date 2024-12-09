@@ -263,7 +263,13 @@ impl Sequence {
             (Sequence::One(_a), Sequence::Empty(_b)) => Ok(false),
             (Sequence::One(a), Sequence::One(b)) => a.general_comparison(b, op, context, xot),
             (Sequence::One(a), Sequence::Many(b)) => a.general_comparison(b, op, context, xot),
-            (Sequence::One(a), Sequence::Range(b)) => a.general_comparison(b, op, context, xot),
+            (Sequence::One(a), Sequence::Range(b)) => {
+                if let Item::Atomic(atomic::Atomic::Integer(_, i)) = a.item() {
+                    Ok(b.general_comparison_integer(i, O::value()))
+                } else {
+                    a.general_comparison(b, op, context, xot)
+                }
+            }
             (Sequence::Many(_a), Sequence::Empty(_b)) => Ok(false),
             (Sequence::Many(a), Sequence::One(b)) => a.general_comparison(b, op, context, xot),
             (Sequence::Many(a), Sequence::Many(b)) => a.general_comparison(b, op, context, xot),

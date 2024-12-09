@@ -7,7 +7,7 @@ use crate::error;
 use super::cast_binary::cast_binary_compare;
 use super::compare::AtomicCompare;
 use super::datetime::EqWithDefaultOffset;
-use super::{Atomic, BinaryType};
+use super::{Atomic, AtomicCompareValue, BinaryType};
 
 pub(crate) struct OpEq;
 
@@ -60,6 +60,10 @@ impl AtomicCompare for OpEq {
 
     fn arguments_inverted() -> impl AtomicCompare {
         super::OpEq
+    }
+
+    fn value() -> AtomicCompareValue {
+        AtomicCompareValue::Eq
     }
 }
 

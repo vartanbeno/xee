@@ -4,7 +4,7 @@ use crate::error;
 
 use super::cast_binary::cast_binary_compare;
 use super::datetime::OrdWithDefaultOffset;
-use super::{Atomic, AtomicCompare, BinaryType};
+use super::{Atomic, AtomicCompare, AtomicCompareValue, BinaryType};
 
 pub(crate) struct OpGt;
 
@@ -52,5 +52,9 @@ impl AtomicCompare for OpGt {
 
     fn arguments_inverted() -> impl AtomicCompare {
         super::OpLt
+    }
+
+    fn value() -> AtomicCompareValue {
+        AtomicCompareValue::Gt
     }
 }

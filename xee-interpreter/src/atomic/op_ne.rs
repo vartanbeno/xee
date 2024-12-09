@@ -3,7 +3,7 @@ use std::cmp::Ordering;
 use crate::error;
 
 use super::op_eq::OpEq;
-use super::{Atomic, AtomicCompare};
+use super::{Atomic, AtomicCompare, AtomicCompareValue};
 
 pub(crate) struct OpNe;
 
@@ -22,5 +22,9 @@ impl AtomicCompare for OpNe {
 
     fn arguments_inverted() -> impl AtomicCompare {
         super::OpNe
+    }
+
+    fn value() -> AtomicCompareValue {
+        AtomicCompareValue::Ne
     }
 }

@@ -3,6 +3,7 @@ use std::rc::Rc;
 use ibig::IBig;
 use xot::Xot;
 
+use crate::atomic::AtomicCompareValue;
 use crate::{atomic, error};
 
 use super::item::Item;
@@ -221,6 +222,35 @@ impl Range {
 
     pub(crate) fn contains(&self, index: &IBig) -> bool {
         index >= self.start.as_ref() && index < self.end.as_ref()
+    }
+
+    pub(crate) fn general_comparison_integer(
+        &self,
+        value: &IBig,
+        comparison: AtomicCompareValue,
+    ) -> bool {
+        match comparison {
+            // value has to be within the range
+            AtomicCompareValue::Eq => value >= self.start.as_ref() && value < self.end.as_ref(),
+            // value has to be outside the range
+            AtomicCompareValue::Ne => value < self.start.as_ref() || value >= self.end.as_ref(),
+            // value has to be greater than the start
+            // 10 gt 10..11 is false
+            AtomicCompareValue::Gt => value > self.start.as_ref(),
+            // value has to be less than the end - 1
+            // 10 lt 10..11 is false
+            AtomicCompareValue::Lt => {
+                let one: IBig = 1.into();
+                let end = self.end.as_ref() - &one;
+                value < &end
+            }
+            // value has to be greater than or equal to the start
+            // 10 ge 10..11 is true
+            AtomicCompareValue::Ge => value >= self.start.as_ref(),
+            // value has to be less than the end
+            // 10 le 10..11 is true
+            AtomicCompareValue::Le => value < self.end.as_ref(),
+        }
     }
 }
 
