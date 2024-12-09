@@ -64,3 +64,25 @@ fn large_map(bencher: Bencher) {
             .unwrap()
     });
 }
+
+#[divan::bench]
+fn element_with_attribute(bencher: Bencher) {
+    let mut documents = Documents::new();
+    // large document doc with 1000 p elements where even elements have the
+    // attribute state='even' and odd elements have the attribute state='odd'
+    let mut doc = String::from("<doc>");
+    for i in 0..1000 {
+        if i % 2 == 0 {
+            doc.push_str(&format!("<p state='even'>{}</p>", i));
+        } else {
+            doc.push_str(&format!("<p state='odd'>{}</p>", i));
+        }
+    }
+    doc.push_str("</doc>");
+    let handle = documents.add_string_without_uri(&doc).unwrap();
+    let queries = Queries::default();
+    let mut q = queries.sequence("/doc/p[@state = 'even']").unwrap();
+    bencher.bench_local(move || {
+        black_box(&mut q).execute(&mut documents, handle).unwrap();
+    });
+}
