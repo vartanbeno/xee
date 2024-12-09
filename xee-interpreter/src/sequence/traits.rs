@@ -149,7 +149,7 @@ where
         let a_atomized = self.atomized(xot);
         let b_atomized = other.atomized(xot);
         // optimization:
-        // if a is actually larger than b, then we want to pass a as the second argument,
+        // if a is actually smaller than b, then we want to pass a as the second argument,
         // because a gets collected by the general comparison logic, and we'd rather
         // collect the smallest vector
         let (a_lower_bound, _) = a_atomized.size_hint();
