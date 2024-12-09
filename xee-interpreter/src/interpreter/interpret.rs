@@ -25,6 +25,7 @@ use super::instruction::{read_i16, read_instruction, read_u16, read_u8, EncodedI
 use super::runnable::Runnable;
 use super::state::State;
 
+// this size should be below a usize
 const MAXIMUM_RANGE_SIZE: i64 = 2_i64.pow(25);
 
 pub struct Interpreter<'a> {
@@ -455,32 +456,8 @@ impl<'a> Interpreter<'a> {
                             if length > MAXIMUM_RANGE_SIZE.into() {
                                 return Err(error::Error::FOAR0002);
                             }
-
-                            let a_usize: Result<usize, _> = a.clone().try_into();
-                            let b_usize: Result<usize, _> = b.try_into();
-
                             let sequence: sequence::Sequence =
-                                if let (Ok(a_usize), Ok(b_usize)) = (a_usize, b_usize) {
-                                    // if a and b are in the usize range, we can make
-                                    // an efficient range object
-
-                                    // add one to convert xpath inclusive range into non-inclusive range
-                                    let one: usize = 1;
-                                    let range = sequence::Range::new(a_usize, b_usize + one);
-                                    range.into()
-                                } else {
-                                    // otherwise we have to create a sequence of integers
-                                    let mut items =
-                                        Vec::with_capacity(length.clone().try_into().unwrap());
-                                    let mut i: IBig = 0.into();
-                                    while i < length {
-                                        let item: sequence::Item = (&a + &i).into();
-                                        items.push(item);
-                                        i += 1;
-                                    }
-                                    items.into()
-                                };
-
+                                sequence::Range::new(a, b + 1).into();
                             self.state.push(sequence)
                         }
                     }

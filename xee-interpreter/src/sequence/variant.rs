@@ -192,20 +192,27 @@ impl<'a> SequenceCore<'a, std::iter::Cloned<std::slice::Iter<'a, Item>>> for Man
 
 #[derive(Debug, Clone, PartialEq)]
 pub struct Range {
-    start: usize,
-    end: usize,
+    start: Box<IBig>,
+    end: Box<IBig>,
 }
 
 impl Range {
-    pub(crate) fn new(start: usize, end: usize) -> Self {
-        Range { start, end }
+    pub(crate) fn new(start: IBig, end: IBig) -> Self {
+        Range {
+            start: start.into(),
+            end: end.into(),
+        }
     }
 
-    pub(crate) fn start(&self) -> usize {
-        self.start
+    pub(crate) fn start(&self) -> &IBig {
+        &self.start
     }
-    pub(crate) fn end(&self) -> usize {
-        self.end
+    pub(crate) fn end(&self) -> &IBig {
+        &self.end
+    }
+
+    pub(crate) fn contains(&self, index: &IBig) -> bool {
+        index >= self.start.as_ref() && index < self.end.as_ref()
     }
 }
 
@@ -217,13 +224,15 @@ impl<'a> SequenceCore<'a, RangeIterator> for Range {
 
     #[inline]
     fn len(&self) -> usize {
-        self.end - self.start
+        let len = self.end.as_ref() - self.start.as_ref();
+        // We should prevent any range that's > usize from being crated
+        len.try_into().unwrap()
     }
 
     #[inline]
     fn get(&self, index: usize) -> Option<Item> {
         if index < self.len() {
-            let i: IBig = (self.start + index).into();
+            let i: IBig = self.start.as_ref() + index;
             Some(i.into())
         } else {
             None
@@ -235,7 +244,7 @@ impl<'a> SequenceCore<'a, RangeIterator> for Range {
         match self.len() {
             0 => Err(error::Error::XPTY0004),
             1 => {
-                let i: IBig = self.start.into();
+                let i: IBig = self.start.as_ref().clone().into();
                 Ok(i.into())
             }
             _ => Err(error::Error::XPTY0004),
@@ -247,7 +256,7 @@ impl<'a> SequenceCore<'a, RangeIterator> for Range {
         match self.len() {
             0 => Ok(None),
             1 => {
-                let i: IBig = self.start.into();
+                let i: IBig = self.start.as_ref().clone().into();
                 Ok(Some(i.into()))
             }
             _ => Err(error::Error::XPTY0004),
@@ -257,9 +266,9 @@ impl<'a> SequenceCore<'a, RangeIterator> for Range {
     #[inline]
     fn iter(&'a self) -> RangeIterator {
         RangeIterator {
-            start: self.start,
-            end: self.end,
-            index: 0,
+            start: self.start.as_ref().clone(),
+            end: self.end.as_ref().clone(),
+            index: 0.into(),
         }
     }
 
@@ -276,27 +285,34 @@ impl<'a> SequenceCore<'a, RangeIterator> for Range {
     fn string_value(&self, _xot: &xot::Xot) -> error::Result<String> {
         match self.len() {
             0 => Ok(String::new()),
-            1 => {
-                let i: IBig = self.start.into();
-                Ok(i.to_string())
-            }
+            1 => Ok(self.start.to_string()),
             _ => Err(error::Error::XPTY0004),
         }
     }
 }
 
 pub struct RangeIterator {
-    start: usize,
-    end: usize,
-    index: usize,
+    start: IBig,
+    end: IBig,
+    index: IBig,
+}
+
+impl RangeIterator {
+    pub(crate) fn new(start: IBig, end: IBig) -> Self {
+        RangeIterator {
+            start,
+            end,
+            index: 0.into(),
+        }
+    }
 }
 
 impl Iterator for RangeIterator {
     type Item = Item;
 
     fn next(&mut self) -> Option<Self::Item> {
-        if self.index < (self.end - self.start) {
-            let i: IBig = (self.start + self.index).into();
+        if self.index < (&self.end - &self.start) {
+            let i = &self.start + &self.index;
             self.index += 1;
             Some(i.into())
         } else {

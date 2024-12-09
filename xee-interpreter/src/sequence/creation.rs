@@ -1,7 +1,5 @@
-use std::rc::Rc;
-
 use ahash::{HashSet, HashSetExt};
-use ibig::IBig;
+use std::rc::Rc;
 use xot::Xot;
 
 use crate::{context, error, string::Collation, xml};
@@ -12,7 +10,7 @@ use super::{
     normalization::normalize,
     serialization::{serialize_sequence, SerializationParameters},
     traits::SequenceCore,
-    variant::{Empty, Range},
+    variant::{Empty, Range, RangeIterator},
 };
 
 impl Sequence {
@@ -64,19 +62,17 @@ impl Sequence {
             (Self::Range(a), Self::Range(b)) => {
                 // if the ranges are consecutive we can merge them
                 if a.end() == b.start() {
-                    Self::Range(Range::new(a.start(), b.end()))
+                    Self::Range(Range::new(a.start().clone(), b.end().clone()))
                 } else if b.end() == a.start() {
-                    Self::Range(Range::new(b.start(), a.end()))
+                    Self::Range(Range::new(b.start().clone(), a.end().clone()))
                 } else {
                     // otherwise unfortunately we have to construct the sequence
                     let mut v = Vec::with_capacity(a.len() + b.len());
-                    for i in a.start()..a.end() {
-                        let i: IBig = i.into();
-                        v.push(i.into());
+                    for i in RangeIterator::new(a.start().clone(), a.end().clone()) {
+                        v.push(i);
                     }
-                    for i in b.start()..b.end() {
-                        let i: IBig = i.into();
-                        v.push(i.into());
+                    for i in RangeIterator::new(b.start().clone(), b.end().clone()) {
+                        v.push(i);
                     }
                     Self::new(v)
                 }
