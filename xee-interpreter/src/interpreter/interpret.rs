@@ -268,7 +268,7 @@ impl<'a> Interpreter<'a> {
                         self.state.push(sequence::Sequence::default());
                         continue;
                     }
-                    let result = a.is(&b, self.runnable.documents().borrow().annotations())?;
+                    let result = a.is(&b)?;
                     self.state.push(result);
                 }
                 EncodedInstruction::Precedes => {

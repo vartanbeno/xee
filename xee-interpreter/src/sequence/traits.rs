@@ -192,19 +192,13 @@ where
         }
     }
 
-    fn is<J>(
-        &'a self,
-        other: &'a impl SequenceOrder<'a, J>,
-        annotations: &xml::Annotations,
-    ) -> error::Result<bool>
+    fn is<J>(&'a self, other: &'a impl SequenceOrder<'a, J>) -> error::Result<bool>
     where
         J: Iterator<Item = Item> + 'a,
     {
         let a = self.one_node()?;
         let b = other.one_node()?;
-        let a_annotation = annotations.get(a).unwrap();
-        let b_annotation = annotations.get(b).unwrap();
-        Ok(a_annotation.document_order == b_annotation.document_order)
+        Ok(a == b)
     }
 
     fn precedes<J>(

@@ -353,24 +353,24 @@ impl Sequence {
         }
     }
 
-    pub(crate) fn is(&self, other: &Self, annotations: &xml::Annotations) -> error::Result<bool> {
+    pub(crate) fn is(&self, other: &Self) -> error::Result<bool> {
         match (self, other) {
-            (Sequence::Empty(a), Sequence::Empty(b)) => a.is(b, annotations),
-            (Sequence::Empty(a), Sequence::One(b)) => a.is(b, annotations),
-            (Sequence::Empty(a), Sequence::Many(b)) => a.is(b, annotations),
-            (Sequence::Empty(a), Sequence::Range(b)) => a.is(b, annotations),
-            (Sequence::One(a), Sequence::Empty(b)) => a.is(b, annotations),
-            (Sequence::One(a), Sequence::One(b)) => a.is(b, annotations),
-            (Sequence::One(a), Sequence::Many(b)) => a.is(b, annotations),
-            (Sequence::One(a), Sequence::Range(b)) => a.is(b, annotations),
-            (Sequence::Many(a), Sequence::Empty(b)) => a.is(b, annotations),
-            (Sequence::Many(a), Sequence::One(b)) => a.is(b, annotations),
-            (Sequence::Many(a), Sequence::Many(b)) => a.is(b, annotations),
-            (Sequence::Many(a), Sequence::Range(b)) => a.is(b, annotations),
-            (Sequence::Range(a), Sequence::Empty(b)) => a.is(b, annotations),
-            (Sequence::Range(a), Sequence::One(b)) => a.is(b, annotations),
-            (Sequence::Range(a), Sequence::Many(b)) => a.is(b, annotations),
-            (Sequence::Range(a), Sequence::Range(b)) => a.is(b, annotations),
+            (Sequence::Empty(a), Sequence::Empty(b)) => a.is(b),
+            (Sequence::Empty(a), Sequence::One(b)) => a.is(b),
+            (Sequence::Empty(a), Sequence::Many(b)) => a.is(b),
+            (Sequence::Empty(a), Sequence::Range(b)) => a.is(b),
+            (Sequence::One(a), Sequence::Empty(b)) => a.is(b),
+            (Sequence::One(a), Sequence::One(b)) => a.is(b),
+            (Sequence::One(a), Sequence::Many(b)) => a.is(b),
+            (Sequence::One(a), Sequence::Range(b)) => a.is(b),
+            (Sequence::Many(a), Sequence::Empty(b)) => a.is(b),
+            (Sequence::Many(a), Sequence::One(b)) => a.is(b),
+            (Sequence::Many(a), Sequence::Many(b)) => a.is(b),
+            (Sequence::Many(a), Sequence::Range(b)) => a.is(b),
+            (Sequence::Range(a), Sequence::Empty(b)) => a.is(b),
+            (Sequence::Range(a), Sequence::One(b)) => a.is(b),
+            (Sequence::Range(a), Sequence::Many(b)) => a.is(b),
+            (Sequence::Range(a), Sequence::Range(b)) => a.is(b),
         }
     }
 
