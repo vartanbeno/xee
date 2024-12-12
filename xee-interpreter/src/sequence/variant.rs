@@ -405,6 +405,9 @@ where
     I: Iterator<Item = Item>,
     Empty: SequenceCore<'a, I>,
 {
+    fn one_node(&self) -> error::Result<xot::Node> {
+        Err(error::Error::XPTY0004)
+    }
 }
 
 impl<'a, I> SequenceExt<'a, I> for One
@@ -432,6 +435,12 @@ where
     I: Iterator<Item = Item>,
     One: SequenceCore<'a, I>,
 {
+    fn one_node(&self) -> error::Result<xot::Node> {
+        match &self.item {
+            Item::Node(n) => Ok(*n),
+            _ => Err(error::Error::XPTY0004),
+        }
+    }
 }
 
 impl<'a, I> SequenceExt<'a, I> for Many
@@ -453,6 +462,9 @@ where
     I: Iterator<Item = Item>,
     Many: SequenceCore<'a, I>,
 {
+    fn one_node(&self) -> error::Result<xot::Node> {
+        Err(error::Error::XPTY0004)
+    }
 }
 
 impl<'a, I> SequenceExt<'a, I> for Range
@@ -474,4 +486,8 @@ where
     I: Iterator<Item = Item>,
     Range: SequenceCore<'a, I>,
 {
+    fn one_node(&self) -> error::Result<xot::Node> {
+        // a range never contains nodes
+        Err(error::Error::XPTY0004)
+    }
 }

@@ -185,12 +185,7 @@ pub(crate) trait SequenceOrder<'a, I>: SequenceCore<'a, I>
 where
     I: Iterator<Item = Item>,
 {
-    fn one_node(&'a self) -> error::Result<xot::Node> {
-        match self.len() {
-            1 => self.iter().next().unwrap().to_node(),
-            _ => Err(error::Error::XPTY0004),
-        }
-    }
+    fn one_node(&self) -> error::Result<xot::Node>;
 
     fn is<J>(&'a self, other: &'a impl SequenceOrder<'a, J>) -> error::Result<bool>
     where
