@@ -196,13 +196,11 @@ impl Sequence {
 
     pub(crate) fn union(self, other: Self, annotations: &xml::Annotations) -> error::Result<Self> {
         let mut s = HashSet::new();
-        for item in self.iter() {
-            let node = item.to_node()?;
-            s.insert(node);
+        for node in self.nodes() {
+            s.insert(node?);
         }
-        for item in other.iter() {
-            let node = item.to_node()?;
-            s.insert(node);
+        for node in other.nodes() {
+            s.insert(node?);
         }
 
         Ok(Self::process_set_result(s, annotations))
@@ -215,12 +213,11 @@ impl Sequence {
     ) -> error::Result<Self> {
         let mut s = HashSet::new();
         let mut r = HashSet::new();
-        for item in self.iter() {
-            let node = item.to_node()?;
-            s.insert(node);
+        for node in self.nodes() {
+            s.insert(node?);
         }
-        for item in other.iter() {
-            let node = item.to_node()?;
+        for node in other.nodes() {
+            let node = node?;
             if s.contains(&node) {
                 r.insert(node);
             }
@@ -230,13 +227,11 @@ impl Sequence {
 
     pub(crate) fn except(self, other: Self, annotations: &xml::Annotations) -> error::Result<Self> {
         let mut s = HashSet::new();
-        for item in self.iter() {
-            let node = item.to_node()?;
-            s.insert(node);
+        for node in self.nodes() {
+            s.insert(node?);
         }
-        for item in other.iter() {
-            let node = item.to_node()?;
-            s.remove(&node);
+        for node in other.nodes() {
+            s.remove(&node?);
         }
         Ok(Self::process_set_result(s, annotations))
     }
