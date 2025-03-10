@@ -34,15 +34,15 @@ https://www.w3.org/TR/xpath-datamodel-31
 
 ### 2.7.2 Predefined types
 
-- [ ] `xs:untyped`
+- [x] `xs:untyped`
 
 - [x] `xs:untypedAtomic`
 
 - [x] `xs:anyAtomicType`
 
-- [ ] `xs:dayTimeDuration`
+- [x] `xs:dayTimeDuration`
 
-- [ ] `xs:yearMonthDuration`
+- [x] `xs:yearMonthDuration`
 
 Primitive data types are defined in section 3.2
 
@@ -70,11 +70,11 @@ Some types are implemented, but a lot isn't yet.
 
 ### 2.8.2 Map items
 
-- [ ] Map items
+- [x] Map items
 
 ### 2.8.3 Array items
 
-- [ ] Array items
+- [x] Array items
 
 ### 2.8.3.1 `array-size` accessor
 
@@ -112,11 +112,11 @@ This is what we can do without further schema information.
 
 ### 3.3.2 dates and times
 
-- [ ] dates and times
+- [x] dates and times
 
 ### 3.3.3 QNames and NOTATIONS
 
-- [ ] QNames
+- [x] QNames
 
 - [ ] Notations
 
