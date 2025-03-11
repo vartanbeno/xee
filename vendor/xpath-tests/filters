@@ -2,7 +2,6 @@
 = app-Demos
 = app-Duplicates
 = app-FunctxFn
-functx-fn-doc-available-1
 functx-fn-namespace-uri-from-QName-all
 = app-FunctxFunctx
 = app-UseCaseCompoundValues
@@ -216,30 +215,11 @@ fn-doc-29
 fn-doc-30
 = fn-doc-available
 fn-doc-available-3
-fn-doc-available-5
 = fn-document-uri
-K-DocumentURIFunc-2a
-K-DocumentURIFunc-3
-fn-document-uri-12
 fn-document-uri-13
 fn-document-uri-14
-fn-document-uri-15
-fn-document-uri-16
-fn-document-uri-17
-fn-document-uri-18
-fn-document-uri-19
-fn-document-uri-20
-fn-document-uri-21
-fn-document-uri-28
 fn-document-uri-29
 fn-document-uri-30
-fn-document-uri-31
-fn-document-uri-32
-fn-document-uri-33
-fn-document-uri-34
-fn-document-uri-35
-fn-document-uri-36
-fn-document-uri-37
 = fn-element-with-id
 fn-element-with-id-1
 fn-element-with-id-2
@@ -896,10 +876,6 @@ fn-function-lookup-005
 fn-function-lookup-006
 fn-function-lookup-007
 fn-function-lookup-008
-fn-function-lookup-021
-fn-function-lookup-022
-fn-function-lookup-023
-fn-function-lookup-024
 fn-function-lookup-033
 fn-function-lookup-034
 fn-function-lookup-053
@@ -1403,7 +1379,6 @@ parse-xml-006
 parse-xml-008
 parse-xml-009
 parse-xml-010
-parse-xml-011
 = fn-parse-xml-fragment
 parse-xml-fragment-001
 parse-xml-fragment-010
@@ -2201,10 +2176,6 @@ function-literal-005
 function-literal-006
 function-literal-007
 function-literal-008
-function-literal-021
-function-literal-022
-function-literal-023
-function-literal-024
 function-literal-033
 function-literal-033a
 function-literal-034

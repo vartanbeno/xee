@@ -75,11 +75,36 @@ fn base_uri(
     })
 }
 
+#[xpath_fn("fn:document-uri($arg as node()?) as xs:anyURI?", context_first)]
+fn document_uri(
+    context: &context::DynamicContext,
+    interpreter: &mut Interpreter,
+    arg: Option<xot::Node>,
+) -> error::Result<Option<atomic::Atomic>> {
+    Ok(if let Some(node) = arg {
+        // root node of the document
+        let root = interpreter.xot().root(node);
+
+        if matches!(interpreter.xot().value(root), xot::Value::Document) {
+            // the base uri of the document is the one we can find registered, if available
+            let documents = context.documents();
+            let documents = documents.borrow();
+            let document_uri = documents.get_uri_by_document_node(root);
+            document_uri.map(|document_uri| document_uri.into())
+        } else {
+            None
+        }
+    } else {
+        None
+    })
+}
+
 pub(crate) fn static_function_descriptions() -> Vec<StaticFunctionDescription> {
     vec![
         wrap_xpath_fn!(node_name),
         wrap_xpath_fn!(string),
         wrap_xpath_fn!(data),
         wrap_xpath_fn!(base_uri),
+        wrap_xpath_fn!(document_uri),
     ]
 }
