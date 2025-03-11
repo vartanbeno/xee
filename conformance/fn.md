@@ -32,7 +32,7 @@
 - [x] distinct-values
 - [x] doc
 - [x] doc-available
-- [ ] document-uri
+- [x] document-uri
 - [x] element-with-id
 - [x] empty
 - [x] encode-for-uri
