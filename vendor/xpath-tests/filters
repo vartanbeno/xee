@@ -213,8 +213,9 @@ fn-doc-26
 fn-doc-27
 fn-doc-28
 fn-doc-29
-fn-doc-37
+fn-doc-30
 = fn-doc-available
+fn-doc-available-3
 fn-doc-available-5
 = fn-document-uri
 K-DocumentURIFunc-2a
@@ -932,14 +933,6 @@ fn-function-lookup-275
 fn-function-lookup-276
 fn-function-lookup-277
 fn-function-lookup-278
-fn-function-lookup-349
-fn-function-lookup-350
-fn-function-lookup-351
-fn-function-lookup-352
-fn-function-lookup-353
-fn-function-lookup-354
-fn-function-lookup-355
-fn-function-lookup-356
 fn-function-lookup-357
 fn-function-lookup-358
 fn-function-lookup-359
@@ -1010,18 +1003,7 @@ fn-function-name-026
 = fn-hours-from-duration
 = fn-hours-from-time
 = fn-id
-K2-SeqIDFunc-1
-K2-SeqIDFunc-10
-K2-SeqIDFunc-11
-K2-SeqIDFunc-12
 K2-SeqIDFunc-13
-K2-SeqIDFunc-14
-K2-SeqIDFunc-15
-K2-SeqIDFunc-2
-K2-SeqIDFunc-3
-fn-id-2
-fn-id-22
-fn-id-3
 fn-id-dtd-10
 fn-id-dtd-11
 fn-id-dtd-14
@@ -2048,14 +2030,9 @@ ArrayTest-084
 Axes041-1
 K2-Axes-38
 K2-Axes-39
-K2-Axes-43
-K2-Axes-44
-K2-Axes-45
 K2-Axes-46
 K2-Axes-50
 K2-Axes-53
-K2-Axes-94
-K2-Axes-98
 statictypingaxis-1
 statictypingaxis-2
 statictypingaxis-3
@@ -2173,10 +2150,6 @@ eqname-913
 = prod-ForClause
 ForExpr013
 K-ForExprWithout-49
-K2-ForExprWithout-40
-K2-ForExprWithout-41
-K2-ForExprWithout-45
-K2-ForExprWithout-7
 = prod-FunctionCall
 FunctionCall-010
 FunctionCall-011
@@ -2205,12 +2178,9 @@ K-SeqExprInstanceOf-52
 K-SeqExprInstanceOf-53
 = prod-LetClause
 = prod-Literal
-K2-Literals-37
-K2-Literals-38
 K2-Literals-6
 = prod-Lookup
 Lookup-211
-Lookup-231
 = prod-MapConstructor
 MapConstructor-025
 = prod-MapTest
@@ -2225,14 +2195,7 @@ MapTest-065
 K2-NameTest-1
 K2-NameTest-37
 K2-NameTest-38
-K2-NameTest-78
-K2-NameTest-79
-K2-NameTest-80
-K2-NameTest-81
-K2-NameTest-83
 K2-NameTest-84
-K2-NameTest-85
-K2-NameTest-86
 = prod-NamedFunctionRef
 function-literal-005
 function-literal-006
@@ -2278,14 +2241,6 @@ function-literal-275
 function-literal-276
 function-literal-277
 function-literal-278
-function-literal-349
-function-literal-350
-function-literal-351
-function-literal-352
-function-literal-353
-function-literal-354
-function-literal-355
-function-literal-356
 function-literal-357
 function-literal-358
 function-literal-359
@@ -2320,8 +2275,6 @@ function-literal-528
 = prod-NodeTest
 K2-NodeTest-15
 K2-NodeTest-19
-K2-NodeTest-29
-K2-NodeTest-30
 = prod-OptionDecl
 = prod-OptionDecl.serialization
 = prod-OrExpr
@@ -2338,11 +2291,6 @@ K-FilterExpr-92
 K-FilterExpr-93
 K-FilterExpr-94
 = prod-QuantifiedExpr
-K-QuantExprWithout-94
-K-QuantExprWithout-95
-K-QuantExprWithout-96
-K-QuantExprWithout-97
-K2-QuantExprWithout-4
 = prod-ReturnClause
 = prod-SchemaImport
 = prod-SequenceType
@@ -2353,7 +2301,6 @@ sequence-type-16
 sequence-type-18
 = prod-SquareArrayConstructor
 = prod-StepExpr
-K2-Steps-8
 K2-Steps-9
 = prod-StringConstructor
 = prod-SwitchExpr
