@@ -33,7 +33,7 @@
 - [x] doc
 - [x] doc-available
 - [ ] document-uri
-- [ ] element-with-id
+- [x] element-with-id
 - [x] empty
 - [x] encode-for-uri
 - [x] ends-with
@@ -68,7 +68,7 @@
 - [x] implicit-timezone
 - [x] index-of
 - [x] innermost
-- [ ] in-scope-prefixes
+- [x] in-scope-prefixes
 - [x] insert-before
 - [x] iri-to-uri
 - [ ] json-doc
@@ -101,9 +101,9 @@
 - [x] one-or-more
 - [x] outermost
 - [ ] parse-ietf-date
-- [ ] parse-json
-- [ ] parse-xml
-- [ ] parse-xml-fragment
+- [x] parse-json
+- [x] parse-xml
+- [x] parse-xml-fragment
 - [x] path
 - [x] position
 - [x] prefix-from-QName
