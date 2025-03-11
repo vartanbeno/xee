@@ -16,8 +16,8 @@ XPath 1.0 mode is not supported.
 Most of the `fn` library has been implemented. `math` functions are supported.
 `map` and `array` are both fully supported.
 
-In general, gaps still exists in XML id support, parsing and formatting,
-unparsed text, document collections, and JSON support.
+In general, gaps still exist in parsing and formatting, unparsed text, document
+collections, and JSON support.
 
 See [fn.md](fn.md) for details.
 

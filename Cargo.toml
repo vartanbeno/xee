@@ -44,5 +44,5 @@ regex = "1.9.3"
 iri-string = "0.7.6"
 json = "0.12.4"
 
-[profile.test.package.xot]
-opt-level = 3
+# [profile.test.package.xot]
+# opt-level = 3
