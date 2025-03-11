@@ -6,7 +6,7 @@
 - [x] apply (hof, array)
 - [ ] available-environment-variables
 - [x] avg
-- [ ] base-uri
+- [x] base-uri
 - [x] boolean
 - [x] ceiling
 - [x] codepoint-equal
@@ -120,7 +120,7 @@
 - [x] seconds-from-dateTime
 - [x] seconds-from-duration
 - [x] seconds-from-time
-- [ ] serialize
+- [x] serialize
 - [x] sort (hof)
 - [x] starts-with
 - [x] static-base-uri
