@@ -3,7 +3,6 @@ use ibig::IBig;
 use xee_name::Name;
 use xee_xpath_macros::xpath_fn;
 
-use crate::context::DynamicContext;
 use crate::error;
 use crate::function::StaticFunctionDescription;
 use crate::sequence;
@@ -12,19 +11,6 @@ use crate::wrap_xpath_fn;
 #[xpath_fn("fn:my_function($a as xs:integer, $b as xs:integer) as xs:integer")]
 fn my_function(a: IBig, b: IBig) -> IBig {
     a + b
-}
-
-#[xpath_fn("fn:generate-id($arg as node()?) as xs:string", context_first)]
-fn generate_id(context: &DynamicContext, arg: Option<xot::Node>) -> String {
-    if let Some(arg) = arg {
-        let documents = context.documents();
-        let documents = documents.borrow();
-        let annotations = documents.annotations();
-        let annotation = annotations.get(arg).unwrap();
-        annotation.generate_id()
-    } else {
-        "".to_string()
-    }
 }
 
 // FIXME: this is not the right signature for fn:error, as it always returns a
@@ -93,7 +79,6 @@ fn error_helper(code: Option<Name>, description: &str) -> error::Result<sequence
 pub(crate) fn static_function_descriptions() -> Vec<StaticFunctionDescription> {
     vec![
         wrap_xpath_fn!(my_function),
-        wrap_xpath_fn!(generate_id),
         wrap_xpath_fn!(error_zero_args),
         wrap_xpath_fn!(error_with_code),
         wrap_xpath_fn!(error_with_code_and_description),
