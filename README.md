@@ -55,7 +55,7 @@ project. Contributions are encouraged!
 
 - Of the 21859 tests in the QT3 test suite (vendored into `vendor/xpath-tests`)
   that match the features we support (so excluding XQuery tests), we support
-  over have 19800 at the time of writing. The failures are mostly due to
+  over have 19987 at the time of writing. The failures are mostly due to
   missing library implementation.
 
 - XMLSchema support. While the basic `xs:*` data types as defined by XML Schema
