@@ -146,22 +146,6 @@ collation-key-205
 collation-key-206
 collation-key-901
 = fn-collection
-K2-SeqCollectionFunc-1
-K2-SeqCollectionFunc-2
-cbcl-collection-001
-collection-001
-collection-002
-collection-003
-collection-005
-collection-006
-collection-007
-collection-009
-collection-900
-collection-901
-collection-902
-collection-903
-fn-collection-2
-fn-collection-3
 fn-collection-7
 = fn-compare
 compare-013
@@ -913,8 +897,6 @@ fn-function-lookup-357
 fn-function-lookup-358
 fn-function-lookup-359
 fn-function-lookup-360
-fn-function-lookup-369
-fn-function-lookup-371
 fn-function-lookup-373
 fn-function-lookup-375
 fn-function-lookup-377
@@ -2216,8 +2198,6 @@ function-literal-357
 function-literal-358
 function-literal-359
 function-literal-360
-function-literal-369
-function-literal-371
 function-literal-373
 function-literal-375
 function-literal-377

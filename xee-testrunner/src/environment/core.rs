@@ -3,11 +3,12 @@ use std::{
     path::{Path, PathBuf},
 };
 
+use ahash::{HashMap, HashMapExt};
 use anyhow::Result;
 use iri_string::types::IriAbsoluteStr;
 use xot::xmlname::OwnedName as Name;
 
-use xee_xpath::{context, Documents, Item, Queries, Query};
+use xee_xpath::{context, Documents, Item, Queries, Query, Sequence};
 use xee_xpath_load::{convert_string, ContextLoadable};
 
 use crate::ns::XPATH_TEST_NS;
@@ -70,7 +71,6 @@ pub(crate) struct EnvironmentSpec {
     pub(crate) collations: Vec<Collation>,
     // TODO: needs to wait until the interpreter has a resource abstraction
     pub(crate) resources: Vec<Resource>,
-    // TODO: needs to wait until the interpreter has a collection abstraction
     pub(crate) collections: Vec<Collection>,
     // not supported as Xee doesn't support XML schema
     pub(crate) schemas: Vec<Schema>,
@@ -113,6 +113,27 @@ impl EnvironmentSpec {
             let _ = source.node(&self.base_dir, documents, &source.uri, base_uri)?;
         }
         Ok(())
+    }
+
+    pub(crate) fn load_collections(
+        &self,
+        documents: &mut Documents,
+        base_uri: Option<&IriAbsoluteStr>,
+    ) -> Result<HashMap<String, Sequence>> {
+        let mut collections = HashMap::new();
+        for collection in &self.collections {
+            let mut items: Vec<Item> = Vec::new();
+            // right now we only load <source> but we should in the future
+            // potential also load <query>. Right now the test suite doesn't
+            // exercise this.
+            // https://github.com/w3c/qt3tests/issues/66
+            for source in &collection.sources {
+                let node = source.node(&self.base_dir, documents, &source.uri, base_uri)?;
+                items.push(node.into());
+            }
+            collections.insert(collection.uri.clone(), items.into());
+        }
+        Ok(collections)
     }
 
     pub(crate) fn context_item(
@@ -203,6 +224,23 @@ impl ContextLoadable<Path> for EnvironmentSpec {
             })
         })?;
 
+        let uri_query = queries.one("@uri/string()", convert_string)?;
+        let collection_sources_query = Source::load(queries)?;
+        let collections_query = queries.many("collection", move |documents, item| {
+            let uri = uri_query.execute(documents, item)?;
+            let sources = collection_sources_query.execute(documents, item)?;
+            // we need to flatten sources
+            let sources = sources.into_iter().flatten().collect::<Vec<Source>>();
+            let collection = Collection {
+                uri,
+                sources,
+                queries: Vec::new(),
+                resources: Vec::new(),
+            };
+
+            Ok(collection)
+        })?;
+
         // the environment base_dir is the same as the catalog/test set path,
         // but without the file name
         let path = path.parent().unwrap();
@@ -214,11 +252,13 @@ impl ContextLoadable<Path> for EnvironmentSpec {
             let sources = sources.into_iter().flatten().collect::<Vec<Source>>();
             let params = params_query.execute(documents, item)?;
             let static_base_uri = static_base_uri_query.execute(documents, item)?;
+            let collections = collections_query.execute(documents, item)?;
             let environment_spec = EnvironmentSpec {
                 base_dir: path.to_path_buf(),
                 sources,
                 params,
                 static_base_uri,
+                collections,
                 ..Default::default()
             };
 

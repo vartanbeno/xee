@@ -1,7 +1,8 @@
 use std::path::Path;
 
+use ahash::{HashMap, HashMapExt};
 use iri_string::types::IriAbsoluteStr;
-use xee_xpath::{context, Item, Queries, Query};
+use xee_xpath::{context, Item, Queries, Query, Sequence};
 use xee_xpath_load::{convert_string, ContextLoadable, Loadable};
 
 use crate::{
@@ -85,6 +86,27 @@ impl<E: Environment> TestCase<E> {
                 .load_sources(run_context.documents, base_uri)?;
         }
         Ok(())
+    }
+
+    pub(crate) fn load_collections<R: Runnable<E>>(
+        &self,
+        run_context: &mut RunContext,
+        catalog: &Catalog<E, R>,
+        test_test: &TestSet<E, R>,
+        base_uri: Option<&IriAbsoluteStr>,
+    ) -> anyhow::Result<HashMap<String, Sequence>> {
+        let mut collections = HashMap::new();
+        let environments = self
+            .environments(catalog, test_test)
+            .collect::<std::result::Result<Vec<_>, crate::error::Error>>()?;
+        for environment in environments {
+            collections.extend(
+                environment
+                    .environment_spec()
+                    .load_collections(run_context.documents, base_uri)?,
+            );
+        }
+        Ok(collections)
     }
 
     pub(crate) fn context_item<R: Runnable<E>>(

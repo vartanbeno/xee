@@ -142,6 +142,28 @@ impl Runnable<XPathEnvironmentSpec> for XPathTestCase {
             builder.context_item(context_item);
         }
         builder.variables(variables.clone());
+        // TODO: at present this doesn't load up any query results,
+        // as those tests are gated to xquery only, but this might change
+        // https://github.com/w3c/qt3tests/issues/66
+        let r = self.test_case.load_collections(
+            run_context,
+            catalog,
+            test_set,
+            static_base_uri.as_deref(),
+        );
+        let collections = match r {
+            Ok(collections) => collections,
+            Err(error) => return TestOutcome::EnvironmentError(error.to_string()),
+        };
+        for (uri, collection) in collections {
+            if uri.is_empty() {
+                builder.default_collection(collection);
+                continue;
+            } else {
+                builder.collection(uri, collection);
+            }
+        }
+
         let context = builder.build();
         // now execute the query with the right dynamic context
         let result = query.execute_with_context(run_context.documents, &context);

@@ -1,5 +1,7 @@
 use std::{cell::RefCell, ops::Deref, rc::Rc};
 
+use ahash::{HashMap, HashMapExt};
+
 use crate::{interpreter, sequence, xml};
 
 use super::{DynamicContext, Variables};
@@ -18,6 +20,8 @@ pub struct DynamicContextBuilder<'a> {
     documents: DocumentsRef,
     variables: Variables,
     current_datetime: chrono::DateTime<chrono::offset::FixedOffset>,
+    default_collection: Option<sequence::Sequence>,
+    collections: HashMap<String, sequence::Sequence>,
 }
 
 #[derive(Debug, Clone)]
@@ -58,6 +62,8 @@ impl<'a> DynamicContextBuilder<'a> {
             documents: DocumentsRef::new(),
             variables: Variables::new(),
             current_datetime: chrono::offset::Local::now().into(),
+            default_collection: None,
+            collections: HashMap::new(),
         }
     }
 
@@ -102,6 +108,18 @@ impl<'a> DynamicContextBuilder<'a> {
         self
     }
 
+    /// The the default collection
+    pub fn default_collection(&mut self, sequence: sequence::Sequence) -> &mut Self {
+        self.default_collection = Some(sequence);
+        self
+    }
+
+    /// Set a collection
+    pub fn collection(&mut self, uri: String, sequence: sequence::Sequence) -> &mut Self {
+        self.collections.insert(uri, sequence);
+        self
+    }
+
     /// Build the `DynamicContext`.
     pub fn build(&self) -> DynamicContext {
         DynamicContext::new(
@@ -110,6 +128,8 @@ impl<'a> DynamicContextBuilder<'a> {
             self.documents.clone(),
             self.variables.clone(),
             self.current_datetime,
+            self.default_collection.clone(),
+            self.collections.clone(),
         )
     }
 }

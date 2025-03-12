@@ -1,4 +1,4 @@
-use ahash::AHashMap;
+use ahash::{AHashMap, HashMap};
 use std::fmt::Debug;
 
 use crate::function::{self, Function};
@@ -30,6 +30,10 @@ pub struct DynamicContext<'a> {
     // TODO: we want to be able to control the creation of this outside,
     // as it needs to be the same for all evalutions of XSLT I believe
     current_datetime: chrono::DateTime<chrono::offset::FixedOffset>,
+    // default collection
+    default_collection: Option<sequence::Sequence>,
+    // collections
+    collections: HashMap<String, sequence::Sequence>,
 }
 
 impl<'a> DynamicContext<'a> {
@@ -39,6 +43,8 @@ impl<'a> DynamicContext<'a> {
         documents: DocumentsRef,
         variables: Variables,
         current_datetime: chrono::DateTime<chrono::offset::FixedOffset>,
+        default_collection: Option<sequence::Sequence>,
+        collections: HashMap<String, sequence::Sequence>,
     ) -> Self {
         Self {
             program,
@@ -46,6 +52,8 @@ impl<'a> DynamicContext<'a> {
             documents,
             variables,
             current_datetime,
+            default_collection,
+            collections,
         }
     }
 
@@ -67,6 +75,19 @@ impl<'a> DynamicContext<'a> {
     /// The variables in this context.
     pub fn variables(&self) -> &Variables {
         &self.variables
+    }
+
+    /// Access the default collection
+    pub fn default_collection(&self) -> Option<&sequence::Sequence> {
+        self.default_collection.as_ref()
+    }
+
+    /// Access a collection by URI
+    ///
+    /// Note that the URI does not have to be a proper URI as the specification
+    /// defines it as an xs:string
+    pub fn collection(&self, uri: &str) -> Option<&sequence::Sequence> {
+        self.collections.get(uri)
     }
 
     pub(crate) fn arguments(&self) -> Result<Vec<sequence::Sequence>, Error> {

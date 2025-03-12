@@ -1,7 +1,10 @@
 use iri_string::types::{IriReferenceStr, IriString};
 use xee_xpath_macros::xpath_fn;
 
-use crate::{context::DynamicContext, error, function::StaticFunctionDescription, wrap_xpath_fn};
+use crate::{
+    context::DynamicContext, error, function::StaticFunctionDescription, sequence::Sequence,
+    wrap_xpath_fn,
+};
 
 #[xpath_fn("fn:doc($uri as xs:string?) as document-node()?")]
 fn doc(context: &DynamicContext, uri: Option<&str>) -> error::Result<Option<xot::Node>> {
@@ -23,17 +26,8 @@ fn doc_available(context: &DynamicContext, uri: Option<&str>) -> bool {
 
 fn document_node(context: &DynamicContext, uri: &str) -> error::Result<Option<xot::Node>> {
     let iri_reference: &IriReferenceStr = uri.try_into().map_err(|_| error::Error::FODC0005)?;
-    let uri: IriString = match iri_reference.to_iri() {
-        Ok(iri) => iri.into(),
-        Err(relative_iri) => {
-            let base = context.static_context().static_base_uri();
-            if let Some(base) = base {
-                relative_iri.resolve_against(base).into()
-            } else {
-                return Err(error::Error::FODC0002);
-            }
-        }
-    };
+    let uri = absolute_uri(context, iri_reference)?;
+
     // first check whether a document is there at all, if so, return it
     let documents = context.documents();
     let documents = documents.borrow();
@@ -47,7 +41,53 @@ fn document_node(context: &DynamicContext, uri: &str) -> error::Result<Option<xo
     }
 }
 
+#[xpath_fn("fn:collection() as item()*")]
+fn collection(context: &DynamicContext) -> error::Result<Sequence> {
+    if let Some(collection) = context.default_collection() {
+        Ok(collection.clone())
+    } else {
+        Err(error::Error::FODC0002)
+    }
+}
+
+#[xpath_fn("fn:collection($uri as xs:string?) as item()*")]
+fn collection_by_uri(context: &DynamicContext, uri: Option<&str>) -> error::Result<Sequence> {
+    if let Some(uri) = uri {
+        let iri_reference: &IriReferenceStr = uri.try_into().map_err(|_| error::Error::FODC0004)?;
+        let uri = absolute_uri(context, iri_reference)?;
+        if let Some(collection) = context.collection(uri.as_str()) {
+            Ok(collection.clone())
+        } else {
+            Err(error::Error::FODC0002)
+        }
+    } else if let Some(collection) = context.default_collection() {
+        Ok(collection.clone())
+    } else {
+        Err(error::Error::FODC0002)
+    }
+}
+
+fn absolute_uri(context: &DynamicContext, uri: &IriReferenceStr) -> error::Result<IriString> {
+    let uri: IriString = match uri.to_iri() {
+        Ok(iri) => iri.into(),
+        Err(relative_iri) => {
+            let base = context.static_context().static_base_uri();
+            if let Some(base) = base {
+                relative_iri.resolve_against(base).into()
+            } else {
+                return Err(error::Error::FODC0002);
+            }
+        }
+    };
+    Ok(uri)
+}
+
 // https://www.w3.org/TR/xpath-functions-31/#fns-on-docs
 pub(crate) fn static_function_descriptions() -> Vec<StaticFunctionDescription> {
-    vec![wrap_xpath_fn!(doc), wrap_xpath_fn!(doc_available)]
+    vec![
+        wrap_xpath_fn!(doc),
+        wrap_xpath_fn!(doc_available),
+        wrap_xpath_fn!(collection),
+        wrap_xpath_fn!(collection_by_uri),
+    ]
 }
