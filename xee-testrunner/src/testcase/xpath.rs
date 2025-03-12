@@ -1,5 +1,5 @@
 use anyhow::Result;
-use iri_string::types::IriAbsoluteString;
+use iri_string::types::{IriAbsoluteString, IriString};
 use std::path::Path;
 
 use xee_xpath::{context, Queries, Query};
@@ -160,7 +160,8 @@ impl Runnable<XPathEnvironmentSpec> for XPathTestCase {
                 builder.default_collection(collection);
                 continue;
             } else {
-                builder.collection(uri, collection);
+                let uri: IriString = uri.try_into().unwrap();
+                builder.collection(&uri, collection);
             }
         }
 

@@ -1,6 +1,7 @@
 use std::{cell::RefCell, ops::Deref, rc::Rc};
 
 use ahash::{HashMap, HashMapExt};
+use iri_string::types::{IriStr, IriString};
 
 use crate::{interpreter, sequence, xml};
 
@@ -21,7 +22,9 @@ pub struct DynamicContextBuilder<'a> {
     variables: Variables,
     current_datetime: chrono::DateTime<chrono::offset::FixedOffset>,
     default_collection: Option<sequence::Sequence>,
-    collections: HashMap<String, sequence::Sequence>,
+    collections: HashMap<IriString, sequence::Sequence>,
+    default_uri_collection: Option<sequence::Sequence>,
+    uri_collections: HashMap<IriString, sequence::Sequence>,
 }
 
 #[derive(Debug, Clone)]
@@ -64,6 +67,8 @@ impl<'a> DynamicContextBuilder<'a> {
             current_datetime: chrono::offset::Local::now().into(),
             default_collection: None,
             collections: HashMap::new(),
+            default_uri_collection: None,
+            uri_collections: HashMap::new(),
         }
     }
 
@@ -108,16 +113,41 @@ impl<'a> DynamicContextBuilder<'a> {
         self
     }
 
-    /// The the default collection
+    /// Set the default collection
     pub fn default_collection(&mut self, sequence: sequence::Sequence) -> &mut Self {
         self.default_collection = Some(sequence);
         self
     }
 
     /// Set a collection
-    pub fn collection(&mut self, uri: String, sequence: sequence::Sequence) -> &mut Self {
-        self.collections.insert(uri, sequence);
+    pub fn collection(&mut self, uri: &IriStr, sequence: sequence::Sequence) -> &mut Self {
+        self.collections.insert((*uri).into(), sequence);
         self
+    }
+
+    /// Set the default URI collection
+    pub fn default_uri_collection(&mut self, uris: &[&IriStr]) -> &mut Self {
+        self.default_uri_collection = Some(Self::uris_into_sequence(uris));
+        self
+    }
+
+    /// Set a URI collection
+    pub fn uri_collection(&mut self, uri: &IriStr, uris: &[&IriStr]) -> &mut Self {
+        self.uri_collections
+            .insert((*uri).into(), Self::uris_into_sequence(uris));
+        self
+    }
+
+    fn uris_into_sequence(uris: &[&IriStr]) -> sequence::Sequence {
+        // turn the URIs into a sequence
+        let items: Vec<sequence::Item> = uris
+            .iter()
+            .map(|uri| {
+                let iri_string: IriString = (*uri).into();
+                iri_string.into()
+            })
+            .collect();
+        items.into()
     }
 
     /// Build the `DynamicContext`.
@@ -130,6 +160,8 @@ impl<'a> DynamicContextBuilder<'a> {
             self.current_datetime,
             self.default_collection.clone(),
             self.collections.clone(),
+            self.default_uri_collection.clone(),
+            self.uri_collections.clone(),
         )
     }
 }

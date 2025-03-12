@@ -897,8 +897,6 @@ fn-function-lookup-357
 fn-function-lookup-358
 fn-function-lookup-359
 fn-function-lookup-360
-fn-function-lookup-373
-fn-function-lookup-375
 fn-function-lookup-377
 fn-function-lookup-378
 fn-function-lookup-379
@@ -1690,12 +1688,6 @@ fn-unparsed-text-lines-055
 = fn-upper-case
 fn-upper-case-19
 = fn-uri-collection
-K2-SeqUriCollectionFunc-1
-K2-SeqUriCollectionFunc-2
-fn-uri-collection-2
-fn-uri-collection-3
-uri-collection-901
-uri-collection-903
 = fn-xml-to-json
 xml-to-json-001
 xml-to-json-002
@@ -2198,8 +2190,6 @@ function-literal-357
 function-literal-358
 function-literal-359
 function-literal-360
-function-literal-373
-function-literal-375
 function-literal-377
 function-literal-378
 function-literal-379

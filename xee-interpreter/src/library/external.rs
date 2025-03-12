@@ -55,12 +55,38 @@ fn collection_by_uri(context: &DynamicContext, uri: Option<&str>) -> error::Resu
     if let Some(uri) = uri {
         let iri_reference: &IriReferenceStr = uri.try_into().map_err(|_| error::Error::FODC0004)?;
         let uri = absolute_uri(context, iri_reference)?;
-        if let Some(collection) = context.collection(uri.as_str()) {
+        if let Some(collection) = context.collection(&uri) {
             Ok(collection.clone())
         } else {
             Err(error::Error::FODC0002)
         }
     } else if let Some(collection) = context.default_collection() {
+        Ok(collection.clone())
+    } else {
+        Err(error::Error::FODC0002)
+    }
+}
+
+#[xpath_fn("fn:uri-collection() as xs:anyURI*")]
+fn uri_collection(context: &DynamicContext) -> error::Result<Sequence> {
+    if let Some(collection) = context.default_uri_collection() {
+        Ok(collection.clone())
+    } else {
+        Err(error::Error::FODC0002)
+    }
+}
+
+#[xpath_fn("fn:uri-collection($uri as xs:string?) as xs:anyURI*")]
+fn uri_collection_by_uri(context: &DynamicContext, uri: Option<&str>) -> error::Result<Sequence> {
+    if let Some(uri) = uri {
+        let iri_reference: &IriReferenceStr = uri.try_into().map_err(|_| error::Error::FODC0004)?;
+        let uri = absolute_uri(context, iri_reference)?;
+        if let Some(collection) = context.uri_collection(&uri) {
+            Ok(collection.clone())
+        } else {
+            Err(error::Error::FODC0002)
+        }
+    } else if let Some(collection) = context.default_uri_collection() {
         Ok(collection.clone())
     } else {
         Err(error::Error::FODC0002)
@@ -89,5 +115,7 @@ pub(crate) fn static_function_descriptions() -> Vec<StaticFunctionDescription> {
         wrap_xpath_fn!(doc_available),
         wrap_xpath_fn!(collection),
         wrap_xpath_fn!(collection_by_uri),
+        wrap_xpath_fn!(uri_collection),
+        wrap_xpath_fn!(uri_collection_by_uri),
     ]
 }

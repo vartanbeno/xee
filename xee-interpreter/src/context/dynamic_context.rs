@@ -1,4 +1,5 @@
 use ahash::{AHashMap, HashMap};
+use iri_string::types::{IriStr, IriString};
 use std::fmt::Debug;
 
 use crate::function::{self, Function};
@@ -33,10 +34,15 @@ pub struct DynamicContext<'a> {
     // default collection
     default_collection: Option<sequence::Sequence>,
     // collections
-    collections: HashMap<String, sequence::Sequence>,
+    collections: HashMap<IriString, sequence::Sequence>,
+    // default uri collection
+    default_uri_collection: Option<sequence::Sequence>,
+    // uri collections
+    uri_collections: HashMap<IriString, sequence::Sequence>,
 }
 
 impl<'a> DynamicContext<'a> {
+    #[allow(clippy::too_many_arguments)]
     pub(crate) fn new(
         program: &'a Program,
         context_item: Option<sequence::Item>,
@@ -44,7 +50,9 @@ impl<'a> DynamicContext<'a> {
         variables: Variables,
         current_datetime: chrono::DateTime<chrono::offset::FixedOffset>,
         default_collection: Option<sequence::Sequence>,
-        collections: HashMap<String, sequence::Sequence>,
+        collections: HashMap<IriString, sequence::Sequence>,
+        default_uri_collection: Option<sequence::Sequence>,
+        uri_collections: HashMap<IriString, sequence::Sequence>,
     ) -> Self {
         Self {
             program,
@@ -54,6 +62,8 @@ impl<'a> DynamicContext<'a> {
             current_datetime,
             default_collection,
             collections,
+            default_uri_collection,
+            uri_collections,
         }
     }
 
@@ -83,11 +93,21 @@ impl<'a> DynamicContext<'a> {
     }
 
     /// Access a collection by URI
+    pub fn collection(&self, uri: &IriStr) -> Option<&sequence::Sequence> {
+        self.collections.get(uri)
+    }
+
+    /// Access the default URI collection
+    pub fn default_uri_collection(&self) -> Option<&sequence::Sequence> {
+        self.default_uri_collection.as_ref()
+    }
+
+    /// Access a URI collection by URI
     ///
     /// Note that the URI does not have to be a proper URI as the specification
     /// defines it as an xs:string
-    pub fn collection(&self, uri: &str) -> Option<&sequence::Sequence> {
-        self.collections.get(uri)
+    pub fn uri_collection(&self, uri: &IriStr) -> Option<&sequence::Sequence> {
+        self.uri_collections.get(uri)
     }
 
     pub(crate) fn arguments(&self) -> Result<Vec<sequence::Sequence>, Error> {
