@@ -732,8 +732,8 @@ impl<'a> Interpreter<'a> {
         let arguments = self.coerce_arguments(parameter_types, arity)?;
         let result =
             static_function.invoke(self.runnable.dynamic_context, self, arguments, closure_vars)?;
-        // truncate the stack to the base
-        self.state.static_return(0); // arity as usize);
+        // pop the last item off
+        let _ = self.state.pop();
         self.state.push(result);
         Ok(())
     }

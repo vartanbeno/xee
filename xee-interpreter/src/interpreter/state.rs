@@ -236,11 +236,6 @@ impl<'a> State<'a> {
         base == start_base
     }
 
-    pub(crate) fn static_return(&mut self, arity: usize) {
-        // truncate the stack to the base
-        self.stack.truncate(self.stack.len() - (arity + 1));
-    }
-
     pub(crate) fn top(&self) -> error::Result<sequence::Sequence> {
         self.stack.last().unwrap().try_into()
     }
