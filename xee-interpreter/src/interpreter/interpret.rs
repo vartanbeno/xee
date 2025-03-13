@@ -5,6 +5,7 @@ use ibig::{ibig, IBig};
 
 use xee_name::Name;
 use xee_schema_type::Xs;
+use xee_xpath_ast::ast;
 use xot::xmlname::NameStrInfo;
 use xot::Xot;
 
@@ -735,22 +736,20 @@ impl<'a> Interpreter<'a> {
         Ok(())
     }
 
-    fn call_inline(
+    fn coerce_arguments(
         &mut self,
-        function_id: function::InlineFunctionId,
+        parameter_types: &[Option<ast::SequenceType>],
         arity: u8,
-    ) -> error::Result<()> {
-        // look up the function in order to access the parameters information
-        let function = self.runnable.program().inline_function(function_id);
-        let parameter_types = &function.signature.parameter_types();
-        if arity as usize != parameter_types.len() {
-            return Err(error::Error::XPTY0004);
-        }
+    ) -> error::Result<Vec<sequence::Sequence>> {
         // TODO: fast path if no sequence types exist for parameters
         // could cache this inside of signature so that it's really fast
         // to detect. we could also have a secondary fast path where
         // if the types are all exactly the same, we don't do a clone, but that
         // won't happen as quickly.
+
+        // In fact we *know* if ther are no parameter types so we could simply
+        // forgo putting anything on the stack in that case. But that would mean
+        // we should not return a sequence here but a reference to the stack.
 
         // now pop everything off the stack to do type matching, along
         // with sequence type conversion, function coercion
@@ -771,6 +770,23 @@ impl<'a> Interpreter<'a> {
                 arguments.push(sequence);
             }
         }
+        Ok(arguments)
+    }
+
+    fn call_inline(
+        &mut self,
+        function_id: function::InlineFunctionId,
+        arity: u8,
+    ) -> error::Result<()> {
+        // look up the function in order to access the parameters information
+        let function = self.runnable.program().inline_function(function_id);
+        let parameter_types = &function.signature.parameter_types();
+        if arity as usize != parameter_types.len() {
+            return Err(error::Error::XPTY0004);
+        }
+
+        let arguments = self.coerce_arguments(parameter_types, arity)?;
+
         // now we have a list of arguments that we want to push back onto the stack,
         // in reverse
         for arg in arguments.into_iter().rev() {
