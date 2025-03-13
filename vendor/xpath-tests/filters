@@ -1171,6 +1171,7 @@ fn-lang1args-3
 = fn-load-xquery-module
 = fn-local-name
 = fn-local-name-from-QName
+LocalNameFromQNameFunc010
 LocalNameFromQNameFunc015a
 = fn-lower-case
 fn-lower-case-19
@@ -1188,6 +1189,7 @@ fn-lower-case-19
 = fn-namespace-uri
 = fn-namespace-uri-for-prefix
 = fn-namespace-uri-from-QName
+NamespaceURIFromQNameFunc010
 NamespaceURIFromQNameFunc015a
 = fn-nilled
 K-NilledFunc-3
@@ -2114,8 +2116,6 @@ GenCompEq-2
 = prod-IfExpr
 = prod-InlineFunctionExpr
 = prod-InstanceofExpr
-K-SeqExprInstanceOf-52
-K-SeqExprInstanceOf-53
 = prod-LetClause
 = prod-Literal
 K2-Literals-6
@@ -2124,7 +2124,6 @@ Lookup-211
 = prod-MapConstructor
 MapConstructor-025
 = prod-MapTest
-MapTest-008
 MapTest-020
 MapTest-059
 MapTest-063
@@ -2205,6 +2204,8 @@ function-literal-527
 function-literal-528
 = prod-NamespaceDecl
 = prod-NodeTest
+K2-NodeTest-12
+K2-NodeTest-13
 K2-NodeTest-15
 K2-NodeTest-19
 = prod-OptionDecl
