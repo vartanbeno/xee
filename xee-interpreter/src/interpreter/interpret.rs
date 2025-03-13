@@ -728,12 +728,37 @@ impl<'a> Interpreter<'a> {
         if arity as usize != static_function.arity() {
             return Err(error::Error::XPTY0004);
         }
+        let parameter_types = static_function.signature().parameter_types();
+        let arguments = self.coerce_arguments(parameter_types, arity)?;
         let result =
-            static_function.invoke(self.runnable.dynamic_context, self, closure_vars, arity)?;
+            static_function.invoke(self.runnable.dynamic_context, self, arguments, closure_vars)?;
         // truncate the stack to the base
-        self.state.static_return(arity as usize);
+        self.state.static_return(0); // arity as usize);
         self.state.push(result);
         Ok(())
+    }
+
+    fn call_inline(
+        &mut self,
+        function_id: function::InlineFunctionId,
+        arity: u8,
+    ) -> error::Result<()> {
+        // look up the function in order to access the parameters information
+        let function = self.runnable.program().inline_function(function_id);
+        let parameter_types = &function.signature.parameter_types();
+        if arity as usize != parameter_types.len() {
+            return Err(error::Error::XPTY0004);
+        }
+
+        let arguments = self.coerce_arguments(parameter_types, arity)?;
+
+        // now we have a list of arguments that we want to push back onto the stack
+        // (they are already reversed)
+        for arg in arguments {
+            self.state.push(arg);
+        }
+
+        self.state.push_frame(function_id, arity as usize)
     }
 
     fn coerce_arguments(
@@ -770,30 +795,8 @@ impl<'a> Interpreter<'a> {
                 arguments.push(sequence);
             }
         }
+        arguments.reverse();
         Ok(arguments)
-    }
-
-    fn call_inline(
-        &mut self,
-        function_id: function::InlineFunctionId,
-        arity: u8,
-    ) -> error::Result<()> {
-        // look up the function in order to access the parameters information
-        let function = self.runnable.program().inline_function(function_id);
-        let parameter_types = &function.signature.parameter_types();
-        if arity as usize != parameter_types.len() {
-            return Err(error::Error::XPTY0004);
-        }
-
-        let arguments = self.coerce_arguments(parameter_types, arity)?;
-
-        // now we have a list of arguments that we want to push back onto the stack,
-        // in reverse
-        for arg in arguments.into_iter().rev() {
-            self.state.push(arg);
-        }
-
-        self.state.push_frame(function_id, arity as usize)
     }
 
     fn call_array(&mut self, array: &function::Array, arity: usize) -> error::Result<()> {

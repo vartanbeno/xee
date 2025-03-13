@@ -751,6 +751,10 @@ pub(crate) fn static_function_descriptions() -> Vec<StaticFunctionDescription> {
     // register concat for a variety of arities
     // the spec leaves the amount of arguments indefinite
     // https://www.w3.org/TR/xpath-functions-31/#func-concat
+    let arg_type = ast::SequenceType::Item(ast::Item {
+        occurrence: ast::Occurrence::Option,
+        item_type: ast::ItemType::AtomicOrUnionType(Xs::AnyAtomicType),
+    });
     let string_type = ast::SequenceType::Item(ast::Item {
         occurrence: ast::Occurrence::One,
         item_type: ast::ItemType::AtomicOrUnionType(Xs::String),
@@ -763,7 +767,7 @@ pub(crate) fn static_function_descriptions() -> Vec<StaticFunctionDescription> {
 
     for arity in 2..MAX_CONCAT_ARITY {
         let signature = function::Signature::new(
-            vec![Some(string_type.clone()); arity],
+            vec![Some(arg_type.clone()); arity],
             Some(string_type.clone()),
         );
         r.push(StaticFunctionDescription {

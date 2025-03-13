@@ -189,30 +189,24 @@ impl StaticFunction {
         &self,
         context: &DynamicContext,
         interpreter: &mut interpreter::Interpreter,
+        arguments: Vec<sequence::Sequence>,
         closure_values: &[stack::Value],
-        arity: u8,
     ) -> error::Result<sequence::Sequence> {
-        let arguments = interpreter.arguments(arity);
-        if arguments.len() != self.arity {
-            return Err(error::Error::XPTY0004);
-        }
-
         if let Some(function_rule) = &self.function_rule {
             match function_rule {
                 FunctionRule::ItemFirst | FunctionRule::PositionFirst | FunctionRule::SizeFirst => {
                     let mut new_arguments: Vec<sequence::Sequence> =
                         vec![closure_values[0].clone().try_into()?];
-                    let arguments = into_sequences(arguments)?;
                     new_arguments.extend(arguments);
                     (self.func)(context, interpreter, &new_arguments)
                 }
                 FunctionRule::ItemLast => {
-                    let mut new_arguments = into_sequences(arguments)?;
+                    let mut new_arguments = arguments;
                     new_arguments.push(closure_values[0].clone().try_into()?);
                     (self.func)(context, interpreter, &new_arguments)
                 }
                 FunctionRule::ItemLastOptional => {
-                    let mut new_arguments = into_sequences(arguments)?;
+                    let mut new_arguments = arguments;
                     let value: sequence::Sequence =
                         if !closure_values.is_empty() && !closure_values[0].is_absent() {
                             closure_values[0].clone().try_into()?
@@ -223,14 +217,13 @@ impl StaticFunction {
                     (self.func)(context, interpreter, &new_arguments)
                 }
                 FunctionRule::Collation => {
-                    let mut new_arguments = into_sequences(arguments)?;
+                    let mut new_arguments = arguments;
                     // the default collation query
                     new_arguments.push(context.static_context().default_collation_uri().into());
                     (self.func)(context, interpreter, &new_arguments)
                 }
             }
         } else {
-            let arguments = into_sequences(arguments)?;
             (self.func)(context, interpreter, &arguments)
         }
     }
