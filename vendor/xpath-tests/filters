@@ -148,7 +148,6 @@ collation-key-901
 = fn-collection
 fn-collection-7
 = fn-compare
-compare-013
 = fn-concat
 = fn-contains
 fn-contains-17
@@ -189,7 +188,6 @@ default-language-006
 = fn-distinct-values
 fn-distinct-values-mixed-args-005
 = fn-doc
-K2-SeqDocFunc-3
 fn-doc-15
 fn-doc-25
 fn-doc-26
@@ -959,7 +957,6 @@ fn-function-name-026
 = fn-hours-from-duration
 = fn-hours-from-time
 = fn-id
-K2-SeqIDFunc-13
 fn-id-dtd-10
 fn-id-dtd-11
 fn-id-dtd-14
@@ -983,7 +980,6 @@ fn-in-scope-prefixes-25
 = fn-innermost
 = fn-insert-before
 = fn-iri-to-uri
-K2-IRIToURIfunc-6
 = fn-json-doc
 json-doc-001
 json-doc-002
@@ -1365,7 +1361,6 @@ parse-xml-fragment-010
 parse-xml-fragment-013
 parse-xml-fragment-014
 parse-xml-fragment-015
-parse-xml-fragment-021
 = fn-path
 = fn-position
 = fn-prefix-from-QName
@@ -1482,7 +1477,6 @@ fn-sort-spec-6
 = fn-starts-with
 = fn-static-base-uri
 = fn-string
-fn-string-31
 = fn-string-join
 = fn-string-length
 fn-string-length-24
@@ -2003,7 +1997,6 @@ preceding-1
 preceding-sibling-1
 = prod-AxisStep.static-typing
 = prod-AxisStep.unabbr
-unabbreviatedSyntax-5
 = prod-BaseURIDecl
 = prod-BoundarySpaceDecl
 = prod-CastExpr
@@ -2066,7 +2059,6 @@ cbcl-castable-unsignedShort-005
 externalcontextitem-11
 externalcontextitem-16
 externalcontextitem-17
-externalcontextitem-18
 externalcontextitem-7
 externalcontextitem-8
 = prod-CopyNamespacesDecl
@@ -2103,7 +2095,6 @@ K-ForExprWithout-49
 FunctionCall-010
 FunctionCall-011
 FunctionCall-012
-FunctionCall-026
 K-FunctionCallExpr-15a
 K-FunctionCallExpr-16a
 K-FunctionCallExpr-17a

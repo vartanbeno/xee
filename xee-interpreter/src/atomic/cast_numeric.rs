@@ -407,17 +407,17 @@ impl atomic::Atomic {
     pub(crate) fn type_promote(self, xs: Xs) -> error::Result<atomic::Atomic> {
         // Section B.1 type promotion
         let schema_type = self.schema_type();
-        if xs == Xs::Double
-            && (schema_type.derives_from(Xs::Float) || schema_type.derives_from(Xs::Decimal))
-        {
-            return self.cast_to_double();
+        match xs {
+            Xs::Double
+                if (schema_type.derives_from(Xs::Float)
+                    || schema_type.derives_from(Xs::Decimal)) =>
+            {
+                self.cast_to_double()
+            }
+            Xs::Float if schema_type.derives_from(Xs::Decimal) => self.cast_to_float(),
+            Xs::String if schema_type.derives_from(Xs::AnyURI) => Ok(self.cast_to_string()),
+            _ => Ok(self),
         }
-
-        if xs == Xs::Float && schema_type.derives_from(Xs::Decimal) {
-            return self.cast_to_float();
-        }
-        // TODO: handle xs:anyURI
-        Ok(self)
     }
 }
 
