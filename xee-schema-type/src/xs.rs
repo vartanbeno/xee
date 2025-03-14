@@ -287,6 +287,7 @@ impl Xs {
         false
     }
 
+    #[inline]
     pub fn matches(&self, other: Xs) -> bool {
         if other != Xs::Numeric {
             return self == &other;
