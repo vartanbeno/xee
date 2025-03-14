@@ -215,50 +215,50 @@ impl Sequence {
         match occurrence_item.occurrence {
             ast::Occurrence::One => {
                 let one = one(sequence.iter())?;
-                let item = one.atomic_item_type_matching(xs, cast_or_promote_atomic)?;
-                Ok(item.into())
+                let atom = one
+                    .to_atomic()?
+                    .atomic_type_matching(xs, cast_or_promote_atomic)?;
+                Ok(atom.into())
             }
             ast::Occurrence::Option => {
                 let option = option(sequence.iter())?;
                 if let Some(item) = option {
-                    let item = item.atomic_item_type_matching(xs, cast_or_promote_atomic)?;
-                    Ok(item.into())
+                    let atom = item
+                        .to_atomic()?
+                        .atomic_type_matching(xs, cast_or_promote_atomic)?;
+                    Ok(atom.into())
                 } else {
                     Ok(sequence)
                 }
             }
             ast::Occurrence::Many => {
-                let mut items = Vec::with_capacity(sequence.len());
+                let mut atoms = Vec::with_capacity(sequence.len());
                 for item in sequence.iter() {
-                    items.push(item.atomic_item_type_matching(xs, cast_or_promote_atomic)?);
+                    atoms.push(
+                        item.to_atomic()?
+                            .atomic_type_matching(xs, cast_or_promote_atomic)?,
+                    );
                 }
-                Ok(items.into())
+                Ok(atoms.into())
             }
             ast::Occurrence::NonEmpty => {
                 if sequence.is_empty() {
                     return Err(error::Error::XPTY0004);
                 }
-                let mut items = Vec::with_capacity(sequence.len());
+                let mut atoms = Vec::with_capacity(sequence.len());
                 for item in sequence.iter() {
-                    items.push(item.atomic_item_type_matching(xs, cast_or_promote_atomic)?);
+                    atoms.push(
+                        item.to_atomic()?
+                            .atomic_type_matching(xs, cast_or_promote_atomic)?,
+                    );
                 }
-                Ok(items.into())
+                Ok(atoms.into())
             }
         }
     }
 }
 
 impl Item {
-    fn atomic_item_type_matching(
-        self,
-        xs: Xs,
-        cast_or_promote_atomic: &impl Fn(atomic::Atomic, Xs) -> error::Result<atomic::Atomic>,
-    ) -> error::Result<Self> {
-        let atom = cast_or_promote_atomic(self.to_atomic()?, xs)?;
-        atom.atomic_type_matching(xs)?;
-        Ok(Item::Atomic(atom))
-    }
-
     pub(crate) fn non_atomic_item_type_matching(
         self,
         item_type: &ast::ItemType,
@@ -286,7 +286,10 @@ impl Item {
                 ast::MapTest::TypedMapTest(typed_map_test) => {
                     let map = self.to_map()?;
                     for (key, value) in map.entries() {
-                        key.atomic_type_matching(typed_map_test.key_type)?;
+                        key.clone().atomic_type_matching(
+                            typed_map_test.key_type,
+                            cast_or_promote_atomic,
+                        )?;
                         value.clone().sequence_type_matching_convert(
                             &typed_map_test.value_type,
                             cast_or_promote_atomic,
@@ -416,10 +419,15 @@ impl Item {
 }
 
 impl atomic::Atomic {
-    fn atomic_type_matching(&self, xs: Xs) -> error::Result<()> {
-        let schema_type = self.schema_type();
+    fn atomic_type_matching(
+        self,
+        xs: Xs,
+        cast_or_promote_atomic: &impl Fn(atomic::Atomic, Xs) -> error::Result<atomic::Atomic>,
+    ) -> error::Result<Self> {
+        let atom = cast_or_promote_atomic(self, xs)?;
+        let schema_type = atom.schema_type();
         if schema_type.derives_from(xs) || schema_type.matches(xs) {
-            Ok(())
+            Ok(atom)
         } else {
             Err(error::Error::XPTY0004)
         }
