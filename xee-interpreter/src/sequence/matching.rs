@@ -50,11 +50,7 @@ impl Sequence {
     ) -> error::Result<Self> {
         self.sequence_type_matching_convert(
             sequence_type,
-            &|sequence, _| {
-                let atomized = sequence.atomized(xot);
-                let sequence: Sequence = atomized.collect::<error::Result<Vec<_>>>()?.into();
-                Ok(sequence)
-            },
+            &|sequence, _| sequence.atomized_sequence(xot),
             &|function_test, item| item.function_type_matching(function_test, &get_signature),
             xot,
         )
@@ -74,6 +70,12 @@ impl Sequence {
             &|function_test, item| item.function_arity_matching(function_test, &get_signature),
             xot,
         )
+    }
+
+    fn atomized_sequence(&self, xot: &Xot) -> error::Result<Self> {
+        let atomized = self.atomized(xot);
+        let sequence: Sequence = atomized.collect::<error::Result<Vec<_>>>()?.into();
+        Ok(sequence)
     }
 
     fn convert_atomic(
