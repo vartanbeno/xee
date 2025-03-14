@@ -50,7 +50,7 @@ impl Sequence {
     ) -> error::Result<Self> {
         self.sequence_type_matching_convert(
             sequence_type,
-            &|sequence, _| sequence.atomized_sequence(xot),
+            &|atomic, _| Ok(atomic),
             &|function_test, item| item.function_type_matching(function_test, &get_signature),
             xot,
         )
@@ -66,7 +66,7 @@ impl Sequence {
     ) -> error::Result<Self> {
         self.sequence_type_matching_convert(
             sequence_type,
-            &|sequence, xs| Self::convert_atomic(sequence, xs, context, xot),
+            &|atomic, xs| Self::cast_or_promote_atomic(atomic, xs, context),
             &|function_test, item| item.function_arity_matching(function_test, &get_signature),
             xot,
         )
@@ -78,32 +78,23 @@ impl Sequence {
         Ok(sequence)
     }
 
-    fn convert_atomic(
-        sequence: &Sequence,
+    fn cast_or_promote_atomic(
+        atom: atomic::Atomic,
         xs: Xs,
         context: &context::StaticContext,
-        xot: &Xot,
-    ) -> error::Result<Sequence> {
-        let atomized = sequence.atomized(xot);
-        let mut items = Vec::new();
-        for atom in atomized {
-            let atom = atom?;
-            let atom = if matches!(atom, atomic::Atomic::Untyped(_)) {
-                atom.cast_to_schema_type(xs, context)?
-            } else {
-                atom
-            };
-            let atom = atom.type_promote(xs)?;
-            let item = Item::from(atom);
-            items.push(item);
-        }
-        Ok(items.into())
+    ) -> error::Result<atomic::Atomic> {
+        let atom = if matches!(atom, atomic::Atomic::Untyped(_)) {
+            atom.cast_to_schema_type(xs, context)?
+        } else {
+            atom
+        };
+        atom.type_promote(xs)
     }
 
     fn sequence_type_matching_convert(
         self,
         t: &ast::SequenceType,
-        convert_atomic: &impl Fn(&Sequence, Xs) -> error::Result<Sequence>,
+        cast_or_promote_atomic: &impl Fn(atomic::Atomic, Xs) -> error::Result<atomic::Atomic>,
         check_function: &impl Fn(&ast::FunctionTest, &Item) -> error::Result<()>,
         xot: &Xot,
     ) -> error::Result<Self> {
@@ -115,72 +106,78 @@ impl Sequence {
                     Err(error::Error::XPTY0004)
                 }
             }
-            ast::SequenceType::Item(occurrence_item) => {
-                self.occurrence_item_matching(occurrence_item, convert_atomic, check_function, xot)
-            }
+            ast::SequenceType::Item(occurrence_item) => self.occurrence_item_matching(
+                occurrence_item,
+                cast_or_promote_atomic,
+                check_function,
+                xot,
+            ),
         }
     }
 
     fn occurrence_item_matching(
         self,
         occurrence_item: &ast::Item,
-        convert_atomic: &impl Fn(&Sequence, Xs) -> error::Result<Sequence>,
+        cast_or_promote_atomic: &impl Fn(atomic::Atomic, Xs) -> error::Result<atomic::Atomic>,
         check_function: &impl Fn(&ast::FunctionTest, &Item) -> error::Result<()>,
         xot: &Xot,
     ) -> error::Result<Self> {
+        // if we're going to be comparing with atomic types, we need to atomize this first
         let sequence = match &occurrence_item.item_type {
-            ast::ItemType::AtomicOrUnionType(xs) => convert_atomic(&self, *xs)?,
+            ast::ItemType::AtomicOrUnionType(_) => self.atomized_sequence(xot)?,
             _ => self,
         };
         match occurrence_item.occurrence {
             ast::Occurrence::One => {
                 let one = one(sequence.iter())?;
-                one.item_type_matching(
+                let item = one.item_type_matching(
                     &occurrence_item.item_type,
-                    convert_atomic,
+                    cast_or_promote_atomic,
                     check_function,
                     xot,
                 )?;
-                Ok(sequence)
+                Ok(item.into())
             }
             ast::Occurrence::Option => {
                 let option = option(sequence.iter())?;
                 if let Some(item) = option {
-                    item.item_type_matching(
+                    let item = item.item_type_matching(
                         &occurrence_item.item_type,
-                        convert_atomic,
+                        cast_or_promote_atomic,
                         check_function,
                         xot,
                     )?;
-                    Ok(sequence)
+                    Ok(item.into())
                 } else {
                     Ok(sequence)
                 }
             }
             ast::Occurrence::Many => {
+                let mut items = Vec::with_capacity(sequence.len());
                 for item in sequence.iter() {
-                    item.item_type_matching(
+                    items.push(item.item_type_matching(
                         &occurrence_item.item_type,
-                        convert_atomic,
+                        cast_or_promote_atomic,
                         check_function,
                         xot,
-                    )?;
+                    )?);
                 }
-                Ok(sequence)
+                Ok(items.into())
             }
             ast::Occurrence::NonEmpty => {
                 if sequence.is_empty() {
                     return Err(error::Error::XPTY0004);
                 }
+                let mut items = Vec::with_capacity(sequence.len());
                 for item in sequence.iter() {
-                    item.item_type_matching(
+                    items.push(item.item_type_matching(
                         &occurrence_item.item_type,
-                        convert_atomic,
+                        cast_or_promote_atomic,
                         check_function,
                         xot,
-                    )?;
+                    )?);
                 }
-                Ok(sequence)
+                Ok(items.into())
             }
         }
     }
@@ -188,23 +185,29 @@ impl Sequence {
 
 impl Item {
     pub(crate) fn item_type_matching(
-        &self,
+        self,
         item_type: &ast::ItemType,
-        convert_atomic: &impl Fn(&Sequence, Xs) -> error::Result<Sequence>,
+        cast_or_promote_atomic: &impl Fn(atomic::Atomic, Xs) -> error::Result<atomic::Atomic>,
         check_function: &impl Fn(&ast::FunctionTest, &Item) -> error::Result<()>,
         xot: &Xot,
-    ) -> error::Result<()> {
+    ) -> error::Result<Item> {
         match item_type {
-            ast::ItemType::Item => Ok(()),
-            ast::ItemType::AtomicOrUnionType(xs) => self.to_atomic()?.atomic_type_matching(*xs),
-            ast::ItemType::KindTest(kind_test) => self.kind_test_matching(kind_test, xot),
-            ast::ItemType::FunctionTest(function_test) => check_function(function_test, self),
+            ast::ItemType::Item => {}
+            ast::ItemType::AtomicOrUnionType(xs) => {
+                let atom = cast_or_promote_atomic(self.to_atomic()?, *xs)?;
+                atom.atomic_type_matching(*xs)?;
+                return Ok(Item::Atomic(atom));
+            }
+            ast::ItemType::KindTest(kind_test) => {
+                self.kind_test_matching(kind_test, xot)?;
+            }
+            ast::ItemType::FunctionTest(function_test) => {
+                check_function(function_test, &self)?;
+            }
             ast::ItemType::MapTest(map_test) => match map_test {
                 ast::MapTest::AnyMapTest => {
-                    if self.is_map() {
-                        Ok(())
-                    } else {
-                        Err(error::Error::XPTY0004)
+                    if !self.is_map() {
+                        return Err(error::Error::XPTY0004);
                     }
                 }
                 ast::MapTest::TypedMapTest(typed_map_test) => {
@@ -213,20 +216,17 @@ impl Item {
                         key.atomic_type_matching(typed_map_test.key_type)?;
                         value.clone().sequence_type_matching_convert(
                             &typed_map_test.value_type,
-                            convert_atomic,
+                            cast_or_promote_atomic,
                             check_function,
                             xot,
                         )?;
                     }
-                    Ok(())
                 }
             },
             ast::ItemType::ArrayTest(array_test) => match array_test {
                 ast::ArrayTest::AnyArrayTest => {
-                    if self.is_array() {
-                        Ok(())
-                    } else {
-                        Err(error::Error::XPTY0004)
+                    if !self.is_array() {
+                        return Err(error::Error::XPTY0004);
                     }
                 }
                 ast::ArrayTest::TypedArrayTest(typed_array_test) => {
@@ -234,15 +234,15 @@ impl Item {
                     for sequence in array.iter() {
                         sequence.clone().sequence_type_matching_convert(
                             &typed_array_test.item_type,
-                            convert_atomic,
+                            cast_or_promote_atomic,
                             check_function,
                             xot,
                         )?;
                     }
-                    Ok(())
                 }
             },
         }
+        Ok(self)
     }
 
     fn kind_test_matching(&self, kind_test: &ast::KindTest, xot: &Xot) -> error::Result<()> {
