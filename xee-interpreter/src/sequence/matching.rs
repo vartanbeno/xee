@@ -72,12 +72,6 @@ impl Sequence {
         )
     }
 
-    fn atomized_sequence(&self, xot: &Xot) -> error::Result<Self> {
-        let atomized = self.atomized(xot);
-        let sequence: Sequence = atomized.collect::<error::Result<Vec<_>>>()?.into();
-        Ok(sequence)
-    }
-
     fn cast_or_promote_atomic(
         atom: atomic::Atomic,
         xs: Xs,
@@ -211,46 +205,35 @@ impl Sequence {
         xs: Xs,
         xot: &Xot,
     ) -> error::Result<Self> {
-        let sequence = self.atomized_sequence(xot)?;
         match occurrence_item.occurrence {
             ast::Occurrence::One => {
-                let one = one(sequence.iter())?;
-                let atom = one
-                    .to_atomic()?
-                    .atomic_type_matching(xs, cast_or_promote_atomic)?;
+                let one = one(self.atomized(xot))?;
+                let atom = one?.atomic_type_matching(xs, cast_or_promote_atomic)?;
                 Ok(atom.into())
             }
             ast::Occurrence::Option => {
-                let option = option(sequence.iter())?;
-                if let Some(item) = option {
-                    let atom = item
-                        .to_atomic()?
-                        .atomic_type_matching(xs, cast_or_promote_atomic)?;
+                let option = option(self.atomized(xot))?;
+                if let Some(atom) = option {
+                    let atom = atom?.atomic_type_matching(xs, cast_or_promote_atomic)?;
                     Ok(atom.into())
                 } else {
-                    Ok(sequence)
+                    Ok(self)
                 }
             }
             ast::Occurrence::Many => {
-                let mut atoms = Vec::with_capacity(sequence.len());
-                for item in sequence.iter() {
-                    atoms.push(
-                        item.to_atomic()?
-                            .atomic_type_matching(xs, cast_or_promote_atomic)?,
-                    );
+                let mut atoms = Vec::with_capacity(self.len());
+                for atom in self.atomized(xot) {
+                    atoms.push(atom?.atomic_type_matching(xs, cast_or_promote_atomic)?);
                 }
                 Ok(atoms.into())
             }
             ast::Occurrence::NonEmpty => {
-                if sequence.is_empty() {
+                if self.is_empty() {
                     return Err(error::Error::XPTY0004);
                 }
-                let mut atoms = Vec::with_capacity(sequence.len());
-                for item in sequence.iter() {
-                    atoms.push(
-                        item.to_atomic()?
-                            .atomic_type_matching(xs, cast_or_promote_atomic)?,
-                    );
+                let mut atoms = Vec::with_capacity(self.len());
+                for atom in self.atomized(xot) {
+                    atoms.push(atom?.atomic_type_matching(xs, cast_or_promote_atomic)?);
                 }
                 Ok(atoms.into())
             }
