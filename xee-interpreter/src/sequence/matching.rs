@@ -84,7 +84,14 @@ impl Sequence {
         context: &context::StaticContext,
     ) -> error::Result<atomic::Atomic> {
         let atom = if matches!(atom, atomic::Atomic::Untyped(_)) {
-            atom.cast_to_schema_type(xs, context)?
+            match xs {
+                //  function conversion rules 3.1.5.2 it says:
+                // If the item is of type xs:untypedAtomic and the expected type is namespace-sensitive, a type error [err:XPTY0117] is raised.
+                Xs::QName | Xs::Notation => {
+                    return Err(error::Error::XPTY0117);
+                }
+                _ => atom.cast_to_schema_type(xs, context)?,
+            }
         } else {
             atom
         };

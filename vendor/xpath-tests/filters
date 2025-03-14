@@ -1171,7 +1171,6 @@ fn-lang1args-3
 = fn-load-xquery-module
 = fn-local-name
 = fn-local-name-from-QName
-LocalNameFromQNameFunc015a
 = fn-lower-case
 fn-lower-case-19
 = fn-matches
@@ -1188,7 +1187,6 @@ fn-lower-case-19
 = fn-namespace-uri
 = fn-namespace-uri-for-prefix
 = fn-namespace-uri-from-QName
-NamespaceURIFromQNameFunc015a
 = fn-nilled
 K-NilledFunc-3
 K-NilledFunc-4
