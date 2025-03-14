@@ -272,14 +272,19 @@ impl Xs {
         }
     }
 
+    #[inline]
     pub fn derives_from(&self, other: Xs) -> bool {
         if self == &other {
             return true;
         }
-        match self.parent() {
-            Some(parent_type) => parent_type.derives_from(other),
-            None => false,
+        let mut xs = *self;
+        while let Some(parent) = xs.parent() {
+            if parent == other {
+                return true;
+            }
+            xs = parent;
         }
+        false
     }
 
     pub fn matches(&self, other: Xs) -> bool {
