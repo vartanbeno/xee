@@ -85,8 +85,9 @@ impl Sequence {
     ) -> error::Result<atomic::Atomic> {
         let atom = if matches!(atom, atomic::Atomic::Untyped(_)) {
             match xs {
-                //  function conversion rules 3.1.5.2 it says:
-                // If the item is of type xs:untypedAtomic and the expected type is namespace-sensitive, a type error [err:XPTY0117] is raised.
+                // function conversion rules 3.1.5.2 it says: If the item is of
+                // type xs:untypedAtomic and the expected type is
+                // namespace-sensitive, a type error [err:XPTY0117] is raised.
                 Xs::QName | Xs::Notation => {
                     return Err(error::Error::XPTY0117);
                 }
@@ -129,31 +130,98 @@ impl Sequence {
         check_function: &impl Fn(&ast::FunctionTest, &Item) -> error::Result<()>,
         xot: &Xot,
     ) -> error::Result<Self> {
-        // if we're going to be comparing with atomic types, we need to atomize this first
-        let sequence = match &occurrence_item.item_type {
-            ast::ItemType::AtomicOrUnionType(_) => self.atomized_sequence(xot)?,
-            _ => self,
-        };
+        match &occurrence_item.item_type {
+            ast::ItemType::AtomicOrUnionType(xs) => self.atomic_occurrence_item_matching(
+                occurrence_item,
+                cast_or_promote_atomic,
+                *xs,
+                xot,
+            ),
+            _ => self.non_atomic_occurrence_item_matching(
+                occurrence_item,
+                cast_or_promote_atomic,
+                check_function,
+                xot,
+            ),
+        }
+    }
+
+    // there is some duplication here for performance reasons; non-atomic
+    // occurrence type matching doesn't have to handle casting or promotion
+
+    fn non_atomic_occurrence_item_matching(
+        self,
+        occurrence_item: &ast::Item,
+        cast_or_promote_atomic: &impl Fn(atomic::Atomic, Xs) -> error::Result<atomic::Atomic>,
+        check_function: &impl Fn(&ast::FunctionTest, &Item) -> error::Result<()>,
+        xot: &Xot,
+    ) -> error::Result<Self> {
         match occurrence_item.occurrence {
             ast::Occurrence::One => {
-                let one = one(sequence.iter())?;
-                let item = one.item_type_matching(
+                let one = one(self.iter())?;
+                one.non_atomic_item_type_matching(
                     &occurrence_item.item_type,
                     cast_or_promote_atomic,
                     check_function,
                     xot,
                 )?;
-                Ok(item.into())
             }
             ast::Occurrence::Option => {
-                let option = option(sequence.iter())?;
+                let option = option(self.iter())?;
                 if let Some(item) = option {
-                    let item = item.item_type_matching(
+                    item.non_atomic_item_type_matching(
                         &occurrence_item.item_type,
                         cast_or_promote_atomic,
                         check_function,
                         xot,
                     )?;
+                }
+            }
+            ast::Occurrence::Many => {
+                for item in self.iter() {
+                    item.non_atomic_item_type_matching(
+                        &occurrence_item.item_type,
+                        cast_or_promote_atomic,
+                        check_function,
+                        xot,
+                    )?;
+                }
+            }
+            ast::Occurrence::NonEmpty => {
+                if self.is_empty() {
+                    return Err(error::Error::XPTY0004);
+                }
+                for item in self.iter() {
+                    item.non_atomic_item_type_matching(
+                        &occurrence_item.item_type,
+                        cast_or_promote_atomic,
+                        check_function,
+                        xot,
+                    )?;
+                }
+            }
+        }
+        Ok(self)
+    }
+
+    fn atomic_occurrence_item_matching(
+        self,
+        occurrence_item: &ast::Item,
+        cast_or_promote_atomic: &impl Fn(atomic::Atomic, Xs) -> error::Result<atomic::Atomic>,
+        xs: Xs,
+        xot: &Xot,
+    ) -> error::Result<Self> {
+        let sequence = self.atomized_sequence(xot)?;
+        match occurrence_item.occurrence {
+            ast::Occurrence::One => {
+                let one = one(sequence.iter())?;
+                let item = one.atomic_item_type_matching(xs, cast_or_promote_atomic)?;
+                Ok(item.into())
+            }
+            ast::Occurrence::Option => {
+                let option = option(sequence.iter())?;
+                if let Some(item) = option {
+                    let item = item.atomic_item_type_matching(xs, cast_or_promote_atomic)?;
                     Ok(item.into())
                 } else {
                     Ok(sequence)
@@ -162,12 +230,7 @@ impl Sequence {
             ast::Occurrence::Many => {
                 let mut items = Vec::with_capacity(sequence.len());
                 for item in sequence.iter() {
-                    items.push(item.item_type_matching(
-                        &occurrence_item.item_type,
-                        cast_or_promote_atomic,
-                        check_function,
-                        xot,
-                    )?);
+                    items.push(item.atomic_item_type_matching(xs, cast_or_promote_atomic)?);
                 }
                 Ok(items.into())
             }
@@ -177,12 +240,7 @@ impl Sequence {
                 }
                 let mut items = Vec::with_capacity(sequence.len());
                 for item in sequence.iter() {
-                    items.push(item.item_type_matching(
-                        &occurrence_item.item_type,
-                        cast_or_promote_atomic,
-                        check_function,
-                        xot,
-                    )?);
+                    items.push(item.atomic_item_type_matching(xs, cast_or_promote_atomic)?);
                 }
                 Ok(items.into())
             }
@@ -191,19 +249,27 @@ impl Sequence {
 }
 
 impl Item {
-    pub(crate) fn item_type_matching(
+    fn atomic_item_type_matching(
+        self,
+        xs: Xs,
+        cast_or_promote_atomic: &impl Fn(atomic::Atomic, Xs) -> error::Result<atomic::Atomic>,
+    ) -> error::Result<Self> {
+        let atom = cast_or_promote_atomic(self.to_atomic()?, xs)?;
+        atom.atomic_type_matching(xs)?;
+        Ok(Item::Atomic(atom))
+    }
+
+    pub(crate) fn non_atomic_item_type_matching(
         self,
         item_type: &ast::ItemType,
         cast_or_promote_atomic: &impl Fn(atomic::Atomic, Xs) -> error::Result<atomic::Atomic>,
         check_function: &impl Fn(&ast::FunctionTest, &Item) -> error::Result<()>,
         xot: &Xot,
-    ) -> error::Result<Item> {
+    ) -> error::Result<()> {
         match item_type {
             ast::ItemType::Item => {}
-            ast::ItemType::AtomicOrUnionType(xs) => {
-                let atom = cast_or_promote_atomic(self.to_atomic()?, *xs)?;
-                atom.atomic_type_matching(*xs)?;
-                return Ok(Item::Atomic(atom));
+            ast::ItemType::AtomicOrUnionType(_) => {
+                unreachable!()
             }
             ast::ItemType::KindTest(kind_test) => {
                 self.kind_test_matching(kind_test, xot)?;
@@ -249,7 +315,7 @@ impl Item {
                 }
             },
         }
-        Ok(self)
+        Ok(())
     }
 
     fn kind_test_matching(&self, kind_test: &ast::KindTest, xot: &Xot) -> error::Result<()> {
