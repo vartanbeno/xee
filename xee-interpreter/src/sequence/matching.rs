@@ -172,26 +172,42 @@ impl Sequence {
                 }
             }
             ast::Occurrence::Many => {
-                for item in self.iter() {
-                    item.non_atomic_item_type_matching(
-                        &occurrence_item.item_type,
-                        cast_or_promote_atomic,
-                        check_function,
-                        xot,
-                    )?;
+                match occurrence_item.item_type {
+                    ast::ItemType::Item => {
+                        // we don't have to do anything, as we already know
+                        // all items are items
+                    }
+                    _ => {
+                        for item in self.iter() {
+                            item.non_atomic_item_type_matching(
+                                &occurrence_item.item_type,
+                                cast_or_promote_atomic,
+                                check_function,
+                                xot,
+                            )?;
+                        }
+                    }
                 }
             }
             ast::Occurrence::NonEmpty => {
                 if self.is_empty() {
                     return Err(error::Error::XPTY0004);
                 }
-                for item in self.iter() {
-                    item.non_atomic_item_type_matching(
-                        &occurrence_item.item_type,
-                        cast_or_promote_atomic,
-                        check_function,
-                        xot,
-                    )?;
+                match occurrence_item.item_type {
+                    ast::ItemType::Item => {
+                        // we don't have to do anything, as we already know
+                        // all items are items
+                    }
+                    _ => {
+                        for item in self.iter() {
+                            item.non_atomic_item_type_matching(
+                                &occurrence_item.item_type,
+                                cast_or_promote_atomic,
+                                check_function,
+                                xot,
+                            )?;
+                        }
+                    }
                 }
             }
         }
