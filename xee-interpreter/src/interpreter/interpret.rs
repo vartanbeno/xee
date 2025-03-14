@@ -766,15 +766,12 @@ impl<'a> Interpreter<'a> {
         parameter_types: &[Option<ast::SequenceType>],
         arity: u8,
     ) -> error::Result<Vec<sequence::Sequence>> {
-        // TODO: fast path if no sequence types exist for parameters
-        // could cache this inside of signature so that it's really fast
-        // to detect. we could also have a secondary fast path where
-        // if the types are all exactly the same, we don't do a clone, but that
-        // won't happen as quickly.
+        // TODO: fast path if no sequence type declarations exist for
+        // parameters could cache this inside of signature so that it's really
+        // fast to detect.
 
-        // In fact we *know* if ther are no parameter types so we could simply
-        // forgo putting anything on the stack in that case. But that would mean
-        // we should not return a sequence here but a reference to the stack.
+        // we could also have a secondary fast path where if the types are all
+        // exactly the same, we don't do a clone.
 
         // get all the stack values out in order
         let stack_values = self.state.arguments(arity as usize);
