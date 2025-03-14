@@ -212,6 +212,10 @@ impl<'a> State<'a> {
         &self.stack[self.stack.len() - arity..]
     }
 
+    pub(crate) fn truncate_arguments(&mut self, arity: usize) {
+        self.stack.truncate(self.stack.len() - arity);
+    }
+
     pub(crate) fn inline_return(&mut self, start_base: usize) -> bool {
         let return_value = self.stack.pop().unwrap();
 

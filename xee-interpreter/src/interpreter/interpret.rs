@@ -776,26 +776,28 @@ impl<'a> Interpreter<'a> {
         // forgo putting anything on the stack in that case. But that would mean
         // we should not return a sequence here but a reference to the stack.
 
-        // now pop everything off the stack to do type matching, along
-        // with sequence type conversion, function coercion
+        // get all the stack values out in order
+        let stack_values = self.state.arguments(arity as usize);
         let mut arguments = Vec::with_capacity(arity as usize);
-        for parameter_type in parameter_types.iter().rev() {
-            let sequence = self.state.pop()?;
+        let static_context = self.runnable.static_context();
+        let xot = self.state.xot();
+        for (parameter_type, stack_value) in parameter_types.iter().zip(stack_values) {
+            let sequence: sequence::Sequence = stack_value.try_into()?;
             if let Some(type_) = parameter_type {
                 // matching also takes care of function conversion rules
                 let sequence = sequence.sequence_type_matching_function_conversion(
                     type_,
-                    self.runnable.static_context(),
-                    self.state.xot(),
+                    static_context,
+                    xot,
                     &|function| self.runnable.function_info(function).signature(),
                 )?;
-                arguments.push(sequence)
+                arguments.push(sequence);
             } else {
                 // no need to do any checking or conversion
                 arguments.push(sequence);
             }
         }
-        arguments.reverse();
+        self.state.truncate_arguments(arity as usize);
         Ok(arguments)
     }
 
