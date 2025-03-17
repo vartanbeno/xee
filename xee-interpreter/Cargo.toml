@@ -59,7 +59,6 @@ static_assertions = "1.1.0"
 
 [dev-dependencies]
 insta = { workspace = true, features = ["yaml", "glob"] }
-rstest = "0.16.0"
 test-generator = "0.3.1"
 xot = { workspace = true, features = ["proptest"] }
 rust_decimal_macros = { workspace = true }
