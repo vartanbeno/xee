@@ -1,4 +1,5 @@
 use chrono::{Datelike, Offset, TimeZone, Timelike};
+use chumsky::input::ValueInput;
 use chumsky::prelude::*;
 use chumsky::util::MaybeRef;
 use rust_decimal::prelude::*;
@@ -582,7 +583,7 @@ impl atomic::Atomic {
 enum ParserError {
     ExpectedFound {
         span: SimpleSpan<usize>,
-        expected: Vec<Option<char>>,
+        expected: Vec<chumsky::DefaultExpected<'static, char>>,
         found: Option<char>,
     },
     Error(error::Error),
@@ -594,22 +595,24 @@ impl From<error::Error> for ParserError {
     }
 }
 
-impl<'a> chumsky::error::Error<'a, &'a str> for ParserError {
-    fn expected_found<E: IntoIterator<Item = Option<MaybeRef<'a, char>>>>(
+impl<'a, I> chumsky::error::LabelError<'a, I, chumsky::DefaultExpected<'a, char>> for ParserError
+where
+    I: ValueInput<'a, Token = char, Span = chumsky::span::SimpleSpan>,
+{
+    fn expected_found<E: IntoIterator<Item = chumsky::DefaultExpected<'a, char>>>(
         expected: E,
-        found: Option<MaybeRef<'a, char>>,
-        span: SimpleSpan<usize>,
+        found: Option<MaybeRef<'a, I::Token>>,
+        span: I::Span,
     ) -> Self {
         Self::ExpectedFound {
             span,
-            expected: expected
-                .into_iter()
-                .map(|e| e.as_deref().copied())
-                .collect(),
+            expected: expected.into_iter().map(|e| e.into_owned()).collect(),
             found: found.as_deref().copied(),
         }
     }
+}
 
+impl<'a> chumsky::error::Error<'a, &'a str> for ParserError {
     fn merge(self, other: Self) -> Self {
         match (self, other) {
             (ParserError::ExpectedFound { .. }, a) => a,

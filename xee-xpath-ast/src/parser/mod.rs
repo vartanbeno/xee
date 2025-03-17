@@ -9,7 +9,9 @@ mod types;
 mod xpath_type;
 
 use chumsky::input::Stream;
+use chumsky::inspector::SimpleState;
 use chumsky::{input::ValueInput, prelude::*};
+
 use std::borrow::Cow;
 
 use xee_name::VariableNames;
@@ -29,7 +31,8 @@ fn create_token_iter(src: &str) -> impl Iterator<Item = (Token, SimpleSpan)> + '
 }
 
 fn tokens(src: &str) -> impl ValueInput<'_, Token = Token<'_>, Span = Span> {
-    Stream::from_iter(create_token_iter(src)).spanned((src.len()..src.len()).into())
+    Stream::from_iter(create_token_iter(src))
+        .map((src.len()..src.len()).into(), |(tok, span)| (tok, span))
 }
 
 fn parse<'a, I, T>(
@@ -41,7 +44,7 @@ where
     I: ValueInput<'a, Token = Token<'a>, Span = Span>,
     T: std::fmt::Debug,
 {
-    let mut state = State { namespaces };
+    let mut state = SimpleState(State { namespaces });
     parser
         .parse_with_state(input, &mut state)
         .into_result()
@@ -67,9 +70,9 @@ impl ast::XPath {
         namespaces: &'a Namespaces,
         variable_names: &'a VariableNames,
     ) -> Result<Self, ParserError> {
-        let mut state = State {
+        let mut state = SimpleState(State {
             namespaces: Cow::Borrowed(namespaces),
-        };
+        });
         let r = parser()
             .xpath_right_brace
             .parse_with_state(tokens(input), &mut state);
@@ -629,6 +632,11 @@ mod tests {
     #[test]
     fn test_treat() {
         assert_ron_snapshot!(ast::ExprSingle::parse("1 treat as xs:integer"));
+    }
+
+    #[test]
+    fn test_treat_invalid() {
+        assert_ron_snapshot!(ast::ExprSingle::parse("3 treat as item("));
     }
 
     #[test]

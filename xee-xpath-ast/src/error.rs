@@ -43,7 +43,7 @@ impl ParserError {
     }
 }
 
-impl<'a, I> chumsky::error::Error<'a, I> for ParserError
+impl<'a, I, L> chumsky::error::LabelError<'a, I, L> for ParserError
 where
     I: ValueInput<'a, Token = Token<'a>, Span = Span>,
 {
@@ -53,14 +53,19 @@ where
     // as soon as we want to build on it in the XSLT parser. We also don't
     // have a good way to turn a logos token into a human-readable string, so
     // we couldn't really construct good error messages anyway.
-    fn expected_found<E: IntoIterator<Item = Option<MaybeRef<'a, Token<'a>>>>>(
+    fn expected_found<E: IntoIterator<Item = L>>(
         _expected: E,
-        _found: Option<MaybeRef<'a, Token<'a>>>,
-        span: Span,
+        _found: Option<MaybeRef<'a, I::Token>>,
+        span: I::Span,
     ) -> Self {
         Self::ExpectedFound { span }
     }
+}
 
+impl<'a, I> chumsky::error::Error<'a, I> for ParserError
+where
+    I: ValueInput<'a, Token = Token<'a>, Span = Span>,
+{
     fn merge(self, other: Self) -> Self {
         match (self, other) {
             (

@@ -1,4 +1,6 @@
+use chumsky::inspector::SimpleState;
 use chumsky::{input::ValueInput, prelude::*};
+
 use xee_xpath_lexer::Token;
 
 use crate::ast::Span;
@@ -42,7 +44,7 @@ where
         local_name_wildcard_token
             .try_map_with(|w, extra| {
                 let span = extra.span();
-                let state: &mut State = extra.state();
+                let state: &mut SimpleState<State> = &mut extra.state();
                 let namespace = state.namespaces.by_prefix(w.prefix).ok_or_else(|| {
                     ParserError::UnknownPrefix {
                         prefix: w.prefix.to_string(),

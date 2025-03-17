@@ -1,4 +1,6 @@
+use chumsky::inspector::SimpleState;
 use chumsky::{input::ValueInput, prelude::*};
+
 use xee_xpath_lexer::Token;
 
 use crate::ast::Span;
@@ -40,7 +42,7 @@ where
 
     let prefixed_name = prefixed_qname_token
         .try_map_with(|prefixed_qname, extra| {
-            let state: &mut State = extra.state();
+            let state: &mut SimpleState<State> = extra.state();
             ast::Name::prefixed(
                 prefixed_qname.prefix,
                 prefixed_qname.local_name,
