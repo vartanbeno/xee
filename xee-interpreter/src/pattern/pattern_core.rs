@@ -337,7 +337,7 @@ mod tests {
         }
     }
 
-    impl<'a> PredicateMatcher for BasicPredicateMatcher<'a> {
+    impl PredicateMatcher for BasicPredicateMatcher<'_> {
         fn match_predicate(&mut self, _inline_function_id: InlineFunctionId, _item: &Item) -> bool {
             self.predicate_matches
         }
