@@ -18,22 +18,19 @@ pub(crate) trait Renderer<E: Environment, R: Runnable<E>> {
         stdout: &mut Stdout,
         catalog: &Catalog<E, R>,
         test_set: &TestSet<E, R>,
-    ) -> crossterm::Result<()>;
-    fn render_test_case(
-        &self,
-        stdout: &mut Stdout,
-        test_case: &TestCase<E>,
-    ) -> crossterm::Result<()>;
+    ) -> std::io::Result<()>;
+    fn render_test_case(&self, stdout: &mut Stdout, test_case: &TestCase<E>)
+        -> std::io::Result<()>;
     fn render_test_outcome(
         &self,
         stdout: &mut Stdout,
         test_result: &TestOutcome,
-    ) -> crossterm::Result<()>;
+    ) -> std::io::Result<()>;
     fn render_test_set_summary(
         &self,
         stdout: &mut Stdout,
         test_set: &TestSet<E, R>,
-    ) -> crossterm::Result<()>;
+    ) -> std::io::Result<()>;
 }
 
 pub(crate) struct VerboseRenderer {}
@@ -50,7 +47,7 @@ impl<E: Environment, R: Runnable<E>> Renderer<E, R> for VerboseRenderer {
         _stdout: &mut Stdout,
         catalog: &Catalog<E, R>,
         test_set: &TestSet<E, R>,
-    ) -> crossterm::Result<()> {
+    ) -> std::io::Result<()> {
         println!("{}", test_set.file_path(catalog).display());
         println!("{}", test_set.name);
         for description in &test_set.descriptions {
@@ -63,7 +60,7 @@ impl<E: Environment, R: Runnable<E>> Renderer<E, R> for VerboseRenderer {
         &self,
         _stdout: &mut Stdout,
         test_case: &TestCase<E>,
-    ) -> crossterm::Result<()> {
+    ) -> std::io::Result<()> {
         print!("{} ... ", test_case.name);
         Ok(())
     }
@@ -72,7 +69,7 @@ impl<E: Environment, R: Runnable<E>> Renderer<E, R> for VerboseRenderer {
         &self,
         stdout: &mut Stdout,
         test_result: &TestOutcome,
-    ) -> crossterm::Result<()> {
+    ) -> std::io::Result<()> {
         match test_result {
             TestOutcome::Passed => {
                 writeln!(
@@ -149,7 +146,7 @@ impl<E: Environment, R: Runnable<E>> Renderer<E, R> for VerboseRenderer {
         &self,
         _stdout: &mut Stdout,
         _test_set: &TestSet<E, R>,
-    ) -> crossterm::Result<()> {
+    ) -> std::io::Result<()> {
         println!();
         Ok(())
     }
@@ -169,7 +166,7 @@ impl<E: Environment, R: Runnable<E>> Renderer<E, R> for CharacterRenderer {
         _stdout: &mut Stdout,
         catalog: &Catalog<E, R>,
         test_set: &TestSet<E, R>,
-    ) -> crossterm::Result<()> {
+    ) -> std::io::Result<()> {
         print!("{} ", test_set.file_path(catalog).display());
         Ok(())
     }
@@ -178,7 +175,7 @@ impl<E: Environment, R: Runnable<E>> Renderer<E, R> for CharacterRenderer {
         &self,
         _stdout: &mut Stdout,
         _test_case: &TestCase<E>,
-    ) -> crossterm::Result<()> {
+    ) -> std::io::Result<()> {
         Ok(())
     }
 
@@ -186,7 +183,7 @@ impl<E: Environment, R: Runnable<E>> Renderer<E, R> for CharacterRenderer {
         &self,
         stdout: &mut Stdout,
         outcome: &TestOutcome,
-    ) -> crossterm::Result<()> {
+    ) -> std::io::Result<()> {
         match outcome {
             TestOutcome::Passed => render_error_code(stdout, ".", crossterm::style::Color::Green),
             TestOutcome::UnexpectedError(_) => {
@@ -215,7 +212,7 @@ impl<E: Environment, R: Runnable<E>> Renderer<E, R> for CharacterRenderer {
         &self,
         _stdout: &mut Stdout,
         _test_set: &TestSet<E, R>,
-    ) -> crossterm::Result<()> {
+    ) -> std::io::Result<()> {
         println!();
         Ok(())
     }
@@ -225,7 +222,7 @@ fn render_error_code(
     stdout: &mut Stdout,
     error_code: &str,
     color: crossterm::style::Color,
-) -> crossterm::Result<()> {
+) -> std::io::Result<()> {
     if stdout.is_terminal() {
         execute!(stdout, style::PrintStyledContent(error_code.with(color)))?;
     } else {

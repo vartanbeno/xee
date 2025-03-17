@@ -21,14 +21,14 @@ xee-xpath = { path = "../xee-xpath" }
 xee-xslt-compiler = { path = "../xee-xslt-compiler" }
 xee-name = { path = "../xee-name" }
 fxhash = "0.2.1"
-indexmap = "1.9.3"
+indexmap = "2.8.0"
 clap = { workspace = true, features = ["derive"] }
-crossterm = "0.26.1"
-globset = "0.4.10"
+crossterm = "0.28.1"
+globset = "0.4.16"
 chrono = { workspace = true }
 ibig = { workspace = true }
 iri-string = { workspace = true }
 
 [dev-dependencies]
 insta = { workspace = true, features = ["yaml", "glob"] }
-tempfile = "3.5.0"
+tempfile = "3.19.0"
