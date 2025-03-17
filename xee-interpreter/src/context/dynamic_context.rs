@@ -39,6 +39,8 @@ pub struct DynamicContext<'a> {
     default_uri_collection: Option<sequence::Sequence>,
     // uri collections
     uri_collections: HashMap<IriString, sequence::Sequence>,
+    // environment variables
+    environment_variables: HashMap<String, String>,
 }
 
 impl<'a> DynamicContext<'a> {
@@ -53,6 +55,7 @@ impl<'a> DynamicContext<'a> {
         collections: HashMap<IriString, sequence::Sequence>,
         default_uri_collection: Option<sequence::Sequence>,
         uri_collections: HashMap<IriString, sequence::Sequence>,
+        environment_variables: HashMap<String, String>,
     ) -> Self {
         Self {
             program,
@@ -64,6 +67,7 @@ impl<'a> DynamicContext<'a> {
             collections,
             default_uri_collection,
             uri_collections,
+            environment_variables,
         }
     }
 
@@ -108,6 +112,16 @@ impl<'a> DynamicContext<'a> {
     /// defines it as an xs:string
     pub fn uri_collection(&self, uri: &IriStr) -> Option<&sequence::Sequence> {
         self.uri_collections.get(uri)
+    }
+
+    /// Access an environment variable by name
+    pub fn environment_variable(&self, name: &str) -> Option<&str> {
+        self.environment_variables.get(name).map(String::as_str)
+    }
+
+    /// Access all environment variable names
+    pub fn environment_variable_names(&self) -> impl Iterator<Item = &str> {
+        self.environment_variables.keys().map(String::as_str)
     }
 
     pub(crate) fn arguments(&self) -> Result<Vec<sequence::Sequence>, Error> {

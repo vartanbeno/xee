@@ -108,6 +108,19 @@ fn absolute_uri(context: &DynamicContext, uri: &IriReferenceStr) -> error::Resul
     Ok(uri)
 }
 
+#[xpath_fn("fn:environment-variable($name as xs:string) as xs:string?")]
+fn environment_variable(context: &DynamicContext, name: &str) -> Option<String> {
+    context.environment_variable(name).map(|s| s.to_string())
+}
+
+#[xpath_fn("fn:available-environment-variables() as xs:string*")]
+fn available_environment_variables(context: &DynamicContext) -> Vec<String> {
+    context
+        .environment_variable_names()
+        .map(|s| s.to_string())
+        .collect()
+}
+
 // https://www.w3.org/TR/xpath-functions-31/#fns-on-docs
 pub(crate) fn static_function_descriptions() -> Vec<StaticFunctionDescription> {
     vec![
@@ -117,5 +130,7 @@ pub(crate) fn static_function_descriptions() -> Vec<StaticFunctionDescription> {
         wrap_xpath_fn!(collection_by_uri),
         wrap_xpath_fn!(uri_collection),
         wrap_xpath_fn!(uri_collection_by_uri),
+        wrap_xpath_fn!(environment_variable),
+        wrap_xpath_fn!(available_environment_variables),
     ]
 }

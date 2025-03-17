@@ -102,14 +102,6 @@ array-sort-021
 = fn-analyze-string
 = fn-apply
 = fn-available-environment-variables
-fn-available-environment-variables-001
-fn-available-environment-variables-002
-fn-available-environment-variables-005
-fn-available-environment-variables-006
-fn-available-environment-variables-007
-fn-available-environment-variables-008
-fn-available-environment-variables-010
-fn-available-environment-variables-011
 = fn-avg
 cbcl-avg-001
 = fn-base-uri
@@ -212,15 +204,6 @@ fn-element-with-id-5
 = fn-encode-for-uri
 = fn-ends-with
 = fn-environment-variable
-environment-variable-001
-environment-variable-002
-environment-variable-005
-environment-variable-006
-environment-variable-007
-environment-variable-009
-environment-variable-010
-environment-variable-011
-environment-variable-012
 = fn-error
 = fn-escape-html-uri
 = fn-exactly-one
@@ -907,10 +890,6 @@ fn-function-lookup-385
 fn-function-lookup-386
 fn-function-lookup-387
 fn-function-lookup-388
-fn-function-lookup-389
-fn-function-lookup-390
-fn-function-lookup-391
-fn-function-lookup-392
 fn-function-lookup-402
 fn-function-lookup-404
 fn-function-lookup-523
@@ -2190,10 +2169,6 @@ function-literal-385
 function-literal-386
 function-literal-387
 function-literal-388
-function-literal-389
-function-literal-390
-function-literal-391
-function-literal-392
 function-literal-523
 function-literal-524
 function-literal-525

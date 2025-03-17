@@ -25,6 +25,7 @@ pub struct DynamicContextBuilder<'a> {
     collections: HashMap<IriString, sequence::Sequence>,
     default_uri_collection: Option<sequence::Sequence>,
     uri_collections: HashMap<IriString, sequence::Sequence>,
+    environment_variables: HashMap<String, String>,
 }
 
 #[derive(Debug, Clone)]
@@ -69,6 +70,7 @@ impl<'a> DynamicContextBuilder<'a> {
             collections: HashMap::new(),
             default_uri_collection: None,
             uri_collections: HashMap::new(),
+            environment_variables: HashMap::new(),
         }
     }
 
@@ -138,6 +140,15 @@ impl<'a> DynamicContextBuilder<'a> {
         self
     }
 
+    /// Set the environment variables
+    pub fn environment_variables(
+        &mut self,
+        environment_variables: HashMap<String, String>,
+    ) -> &mut Self {
+        self.environment_variables = environment_variables;
+        self
+    }
+
     fn uris_into_sequence(uris: &[&IriStr]) -> sequence::Sequence {
         // turn the URIs into a sequence
         let items: Vec<sequence::Item> = uris
@@ -162,6 +173,7 @@ impl<'a> DynamicContextBuilder<'a> {
             self.collections.clone(),
             self.default_uri_collection.clone(),
             self.uri_collections.clone(),
+            self.environment_variables.clone(),
         )
     }
 }
