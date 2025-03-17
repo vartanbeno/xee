@@ -192,13 +192,13 @@ Used in:
 
 ### 2.4.5 URI Literals
 
-- [ ] Verification of valid URI in BracedURILiteral
+- [x] Verification of valid URI in BracedURILiteral
 
 - [x] Whitespace normalization of URI literal
 
 ### 2.4.6 Resolving a Relative URI Reference
 
-- [ ] Resolving a relative URI reference
+- [x] Resolving a relative URI reference
 
 ## 2.5 Types
 
@@ -712,7 +712,7 @@ Note: detailed rules of 36 items, may spell it out when implementing.
 
 ## 3.16 Arrow operator (`=>`)
 
-- [ ] Arrow operator
+- [x] Arrow operator
 
 # A XPath 3.1 Grammar
 
