@@ -43,8 +43,7 @@ regexml = { git = "ssh://git@github.com/Paligo/regexml.git" }
 regex = "1.11.1"
 iri-string = "0.7.7"
 json = "0.12.4"
-insta = { version = "1.42.2" }
-
+insta = "1.42.2"
 
 # [profile.test.package.xot]
 # opt-level = 3
