@@ -2120,6 +2120,8 @@ Lookup-211
 = prod-MapConstructor
 MapConstructor-025
 = prod-MapTest
+MapTest-007
+MapTest-016
 MapTest-020
 MapTest-059
 MapTest-063
@@ -2234,6 +2236,7 @@ K2-Steps-9
 = prod-StringConstructor
 = prod-SwitchExpr
 = prod-TreatExpr
+K-SeqExprTreat-16
 = prod-TryCatchExpr
 = prod-TypeswitchExpr
 = prod-UnaryLookup

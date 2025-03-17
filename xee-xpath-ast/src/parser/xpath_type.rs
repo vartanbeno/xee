@@ -148,13 +148,15 @@ where
 
             let parenthesized_item_type =
                 item_type.delimited_by(just(Token::LeftParen), just(Token::RightParen));
-            item_type_empty
-                .or(item_type_array_test)
-                .or(item_type_map_test)
-                .or(item_type_function_test)
-                .or(item_type_kind_test)
-                .or(item_type_atomic_or_union)
-                .or(parenthesized_item_type)
+            choice((
+                item_type_empty,
+                item_type_array_test,
+                item_type_map_test,
+                item_type_function_test,
+                item_type_kind_test,
+                item_type_atomic_or_union,
+                parenthesized_item_type,
+            ))
         })
         .boxed();
 

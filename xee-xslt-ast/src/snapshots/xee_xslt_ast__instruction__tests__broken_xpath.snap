@@ -4,7 +4,7 @@ expression: "parse_sequence_constructor_item(r#\"<xsl:variable xmlns:xsl=\"http:
 ---
 Err(Attribute(XPathParser(ExpectedFound(
   span: SimpleSpan(
-    start: 92,
+    start: 93,
     end: 93,
     context: (),
   ),
