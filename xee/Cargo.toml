@@ -18,9 +18,9 @@ clap = { workspace = true, features = ["derive", "cargo"] }
 ariadne = "0.3.0"
 anyhow.workspace = true
 regex = { workspace = true }
-rustyline = "14.0.0"
+rustyline = "15.0.0"
 ahash = { workspace = true }
-const_format = "0.2.33"
+const_format = "0.2.34"
 
 [build-dependencies]
 build-data = "0"
