@@ -26,4 +26,4 @@ itertools = "0.13.0"
 xee-xpath-lexer = { path = ".", features = ["serde"] }
 insta = { workspace = true, features = ["yaml", "glob"] }
 rust_decimal_macros = { workspace = true }
-ron = "0.8.0"
+ron = { workspace = true }

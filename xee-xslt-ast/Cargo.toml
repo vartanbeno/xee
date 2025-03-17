@@ -37,4 +37,4 @@ rust_decimal = { workspace = true }
 xee-xslt-ast = { path = ".", features = ["serde"] }
 insta = { workspace = true, features = ["ron", "glob"] }
 xot = { workspace = true, features = ["proptest"] }
-ron = "0.8.0"
+ron = { workspace = true }
