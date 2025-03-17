@@ -3,8 +3,8 @@ use xee_xpath::error::Error;
 pub(crate) fn render_error(src: &str, e: Error) {
     let red = ariadne::Color::Red;
 
-    let mut report =
-        ariadne::Report::build(ariadne::ReportKind::Error, "source", 0).with_code(e.error.code());
+    let mut report = ariadne::Report::build(ariadne::ReportKind::Error, ("source", (0..0)))
+        .with_code(e.error.code());
 
     if let Some(span) = e.span {
         report = report.with_label(
@@ -22,7 +22,7 @@ pub(crate) fn render_error(src: &str, e: Error) {
 
 pub(crate) fn render_parse_error(src: &str, e: xot::ParseError) {
     let red = ariadne::Color::Red;
-    let mut report = ariadne::Report::build(ariadne::ReportKind::Error, "source", 0);
+    let mut report = ariadne::Report::build(ariadne::ReportKind::Error, ("source", (0..0)));
 
     report = report.with_label(
         ariadne::Label::new(("source", e.span().range()))
