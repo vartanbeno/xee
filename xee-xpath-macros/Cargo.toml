@@ -24,5 +24,5 @@ xot = { workspace = true }
 
 [dev-dependencies]
 serde = { workspace = true, features = ["derive"] }
-insta = { version = "1.29.0", features = ["yaml", "glob"] }
+insta = { workspace = true, features = ["yaml", "glob"] }
 xot = { workspace = true, features = ["serde"] }

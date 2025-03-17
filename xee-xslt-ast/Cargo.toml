@@ -35,6 +35,6 @@ rust_decimal = { workspace = true }
 [dev-dependencies]
 # we want to depend on serde feature during tests
 xee-xslt-ast = { path = ".", features = ["serde"] }
-insta = { version = "1.29.0", features = ["ron", "glob"] }
+insta = { workspace = true, features = ["ron", "glob"] }
 xot = { workspace = true, features = ["proptest"] }
 ron = "0.8.0"

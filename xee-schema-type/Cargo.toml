@@ -16,7 +16,7 @@ ahash = { workspace = true }
 serde = { workspace = true, features = ["derive"], optional = true }
 
 [dev-dependencies]
-insta = { version = "1.29.0", features = ["yaml", "glob"] }
+insta = { workspace = true, features = ["yaml", "glob"] }
 
 [features]
 serde = ["dep:serde"]

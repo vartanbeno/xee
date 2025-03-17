@@ -32,5 +32,5 @@ xee-interpreter = { path = "../xee-interpreter" }
 xee-ir = { path = "../xee-ir" }
 
 [dev-dependencies]
-insta = { version = "1.29.0", features = ["yaml", "glob"] }
+insta = { workspace = true, features = ["yaml", "glob"] }
 rust_decimal_macros = { workspace = true }

@@ -28,5 +28,5 @@ xee-ir = { path = "../xee-ir" }
 iri-string = { workspace = true }
 
 [dev-dependencies]
-insta = { version = "1.29.0", features = ["yaml", "glob"] }
+insta = { workspace = true, features = ["yaml", "glob"] }
 rust_decimal_macros = { workspace = true }

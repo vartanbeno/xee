@@ -58,7 +58,7 @@ v_jsonescape = "0.7.8"
 static_assertions = "1.1.0"
 
 [dev-dependencies]
-insta = { version = "1.29.0", features = ["yaml", "glob"] }
+insta = { workspace = true, features = ["yaml", "glob"] }
 rstest = "0.16.0"
 test-generator = "0.3.0"
 xot = { workspace = true, features = ["proptest"] }
