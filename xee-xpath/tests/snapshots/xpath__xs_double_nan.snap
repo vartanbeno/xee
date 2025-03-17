@@ -1,5 +1,5 @@
 ---
-source: xee-xpath-compiler/tests/xpath.rs
+source: xee-xpath/tests/xpath.rs
 expression: "run(\"xs:double('NaN')\")"
 ---
 Ok(
@@ -7,9 +7,7 @@ Ok(
         One {
             item: Atomic(
                 Double(
-                    OrderedFloat(
-                        NaN,
-                    ),
+                    NaN,
                 ),
             ),
         },

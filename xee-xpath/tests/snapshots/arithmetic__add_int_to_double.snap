@@ -1,15 +1,13 @@
 ---
-source: xee-xpath-compiler/tests/arithmetic.rs
-expression: "evaluate_without_focus(\"12 + 15.4e0\")"
+source: xee-xpath/tests/arithmetic.rs
+expression: "run(\"12 + 15.4e0\")"
 ---
 Ok(
     One(
         One {
             item: Atomic(
                 Double(
-                    OrderedFloat(
-                        27.4,
-                    ),
+                    27.4,
                 ),
             ),
         },
