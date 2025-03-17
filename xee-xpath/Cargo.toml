@@ -32,7 +32,7 @@ iri-string = { workspace = true }
 [dev-dependencies]
 insta = { workspace = true, features = ["yaml", "glob"] }
 rust_decimal_macros = { workspace = true }
-divan = "0.1.16"
+divan = "0.1.17"
 
 [[bench]]
 name = "xpath"
