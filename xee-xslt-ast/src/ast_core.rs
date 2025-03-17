@@ -1,5 +1,5 @@
 use rust_decimal::Decimal;
-use strum_macros::{EnumDiscriminants, EnumString, EnumVariantNames};
+use strum_macros::{EnumDiscriminants, EnumString, VariantNames};
 
 pub use xee_name::Name;
 use xee_xpath_ast::ast as xpath_ast;
@@ -1259,7 +1259,7 @@ pub struct Override {
 
 #[derive(Debug, Clone, PartialEq, Eq, EnumDiscriminants)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize))]
-#[strum_discriminants(derive(EnumString, EnumVariantNames))]
+#[strum_discriminants(derive(EnumString, VariantNames))]
 #[strum_discriminants(strum(serialize_all = "kebab-case"))]
 #[strum_discriminants(name(OverrideContentName))]
 pub enum OverrideContent {
@@ -1714,7 +1714,7 @@ pub enum Content {
 
 #[derive(Debug, Clone, PartialEq, Eq, EnumDiscriminants)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize))]
-#[strum_discriminants(derive(EnumString, EnumVariantNames))]
+#[strum_discriminants(derive(EnumString, VariantNames))]
 #[strum_discriminants(strum(serialize_all = "kebab-case"))]
 #[strum_discriminants(name(SequenceConstructorName))]
 pub enum SequenceConstructorInstruction {
@@ -1792,7 +1792,7 @@ impl From<ElementNode> for SequenceConstructorItem {
 
 #[derive(Debug, Clone, PartialEq, Eq, EnumDiscriminants)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize))]
-#[strum_discriminants(derive(EnumString, EnumVariantNames))]
+#[strum_discriminants(derive(EnumString, VariantNames))]
 #[strum_discriminants(strum(serialize_all = "kebab-case"))]
 #[strum_discriminants(name(DeclarationName))]
 pub enum Declaration {

@@ -22,12 +22,12 @@ members = [
 resolver = "2"
 
 [workspace.dependencies]
-anyhow = "1.0.80"
+anyhow = "1.0.97"
 xot = "0.29.0"
-ahash = "0.8.6"
-strum = "0.25"
-strum_macros = "0.25"
-clap = "4.2.7"
+ahash = "0.8.11"
+strum = "0.27"
+strum_macros = "0.27"
+clap = "4.5.32"
 ibig = "0.3.6"
 ordered-float = "3.7.0"
 rust_decimal = "1.30.0"
