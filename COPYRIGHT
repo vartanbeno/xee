@@ -2,8 +2,7 @@ The Xee project is copyright Paligo and contributors.
 
 Short version for non-lawyers:
 
-The Xee Project is dual-licensed under Apache 2.0 and MIT
-terms.
+The Xee Project is dual-licensed under MIT terms.
 
 Longer version:
 
@@ -13,14 +12,12 @@ copyright assignment is required to contribute to the Xee project.
 Some files include explicit copyright notices and/or license notices.
 For full authorship information, see the version control history.
 
-Except as otherwise noted (below and/or in individual files), Xee is
-licensed under the Apache License, Version 2.0 <LICENSE-APACHE> or
-<http://www.apache.org/licenses/LICENSE-2.0> or the MIT license
-<LICENSE-MIT> or <http://opensource.org/licenses/MIT>, at your option.
+Except as otherwise noted (below and/or in individual files), Xee is licensed
+under the MIT license <LICENSE-MIT> or <http://opensource.org/licenses/MIT>.
 
-The Xee Project includes materials written by third parties. The following third
-party packages are included, and carry their own copyright notices and license
-terms:
+The Xee Project includes materials written by third parties. The following
+third party packages are included, and carry their own copyright notices and
+license terms:
 
 * qt3tests, located in vendor/xpath-tests, and xslt-tests, located in
   vendor/xslt-tests are both copyright W3C. It is licensed under the following
