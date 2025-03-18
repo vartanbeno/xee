@@ -4,7 +4,7 @@
 - [x] adjust-time-to-timezone
 - [x] analyze-string (regex, generates nodes)
 - [x] apply (hof, array)
-- [ ] available-environment-variables
+- [x] available-environment-variables
 - [x] avg
 - [x] base-uri
 - [x] boolean
@@ -12,7 +12,7 @@
 - [x] codepoint-equal
 - [x] codepoints-to-string
 - [ ] collation-key (icu4x does not provide this)
-- [ ] collection
+- [x] collection
 - [x] compare
 - [x] concat
 - [x] contains (UCA collation units aren't supported, https://github.com/unicode-org/icu4x/discussions/3981)
@@ -37,7 +37,7 @@
 - [x] empty
 - [x] encode-for-uri
 - [x] ends-with
-- [ ] environment-variable
+- [x] environment-variable
 - [x] error
 - [x] escape-html-uri
 - [x] exactly-one
@@ -63,7 +63,7 @@
 - [x] hours-from-dateTime
 - [x] hours-from-duration
 - [x] hours-from-time
-- [ ] id
+- [x] id
 - [ ] idref
 - [x] implicit-timezone
 - [x] index-of
@@ -73,7 +73,7 @@
 - [x] iri-to-uri
 - [ ] json-doc
 - [ ] json-to-xml (generates XML nodes)
-- [ ] lang
+- [x] lang
 - [x] last
 - [ ] load-xquery-module (XQuery)
 - [x] local-name
@@ -100,7 +100,7 @@
 - [x] number
 - [x] one-or-more
 - [x] outermost
-- [ ] parse-ietf-date
+- [x] parse-ietf-date (partial)
 - [x] parse-json
 - [x] parse-xml
 - [x] parse-xml-fragment
