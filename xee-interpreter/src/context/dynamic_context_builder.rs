@@ -149,6 +149,12 @@ impl<'a> DynamicContextBuilder<'a> {
         self
     }
 
+    /// Initialize the environment variables from the current system environment.
+    pub fn initialize_env(&mut self) -> &mut Self {
+        self.environment_variables = std::env::vars().collect();
+        self
+    }
+
     fn uris_into_sequence(uris: &[&IriStr]) -> sequence::Sequence {
         // turn the URIs into a sequence
         let items: Vec<sequence::Item> = uris
