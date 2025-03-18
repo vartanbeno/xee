@@ -35,7 +35,6 @@ fo-test-fn-ends-with-005
 fo-test-fn-ends-with-006
 fo-test-fn-ends-with-007
 fo-test-fn-ends-with-008
-fo-test-fn-filter-002
 fo-test-fn-format-integer-001
 fo-test-fn-format-integer-002
 fo-test-fn-format-integer-003
@@ -870,10 +869,6 @@ fn-function-lookup-245
 fn-function-lookup-246
 fn-function-lookup-247
 fn-function-lookup-248
-fn-function-lookup-275
-fn-function-lookup-276
-fn-function-lookup-277
-fn-function-lookup-278
 fn-function-lookup-357
 fn-function-lookup-358
 fn-function-lookup-359
@@ -928,7 +923,6 @@ fn-function-lookup-766b
 fn-function-lookup-812
 = fn-function-name
 fn-function-name-017
-fn-function-name-026
 = fn-generate-id
 = fn-has-children
 = fn-head
@@ -1109,43 +1103,6 @@ json-to-xml-error-039
 json-to-xml-error-040
 json-to-xml-error-041
 = fn-lang
-K-NodeLangFunc-2
-K-NodeLangFunc-3
-K-NodeLangFunc-4
-fn-lang-10
-fn-lang-11
-fn-lang-12
-fn-lang-13
-fn-lang-14
-fn-lang-15
-fn-lang-16
-fn-lang-17
-fn-lang-18
-fn-lang-19
-fn-lang-2
-fn-lang-20
-fn-lang-21
-fn-lang-22
-fn-lang-23
-fn-lang-24
-fn-lang-25
-fn-lang-26
-fn-lang-27
-fn-lang-28
-fn-lang-29
-fn-lang-3
-fn-lang-30
-fn-lang-31
-fn-lang-32
-fn-lang-4
-fn-lang-5
-fn-lang-6
-fn-lang-7
-fn-lang-8
-fn-lang-9
-fn-lang1args-1
-fn-lang1args-2
-fn-lang1args-3
 = fn-last
 = fn-load-xquery-module
 = fn-local-name
@@ -2149,10 +2106,6 @@ function-literal-245
 function-literal-246
 function-literal-247
 function-literal-248
-function-literal-275
-function-literal-276
-function-literal-277
-function-literal-278
 function-literal-357
 function-literal-358
 function-literal-359

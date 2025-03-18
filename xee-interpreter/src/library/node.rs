@@ -53,6 +53,40 @@ fn namespace_uri(interpreter: &Interpreter, arg: Option<xot::Node>) -> atomic::A
     atomic::Atomic::String(atomic::StringType::AnyURI, uri.into())
 }
 
+#[xpath_fn(
+    "fn:lang($testlang as xs:string?, $node as node()) as xs:boolean",
+    context_last
+)]
+fn lang(interpreter: &Interpreter, testlang: Option<&str>, node: xot::Node) -> error::Result<bool> {
+    let xot = interpreter.xot();
+    let lang_name = xot.name_ns("lang", xot.xml_namespace());
+    let test_lang = testlang.unwrap_or("");
+    if let Some(lang_name) = lang_name {
+        let mut lang = None;
+        for node in xot.ancestors(node) {
+            if let Some(attribute) = xot.get_attribute(node, lang_name) {
+                lang = Some(attribute);
+                break;
+            }
+        }
+        if let Some(lang) = lang {
+            let lang = lang.to_lowercase();
+            let test_lang = test_lang.to_lowercase();
+            if lang == test_lang {
+                Ok(true)
+            } else {
+                Ok(lang.starts_with(&test_lang) && lang.chars().nth(test_lang.len()) == Some('-'))
+            }
+        } else {
+            // no lang attribute found
+            Ok(false)
+        }
+    } else {
+        // no lang name known anywhere so cannot occur
+        Ok(false)
+    }
+}
+
 #[xpath_fn("fn:root($arg as node()?) as node()?", context_first)]
 fn root(interpreter: &Interpreter, arg: Option<xot::Node>) -> Option<xot::Node> {
     arg.map(|arg| interpreter.xot().root(arg))
@@ -228,6 +262,7 @@ pub(crate) fn static_function_descriptions() -> Vec<StaticFunctionDescription> {
         wrap_xpath_fn!(name),
         wrap_xpath_fn!(local_name),
         wrap_xpath_fn!(namespace_uri),
+        wrap_xpath_fn!(lang),
         wrap_xpath_fn!(root),
         wrap_xpath_fn!(has_children),
         wrap_xpath_fn!(innermost),
