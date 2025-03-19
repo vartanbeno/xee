@@ -4,6 +4,7 @@ version = "0.1.0"
 edition = "2021"
 authors = ["The Xee Project Developers"]
 keywords = ["xml", "xpath", "xslt"]
+categories = ["text-processing", "compilers"]
 license = "MIT"
 description = "Xee intermediate representation and compilation to bytecode"
 repository = "http://github.com/Paligo/xee"

@@ -4,6 +4,7 @@ version = "0.1.0"
 edition = "2021"
 authors = ["The Xee Project Developers"]
 keywords = ["xml", "xpath"]
+categories = ["text-processing", "compilers"]
 license = "MIT"
 description = "XPath 3.1 library API"
 repository = "http://github.com/Paligo/xee"
