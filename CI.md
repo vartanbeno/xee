@@ -38,6 +38,13 @@ improvements" below).
 This token is named CRATES_IO_XEE. It's set up separately for each xee-related
 repository at the time being. 
 
+## ownership on crates.io
+
+All xee-related crates.io packages have ownership access added for xee-team in
+the Paligo github organization (github:paligo:xee-team). This means that anyone
+in the Paligo xee-team shares ownership with the crates.io packages and can
+manage them through crates.io should this be necessary.
+
 ## future improvements
 
 Should Paligo want to take over management of the crates.io token that
