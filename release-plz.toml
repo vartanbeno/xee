@@ -1,2 +1,1 @@
 [workspace]
-semver_check = false # I suspect this is causing the PR generation to break atm
