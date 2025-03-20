@@ -99,62 +99,67 @@ The IR and interpreter are shared with XPath.
 
 The Xee project is composed of many crates. Here is a quick overview:
 
-- `xee` - Swiss Army knife for XML manipulation.
+- [`xee`](xee) - Swiss Army knife CLI tool for XML manipulation.
 
-- `xee-xpath` - Combines the underlying components to provide a high level API
-  to support XPath queries in Rust.
+- [`xee-xpath`](xee-xpath) - Combines the underlying components to
+  provide a high level API to support XPath queries in Rust.
 
-- `xee-testrunner` - a testrunner that can run the QT3 conformance suite of
-  XPath tests (in `vendor/xpath-tests`). It has also been generalized towards
-  supporting running XSLT conformance tests, but that implementation is not
-  complete yet.
+- [`xee-testrunner`](xee-testrunner) - a testrunner that can run the
+  QT3 conformance suite of XPath tests (in `vendor/xpath-tests`). It has also
+  been generalized towards supporting running XSLT conformance tests, but that
+  implementation is not complete yet.
 
-- `xee-xpath-lexer` - A lexer for XPath expressions.
+- [`xee-xpath-lexer`](xee-xpath-lexer) - A lexer for XPath
+  expressions.
 
-- `xee-xpath-ast` - Defines an XPath AST. Turns `xee-xpath-lexer` output into
-  an XPath AST.
+- [`xee-xpath-ast`](xee-xpath-ast) - Defines an XPath AST. Turns
+  `xee-xpath-lexer` output into an XPath AST.
 
-- `xee-xslt-ast` - Parse XSLT documents into an AST. Uses `xee-xpath-ast` for
-  the underlying XPath expressions.
+- [`xee-xslt-ast`](xee-xslt-ast) - Parse XSLT documents into an AST. Uses
+  `xee-xpath-ast` for the underlying XPath expressions.
 
-- `xee-xpath-compiler` - Compiles XPath AST provided by `xee-xpath-ast` to
-  IR supported by `xee-ir`, which it then uses to create bytecode for
+- [`xee-xpath-compiler`](xee-xpath-compiler) - Compiles XPath AST provided by
+  `xee-xpath-ast` to IR supported by `xee-ir`, which it then uses to create
+  bytecode for `xee-interpreter`.
+
+- [`xee-xslt-compiler`](xee-xslt-compiler) - A compiler of the XSLT AST
+  (defined by `xee-xslt-ast`) into `xee-ir` IR, so that XSLT code can be run by
+  the `xee-interpreter` engine.
+
+- [`xee-ir`](xee-ir) - an intermediate language (in functional single
+  assignment form) with logic to compile it down to Xee bytecode used by
   `xee-interpreter`.
 
-- `xee-xslt-compiler` - A compiler of the XSLT AST (defined by
-  `xee-xslt-ast`) into `xee-ir` IR, so that XSLT code can be run by the
-  `xee-interpreter` engine.
+- [`xee-interpreter`](xee-interpreter) - the core virtual machine interpreter
+  that can execute XPath and XSLT. Also contains the XPath functions and
+  operators implementation.
 
-- `xee-ir` - an intermediate language (in functional single assignment form)
-  with logic to compile it down to Xee bytecode used by `xee-interpreter`.
+- [`xee-name`](xee-name) - support code for XML namespaces
 
-- `xee-interpreter` - the core virtual machine interpreter that can execute
-  XPath and XSLT. Also contains the XPath functions and operators implementation.
+- [`xee-xpath-macros`](xee-xpath-macros) - Macros used by `xee-interpreter` to
+  help implement the XPath library functions. Provides a way to create Rust
+  bindings for XPath, though is currently restricted to the functions and
+  operator specification.
 
-- `xee-name` - support code for XML namespaces
+- [`xee-xpath-type`](xee-xpath-type) - The AST specifically for type
+  expressions in the XPath AST. These are used separately by `xee-xpath-macros`
+  for its Rust bindings infrastructure.
 
-- `xee-xpath-macros` - Macros used by `xee-interpreter` to help implement the
-  XPath library functions. Provides a way to create Rust bindings for XPath,
-  though is currently restricted to the functions and operator specification.
+- [`xee-schema-type`](xee-schema-type) - support code defininig properties of
+  core XML schema basic datatypes (`xs:*`).
 
-- `xee-xpath-type` - The AST specifically for type expressions in the XPath
-  AST. These are used separately by `xee-xpath-macros` for its Rust bindings
-  infrastructure.
-
-- `xee-schema-type` - support code defininig properties of core XML schema
-  basic datatypes (`xs:*`).
-
-- `xee-xpath-load` - Infastructure to help defining loaders for XML data used
-  by `xee-testrunner`.
+- [`xee-xpath-load`](xee-xpath-load) - Infastructure to help defining loaders
+  for XML data used by `xee-testrunner`.
 
 Some affiliated projects exist as well maintained outside of this project:
 
-- `xot` - XML tree library implementation. Contains logic for traversal,
-  manipulation, parsing and serialization.
+- [`xot`](https://github.com/faassen/xot) - XML tree library implementation.
+  Contains logic for traversal, manipulation, parsing and serialization.
 
-- `regexml` - XML Schema and XPath compatible regex engine.
+- [`regexml`](https://github.com/Paligo/regexml) - XML Schema and XPath
+  compatible regex engine.
 
-- `xee-php` - PHP bindings for Xee.
+- [`xee-php`](https://github.com/Paligo/xee-php) - PHP bindings for Xee.
 
 ### Other directories
 
