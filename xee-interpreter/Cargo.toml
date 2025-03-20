@@ -25,7 +25,11 @@ serde = [
 ]
 
 [dependencies]
-xee-xpath-ast = { path = "../xee-xpath-ast" }
+xee-xpath-ast = { path = "../xee-xpath-ast", version = "0.1.1" }
+xee-xpath-macros = { path = "../xee-xpath-macros", version = "0.1.1" }
+xee-schema-type = { path = "../xee-schema-type", version = "0.1.1" }
+xee-xpath-type = { path = "../xee-xpath-type", version = "0.1.1" }
+xee-name = { path = "../xee-name" }
 ahash = { workspace = true }
 arrayvec = "0.7.6"
 chumsky = { workspace = true }
@@ -41,10 +45,6 @@ rust_decimal = { workspace = true }
 ibig = { workspace = true }
 thiserror = { workspace = true }
 xot = { workspace = true }
-xee-xpath-macros = { path = "../xee-xpath-macros" }
-xee-schema-type = { path = "../xee-schema-type" }
-xee-xpath-type = { path = "../xee-xpath-type" }
-xee-name = { path = "../xee-name" }
 lexical = { version = "7.0.4", features = ["format"] }
 hex = "0.4.3"
 base64 = "0.22.1"

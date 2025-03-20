@@ -12,14 +12,14 @@ documentation = "https://docs.rs/xee-testrunner"
 homepage = "https://github.com/Paligo/xee"
 
 [dependencies]
+xee-xpath-load = { path = "../xee-xpath-load", version = "0.1.1" }
+xee-xpath = { path = "../xee-xpath", version = "0.1.1" }
+xee-xslt-compiler = { path = "../xee-xslt-compiler", version = "0.1.1" }
+xee-name = { path = "../xee-name" }
 anyhow = { workspace = true }
 thiserror = { workspace = true }
 ahash = { workspace = true }
 xot = { workspace = true }
-xee-xpath-load = { path = "../xee-xpath-load" }
-xee-xpath = { path = "../xee-xpath" }
-xee-xslt-compiler = { path = "../xee-xslt-compiler" }
-xee-name = { path = "../xee-name" }
 fxhash = "0.2.1"
 indexmap = "2.8.0"
 clap = { workspace = true, features = ["derive"] }

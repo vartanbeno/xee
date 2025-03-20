@@ -16,6 +16,11 @@ homepage = "https://github.com/Paligo/xee"
 serde = ["xee-xpath-ast/serde", "xee-interpreter/serde"]
 
 [dependencies]
+xee-xpath-compiler = { path = "../xee-xpath-compiler", version = "0.1.1" }
+xee-xpath-ast = { path = "../xee-xpath-ast", version = "0.1.1" }
+xee-schema-type = { path = "../xee-schema-type", version = "0.1.1" }
+xee-interpreter = { path = "../xee-interpreter", version = "0.1.1" }
+xee-ir = { path = "../xee-ir", version = "0.1.1" }
 chrono = { workspace = true }
 ahash = { workspace = true }
 ordered-float = { workspace = true }
@@ -23,11 +28,6 @@ rust_decimal = { workspace = true }
 ibig = { workspace = true }
 thiserror = { workspace = true }
 xot = { workspace = true }
-xee-xpath-compiler = { path = "../xee-xpath-compiler" }
-xee-xpath-ast = { path = "../xee-xpath-ast" }
-xee-schema-type = { path = "../xee-schema-type" }
-xee-interpreter = { path = "../xee-interpreter" }
-xee-ir = { path = "../xee-ir" }
 iri-string = { workspace = true }
 
 [dev-dependencies]

@@ -15,6 +15,13 @@ homepage = "https://github.com/Paligo/xee"
 serde = ["xee-xslt-ast/serde", "xee-interpreter/serde"]
 
 [dependencies]
+xee-name = { path = "../xee-name", version = "0.1.1" }
+xee-xpath-ast = { path = "../xee-xpath-ast", version = "0.1.1" }
+xee-xpath-compiler = { path = "../xee-xpath-compiler", version = "0.1.1" }
+xee-xslt-ast = { path = "../xee-xslt-ast", version = "0.1.1" }
+xee-schema-type = { path = "../xee-schema-type", version = "0.1.1" }
+xee-interpreter = { path = "../xee-interpreter", version = "0.1.1" }
+xee-ir = { path = "../xee-ir" }
 ahash = { workspace = true }
 iri-string = { workspace = true }
 ordered-float = { workspace = true }
@@ -23,13 +30,7 @@ rust_decimal_macros = { workspace = true }
 ibig = { workspace = true }
 thiserror = { workspace = true }
 xot = { workspace = true }
-xee-name = { path = "../xee-name" }
-xee-xpath-ast = { path = "../xee-xpath-ast" }
-xee-xpath-compiler = { path = "../xee-xpath-compiler" }
-xee-xslt-ast = { path = "../xee-xslt-ast" }
-xee-schema-type = { path = "../xee-schema-type" }
-xee-interpreter = { path = "../xee-interpreter" }
-xee-ir = { path = "../xee-ir" }
+
 
 [dev-dependencies]
 insta = { workspace = true, features = ["yaml", "glob"] }

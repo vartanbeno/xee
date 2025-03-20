@@ -20,10 +20,10 @@ serde = [
 ]
 
 [dependencies]
+xee-xpath-ast = { path = "../xee-xpath-ast", version = "0.1.1" }
+xee-xpath-compiler = { path = "../xee-xpath-compiler", version = "0.1.1" }
+xee-name = { path = "../xee-name", version = "0.1.1" }
 ahash = { workspace = true }
-xee-xpath-ast = { path = "../xee-xpath-ast" }
-xee-xpath-compiler = { path = "../xee-xpath-compiler" }
-xee-name = { path = "../xee-name" }
 thiserror = { workspace = true }
 xot = { workspace = true }
 serde = { workspace = true, features = ["derive"], optional = true }

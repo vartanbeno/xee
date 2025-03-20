@@ -12,8 +12,8 @@ documentation = "https://docs.rs/xee"
 homepage = "https://github.com/Paligo/xee"
 
 [dependencies]
+xee-xpath = { path = "../xee-xpath", version = "0.1.1" }
 xot = { workspace = true }
-xee-xpath = { path = "../xee-xpath" }
 clap = { workspace = true, features = ["derive", "cargo"] }
 ariadne = "0.5.1"
 anyhow.workspace = true
