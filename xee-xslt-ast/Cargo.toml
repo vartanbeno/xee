@@ -22,7 +22,7 @@ serde = [
 [dependencies]
 xee-xpath-ast = { path = "../xee-xpath-ast", version = "0.1.1" }
 xee-xpath-compiler = { path = "../xee-xpath-compiler", version = "0.1.1" }
-xee-name = { path = "../xee-name", version = "0.1.1" }
+xee-name = { path = "../xee-name", version = "0.1.2" }
 ahash = { workspace = true }
 thiserror = { workspace = true }
 xot = { workspace = true }

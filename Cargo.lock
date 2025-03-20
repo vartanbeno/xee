@@ -2979,7 +2979,7 @@ dependencies = [
 
 [[package]]
 name = "xee-name"
-version = "0.1.1"
+version = "0.1.2"
 dependencies = [
  "ahash 0.8.11",
  "serde",
@@ -2988,7 +2988,7 @@ dependencies = [
 
 [[package]]
 name = "xee-schema-type"
-version = "0.1.1"
+version = "0.1.2"
 dependencies = [
  "ahash 0.8.11",
  "insta",
@@ -3085,7 +3085,7 @@ dependencies = [
 
 [[package]]
 name = "xee-xpath-lexer"
-version = "0.1.1"
+version = "0.1.2"
 dependencies = [
  "ibig",
  "insta",
