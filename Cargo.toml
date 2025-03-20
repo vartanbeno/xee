@@ -39,7 +39,7 @@ serde = "1"
 chrono = "0.4.40"
 blanket = "0.4.0"
 thiserror = "2.0.12"
-regexml = { git = "ssh://git@github.com/Paligo/regexml.git" }
+regexml = "0.2.1"
 regex = "1.11.1"
 iri-string = "0.7.7"
 json = "0.12.4"
