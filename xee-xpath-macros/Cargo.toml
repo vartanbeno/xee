@@ -15,11 +15,11 @@ homepage = "https://github.com/Paligo/xee"
 proc-macro = true
 
 [dependencies]
+xee-xpath-ast = { path = "../xee-xpath-ast", version = "0.1.1" }
+xee-schema-type = { path = "../xee-schema-type", version = "0.1.1" }
 proc-macro2 = { version = "1", default-features = false }
 quote = "1"
 syn = { version = "2", features = ["full", "extra-traits"] }
-xee-xpath-ast = { path = "../xee-xpath-ast" }
-xee-schema-type = { path = "../xee-schema-type" }
 xot = { workspace = true }
 
 [dev-dependencies]

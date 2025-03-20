@@ -24,6 +24,10 @@ serde = [
 ]
 
 [dependencies]
+xee-schema-type = { path = "../xee-schema-type", version = "0.1.1" }
+xee-name = { path = "../xee-name", version = "0.1.1" }
+xee-xpath-type = { path = "../xee-xpath-type", version = "0.1.1" }
+xee-xpath-lexer = { path = "../xee-xpath-lexer", version = "0.1.1" }
 ahash = { workspace = true }
 chumsky = { workspace = true }
 blanket = { workspace = true }
@@ -32,11 +36,8 @@ ibig = { workspace = true }
 rust_decimal = { workspace = true }
 thiserror = { workspace = true }
 xot = { workspace = true }
-xee-schema-type = { path = "../xee-schema-type" }
-xee-name = { path = "../xee-name" }
 serde = { workspace = true, features = ["derive"], optional = true }
-xee-xpath-type = { path = "../xee-xpath-type" }
-xee-xpath-lexer = { path = "../xee-xpath-lexer" }
+
 
 [dev-dependencies]
 # we want to depend on serde feature during tests

@@ -17,7 +17,7 @@ homepage = "https://github.com/Paligo/xee"
 serde = ["dep:serde", "xot/serde"]
 
 [dependencies]
+xee-schema-type = { path = "../xee-schema-type", version = "0.1.1" }
 xot = { workspace = true }
-xee-schema-type = { path = "../xee-schema-type" }
 xee-name = { path = "../xee-name" }
 serde = { workspace = true, features = ["derive"], optional = true }
