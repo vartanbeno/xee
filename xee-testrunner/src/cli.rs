@@ -131,9 +131,17 @@ impl<'a, E: Environment, R: Runnable<E>> Runner<'a, E, R> {
         if self.path_info.whole_catalog() {
             let outcomes = self.catalog_outcomes(&catalog, &test_filter)?;
             println!("{}", outcomes.display());
+            if outcomes.has_failures() {
+                // ensure we have process status 1
+                return Err(anyhow::anyhow!("Failures found"));
+            }
         } else {
             let outcomes = self.test_set_outcomes(&catalog, &test_filter)?;
             println!("{}", outcomes.display());
+            if outcomes.has_failures() {
+                // ensure we have process status 1
+                return Err(anyhow::anyhow!("Failures found"));
+            }
         }
         Ok(())
     }

@@ -111,6 +111,12 @@ impl TestSetOutcomes {
             .map(|outcome| outcome.test_case_name.clone())
             .collect()
     }
+
+    pub(crate) fn has_failures(&self) -> bool {
+        self.outcomes
+            .iter()
+            .any(|outcome| !outcome.outcome.is_exactly_passed())
+    }
 }
 
 impl Outcomes for TestSetOutcomes {
@@ -138,6 +144,15 @@ impl CatalogOutcomes {
 
     pub(crate) fn add_outcomes(&mut self, test_set_outcomes: TestSetOutcomes) {
         self.outcomes.push(test_set_outcomes);
+    }
+
+    pub(crate) fn has_failures(&self) -> bool {
+        self.outcomes.iter().any(|test_set_outcome| {
+            test_set_outcome
+                .outcomes
+                .iter()
+                .any(|outcome| !outcome.outcome.is_exactly_passed())
+        })
     }
 }
 
