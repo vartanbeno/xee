@@ -14,7 +14,7 @@ homepage = "https://github.com/Paligo/xee"
 
 [dependencies]
 xee-xpath-ast = { path = "../xee-xpath-ast", version = "0.1.1" }
-xee-schema-type = { path = "../xee-schema-type", version = "0.1.1" }
+xee-schema-type = { path = "../xee-schema-type", version = "0.1.2" }
 xee-interpreter = { path = "../xee-interpreter", version = "0.1.1" }
 ahash = { workspace = true }
 ordered-float = { workspace = true }

@@ -16,7 +16,7 @@ serde = ["xee-xpath-ast/serde", "xee-interpreter/serde"]
 
 [dependencies]
 xee-xpath-ast = { path = "../xee-xpath-ast", version = "0.1.1" }
-xee-schema-type = { path = "../xee-schema-type", version = "0.1.1" }
+xee-schema-type = { path = "../xee-schema-type", version = "0.1.2" }
 xee-interpreter = { path = "../xee-interpreter", version = "0.1.1" }
 xee-ir = { path = "../xee-ir" }
 ahash = { workspace = true }

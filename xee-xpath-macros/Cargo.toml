@@ -16,7 +16,7 @@ proc-macro = true
 
 [dependencies]
 xee-xpath-ast = { path = "../xee-xpath-ast", version = "0.1.1" }
-xee-schema-type = { path = "../xee-schema-type", version = "0.1.1" }
+xee-schema-type = { path = "../xee-schema-type", version = "0.1.2" }
 proc-macro2 = { version = "1", default-features = false }
 quote = "1"
 syn = { version = "2", features = ["full", "extra-traits"] }
