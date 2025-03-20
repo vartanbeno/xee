@@ -9,9 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [0.1.2](https://github.com/Paligo/xee/compare/xee-schema-type-v0.1.1...xee-schema-type-v0.1.2) - 2025-03-20
 
-### Other
-
-- Tweak all the changelog. Add missing (?) changelogs.
+- Tweak to do with release fixing.
 
 ## [0.1.1](https://github.com/Paligo/xee/releases/tag/xee-schema-type-v0.1.1) - 2025-03-20
 

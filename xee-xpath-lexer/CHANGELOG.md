@@ -9,9 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [0.1.2](https://github.com/Paligo/xee/compare/xee-xpath-lexer-v0.1.1...xee-xpath-lexer-v0.1.2) - 2025-03-20
 
-### Other
-
-- Tweak all the changelog. Add missing (?) changelogs.
+Release tweaking.
 
 ## [0.1.1](https://github.com/Paligo/xee/releases/tag/xee-xpath-lexer-v0.1.1) - 2025-03-20
 
