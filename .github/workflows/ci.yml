@@ -34,3 +34,5 @@ jobs:
       - name: Test
         run: cargo test --verbose
       
+      - name: Check (conformance suite)
+        run: cargo run --release --bin xee-testrunner -- -v check vendor/xpath-tests/
