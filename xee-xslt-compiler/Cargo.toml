@@ -21,7 +21,7 @@ xee-xpath-compiler = { path = "../xee-xpath-compiler", version = "0.1.1" }
 xee-xslt-ast = { path = "../xee-xslt-ast", version = "0.1.1" }
 xee-schema-type = { path = "../xee-schema-type", version = "0.1.2" }
 xee-interpreter = { path = "../xee-interpreter", version = "0.1.1" }
-xee-ir = { path = "../xee-ir" }
+xee-ir = { path = "../xee-ir", version = "0.1.1" }
 ahash = { workspace = true }
 iri-string = { workspace = true }
 ordered-float = { workspace = true }
