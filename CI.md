@@ -50,18 +50,19 @@ can manage them through crates.io should this be necessary.
 Should Paligo want to take over management of the crates.io token that
 requires:
 
-- a Paligo controlled github account that's in the Paligo `xee-team`. This
+- Use a Paligo controlled github account that's in the Paligo `xee-team`. This
   gives it owner access to the Xee-related crates. This could be some other
   github user's account, or a Paligo specific machine account.
 
-- a Paligo controlled `crates.io` account associated with that github account.
+- Create a Paligo controlled `crates.io` account associated with that github
+  account.
 
-- On `crates.io`, In "Account Settings" -> "API Tokens" crate a new token with
+- On `crates.io`, In "Account Settings" -> "API Tokens" create a new token with
   scopes `publish-new` and `publish-update`. Unless this user plans to publish
   non-xee related crates, it doesn't need crate restrictions.
   
-- Removing the `CRATES_IO_XEE` tokens for the specific Xee repositories on
-  github, and adding a single `CRATES_IO_XEE` token to the Paligo organization.
+- Remove the `CRATES_IO_XEE` tokens for the specific Xee repositories on
+  github, and add a single `CRATES_IO_XEE` token to the Paligo organization.
   (in "Secrets and Variables" -> "Actions")
 
 
