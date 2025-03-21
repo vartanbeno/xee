@@ -1,2 +1,7 @@
-# default for now
+
 [workspace]
+git_release_enable = false
+
+[[package]]
+name = "xee"
+git_release_enable = true

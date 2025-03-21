@@ -52,7 +52,9 @@ requires:
 
 - Use a Paligo controlled github account that's in the Paligo `xee-team`. This
   gives it owner access to the Xee-related crates. This could be some other
-  github user's account, or a Paligo specific machine account.
+  github user's account, or a Paligo specific machine account. When creating a
+  fine-grained PAT you need to create the Paligo organization. [More
+  info](https://release-plz.dev/docs/github/token)
 
 - Create a Paligo controlled `crates.io` account associated with that github
   account.
