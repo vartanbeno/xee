@@ -7,6 +7,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.1.2](https://github.com/Paligo/xee/compare/xee-interpreter-v0.1.1...xee-interpreter-v0.1.2) - 2025-03-21
+
+### Other
+
+- Fix underflow error in arrays.
+- Fix an array test overflow.
+- Rewrite substring logic so that it passes fn-substring-22 and doesn't overflow in debug mode.
+
 ## [0.1.1](https://github.com/Paligo/xee/releases/tag/xee-interpreter-v0.1.1) - 2025-03-20
 
 ### Fixed

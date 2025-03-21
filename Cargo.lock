@@ -2923,7 +2923,7 @@ dependencies = [
 
 [[package]]
 name = "xee-interpreter"
-version = "0.1.1"
+version = "0.1.2"
 dependencies = [
  "ahash 0.8.11",
  "arrayvec",
@@ -2964,7 +2964,7 @@ dependencies = [
 
 [[package]]
 name = "xee-ir"
-version = "0.1.1"
+version = "0.1.2"
 dependencies = [
  "ahash 0.8.11",
  "ibig",
@@ -3021,7 +3021,7 @@ dependencies = [
 
 [[package]]
 name = "xee-xpath"
-version = "0.1.1"
+version = "0.1.2"
 dependencies = [
  "ahash 0.8.11",
  "chrono",
@@ -3066,7 +3066,7 @@ dependencies = [
 
 [[package]]
 name = "xee-xpath-compiler"
-version = "0.1.1"
+version = "0.1.2"
 dependencies = [
  "ahash 0.8.11",
  "ibig",
@@ -3159,7 +3159,7 @@ dependencies = [
 
 [[package]]
 name = "xee-xslt-compiler"
-version = "0.1.1"
+version = "0.1.2"
 dependencies = [
  "ahash 0.8.11",
  "ibig",
