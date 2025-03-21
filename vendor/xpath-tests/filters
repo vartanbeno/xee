@@ -1361,7 +1361,6 @@ cbcl-subsequence-012
 cbcl-subsequence-013
 cbcl-subsequence-014
 = fn-substring
-fn-substring-22
 = fn-substring-after
 = fn-substring-before
 = fn-sum

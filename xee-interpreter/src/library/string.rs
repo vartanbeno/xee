@@ -169,43 +169,58 @@ fn string_join_sep(
 
 #[xpath_fn("fn:substring($sourceString as xs:string?, $start as xs:double) as xs:string")]
 fn substring2(source_string: Option<&str>, start: f64) -> String {
-    substring_with_length(source_string, start, usize::MAX)
+    if let Some(source_string) = source_string {
+        substring_with_length(source_string, start, f64::INFINITY)
+    } else {
+        "".to_string()
+    }
 }
 
 #[xpath_fn("fn:substring($sourceString as xs:string?, $start as xs:double, $length as xs:double) as xs:string")]
 fn substring3(source_string: Option<&str>, start: f64, length: f64) -> String {
-    let length = length.round();
-    if length < 0.0 || length.is_nan() {
-        return "".to_string();
-    }
-    substring_with_length(source_string, start, length as usize)
-}
-
-fn substring_with_length(source_string: Option<&str>, start: f64, length: usize) -> String {
-    if start.is_nan() {
-        return "".to_string();
-    }
-    let start = start.round();
-
-    let start = start as i64 - 1;
-    // substract any negative start from the length
-    let (start, length) = if start < 0 {
-        (0, length - start.unsigned_abs() as usize)
-    } else {
-        (start as usize, length)
-    };
     if let Some(source_string) = source_string {
-        if source_string.is_empty() {
-            return "".to_string();
-        }
-        source_string
-            .chars()
-            .skip(start)
-            .take(length)
-            .collect::<String>()
+        substring_with_length(source_string, start, length)
     } else {
         "".to_string()
     }
+}
+
+fn substring_with_length(source_string: &str, start: f64, length: f64) -> String {
+    // we deliberately do the calculations with floats as long as possible
+    // to handle infinities and such, as those are part of the spec, as well
+    // as avoid overflows.
+    if source_string.is_empty() {
+        return "".to_string();
+    }
+    if start.is_nan() || length.is_nan() {
+        return "".to_string();
+    }
+    let start = start.round();
+    let length = length.round();
+
+    // we calculate the end point
+    let end = start + length;
+    // if this results in a NaN we're done
+    if end.is_nan() {
+        return "".to_string();
+    }
+    // we say the start should not be less than 1
+    let start = start.round().max(1f64);
+    // now we say the end should not more than the total length of the string
+    // the end position is one beyond the end of the string, due to the starting
+    // at 1.
+    let end = end.min((source_string.len() + 1) as f64);
+
+    // now turn into integers and substract 1 to get
+    let length: usize = (end - start) as usize;
+    let start: usize = start as usize - 1;
+
+    source_string
+        .chars()
+        .skip(start)
+        // take until end position is reached
+        .take(length)
+        .collect::<String>()
 }
 
 #[xpath_fn("fn:string-length($arg as xs:string?) as xs:integer", context_first)]
