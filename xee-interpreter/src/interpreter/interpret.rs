@@ -820,6 +820,9 @@ impl<'a> Interpreter<'a> {
             .cast_to_integer_value::<i64>()
             .map_err(|_| error::Error::XPTY0004)?;
         let position = position as usize;
+        if position == 0 {
+            return Err(error::Error::FOAY0001);
+        }
         let position = position - 1;
         let sequence = array.index(position);
         sequence.cloned().ok_or(error::Error::FOAY0001)

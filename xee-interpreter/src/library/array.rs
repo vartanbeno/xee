@@ -96,9 +96,13 @@ fn head(array: function::Array) -> error::Result<sequence::Sequence> {
 
 #[xpath_fn("array:tail($array as array(*)) as item()*")]
 fn tail(array: function::Array) -> error::Result<function::Array> {
-    array
-        .subarray(1, array.len() - 1)
-        .ok_or(error::Error::FOAY0001)
+    if !array.is_empty() {
+        array
+            .subarray(1, array.len() - 1)
+            .ok_or(error::Error::FOAY0001)
+    } else {
+        Err(error::Error::FOAY0001)
+    }
 }
 
 #[xpath_fn("array:reverse($array as array(*)) as array(*)")]
