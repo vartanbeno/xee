@@ -31,7 +31,7 @@ The XPath functions in [the XPath standard function library](https://www.w3.org/
 An affiliated project is `regexml`, which contains an XML Schema and XPath
 compatible version of regular expressions for Rust. 
 
-`xee-php` is the start of PHP bindings for Xee.
+[`xee-php`](https://github.com/Paligo/xee-php) is the start of PHP bindings for Xee.
 
 ## Testing
 
