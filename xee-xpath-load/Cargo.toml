@@ -13,8 +13,8 @@ homepage = "https://github.com/Paligo/xee"
 
 
 [dependencies]
-xee-xpath-compiler = { path = "../xee-xpath-compiler", version = "0.1.1" }
-xee-xpath = { path = "../xee-xpath", version = "0.1.1" }
+xee-xpath-compiler = { path = "../xee-xpath-compiler", version = "0.1.2" }
+xee-xpath = { path = "../xee-xpath", version = "0.1.2" }
 thiserror = { workspace = true }
 xot = { workspace = true }
 ibig = { workspace = true }
