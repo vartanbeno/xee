@@ -1,4 +1,4 @@
-## xee
+# xee
 
 Swiss Army knife tool for XML.
 
@@ -7,6 +7,39 @@ The `xee` (try `-h`) allows you to do stuff with XML on the command line.
 Features include:
 
 - formatting XML in various ways, including in indented form
-- evalutae an XPath expression against an XML document
+- evaluate an XPath expression against an XML document
 - a REPL for evaluating XPath expressions.
+
+This implements XPath 3.1.
+
+## Usage
+
+### Execute an XPath expression
+
+Execute an XPath expression `/doc/p` against a file `foo.xml`, result to stdout:
+
+```
+xee xpath /doc/p foo.xml
+```
+
+### Interactive shell for XPath
+
+Interactive shell (REPL) to issue multiple xpath expressions against a document:
+
+```
+xee repl
+```
+
+### Pretty-print an XML file
+
+Pretty-print `foo.xml`, result to stdout:
+
+```
+xee indent foo.xml
+```
+
+## Credits
+
+This project was made possible by the generous support of
+[Paligo](https://paligo.net/).
 
