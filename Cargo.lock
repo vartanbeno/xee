@@ -2907,7 +2907,7 @@ dependencies = [
 
 [[package]]
 name = "xee"
-version = "0.1.3"
+version = "0.1.4"
 dependencies = [
  "ahash 0.8.11",
  "anyhow",
