@@ -1,6 +1,8 @@
 use ahash::{HashMap, HashMapExt};
 
+/// The XPath FN namespace URI
 pub const FN_NAMESPACE: &str = "http://www.w3.org/2005/xpath-functions";
+/// The XML Schema XS namespace URI
 pub const XS_NAMESPACE: &str = "http://www.w3.org/2001/XMLSchema";
 const XML_NAMESPACE: &str = "http://www.w3.org/XML/1998/namespace";
 
@@ -14,16 +16,21 @@ const STATIC_NAMESPACES: [(&str, &str); 7] = [
     ("output", "http://www.w3.org/2010/xslt-xquery-serialization"),
 ];
 
+/// Declared namespaces.
 #[derive(Debug, Clone)]
 pub struct Namespaces {
     namespaces: HashMap<String, String>,
+    /// The default namespace for elements in XPath expressions.
     pub default_element_namespace: String,
+    /// The default namespace for functions in XPath expressions.
     pub default_function_namespace: String,
 }
 
 impl Namespaces {
+    /// The XPath FN namespace URI
     pub const FN_NAMESPACE: &'static str = FN_NAMESPACE;
 
+    /// Create a new namespace struct.
     pub fn new(
         namespaces: HashMap<String, String>,
         default_element_namespace: String,
@@ -36,6 +43,7 @@ impl Namespaces {
         }
     }
 
+    /// The default known namespaces for XPath.
     pub fn default_namespaces() -> HashMap<String, String> {
         let mut namespaces = HashMap::new();
         namespaces.insert("xml".to_string(), XML_NAMESPACE.to_string());
@@ -45,6 +53,8 @@ impl Namespaces {
         namespaces
     }
 
+    /// Add a list of namespace declarations (prefix, uri) to the namespace
+    /// store.
     pub fn add(&mut self, namespace_pairs: &[(&str, &str)]) {
         for (prefix, namespace) in namespace_pairs {
             if prefix.is_empty() {
@@ -56,11 +66,13 @@ impl Namespaces {
         }
     }
 
+    /// Get the namespace URI for a given prefix.
     #[inline]
     pub fn by_prefix(&self, prefix: &str) -> Option<&str> {
         self.namespaces.get(prefix).map(String::as_str)
     }
 
+    /// Get the default element namespace.
     #[inline]
     pub fn default_element_namespace(&self) -> &str {
         self.default_element_namespace.as_str()
@@ -77,7 +89,9 @@ impl Default for Namespaces {
     }
 }
 
+/// A trait for looking up namespace URIs by prefix.
 pub trait NamespaceLookup {
+    /// Get the namespace URI for a given prefix.
     fn by_prefix(&self, prefix: &str) -> Option<&str>;
 }
 
