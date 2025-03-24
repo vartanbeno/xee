@@ -9,7 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [0.1.3](https://github.com/Paligo/xee/compare/xee-name-v0.1.2...xee-name-v0.1.3) - 2025-03-24
 
-### Other
+### Docs
 
 - Create some basic API documentation.
 
