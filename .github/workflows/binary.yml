@@ -23,7 +23,7 @@ defaults:
 jobs:
   upload-assets:
     name: ${{ matrix.target }}
-    if: github.repository_owner == 'Paligo' && github.event.release.name == 'xee'
+    if: github.repository_owner == 'Paligo' && startsWith(github.event.release.name, 'xee')
     runs-on: ${{ matrix.os }}
     strategy:
       matrix:

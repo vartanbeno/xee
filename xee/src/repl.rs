@@ -190,6 +190,7 @@ impl Repl {
                 "Display this help",
                 vec![],
                 Box::new(|_, _, definitions| {
+                    println!("Either enter an XPath expression or a special command prefixed by !");
                     println!("Commands:");
                     for definition in &definitions.definitions {
                         println!("  {}", definition.help());
@@ -200,7 +201,7 @@ impl Repl {
         ]);
 
         println!("Xee XPath REPL {}", VERSION);
-        println!("Type !help for more info.");
+        println!("Type !help for more information.");
         let mut rl = rustyline::DefaultEditor::new()?;
         loop {
             let readline = rl.readline(">> ");
