@@ -200,7 +200,7 @@ impl Repl {
         ]);
 
         println!("Xee XPath REPL {}", VERSION);
-        println!("Type !help for more information.");
+        println!("Type !help for more info.");
         let mut rl = rustyline::DefaultEditor::new()?;
         loop {
             let readline = rl.readline(">> ");
