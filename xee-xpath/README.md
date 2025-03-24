@@ -12,9 +12,11 @@ The [API docs](https://docs.rs/xee-xpath/latest/xee_xpath/) contain a usage
 example.
 
 This is top-level API crate of the [Xee
-project](https://github.com/Paligo/xee). For the `xee` commandline tool built
-this `xee-xpath`, download a
-[release](https://github.com/Paligo/xee/releases/).
+project](https://github.com/Paligo/xee). For the
+[`xee`](https://github.com/Paligo/xee/xee) commandline tool built with
+`xee-xpath`, download a [release](https://github.com/Paligo/xee/releases/) or
+[build it
+yourself](https://github.com/Paligo/xee?tab=readme-ov-file#obtaining-the-xee-commandline-tool).
 
 ## More Xee
 
