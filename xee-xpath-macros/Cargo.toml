@@ -1,6 +1,6 @@
 [package]
 name = "xee-xpath-macros"
-version = "0.1.1"
+version = "0.1.2"
 description = "Proc macros for xee-interpreter function library"
 authors = ["The Xee Project Developers"]
 edition = "2021"
