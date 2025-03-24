@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.1.4](https://github.com/Paligo/xee/compare/xee-v0.1.3...xee-v0.1.4) - 2025-03-24
+
+### Other
+
+- Another attempt to produce a binary release.
+
 ## [0.1.3](https://github.com/Paligo/xee/compare/xee-v0.1.2...xee-v0.1.3) - 2025-03-24
 
 ### Other
