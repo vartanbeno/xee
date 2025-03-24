@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.1.3](https://github.com/Paligo/xee/compare/xee-xslt-ast-v0.1.2...xee-xslt-ast-v0.1.3) - 2025-03-24
+
+### Other
+
+- updated the following local packages: xee-name
+
 ## [0.1.2](https://github.com/Paligo/xee/compare/xee-xslt-ast-v0.1.1...xee-xslt-ast-v0.1.2) - 2025-03-21
 
 ### Other
