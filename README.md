@@ -32,8 +32,7 @@ Then:
 
 ```
 git clone https://github.com/Paligo/xee.git
-cd xee
-cargo install --path .
+cargo install --path xee/xee
 ```
 
 Note that you need a recent stable version of Rust; `rustup update` should get
