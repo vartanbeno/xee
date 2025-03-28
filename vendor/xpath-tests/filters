@@ -1801,12 +1801,6 @@ K-NumericLT-20
 = op-numeric-mod
 = op-numeric-multiply
 = op-numeric-subtract
-K-NumericSubtract-27
-K-NumericSubtract-28
-K-NumericSubtract-32
-K-NumericSubtract-33
-K-NumericSubtract-34
-K-NumericSubtract-35
 = op-numeric-unary-minus
 = op-numeric-unary-plus
 = op-same-key
@@ -1928,11 +1922,6 @@ cbcl-castable-unsignedShort-005
 = prod-ConstructionDecl.schema
 = prod-ContextItemDecl
 = prod-ContextItemExpr
-externalcontextitem-11
-externalcontextitem-16
-externalcontextitem-17
-externalcontextitem-7
-externalcontextitem-8
 = prod-CopyNamespacesDecl
 = prod-CountClause
 = prod-CurlyArrayConstructor
@@ -2079,7 +2068,6 @@ K2-NodeTest-19
 = prod-OrderingModeDecl
 = prod-ParenthesizedExpr
 = prod-PathExpr
-PathExpr-15
 = prod-PositionalVar
 = prod-Predicate
 K-FilterExpr-38
