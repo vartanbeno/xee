@@ -28,6 +28,7 @@ globset = "0.4.16"
 chrono = { workspace = true }
 ibig = { workspace = true }
 iri-string = { workspace = true }
+url = "2.5.4"
 
 [dev-dependencies]
 insta = { workspace = true, features = ["yaml", "glob"] }

@@ -37,9 +37,9 @@ impl<E: Environment, R: Runnable<E>> TestSet<E, R> {
     }
 
     pub(crate) fn file_uri(&self) -> IriAbsoluteString {
-        format!("file://{}", self.full_path.to_string_lossy())
-            .try_into()
-            .unwrap()
+        let url_str =
+            url::Url::from_file_path(&self.full_path).expect("Only absolute path is supported");
+        IriAbsoluteString::try_from(format!("{url_str}")).expect("Failed to convert file path URI")
     }
 
     pub(crate) fn run(
