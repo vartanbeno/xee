@@ -114,11 +114,11 @@ project. Contributions are encouraged!
 
 XPath gets lexed into tokens using a lexer (logos) in
 [`xee-xpath-lexer`](xee-xpath-lexer). This is then parsed into an XPath AST
-(abstract syntax tree) by [`xee-xpath-ast`](`xee-xpath-ast`). This AST is then
+(abstract syntax tree) by [`xee-xpath-ast`](xee-xpath-ast). This AST is then
 compiled down into a specialized IR (intermediate representation) by
-[`xee-xpath-compiler`](`xee-xpath-compiler`). This IR is then compiled down
-into a bytecode by [`xee-ir`](`xee-ir`). This bytecode is executed using the
-interpreter implemented in [`xee-interpreter`](`xee-interpreter`) which also
+[`xee-xpath-compiler`](xee-xpath-compiler). This IR is then compiled down
+into a bytecode by [`xee-ir`](xee-ir). This bytecode is executed using the
+interpreter implemented in [`xee-interpreter`](xee-interpreter) which also
 implements the standard library functions for XPath.
 
 An XPath API is exposed for use by others in [`xee-xpath`](xee-xpath) ([API
