@@ -780,7 +780,7 @@ pub(crate) fn static_function_descriptions() -> Vec<StaticFunctionDescription> {
         String::new(),
     );
 
-    for arity in 2..MAX_CONCAT_ARITY {
+    for arity in 2..=MAX_CONCAT_ARITY {
         let signature = function::Signature::new(
             vec![Some(arg_type.clone()); arity],
             Some(string_type.clone()),
