@@ -839,8 +839,6 @@ fn-function-lookup-005
 fn-function-lookup-006
 fn-function-lookup-007
 fn-function-lookup-008
-fn-function-lookup-033
-fn-function-lookup-034
 fn-function-lookup-053
 fn-function-lookup-054
 fn-function-lookup-055
@@ -1324,32 +1322,6 @@ cbcl-subsequence-014
 = fn-timezone-from-time
 = fn-tokenize
 = fn-trace
-K-TraceFunc-4
-K-TraceFunc-5
-K-TraceFunc-6
-fn-trace-10
-fn-trace-11
-fn-trace-12
-fn-trace-13
-fn-trace-14
-fn-trace-15
-fn-trace-16
-fn-trace-17
-fn-trace-18
-fn-trace-19
-fn-trace-2
-fn-trace-20
-fn-trace-21
-fn-trace-22
-fn-trace-23
-fn-trace-24
-fn-trace-3
-fn-trace-4
-fn-trace-5
-fn-trace-6
-fn-trace-7
-fn-trace-8
-fn-trace-9
 = fn-transform
 fn-transform-901
 fn-transform-902
@@ -1905,7 +1877,6 @@ eqname-913
 = prod-FLWORExpr.static-typing
 = prod-ForClause
 ForExpr013
-K-ForExprWithout-49
 = prod-FunctionCall
 FunctionCall-010
 FunctionCall-011
@@ -1955,10 +1926,6 @@ function-literal-005
 function-literal-006
 function-literal-007
 function-literal-008
-function-literal-033
-function-literal-033a
-function-literal-034
-function-literal-034a
 function-literal-053
 function-literal-054
 function-literal-055

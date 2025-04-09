@@ -76,6 +76,18 @@ fn error_helper(code: Option<Name>, description: &str) -> error::Result<sequence
     }
 }
 
+#[xpath_fn("fn:trace($value as item()*) as item()*")]
+fn trace(value: &sequence::Sequence) -> sequence::Sequence {
+    // TODO: direct values to the "trace data set".
+    value.clone()
+}
+
+#[xpath_fn("fn:trace($value as item()*,$label as xs:string) as item()*")]
+fn trace_with_label(value: &sequence::Sequence, _label: &str) -> sequence::Sequence {
+    // TODO: direct values + label to the "trace data set".
+    value.clone()
+}
+
 pub(crate) fn static_function_descriptions() -> Vec<StaticFunctionDescription> {
     vec![
         wrap_xpath_fn!(my_function),
@@ -83,5 +95,7 @@ pub(crate) fn static_function_descriptions() -> Vec<StaticFunctionDescription> {
         wrap_xpath_fn!(error_with_code),
         wrap_xpath_fn!(error_with_code_and_description),
         wrap_xpath_fn!(error_with_code_and_description_and_sequence),
+        wrap_xpath_fn!(trace),
+        wrap_xpath_fn!(trace_with_label),
     ]
 }

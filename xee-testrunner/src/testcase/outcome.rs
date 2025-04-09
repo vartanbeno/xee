@@ -15,6 +15,7 @@ pub enum TestOutcome {
     UnsupportedExpression(ErrorValue),
     Unsupported,
     EnvironmentError(String),
+    Panic,
 }
 
 impl TestOutcome {

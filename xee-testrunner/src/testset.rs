@@ -1,6 +1,5 @@
 use std::{
-    io::Stdout,
-    path::{Path, PathBuf},
+    io::Stdout, panic::{catch_unwind, AssertUnwindSafe}, path::{Path, PathBuf}
 };
 
 use anyhow::Result;
@@ -18,7 +17,7 @@ use crate::{
     outcomes::TestSetOutcomes,
     renderer::Renderer,
     runcontext::RunContext,
-    testcase::Runnable,
+    testcase::{Runnable, TestOutcome},
 };
 
 #[derive(Debug)]
@@ -72,7 +71,11 @@ impl<L: Language> TestSet<L> {
                 continue;
             }
             renderer.render_test_case(out, test_case)?;
-            let outcome = runner.run(run_context, catalog, self);
+
+            let outcome = catch_unwind(AssertUnwindSafe(|| {
+                runner.run(run_context, catalog, self)
+            })).unwrap_or(TestOutcome::Panic);
+
             renderer.render_test_outcome(out, &outcome)?;
             test_set_outcomes.add_outcome(&test_case.name, outcome);
         }

@@ -139,6 +139,13 @@ impl<L: Language> Renderer<L> for VerboseRenderer {
                     error
                 )
             }
+            TestOutcome::Panic => {
+                writeln!(
+                    stdout,
+                    "{}",
+                    with_color(stdout, "PANIC", crossterm::style::Color::Red)
+                )
+            }
         }
     }
 
@@ -203,6 +210,9 @@ impl<L: Language> Renderer<L> for CharacterRenderer {
                 render_error_code(stdout, "E", crossterm::style::Color::Red)
             }
             TestOutcome::EnvironmentError(_) => {
+                render_error_code(stdout, "E", crossterm::style::Color::Red)
+            }
+            TestOutcome::Panic => {
                 render_error_code(stdout, "E", crossterm::style::Color::Red)
             }
         }
