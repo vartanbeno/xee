@@ -1,25 +1,17 @@
+mod common;
 mod error;
 mod format;
 mod indent;
 mod repl;
 mod repl_cmd;
-mod xslt;
 mod xpath;
-mod common;
+mod xslt;
 
 use clap::{Parser, Subcommand};
-use const_format::formatcp;
-
-pub(crate) const VERSION: &str = formatcp!(
-    "{} ({}, {})",
-    clap::crate_version!(),
-    env!("SOURCE_TIMESTAMP"),
-    env!("GIT_COMMIT")
-);
 
 #[derive(Parser)]
-#[command(author, about,  version = VERSION, long_about)]
-struct Cli {
+#[command(author, about, version, long_about)]
+pub(crate) struct Cli {
     #[command(subcommand)]
     command: Commands,
 }

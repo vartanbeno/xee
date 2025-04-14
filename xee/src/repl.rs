@@ -5,14 +5,14 @@ use std::{
 };
 
 use ahash::HashMap;
-use clap::Parser;
+use clap::{CommandFactory, Parser};
 use rustyline::error::ReadlineError;
 use xee_xpath::{DocumentHandle, Documents, Itemable, Query};
 
 use crate::{
     error::{render_error, render_parse_error},
     repl_cmd::{ArgumentDefinition, CommandDefinition, CommandDefinitions},
-    VERSION,
+    Cli,
 };
 
 #[derive(Debug, Parser)]
@@ -200,7 +200,10 @@ impl Repl {
             ),
         ]);
 
-        println!("Xee XPath REPL {}", VERSION);
+        println!(
+            "Xee XPath REPL {}",
+            Cli::command().get_version().unwrap_or_default(),
+        );
         println!("Type !help for more information.");
         let mut rl = rustyline::DefaultEditor::new()?;
         loop {

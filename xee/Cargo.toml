@@ -22,9 +22,5 @@ anyhow.workspace = true
 regex = { workspace = true }
 rustyline = "15.0.0"
 ahash = { workspace = true }
-const_format = "0.2.34"
-
-[build-dependencies]
-build-data = "0"
 
 [dev-dependencies]
