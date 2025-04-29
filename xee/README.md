@@ -36,6 +36,29 @@ If you don't include the file, the XML is taken from stdin, allowing you to do:
 cat foo.xml | xee xpath /doc/p
 ```
 
+#### Working with namespaces
+
+For XML with namespaces, use the `--namespace` option (format: `prefix=uri`):
+
+```
+xee xpath /doc/a:p --namespace a=http://example.com foo.xml
+```
+
+For multiple namespaces, repeat the option:
+
+```
+xee xpath /x:doc/a:p \
+  --namespace x=http://example.com/x \
+  --namespace a=http://example.com/a \
+  foo.xml
+```
+
+For XML with a default namespace, use `--default-namespace-uri`:
+
+```
+xee xpath /doc/p --default-namespace-uri http://example.com foo.xml
+```
+
 ### Interactive shell for XPath
 
 Interactive shell (REPL) to issue multiple xpath expressions against a document:
@@ -83,4 +106,3 @@ a high level API to issue XPath 3.1 expressions in Rust.
 
 This project was made possible by the generous support of
 [Paligo](https://paligo.net/).
-
