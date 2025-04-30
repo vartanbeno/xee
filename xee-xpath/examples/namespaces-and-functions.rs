@@ -33,7 +33,7 @@ impl<'a> Document<'a> {
             .sequence(xpath)
             .and_then(|it| it.execute(&mut self.documents, self.doc_handle))
             .unwrap()
-            .string_value(&self.documents.xot())
+            .string_value(self.documents.xot())
             .unwrap()
     }
 }
